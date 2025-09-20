@@ -1,13 +1,20 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "ai-image-studio-pro",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "generate-icons": "node scripts/generate-icon.js",
+    "tauricon": "npx tauricon src-tauri/icons/icon.png",
+    "deploy": "npm run build && tar -czf deploy.tar.gz captain-definition Dockerfile nginx.conf dist/ && echo 'Deploy archive created: deploy.tar.gz'",
+    "caprover:deploy": "caprover deploy -t ./deploy.tar.gz"
   },
   "dependencies": {
     "@google/genai": "^1.16.0",
@@ -16,6 +23,9 @@
     "@radix-ui/react-slider": "^1.3.6",
     "@radix-ui/react-switch": "^1.2.6",
     "@tanstack/react-query": "^5.85.5",
+    "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/plugin-dialog": "^2.4.0",
+    "@tauri-apps/plugin-fs": "^2.4.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fabric": "^6.7.1",
@@ -30,6 +40,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@tauri-apps/cli": "^2.8.4",
+    "@tauri-apps/tauricon": "^1.0.3",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -39,6 +51,7 @@
     "eslint-plugin-react-refresh": "^0.4.11",
     "globals": "^15.9.0",
     "postcss": "^8.4.35",
+    "sharp": "^0.34.3",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.3.0",
