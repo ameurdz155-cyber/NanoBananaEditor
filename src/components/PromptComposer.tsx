@@ -3,11 +3,11 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Upload, Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText } from 'lucide-react';
+import { Upload, Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check } from 'lucide-react';
 import { blobToBase64 } from '../utils/imageUtils';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
-import { validateApiKey } from '../services/geminiService';
+import { validateApiKey, improvePromptText } from '../services/geminiService';
 
 // Prompt templates
 const promptTemplates = [
@@ -88,6 +88,8 @@ export const PromptComposer: React.FC = () => {
   const [isValidating, setIsValidating] = useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('none');
+  const [isImproving, setIsImproving] = useState(false);
+  const [improvedPrompt, setImprovedPrompt] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const templateDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -118,6 +120,34 @@ export const PromptComposer: React.FC = () => {
     setSelectedTemplate(template.name);
     setCurrentPrompt(template.prompt);
     setShowTemplateDropdown(false);
+  };
+
+  const handleImprovePrompt = async () => {
+    if (!currentPrompt.trim()) return;
+    
+    setIsImproving(true);
+    setApiKeyError(null);
+    
+    try {
+      const improved = await improvePromptText(currentPrompt);
+      setImprovedPrompt(improved);
+    } catch (error: any) {
+      console.error('Failed to improve prompt:', error);
+      setApiKeyError(error.message || 'Failed to improve prompt. Please try again.');
+    } finally {
+      setIsImproving(false);
+    }
+  };
+
+  const handleAcceptImprovedPrompt = () => {
+    if (improvedPrompt) {
+      setCurrentPrompt(improvedPrompt);
+      setImprovedPrompt(null);
+    }
+  };
+
+  const handleRejectImprovedPrompt = () => {
+    setImprovedPrompt(null);
   };
 
   const handleGenerate = async () => {
@@ -458,6 +488,66 @@ export const PromptComposer: React.FC = () => {
           }
           className="min-h-[120px] resize-none bg-gray-800 border-gray-700 focus:border-purple-500 transition-colors"
         />
+        
+        {/* Improve Prompt Button */}
+        <div className="mt-2 flex items-center justify-between">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleImprovePrompt}
+            disabled={isImproving || !currentPrompt.trim() || !!improvedPrompt}
+            className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border-purple-500/30"
+          >
+            {isImproving ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-400 mr-2" />
+                <span>Improving...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3 w-3 mr-2" />
+                <span>Improve Prompt</span>
+              </>
+            )}
+          </Button>
+        </div>
+        
+        {/* Improved Prompt Preview */}
+        {improvedPrompt && (
+          <div className="mt-3 p-3 bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-lg">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="h-4 w-4 text-purple-400" />
+                <span className="text-xs font-semibold text-purple-300">Improved Prompt</span>
+              </div>
+              <button
+                onClick={handleRejectImprovedPrompt}
+                className="text-gray-400 hover:text-gray-300 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-sm text-gray-200 mb-3 leading-relaxed">{improvedPrompt}</p>
+            <div className="flex space-x-2">
+              <Button
+                size="sm"
+                onClick={handleAcceptImprovedPrompt}
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+              >
+                <Check className="h-3 w-3 mr-1" />
+                Accept
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRejectImprovedPrompt}
+                className="flex-1"
+              >
+                Reject
+              </Button>
+            </div>
+          </div>
+        )}
         
         {/* Prompt Quality Indicator */}
         <div className="mt-3 flex items-center justify-between text-xs">

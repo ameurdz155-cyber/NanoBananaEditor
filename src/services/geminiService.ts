@@ -248,3 +248,27 @@ Preserve image quality and ensure the edit looks professional and realistic.`;
 }
 
 export const geminiService = new GeminiService();
+
+// Text helper: improve a user prompt for image generation
+export async function improvePromptText(prompt: string): Promise<string> {
+  try {
+    const contents = [
+      { text: `Improve the following image generation prompt by making it more descriptive, cinematic, and specific while preserving any placeholders like [subject]. Return only the improved prompt text without extra commentary.\n\nOriginal Prompt:\n${prompt}` }
+    ];
+
+    const response = await getGenAI().models.generateContent({
+      model: "gemini-2.5-flash-image-preview",
+      contents,
+    });
+
+    const candidate = response.candidates?.[0];
+    if (!candidate?.content?.parts) return prompt;
+
+    // Find first text part
+    const part = candidate.content.parts.find((p: any) => p.text)?.text;
+    return (part || '').trim() || prompt;
+  } catch (error) {
+    console.error('Error improving prompt text:', error);
+    throw new Error('Failed to improve prompt.');
+  }
+}
