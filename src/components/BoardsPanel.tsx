@@ -5,18 +5,14 @@ import {
   Layers, 
   Search, 
   Grid, 
-  MoreVertical,
-  Star,
-  Clock,
-  Share2,
-  Download,
-  Eye,
   Sparkles,
   Plus,
   Folder,
   Trash2,
   Edit2,
-  X
+  X,
+  Eye,
+  Download
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { saveImageWithDialog } from '../utils/fileSaver';
@@ -182,7 +178,7 @@ export const BoardsPanel: React.FC = () => {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-100">Boards Manager</h1>
+              <h1 className="text-xl font-bold text-gray-100">AI POD</h1>
             </div>
             
             {/* View Mode Tabs */}

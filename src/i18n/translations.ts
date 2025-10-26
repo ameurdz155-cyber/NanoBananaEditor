@@ -127,9 +127,9 @@ export interface Translations {
 export const translations: Record<Language, Translations> = {
   en: {
     // Header
-    appName: 'AI POD Lite',
-    appSubtitle: 'Lite Edition',
-    versionBadge: 'v1.0 LITE',
+    appName: 'AI POD',
+    appSubtitle: 'Professional Edition',
+    versionBadge: 'v1.0 PRO',
     
     // Settings
     settings: 'Settings',
@@ -250,9 +250,9 @@ export const translations: Record<Language, Translations> = {
   },
   zh: {
     // Header
-    appName: 'AI POD 精简版',
-    appSubtitle: '精简版',
-    versionBadge: 'v1.0 精简版',
+    appName: 'AI POD',
+    appSubtitle: '专业版',
+    versionBadge: 'v1.0 专业版',
     
     // Settings
     settings: '设置',
