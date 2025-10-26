@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { saveImageWithDialog } from '../utils/fileSaver';
 
 export const useKeyboardShortcuts = () => {
   const {
@@ -9,16 +10,26 @@ export const useKeyboardShortcuts = () => {
     setShowPromptPanel,
     showPromptPanel,
     currentPrompt,
-    isGenerating
+    isGenerating,
+    canvasImage
   } = useAppStore();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Handle Ctrl+S for save
+      if (event.ctrlKey && event.key === 's') {
+        event.preventDefault();
+        if (canvasImage) {
+          saveImageWithDialog(canvasImage);
+        }
+        return;
+      }
+
       // Ignore if user is typing in an input
       if (event.target instanceof HTMLInputElement || 
           event.target instanceof HTMLTextAreaElement) {
-        // Only handle Cmd/Ctrl + Enter for generation
-        if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        // Only handle Ctrl + Enter for generation (Windows-compatible)
+        if (event.ctrlKey && event.key === 'Enter') {
           event.preventDefault();
           if (!isGenerating && currentPrompt.trim()) {
             console.log('Generate via keyboard shortcut');
@@ -59,5 +70,5 @@ export const useKeyboardShortcuts = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setSelectedTool, setShowHistory, showHistory, setShowPromptPanel, showPromptPanel, currentPrompt, isGenerating]);
+  }, [setSelectedTool, setShowHistory, showHistory, setShowPromptPanel, showPromptPanel, currentPrompt, isGenerating, canvasImage]);
 };

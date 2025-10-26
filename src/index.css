@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import './styles/theme.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,9 +9,24 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   overflow: hidden;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-mesh);
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Custom scrollbar for dark theme */
@@ -38,18 +54,20 @@ body {
   height: 16px;
   width: 16px;
   border-radius: 50%;
-  background: #FDE047;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   cursor: pointer;
-  border: 2px solid #1F2937;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
 }
 
 .slider::-moz-range-thumb {
   height: 16px;
   width: 16px;
   border-radius: 50%;
-  background: #FDE047;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   cursor: pointer;
-  border: 2px solid #1F2937;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
 }
 
 /* Marching ants animation */
@@ -65,8 +83,9 @@ body {
 
 /* Focus styles for accessibility */
 *:focus-visible {
-  outline: 2px solid #FDE047;
+  outline: 2px solid #a855f7;
   outline-offset: 2px;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
 }
 
 /* Smooth transitions */

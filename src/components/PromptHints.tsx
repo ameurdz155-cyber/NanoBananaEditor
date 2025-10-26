@@ -75,7 +75,7 @@ export const PromptHints: React.FC<PromptHintsProps> = ({ open, onOpenChange }) 
             
             <div className="p-4 bg-gray-800 rounded-lg border border-gray-700 mt-6">
               <p className="text-sm text-gray-300">
-                <strong className="text-yellow-400">Best practice:</strong> Write full sentences that describe the complete scene, 
+                <strong className="text-purple-400">Best practice:</strong> Write full sentences that describe the complete scene, 
                 not just keywords. Think "paint me a picture with words."
               </p>
             </div>

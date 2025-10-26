@@ -159,6 +159,6 @@ export const useAppStore = create<AppState>()(
       
       setSelectedTool: (tool) => set({ selectedTool: tool }),
     }),
-    { name: 'nano-banana-store' }
+    { name: 'ai-studio-pro-store' }
   )
 );

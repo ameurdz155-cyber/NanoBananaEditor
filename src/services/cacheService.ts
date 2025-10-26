@@ -1,7 +1,7 @@
 import { get, set, del, keys } from 'idb-keyval';
 import { Project, Generation, Asset } from '../types';
 
-const CACHE_PREFIX = 'nano-banana';
+const CACHE_PREFIX = 'ai-studio-pro';
 const CACHE_VERSION = '1.0';
 
 export class CacheService {

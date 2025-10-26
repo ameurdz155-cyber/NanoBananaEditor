@@ -1,8 +1,89 @@
 import { GoogleGenAI } from '@google/genai';
 
-// Note: In production, this should be handled via a backend proxy
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'demo-key';
-const genAI = new GoogleGenAI({ apiKey: API_KEY });
+// Get API key from localStorage or environment variable
+const getApiKey = () => {
+  const storedKey = localStorage.getItem('gemini_api_key');
+  return storedKey || import.meta.env.VITE_GEMINI_API_KEY || '';
+};
+
+let genAI: GoogleGenAI | null = null;
+
+const getGenAI = () => {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error('Please configure your Gemini API key in Settings');
+  }
+  // Create new instance with the API key
+  if (!genAI) {
+    genAI = new GoogleGenAI({ apiKey });
+  }
+  return genAI;
+};
+
+// Validate API key by making a simple test request
+export const validateApiKey = async (): Promise<{ valid: boolean; error?: string }> => {
+  try {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      return { valid: false, error: 'No API key configured. Please add your Gemini API key.' };
+    }
+
+    if (!apiKey.startsWith('AIza')) {
+      return { valid: false, error: 'Invalid API key format. Gemini API keys should start with "AIza".' };
+    }
+
+    // Try to create a client and make a simple test request
+    try {
+      const testAI = new GoogleGenAI({ apiKey });
+
+      // Make a simple test request to validate the key
+      const response = await testAI.models.generateContent({
+        model: "gemini-2.5-flash-image-preview",
+        contents: "Generate a simple test: say 'API key is working'",
+      });
+
+      // Check if we got a valid response
+      if (response && response.candidates && response.candidates.length > 0) {
+        // Reset the genAI instance with the new key if valid
+        genAI = new GoogleGenAI({ apiKey });
+        return { valid: true };
+      }
+
+      return { valid: false, error: 'Received empty response from API. Please check your API key.' };
+    } catch (apiError: any) {
+      console.error('API validation error:', apiError);
+
+      // Parse error messages for better user feedback
+      const errorMessage = apiError?.message || apiError?.error?.message || '';
+
+      if (errorMessage.includes('API_KEY_INVALID') ||
+          errorMessage.includes('API key not valid') ||
+          errorMessage.includes('401') ||
+          apiError?.status === 401) {
+        return { valid: false, error: 'Invalid API key. Please check your Gemini API key.' };
+      }
+
+      if (errorMessage.includes('PERMISSION_DENIED') ||
+          errorMessage.includes('403') ||
+          apiError?.status === 403) {
+        return { valid: false, error: 'API key lacks permissions. Enable the Generative Language API in Google Cloud Console.' };
+      }
+
+      if (errorMessage.includes('quota') || errorMessage.includes('429')) {
+        return { valid: false, error: 'API quota exceeded. Please check your usage limits.' };
+      }
+
+      if (errorMessage.includes('model')) {
+        return { valid: false, error: 'Model not available. Please ensure your API key has access to Gemini 2.5 Flash Image model.' };
+      }
+
+      return { valid: false, error: `API Error: ${errorMessage.substring(0, 100)}` };
+    }
+  } catch (error: any) {
+    console.error('API key validation error:', error);
+    return { valid: false, error: 'Network error. Please check your internet connection.' };
+  }
+};
 
 export interface GenerationRequest {
   prompt: string;
@@ -42,7 +123,7 @@ export class GeminiService {
         });
       }
 
-      const response = await genAI.models.generateContent({
+      const response = await getGenAI().models.generateContent({
         model: "gemini-2.5-flash-image-preview",
         contents,
       });
@@ -95,7 +176,7 @@ export class GeminiService {
         });
       }
 
-      const response = await genAI.models.generateContent({
+      const response = await getGenAI().models.generateContent({
         model: "gemini-2.5-flash-image-preview",
         contents,
       });
@@ -140,7 +221,7 @@ Only segment the specific object or region requested. The mask should be a binar
         },
       ];
 
-      const response = await genAI.models.generateContent({
+      const response = await getGenAI().models.generateContent({
         model: "gemini-2.5-flash-image-preview",
         contents: prompt,
       });

@@ -38,17 +38,17 @@ function AppContent() {
   }, [setShowPromptPanel, setShowHistory]);
 
   return (
-    <div className="h-screen bg-gray-900 text-gray-100 flex flex-col font-sans">
+    <div className="h-screen flex flex-col font-sans relative" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <Header />
       
-      <div className="flex-1 flex overflow-hidden">
-        <div className={cn("flex-shrink-0 transition-all duration-300", !showPromptPanel && "w-8")}>
+      <div className="flex-1 flex overflow-hidden relative">
+        <div className={cn("flex-shrink-0 transition-all duration-300 relative z-10", !showPromptPanel && "w-8")}>
           <PromptComposer />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 relative z-10">
           <ImageCanvas />
         </div>
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 relative z-10">
           <HistoryPanel />
         </div>
       </div>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<title>Veo - Video Generation</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366F1",
+                        "primary-dark": "#4F46E5",
+                        "background-light": "#FFFFFF",
+                        "background-dark": "#0F172A",
+                        "text-light": "#1E293B",
+                        "text-dark": "#E2E8F0",
+                        "subtext-light": "#64748B",
+                        "subtext-dark": "#94A3B8",
+                        "border-light": "#E2E8F0",
+                        "border-dark": "#334155",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-light dark:text-text-dark">
+<div class="flex flex-col min-h-screen">
+<header class="flex items-center justify-between p-4">
+<h1 class="text-2xl font-bold tracking-tight text-text-light dark:text-text-dark">veo</h1>
+<button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-subtext-light dark:text-subtext-dark">
+                    more_horiz
+                </span>
+</button>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center text-center p-6">
+<div class="max-w-md w-full">
+<div class="mb-8">
+<span class="material-symbols-outlined text-primary text-6xl">
+                        movie
+                    </span>
+</div>
+<h2 class="text-4xl font-bold tracking-tight text-text-light dark:text-text-dark mb-4">Welcome to Veo</h2>
+<p class="text-subtext-light dark:text-subtext-dark mb-10 text-lg">
+                    Bring your creative visions to life. Generate stunning videos from text or images instantly.
+                </p>
+<div class="space-y-4">
+<button class="w-full bg-primary text-white font-semibold py-4 px-5 rounded-xl hover:bg-primary-dark transition-colors duration-300 flex items-center justify-center space-x-2">
+<span class="material-symbols-outlined">edit</span>
+<span>Generate from text</span>
+</button>
+<button class="w-full bg-gray-100 dark:bg-slate-800 text-text-light dark:text-text-dark font-semibold py-4 px-5 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors duration-300 flex items-center justify-center space-x-2">
+<span class="material-symbols-outlined">image</span>
+<span>Generate from image</span>
+</button>
+</div>
+</div>
+</main>
+<footer class="sticky bottom-0 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm border-t border-border-light dark:border-border-dark">
+<nav class="flex justify-around items-center h-20">
+<a class="flex flex-col items-center justify-center text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">
+                        home
+                    </span>
+<span class="text-xs font-medium mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-subtext-light dark:text-subtext-dark hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">
+                        explore
+                    </span>
+<span class="text-xs font-medium mt-1">Discover</span>
+</a>
+<a class="flex flex-col items-center justify-center text-subtext-light dark:text-subtext-dark hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">
+                        video_library
+                    </span>
+<span class="text-xs font-medium mt-1">Library</span>
+</a>
+<a class="flex flex-col items-center justify-center text-subtext-light dark:text-subtext-dark hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">
+                        account_circle
+                    </span>
+<span class="text-xs font-medium mt-1">Profile</span>
+</a>
+</nav>
+</footer>
+</div>
+
+</body></html>

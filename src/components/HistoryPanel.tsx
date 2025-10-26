@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { History, Download, Image as ImageIcon, Layers } from 'lucide-react';
+import { History, Save, Image as ImageIcon, Layers } from 'lucide-react';
+import { saveImageWithDialog } from '../utils/fileSaver';
 import { cn } from '../utils/cn';
 import { ImagePreviewModal } from './ImagePreviewModal';
 
@@ -103,7 +104,7 @@ export const HistoryPanel: React.FC = () => {
                 className={cn(
                   'relative aspect-square rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden',
                   selectedGenerationId === generation.id
-                    ? 'border-yellow-400'
+                    ? 'border-purple-500'
                     : 'border-gray-700 hover:border-gray-600'
                 )}
                 onClick={() => {
@@ -123,7 +124,7 @@ export const HistoryPanel: React.FC = () => {
                   </>
                 ) : (
                   <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-400" />
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
                   </div>
                 )}
                 
@@ -141,7 +142,7 @@ export const HistoryPanel: React.FC = () => {
                 className={cn(
                   'relative aspect-square rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden',
                   selectedEditId === edit.id
-                    ? 'border-yellow-400'
+                    ? 'border-purple-500'
                     : 'border-gray-700 hover:border-gray-600'
                 )}
                 onClick={() => {
@@ -160,7 +161,7 @@ export const HistoryPanel: React.FC = () => {
                   />
                 ) : (
                   <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-400" />
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
                   </div>
                 )}
                 
@@ -349,7 +350,7 @@ export const HistoryPanel: React.FC = () => {
           variant="outline" 
           size="sm" 
           className="w-full"
-          onClick={() => {
+          onClick={async () => {
             // Find the currently displayed image (either generation or edit)
             let imageUrl: string | null = null;
             
@@ -363,35 +364,13 @@ export const HistoryPanel: React.FC = () => {
             }
             
             if (imageUrl) {
-              // Handle both data URLs and regular URLs
-              if (imageUrl.startsWith('data:')) {
-                const link = document.createElement('a');
-                link.href = imageUrl;
-                link.download = `nano-banana-${Date.now()}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-              } else {
-                // For external URLs, we need to fetch and convert to blob
-                fetch(imageUrl)
-                  .then(response => response.blob())
-                  .then(blob => {
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `nano-banana-${Date.now()}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-                  });
-              }
+              await saveImageWithDialog(imageUrl);
             }
           }}
           disabled={!selectedGenerationId && !useAppStore.getState().canvasImage}
         >
-          <Download className="h-4 w-4 mr-2" />
-          Download
+          <Save className="h-4 w-4 mr-2" />
+          Save
         </Button>
       </div>
       

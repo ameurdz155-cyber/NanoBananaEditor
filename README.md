@@ -1,8 +1,5 @@
-# 🍌 Nano Banana AI Image Editor 
-Release Version: (v1.0)
-
-### **⏬ Get Your 1-Click Install Copy!** 
-Join the [Vibe Coding is Life Skool Community](https://www.skool.com/vibe-coding-is-life/about?ref=456537abaf37491cbcc6976f3c26af41) and get a **1-click ⚡Bolt.new installation clone**  of this app, plus access to live build sessions, exclusive project downloads, AI prompts, masterclasses, and the best vibe coding community on the web!
+# 🎨 AI Image Studio Pro
+Release Version: (v2.0)
 
 ---
 
@@ -10,9 +7,6 @@ Join the [Vibe Coding is Life Skool Community](https://www.skool.com/vibe-coding
 
 A production-ready React + TypeScript application for delightful image generation and conversational, region-aware revisions using Google's Gemini 2.5 Flash Image model. Built with modern web technologies and designed for both creators and developers.
 
-[![Nano Banana Image Editor](https://getsmartgpt.com/nano-banana-editor.jpg)](https://nanobananaeditor.dev)
-
-🍌 [Try the LIVE Demo](https://nanobananaeditor.dev)
 
 ## ✨ Key Features
 
@@ -57,7 +51,7 @@ A production-ready React + TypeScript application for delightful image generatio
 1. **Clone and install dependencies**:
    ```bash
    git clone <repository-url>
-   cd nano-banana-image-editor
+   cd ai-image-studio-pro
    npm install
    ```
 
@@ -174,9 +168,7 @@ npm run lint     # Run ESLint
 - **Storage**: Set up cloud storage for generated assets
 - **Monitoring**: Add error tracking and analytics
 
-## 📄 License & Copyright
-
-**Copyright © 2025 [Mark Fulton](https://markfulton.com)**
+## 📄 License
 
 This project is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0).
 
@@ -200,9 +192,6 @@ We welcome contributions! Please:
 
 ## 🔗 Links & Resources
 
-- **Creator**: [Mark Fulton](https://markfulton.com)
-- **AI Training Program**: [Reinventing.AI](https://www.reinventing.ai/)
-- **Community**: [Vibe Coding is Life Skool](https://www.skool.com/vibe-coding-is-life/about?ref=456537abaf37491cbcc6976f3c26af41)
 - **Google AI Studio**: [Get your API key](https://aistudio.google.com/)
 - **Gemini API Docs**: [Official Documentation](https://ai.google.dev/gemini-api/docs)
 
@@ -223,4 +212,4 @@ We welcome contributions! Please:
 
 ---
 
-**Built by [Mark Fulton](https://markfulton.com)** | **Powered by Gemini 2.5 Flash Image** | **Made with Bolt.new**
+**AI Image Studio Pro** | **Powered by Gemini 2.5 Flash Image**

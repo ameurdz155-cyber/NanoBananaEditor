@@ -10,7 +10,7 @@ export const MaskOverlay: React.FC = () => {
     <div className="absolute inset-0 pointer-events-none">
       {/* Marching ants effect */}
       <div 
-        className="absolute border-2 border-yellow-400 animate-pulse"
+        className="absolute border-2 border-purple-400 animate-pulse"
         style={{
           left: selectedMask.bounds.x,
           top: selectedMask.bounds.y,
@@ -23,7 +23,7 @@ export const MaskOverlay: React.FC = () => {
       
       {/* Mask overlay */}
       <div
-        className="absolute bg-yellow-400/20"
+        className="absolute bg-purple-400/20"
         style={{
           left: selectedMask.bounds.x,
           top: selectedMask.bounds.y,

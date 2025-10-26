@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text-to-Image Service Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0a0a0a;
+      color: #fafafa;
+    }
+    h1 {
+      color: #a855f7;
+    }
+    .controls {
+      background: #18181b;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #27272a;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      background: #09090b;
+      color: #fafafa;
+      border: 1px solid #27272a;
+      border-radius: 6px;
+      font-family: inherit;
+    }
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    button {
+      background: #a855f7;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    button:hover:not(:disabled) {
+      background: #9333ea;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .output {
+      background: #18181b;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #27272a;
+      margin-top: 20px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .images {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .image-container {
+      background: #18181b;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #27272a;
+    }
+    .image-container img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .error {
+      color: #ef4444;
+      padding: 10px;
+      background: #1f1111;
+      border: 1px solid #441111;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .success {
+      color: #22c55e;
+      padding: 10px;
+      background: #111f11;
+      border: 1px solid #114411;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tab-button {
+      padding: 10px 20px;
+      background: #27272a;
+      border: none;
+      border-radius: 6px;
+      color: #a1a1aa;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-button.active {
+      background: #a855f7;
+      color: white;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #a1a1aa;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎨 Text-to-Image Service Test</h1>
+
+  <div class="tab-buttons">
+    <button class="tab-button active" onclick="switchTab('generate')">Generate Image</button>
+    <button class="tab-button" onclick="switchTab('test')">Run Tests</button>
+  </div>
+
+  <div id="generate-tab" class="tab-content active">
+    <div class="controls">
+      <label for="apiKey">API Key (optional - will use stored key if available):</label>
+      <input
+        type="password"
+        id="apiKey"
+        placeholder="Enter your Gemini API key (optional)"
+      />
+
+      <label for="prompt">Image Prompt:</label>
+      <textarea
+        id="prompt"
+        placeholder="Describe the image you want to generate..."
+      >A futuristic city skyline at sunset with flying cars</textarea>
+
+      <label for="referenceUrl">Reference Image URL (optional):</label>
+      <input
+        type="text"
+        id="referenceUrl"
+        placeholder="Enter image URL or leave empty"
+      />
+
+      <button id="generateBtn" onclick="generateImage()">
+        Generate Image
+      </button>
+    </div>
+
+    <div id="result"></div>
+    <div id="images" class="images"></div>
+  </div>
+
+  <div id="test-tab" class="tab-content">
+    <div class="controls">
+      <button onclick="runUnitTests()">Run Unit Tests</button>
+    </div>
+    <div id="testOutput" class="output"></div>
+  </div>
+
+  <script type="module">
+    import { textToImageService } from './src/services/textToImageService.ts';
+    import { runTests } from './src/services/textToImageService.test.ts';
+
+    let currentTab = 'generate';
+
+    window.switchTab = function(tab) {
+      currentTab = tab;
+
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+
+      if (tab === 'generate') {
+        document.querySelector('.tab-button:nth-child(1)').classList.add('active');
+        document.getElementById('generate-tab').classList.add('active');
+      } else {
+        document.querySelector('.tab-button:nth-child(2)').classList.add('active');
+        document.getElementById('test-tab').classList.add('active');
+      }
+    };
+
+    window.generateImage = async function() {
+      const btn = document.getElementById('generateBtn');
+      const resultDiv = document.getElementById('result');
+      const imagesDiv = document.getElementById('images');
+
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      resultDiv.innerHTML = '';
+      imagesDiv.innerHTML = '';
+
+      try {
+        const apiKey = document.getElementById('apiKey').value || undefined;
+        const prompt = document.getElementById('prompt').value;
+        const referenceUrl = document.getElementById('referenceUrl').value;
+
+        if (!prompt) {
+          throw new Error('Please enter a prompt');
+        }
+
+        const referenceImages = [];
+        if (referenceUrl) {
+          try {
+            const base64 = await textToImageService.convertImageToBase64(referenceUrl);
+            referenceImages.push(base64);
+          } catch (e) {
+            console.warn('Could not load reference image:', e);
+          }
+        }
+
+        const startTime = Date.now();
+        const result = await textToImageService.generateImage({
+          prompt,
+          referenceImages,
+          apiKey
+        });
+
+        const elapsed = Date.now() - startTime;
+
+        if (result.error) {
+          resultDiv.innerHTML = `<div class="error">❌ ${result.error}</div>`;
+        } else {
+          resultDiv.innerHTML = `
+            <div class="success">
+              ✅ Generated ${result.images.length} image(s) in ${(elapsed / 1000).toFixed(2)} seconds
+            </div>
+          `;
+
+          result.images.forEach((base64, index) => {
+            const container = document.createElement('div');
+            container.className = 'image-container';
+
+            const img = document.createElement('img');
+            img.src = textToImageService.convertToDataUrl(base64);
+            img.alt = `Generated image ${index + 1}`;
+
+            const caption = document.createElement('p');
+            caption.textContent = `Image ${index + 1} - ${prompt}`;
+            caption.style.margin = '10px 0 0 0';
+            caption.style.fontSize = '0.9em';
+            caption.style.color = '#a1a1aa';
+
+            container.appendChild(img);
+            container.appendChild(caption);
+            imagesDiv.appendChild(container);
+          });
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate Image';
+      }
+    };
+
+    window.runUnitTests = async function() {
+      const output = document.getElementById('testOutput');
+      output.textContent = 'Running tests...\n\n';
+
+      const originalLog = console.log;
+      const originalError = console.error;
+
+      console.log = (...args) => {
+        output.textContent += args.join(' ') + '\n';
+        originalLog(...args);
+      };
+
+      console.error = (...args) => {
+        output.textContent += args.join(' ') + '\n';
+        originalError(...args);
+      };
+
+      try {
+        await runTests();
+      } catch (error) {
+        output.textContent += `\n❌ Test runner error: ${error.message}\n`;
+      }
+
+      console.log = originalLog;
+      console.error = originalError;
+    };
+
+    const storedKey = localStorage.getItem('gemini_api_key');
+    if (storedKey) {
+      document.getElementById('apiKey').placeholder = 'Using stored API key (leave empty to use it)';
+    }
+  </script>
+</body>
+</html>

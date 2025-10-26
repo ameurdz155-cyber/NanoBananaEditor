@@ -2,8 +2,9 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Image as KonvaImage, Line } from 'react-konva';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { ZoomIn, ZoomOut, RotateCcw, Download, Eye, EyeOff, Eraser } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Sparkles } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { saveImageWithDialog } from '../utils/fileSaver';
 
 export const ImageCanvas: React.FC = () => {
   const {
@@ -159,15 +160,12 @@ export const ImageCanvas: React.FC = () => {
     }
   };
 
-  const handleDownload = () => {
+  const handleSave = async () => {
     if (canvasImage) {
-      if (canvasImage.startsWith('data:')) {
-        const link = document.createElement('a');
-        link.href = canvasImage;
-        link.download = `nano-banana-${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      const saved = await saveImageWithDialog(canvasImage);
+      if (saved) {
+        // Show success feedback (you could add a toast notification here)
+        console.log('Image saved successfully!');
       }
     }
   };
@@ -224,16 +222,16 @@ export const ImageCanvas: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={() => setShowMasks(!showMasks)}
-              className={cn(showMasks && 'bg-yellow-400/10 border-yellow-400/50')}
+              className={cn(showMasks && 'bg-purple-500/10 border-purple-500/50')}
             >
               {showMasks ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               <span className="hidden sm:inline ml-2">Masks</span>
             </Button>
             
             {canvasImage && (
-              <Button variant="secondary" size="sm" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Download</span>
+              <Button variant="secondary" size="sm" onClick={handleSave}>
+                <Save className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Save</span>
               </Button>
             )}
           </div>
@@ -248,9 +246,14 @@ export const ImageCanvas: React.FC = () => {
         {!image && !isGenerating && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-6xl mb-4">🍌</div>
-              <h2 className="text-xl font-medium text-gray-300 mb-2">
-                Welcome to Nano Banana Framework
+              <div className="relative inline-block mb-4">
+                <div className="absolute inset-0 gradient-glow opacity-40 blur-2xl rounded-full"></div>
+                <div className="relative w-20 h-20 gradient-primary rounded-2xl flex items-center justify-center shadow-2xl mx-auto">
+                  <Sparkles className="h-12 w-12 text-white" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-gradient mb-2">
+                AI Image Studio Pro
               </h2>
               <p className="text-gray-500 max-w-md">
                 {selectedTool === 'generate' 
@@ -265,7 +268,7 @@ export const ImageCanvas: React.FC = () => {
         {isGenerating && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mb-4" />
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mb-4" />
               <p className="text-gray-300">Creating your image...</p>
             </div>
           </div>
@@ -343,25 +346,13 @@ export const ImageCanvas: React.FC = () => {
         <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center space-x-4">
             {brushStrokes.length > 0 && (
-              <span className="text-yellow-400">{brushStrokes.length} brush stroke{brushStrokes.length !== 1 ? 's' : ''}</span>
+              <span className="text-purple-400">{brushStrokes.length} brush stroke{brushStrokes.length !== 1 ? 's' : ''}</span>
             )}
           </div>
           
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-gray-500">
-              © 2025 Mark Fulton - 
-              <a
-                href="https://www.reinventing.ai/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-yellow-400 hover:text-yellow-300 transition-colors ml-1"
-              >
-                Reinventing.AI Solutions
-              </a>
-            </span>
-            <span className="text-gray-600 hidden md:inline">•</span>
-            <span className="text-yellow-400 hidden md:inline">⚡</span>
-            <span className="hidden md:inline">Powered by Gemini 2.5 Flash Image</span>
+            <span className="text-purple-400 hidden md:inline">⚡</span>
+            <span className="text-xs text-gray-500 hidden md:inline">Powered by Gemini 2.5 Flash Image</span>
           </div>
         </div>
       </div>

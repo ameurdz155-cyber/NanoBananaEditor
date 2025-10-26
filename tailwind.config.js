@@ -4,18 +4,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Banana yellow accent
-        banana: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          200: '#FDE68A',
-          300: '#FCD34D',
-          400: '#FDE047', // Primary banana yellow
-          500: '#EAB308',
-          600: '#CA8A04',
-          700: '#A16207',
-          800: '#854D0E',
-          900: '#713F12',
+        // Purple gradient theme
+        primary: {
+          50: '#faf5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#a855f7',
+          600: '#9333ea',
+          700: '#7e22ce',
+          800: '#6b21a8',
+          900: '#581c87',
+        },
+        accent: {
+          cyan: '#06b6d4',
+          pink: '#ec4899',
+          emerald: '#10b981',
+          amber: '#f59e0b',
         },
       },
       fontFamily: {

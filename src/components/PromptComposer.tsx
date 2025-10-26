@@ -3,10 +3,11 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Upload, Wand2, Edit3, MousePointer, HelpCircle, Menu, ChevronDown, ChevronRight, RotateCcw } from 'lucide-react';
+import { Upload, Wand2, Edit3, MousePointer, HelpCircle, Menu, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings } from 'lucide-react';
 import { blobToBase64 } from '../utils/imageUtils';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
+import { validateApiKey } from '../services/geminiService';
 
 export const PromptComposer: React.FC = () => {
   const {
@@ -39,10 +40,25 @@ export const PromptComposer: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showHintsModal, setShowHintsModal] = useState(false);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!currentPrompt.trim()) return;
+    
+    // Clear previous errors
+    setApiKeyError(null);
+    
+    // Validate API key before generating
+    setIsValidating(true);
+    const validation = await validateApiKey();
+    setIsValidating(false);
+    
+    if (!validation.valid) {
+      setApiKeyError(validation.error || 'Invalid API key. Please check Settings.');
+      return;
+    }
     
     if (selectedTool === 'generate') {
       const referenceImages = uploadedImages
@@ -162,7 +178,7 @@ export const PromptComposer: React.FC = () => {
               className={cn(
                 'flex flex-col items-center p-3 rounded-lg border transition-all duration-200',
                 selectedTool === tool.id
-                  ? 'bg-yellow-400/10 border-yellow-400/50 text-yellow-400'
+                  ? 'bg-purple-400/10 border-purple-400/50 text-purple-400'
                   : 'bg-gray-900 border-gray-700 text-gray-400 hover:bg-gray-800 hover:text-gray-300'
               )}
             >
@@ -263,7 +279,7 @@ export const PromptComposer: React.FC = () => {
           ) : (
             <div className={cn(
               'h-2 w-2 rounded-full mr-2',
-              currentPrompt.length < 50 ? 'bg-yellow-500' : 'bg-green-500'
+              currentPrompt.length < 50 ? 'bg-purple-500' : 'bg-green-500'
             )} />
           )}
           <span className="text-gray-500 group-hover:text-gray-400">
@@ -274,24 +290,57 @@ export const PromptComposer: React.FC = () => {
       </div>
 
 
+      {/* API Key Error Message */}
+      {apiKeyError && (
+        <div className="glass border border-red-500/30 bg-red-900/20 rounded-xl p-4 mb-4">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-red-300 font-medium">{apiKeyError}</p>
+              <button
+                onClick={() => {
+                  const event = new CustomEvent('openSettings');
+                  window.dispatchEvent(event);
+                }}
+                className="mt-2 flex items-center text-xs text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                <Settings className="h-3 w-3 mr-1" />
+                Open Settings to configure API key
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Generate Button */}
-      <Button
-        onClick={handleGenerate}
-        disabled={isGenerating || !currentPrompt.trim()}
-        className="w-full h-14 text-base font-medium"
-      >
-        {isGenerating ? (
-          <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 mr-2" />
-            Generating...
-          </>
-        ) : (
-          <>
-            <Wand2 className="h-4 w-4 mr-2" />
-            {selectedTool === 'generate' ? 'Generate' : 'Apply Edit'}
-          </>
-        )}
-      </Button>
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+        <Button
+          onClick={handleGenerate}
+          disabled={isGenerating || isValidating || !currentPrompt.trim()}
+          className="relative w-full h-20 text-lg font-bold btn-premium shadow-2xl hover:shadow-purple-500/25 transform transition-all duration-200 hover:scale-[1.02] generate-button-glow"
+          size="lg"
+        >
+          {isValidating ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3" />
+              <span className="text-white">Validating API Key...</span>
+            </div>
+          ) : isGenerating ? (
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3" />
+              <span className="text-white">Generating Magic...</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center">
+              <Wand2 className="h-6 w-6 mr-3" />
+              <span className="text-white">
+                {selectedTool === 'generate' ? 'Generate Image' : 'Apply Edit'}
+              </span>
+            </div>
+          )}
+        </Button>
+      </div>
 
       {/* Advanced Controls */}
       <div>
@@ -377,12 +426,16 @@ export const PromptComposer: React.FC = () => {
         <h4 className="text-xs font-medium text-gray-400 mb-2">Shortcuts</h4>
         <div className="space-y-1 text-xs text-gray-500">
           <div className="flex justify-between">
+            <span>Save Image</span>
+            <span>Ctrl + S</span>
+          </div>
+          <div className="flex justify-between">
             <span>Generate</span>
-            <span>⌘ + Enter</span>
+            <span>Ctrl + Enter</span>
           </div>
           <div className="flex justify-between">
             <span>Re-roll</span>
-            <span>⇧ + R</span>
+            <span>Shift + R</span>
           </div>
           <div className="flex justify-between">
             <span>Edit mode</span>
