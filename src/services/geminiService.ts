@@ -69,8 +69,8 @@ export const validateApiKey = async (): Promise<{ valid: boolean; error?: string
         return { valid: false, error: 'API key lacks permissions. Enable the Generative Language API in Google Cloud Console.' };
       }
 
-      if (errorMessage.includes('quota') || errorMessage.includes('429')) {
-        return { valid: false, error: 'API quota exceeded. Please check your usage limits.' };
+      if (errorMessage.includes('quota') || errorMessage.includes('429') || apiError?.status === 429) {
+        return { valid: false, error: 'API quota exceeded. Please check your usage limits or try again later.' };
       }
 
       if (errorMessage.includes('model')) {
@@ -128,17 +128,28 @@ export class GeminiService {
         contents,
       });
 
+      if (!response.candidates || response.candidates.length === 0) {
+        throw new Error('No response from API. Please try again.');
+      }
+
       const images: string[] = [];
 
       for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
+        if (part.inlineData && part.inlineData.data) {
           images.push(part.inlineData.data);
         }
       }
 
+      if (images.length === 0) {
+        throw new Error('No images were generated. The model may have returned only text.');
+      }
+
       return images;
-    } catch (error) {
-      console.error('Error generating image:', error);
+    } catch (error: any) {
+      console.error('❌ Error generating image:', error);
+      if (error.message.includes('429')) {
+        throw new Error('API quota exceeded. Please check your usage limits or try again later.');
+      }
       throw new Error('Failed to generate image. Please try again.');
     }
   }

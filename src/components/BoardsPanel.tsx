@@ -2,141 +2,164 @@ import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
 import { 
-  Folder, 
-  Plus, 
+  Layers, 
   Search, 
   Grid, 
   MoreVertical,
-  FolderOpen,
   Star,
   Clock,
   Share2,
   Download,
-  Copy,
   Eye,
-  Sparkles
+  Sparkles,
+  Plus,
+  Folder,
+  Trash2,
+  Edit2,
+  X
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { saveImageWithDialog } from '../utils/fileSaver';
 
 interface Board {
   id: string;
   name: string;
   emoji?: string;
-  itemCount: number;
+  description?: string;
   createdAt: number;
   updatedAt: number;
-  thumbnail?: string;
-}
-
-interface Template {
-  id: string;
-  name: string;
-  category: string;
-  thumbnail: string;
-  dimensions: string;
+  imageIds: string[]; // IDs of generations/edits in this board
 }
 
 export const BoardsPanel: React.FC = () => {
-  const { currentProject } = useAppStore();
+  const { 
+    currentProject, 
+    setCanvasImage,
+    selectGeneration,
+    selectEdit,
+  } = useAppStore();
   
   const [showBoardsPanel, setShowBoardsPanel] = useState(false);
-  const [viewMode, setViewMode] = useState<'projects' | 'templates'>('projects');
+  const [viewMode, setViewMode] = useState<'boards' | 'templates'>('boards');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedBoard, setSelectedBoard] = useState<string | null>(null);
+  const [boards, setBoards] = useState<Board[]>(() => {
+    // Load boards from localStorage
+    const saved = localStorage.getItem('ai-pod-boards');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return [];
+      }
+    }
+    return [
+      {
+        id: 'default',
+        name: 'My Creations',
+        emoji: '🎨',
+        description: 'All your generated images',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        imageIds: []
+      }
+    ];
+  });
+
+  // Save boards to localStorage whenever they change
+  React.useEffect(() => {
+    localStorage.setItem('ai-pod-boards', JSON.stringify(boards));
+  }, [boards]);
+
+  const generations = currentProject?.generations || [];
+  const edits = currentProject?.edits || [];
   
-  // Mock boards data - in real app, this would come from store
-  const [boards] = useState<Board[]>([
-    {
-      id: 'recent-1',
-      name: 'Landscape Series',
-      itemCount: 12,
-      createdAt: Date.now() - 86400000,
-      updatedAt: Date.now(),
-      thumbnail: currentProject?.generations[0]?.outputAssets[0]?.url
-    },
-    {
-      id: 'recent-2',
-      name: 'Portrait Collection',
-      emoji: '👤',
-      itemCount: 8,
-      createdAt: Date.now() - 172800000,
-      updatedAt: Date.now() - 3600000,
-      thumbnail: currentProject?.generations[1]?.outputAssets[0]?.url
-    },
-    {
-      id: 'recent-3',
-      name: 'Digital Art',
-      emoji: '🎨',
-      itemCount: 15,
-      createdAt: Date.now() - 259200000,
-      updatedAt: Date.now() - 7200000,
+  const allImages = [
+    ...generations.map(g => ({ type: 'generation' as const, item: g, id: g.id, timestamp: g.timestamp })),
+    ...edits.map(e => ({ type: 'edit' as const, item: e, id: e.id, timestamp: e.timestamp }))
+  ].sort((a, b) => b.timestamp - a.timestamp);
+
+  const handleCreateBoard = () => {
+    const name = prompt('Enter board name:');
+    if (name && name.trim()) {
+      const emoji = prompt('Enter an emoji (optional):') || '📁';
+      const newBoard: Board = {
+        id: `board-${Date.now()}`,
+        name: name.trim(),
+        emoji,
+        description: '',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        imageIds: []
+      };
+      setBoards([...boards, newBoard]);
     }
-  ]);
+  };
 
-  const templates: Template[] = [
-    {
-      id: 'instagram-post',
-      name: 'Instagram Post',
-      category: 'Social Media',
-      thumbnail: 'https://via.placeholder.com/400x400/667eea/ffffff?text=IG+Post',
-      dimensions: '1080 × 1080 px'
-    },
-    {
-      id: 'instagram-story',
-      name: 'Instagram Story',
-      category: 'Social Media',
-      thumbnail: 'https://via.placeholder.com/400x711/764ba2/ffffff?text=IG+Story',
-      dimensions: '1080 × 1920 px'
-    },
-    {
-      id: 'youtube-thumbnail',
-      name: 'YouTube Thumbnail',
-      category: 'Video',
-      thumbnail: 'https://via.placeholder.com/1280x720/ec4899/ffffff?text=YouTube',
-      dimensions: '1280 × 720 px'
-    },
-    {
-      id: 'facebook-post',
-      name: 'Facebook Post',
-      category: 'Social Media',
-      thumbnail: 'https://via.placeholder.com/940x788/10b981/ffffff?text=FB+Post',
-      dimensions: '940 × 788 px'
-    },
-    {
-      id: 'twitter-post',
-      name: 'Twitter Post',
-      category: 'Social Media',
-      thumbnail: 'https://via.placeholder.com/1200x675/06b6d4/ffffff?text=Twitter',
-      dimensions: '1200 × 675 px'
-    },
-    {
-      id: 'presentation',
-      name: 'Presentation',
-      category: 'Document',
-      thumbnail: 'https://via.placeholder.com/1920x1080/f59e0b/ffffff?text=Slides',
-      dimensions: '1920 × 1080 px'
+  const handleRenameBoard = (boardId: string) => {
+    const board = boards.find(b => b.id === boardId);
+    if (!board) return;
+    
+    const newName = prompt('Enter new name:', board.name);
+    if (newName && newName.trim()) {
+      setBoards(boards.map(b => 
+        b.id === boardId 
+          ? { ...b, name: newName.trim(), updatedAt: Date.now() }
+          : b
+      ));
     }
-  ];
+  };
 
-  const categories = ['all', 'Social Media', 'Video', 'Document', 'Print'];
+  const handleDeleteBoard = (boardId: string) => {
+    if (boardId === 'default') {
+      alert('Cannot delete the default board');
+      return;
+    }
+    
+    if (confirm('Are you sure you want to delete this board?')) {
+      setBoards(boards.filter(b => b.id !== boardId));
+      if (selectedBoard === boardId) {
+        setSelectedBoard(null);
+      }
+    }
+  };
 
-  const filteredTemplates = templates.filter(template => 
-    (selectedCategory === 'all' || template.category === selectedCategory) &&
-    template.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const handleAddToBoard = (boardId: string, imageId: string) => {
+    setBoards(boards.map(b => 
+      b.id === boardId
+        ? { ...b, imageIds: [...b.imageIds, imageId], updatedAt: Date.now() }
+        : b
+    ));
+  };
+
+  const handleRemoveFromBoard = (boardId: string, imageId: string) => {
+    setBoards(boards.map(b => 
+      b.id === boardId
+        ? { ...b, imageIds: b.imageIds.filter(id => id !== imageId), updatedAt: Date.now() }
+        : b
+    ));
+  };
+
+  const getCurrentBoardImages = () => {
+    if (!selectedBoard) return allImages;
+    const board = boards.find(b => b.id === selectedBoard);
+    if (!board) return allImages;
+    return allImages.filter(img => board.imageIds.includes(img.id));
+  };
+
+  const filteredBoards = boards.filter(board =>
+    board.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  // Mock images data - would come from the selected board's generations
-  const mockImages = currentProject?.generations.slice(0, 12).map(gen => gen.outputAssets[0]?.url).filter(Boolean) || [];
 
   if (!showBoardsPanel) {
     return (
-      <div className="fixed top-4 left-4 z-50">
+      <div className="fixed top-20 left-4 z-40">
         <Button
           onClick={() => setShowBoardsPanel(true)}
           className="bg-gray-900/90 backdrop-blur-sm hover:bg-gray-800 border border-gray-700 shadow-lg"
         >
-          <Folder className="h-4 w-4 mr-2" />
-          Projects
+          <Layers className="h-4 w-4 mr-2" />
+          Boards
         </Button>
       </div>
     );
@@ -150,30 +173,31 @@ export const BoardsPanel: React.FC = () => {
         onClick={() => setShowBoardsPanel(false)}
       />
       
-      {/* Main Panel - Canva Style */}
-      <div className="relative w-full bg-gray-950 flex flex-col overflow-hidden shadow-2xl">
-        {/* Top Navigation - Canva Style */}
+      {/* Main Panel */}
+      <div className="relative w-full max-w-7xl mx-auto my-8 bg-gray-950 flex flex-col overflow-hidden shadow-2xl rounded-2xl border border-gray-800">
+        {/* Top Navigation */}
         <div className="flex-shrink-0 h-16 bg-gray-900/50 border-b border-gray-800 flex items-center justify-between px-6">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                 <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-100">AI POD Lite</h1>
+              <h1 className="text-xl font-bold text-gray-100">Boards Manager</h1>
             </div>
             
             {/* View Mode Tabs */}
             <div className="flex bg-gray-800 rounded-lg p-1">
               <button
-                onClick={() => setViewMode('projects')}
+                onClick={() => setViewMode('boards')}
                 className={cn(
                   "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
-                  viewMode === 'projects' 
+                  viewMode === 'boards' 
                     ? "bg-purple-600 text-white shadow-lg" 
                     : "text-gray-400 hover:text-gray-200"
                 )}
               >
-                Your Projects
+                <Folder className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+                My Boards
               </button>
               <button
                 onClick={() => setViewMode('templates')}
@@ -184,7 +208,8 @@ export const BoardsPanel: React.FC = () => {
                     : "text-gray-400 hover:text-gray-200"
                 )}
               >
-                Templates
+                <Grid className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+                All Images
               </button>
             </div>
           </div>
@@ -195,7 +220,7 @@ export const BoardsPanel: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <input
                 type="text"
-                placeholder="Search designs..."
+                placeholder="Search boards..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 w-64 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500"
@@ -203,220 +228,283 @@ export const BoardsPanel: React.FC = () => {
             </div>
             
             <Button
+              onClick={handleCreateBoard}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Board
+            </Button>
+            
+            <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowBoardsPanel(false)}
               className="h-9 w-9 hover:bg-gray-800"
             >
-              <span className="text-xl text-gray-400">×</span>
+              <X className="h-5 w-5 text-gray-400" />
             </Button>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-8">
-          {viewMode === 'projects' ? (
-            <div>
-              {/* Quick Actions */}
-              <div className="mb-8">
-                <h2 className="text-lg font-semibold text-gray-200 mb-4">Start creating</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  <button
-                    onClick={() => setShowBoardsPanel(false)}
-                    className="aspect-[4/3] rounded-xl border-2 border-dashed border-gray-700 hover:border-purple-500 bg-gray-900/30 hover:bg-gray-900/50 transition-all flex flex-col items-center justify-center group"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-purple-600/20 group-hover:bg-purple-600/30 flex items-center justify-center mb-2 transition-all">
-                      <Plus className="h-6 w-6 text-purple-400" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-300 group-hover:text-purple-300">Create blank</span>
-                  </button>
-                  
-                  {templates.slice(0, 3).map((template) => (
-                    <button
-                      key={template.id}
-                      onClick={() => setShowBoardsPanel(false)}
-                      className="aspect-[4/3] rounded-xl overflow-hidden border-2 border-gray-800 hover:border-purple-500 bg-gray-900 hover:scale-105 transition-all group relative"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="relative h-full flex items-center justify-center p-4">
-                        <div className="text-center">
-                          <div className="text-2xl mb-2">📐</div>
-                          <div className="text-sm font-medium text-gray-200 mb-1">{template.name}</div>
-                          <div className="text-xs text-gray-500">{template.dimensions}</div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Recent Projects */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-gray-200 flex items-center">
-                    <Clock className="h-5 w-5 mr-2 text-gray-400" />
-                    Recent designs
-                  </h2>
-                  <button className="text-sm text-purple-400 hover:text-purple-300">
-                    See all
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {boards.map((board) => (
+        <div className="flex-1 flex overflow-hidden">
+          {/* Sidebar - Boards List */}
+          {viewMode === 'boards' && (
+            <div className="w-64 border-r border-gray-800 bg-gray-900/30 overflow-y-auto p-4">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                Boards ({boards.length})
+              </h3>
+              <div className="space-y-1">
+                {filteredBoards.map(board => {
+                  const boardImages = allImages.filter(img => board.imageIds.includes(img.id));
+                  return (
                     <div
                       key={board.id}
-                      className="group cursor-pointer"
-                      onClick={() => setShowBoardsPanel(false)}
+                      className={cn(
+                        "group relative rounded-lg p-3 cursor-pointer transition-all",
+                        selectedBoard === board.id
+                          ? "bg-purple-500/20 border border-purple-500/50"
+                          : "hover:bg-gray-800 border border-transparent"
+                      )}
+                      onClick={() => setSelectedBoard(board.id)}
                     >
-                      <div className="aspect-[4/3] rounded-xl overflow-hidden border-2 border-gray-800 hover:border-purple-500 bg-gray-900 mb-2 relative transition-all group-hover:scale-105">
-                        {board.thumbnail ? (
-                          <img
-                            src={board.thumbnail}
-                            alt={board.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-                            <span className="text-4xl">{board.emoji || '🎨'}</span>
-                          </div>
-                        )}
-                        
-                        {/* Hover overlay */}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <div className="flex space-x-2">
-                            <Button size="sm" variant="ghost" className="bg-white/10 hover:bg-white/20">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="bg-white/10 hover:bg-white/20">
-                              <Share2 className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="ghost" className="bg-white/10 hover:bg-white/20">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="px-1">
-                        <h3 className="text-sm font-medium text-gray-200 truncate mb-1">{board.name}</h3>
-                        <p className="text-xs text-gray-500">{board.itemCount} images</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* All Projects Gallery */}
-              {mockImages.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-200 flex items-center">
-                      <FolderOpen className="h-5 w-5 mr-2 text-gray-400" />
-                      Your creations
-                    </h2>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Star className="h-4 w-4 mr-2" />
-                        Favorites
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Grid className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-                    {mockImages.map((imageUrl, index) => (
-                      <div
-                        key={index}
-                        className="group cursor-pointer"
-                        onClick={() => setShowBoardsPanel(false)}
-                      >
-                        <div className="aspect-square rounded-lg overflow-hidden border border-gray-800 hover:border-purple-500 bg-gray-900 relative transition-all group-hover:scale-105">
-                          <img
-                            src={imageUrl}
-                            alt={`Creation ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          
-                          {/* Hover actions */}
-                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="flex flex-col space-y-1">
-                              <Button size="sm" variant="ghost" className="h-7 w-7 bg-black/50 hover:bg-black/70 p-0">
-                                <Star className="h-3 w-3" />
-                              </Button>
-                              <Button size="sm" variant="ghost" className="h-7 w-7 bg-black/50 hover:bg-black/70 p-0">
-                                <Download className="h-3 w-3" />
-                              </Button>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <span className="text-xl flex-shrink-0">{board.emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-200 truncate">
+                              {board.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {boardImages.length} images
                             </div>
                           </div>
-                          
-                          {/* Selection checkbox */}
-                          <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div className="h-5 w-5 rounded border-2 border-white bg-black/30" />
-                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRenameBoard(board.id);
+                            }}
+                            className="p-1 hover:bg-gray-700 rounded"
+                          >
+                            <Edit2 className="h-3 w-3 text-gray-400" />
+                          </button>
+                          {board.id !== 'default' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteBoard(board.id);
+                              }}
+                              className="p-1 hover:bg-red-500/20 rounded"
+                            >
+                              <Trash2 className="h-3 w-3 text-red-400" />
+                            </button>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            // Templates View
-            <div>
-              {/* Category Filter */}
-              <div className="mb-6 flex items-center space-x-2 overflow-x-auto pb-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={cn(
-                      "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all",
-                      selectedCategory === category
-                        ? "bg-purple-600 text-white"
-                        : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-200"
-                    )}
-                  >
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </button>
-                ))}
-              </div>
-
-              {/* Templates Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {filteredTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    onClick={() => setShowBoardsPanel(false)}
-                    className="group cursor-pointer text-left"
-                  >
-                    <div className="aspect-[4/3] rounded-xl overflow-hidden border-2 border-gray-800 hover:border-purple-500 bg-gray-900 mb-2 relative transition-all group-hover:scale-105">
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600/10 to-pink-600/10">
-                        <div className="text-center p-4">
-                          <div className="text-3xl mb-2">📱</div>
-                          <div className="text-xs text-gray-400">{template.dimensions}</div>
-                        </div>
-                      </div>
-                      
-                      {/* Use button overlay */}
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Button className="bg-purple-600 hover:bg-purple-700">
-                          <Copy className="h-4 w-4 mr-2" />
-                          Use template
-                        </Button>
-                      </div>
                     </div>
-                    
-                    <div className="px-1">
-                      <h3 className="text-sm font-medium text-gray-200 truncate mb-1">{template.name}</h3>
-                      <p className="text-xs text-gray-500">{template.category}</p>
-                    </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
+
+          {/* Main Content - Images Grid */}
+          <div className="flex-1 overflow-y-auto p-8">
+            {viewMode === 'boards' && selectedBoard ? (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-100 mb-2">
+                    {boards.find(b => b.id === selectedBoard)?.emoji} {boards.find(b => b.id === selectedBoard)?.name}
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    {getCurrentBoardImages().length} images in this board
+                  </p>
+                </div>
+
+                {getCurrentBoardImages().length === 0 ? (
+                  <div className="text-center py-20">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                      <Layers className="h-10 w-10 text-gray-500" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-400 mb-2">No images in this board</h3>
+                    <p className="text-sm text-gray-600">Start adding images to organize your work</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {getCurrentBoardImages().map(({ type, item, id }) => {
+                      const imageUrl = type === 'generation' 
+                        ? item.outputAssets[0]?.url 
+                        : item.outputAssets[0]?.url;
+                      
+                      if (!imageUrl) return null;
+
+                      return (
+                        <div key={id} className="group relative">
+                          <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-800 hover:border-purple-500 bg-gray-900 relative transition-all cursor-pointer">
+                            <img
+                              src={imageUrl}
+                              alt={type === 'generation' ? 'Generation' : 'Edit'}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                              onClick={() => {
+                                setCanvasImage(imageUrl);
+                                if (type === 'generation') {
+                                  selectGeneration(id);
+                                  selectEdit(null);
+                                } else {
+                                  selectEdit(id);
+                                  selectGeneration(null);
+                                }
+                                setShowBoardsPanel(false);
+                              }}
+                            />
+                            
+                            {/* Overlay */}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <div className="flex space-x-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="bg-white/10 hover:bg-white/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCanvasImage(imageUrl);
+                                    setShowBoardsPanel(false);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="bg-white/10 hover:bg-white/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    saveImageWithDialog(imageUrl);
+                                  }}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="bg-white/10 hover:bg-white/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveFromBoard(selectedBoard, id);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Type Badge */}
+                            <div className={cn(
+                              "absolute top-2 left-2 text-xs px-2 py-1 rounded font-medium",
+                              type === 'generation' 
+                                ? "bg-blue-600/80 text-white" 
+                                : "bg-purple-600/80 text-white"
+                            )}>
+                              {type === 'generation' ? 'Gen' : 'Edit'}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-gray-100 mb-2">All Images</h2>
+                  <p className="text-sm text-gray-400">
+                    {allImages.length} total images • {generations.length} generations • {edits.length} edits
+                  </p>
+                </div>
+
+                {allImages.length === 0 ? (
+                  <div className="text-center py-20">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                      <div className="text-4xl">🎨</div>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-400 mb-2">No images yet</h3>
+                    <p className="text-sm text-gray-600">Start creating to see your work here</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+                    {allImages.map(({ type, item, id }) => {
+                      const imageUrl = type === 'generation' 
+                        ? item.outputAssets[0]?.url 
+                        : item.outputAssets[0]?.url;
+                      
+                      if (!imageUrl) return null;
+
+                      return (
+                        <div key={id} className="group relative">
+                          <div className="aspect-square rounded-lg overflow-hidden border border-gray-800 hover:border-purple-500 bg-gray-900 relative transition-all cursor-pointer">
+                            <img
+                              src={imageUrl}
+                              alt={type === 'generation' ? 'Generation' : 'Edit'}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                              onClick={() => {
+                                setCanvasImage(imageUrl);
+                                if (type === 'generation') {
+                                  selectGeneration(id);
+                                  selectEdit(null);
+                                } else {
+                                  selectEdit(id);
+                                  selectGeneration(null);
+                                }
+                                setShowBoardsPanel(false);
+                              }}
+                            />
+                            
+                            {/* Hover Overlay */}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="absolute top-2 right-2 flex flex-col space-y-1">
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="h-7 w-7 bg-black/50 hover:bg-black/70 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    saveImageWithDialog(imageUrl);
+                                  }}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="h-7 w-7 bg-black/50 hover:bg-black/70 p-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const boardId = prompt('Enter board ID to add to (or leave empty for default):') || 'default';
+                                    handleAddToBoard(boardId, id);
+                                  }}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Type Badge */}
+                            <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded-md bg-gray-900/90 backdrop-blur-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

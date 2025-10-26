@@ -52,6 +52,7 @@ function AppContent() {
           <HistoryPanel />
         </div>
       </div>
+      
     </div>
   );
 }

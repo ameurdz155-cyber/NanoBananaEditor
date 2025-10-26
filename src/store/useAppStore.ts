@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import { Project, Generation, Edit, BrushStroke } from '../types';
 import { Language } from '../i18n/translations';
 
@@ -76,11 +76,18 @@ interface AppState {
   setSelectedTool: (tool: 'generate' | 'edit' | 'mask') => void;
   
   setLanguage: (language: Language) => void;
+  
+  // API Key state
+  apiKey: string | null;
+  setApiKey: (key: string | null) => void;
+  apiKeyError: string | null;
+  setApiKeyError: (error: string | null) => void;
 }
 
 export const useAppStore = create<AppState>()(
   devtools(
-    (set) => ({
+    persist(
+      (set) => ({
       // Initial state
       currentProject: null,
       canvasImage: null,
@@ -101,13 +108,17 @@ export const useAppStore = create<AppState>()(
       
       selectedGenerationId: null,
       selectedEditId: null,
-      showHistory: true,
+      showHistory: false,
       
       showPromptPanel: true,
       
       selectedTool: 'generate',
       
       language: (typeof localStorage !== 'undefined' && localStorage.getItem('ai-pod-language') as Language) || 'en',
+      
+      // API Key state
+      apiKey: null,
+      apiKeyError: null,
       
       // Actions
       setCurrentProject: (project) => set({ currentProject: project }),
@@ -173,7 +184,22 @@ export const useAppStore = create<AppState>()(
         }
         set({ language: language });
       },
-    }),
+      
+      setApiKey: (key) => set({ apiKey: key }),
+      setApiKeyError: (error) => set({ apiKeyError: error }),
+      }),
+      {
+        name: 'ai-pod-storage',
+        partialize: (state) => ({
+          currentProject: state.currentProject,
+          language: state.language,
+          apiKey: state.apiKey,
+          brushSize: state.brushSize,
+          temperature: state.temperature,
+          selectedTool: state.selectedTool,
+        }),
+      }
+    ),
     { name: 'ai-studio-pro-store' }
   )
 );

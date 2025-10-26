@@ -77,6 +77,8 @@ export const PromptComposer: React.FC = () => {
     showPromptPanel,
     setShowPromptPanel,
     clearBrushStrokes,
+    apiKeyError,
+    setApiKeyError,
   } = useAppStore();
 
   const { generate } = useImageGeneration();
@@ -84,7 +86,6 @@ export const PromptComposer: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showHintsModal, setShowHintsModal] = useState(false);
-  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('none');

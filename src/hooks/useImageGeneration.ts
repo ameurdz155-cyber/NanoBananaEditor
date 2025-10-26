@@ -5,7 +5,7 @@ import { generateId } from '../utils/imageUtils';
 import { Generation, Edit, Asset } from '../types';
 
 export const useImageGeneration = () => {
-  const { addGeneration, setIsGenerating, setCanvasImage, setCurrentProject, currentProject } = useAppStore();
+  const { addGeneration, setIsGenerating, setCanvasImage, setCurrentProject, currentProject, setApiKeyError } = useAppStore();
 
   const generateMutation = useMutation({
     mutationFn: async (request: GenerationRequest) => {
@@ -14,10 +14,11 @@ export const useImageGeneration = () => {
     },
     onMutate: () => {
       setIsGenerating(true);
+      setApiKeyError(null);
     },
     onSuccess: (images, request) => {
       if (images.length > 0) {
-        const outputAssets: Asset[] = images.map((base64, index) => ({
+        const outputAssets: Asset[] = images.map((base64) => ({
           id: generateId(),
           type: 'output',
           url: `data:image/png;base64,${base64}`,
@@ -35,15 +36,7 @@ export const useImageGeneration = () => {
             seed: request.seed,
             temperature: request.temperature
           },
-          sourceAssets: request.referenceImage ? [{
-            id: generateId(),
-            type: 'original',
-            url: `data:image/png;base64,${request.referenceImages[0]}`,
-            mime: 'image/png',
-            width: 1024,
-            height: 1024,
-            checksum: request.referenceImages[0].slice(0, 32)
-          }] : request.referenceImages ? request.referenceImages.map((img, index) => ({
+          sourceAssets: request.referenceImages ? request.referenceImages.map((img) => ({
             id: generateId(),
             type: 'original' as const,
             url: `data:image/png;base64,${img}`,
@@ -58,6 +51,7 @@ export const useImageGeneration = () => {
         };
 
         addGeneration(generation);
+        
         setCanvasImage(outputAssets[0].url);
         
         // Create project if none exists
@@ -76,7 +70,7 @@ export const useImageGeneration = () => {
       setIsGenerating(false);
     },
     onError: (error) => {
-      console.error('Generation failed:', error);
+      setApiKeyError(error.message || 'An unknown error occurred.');
       setIsGenerating(false);
     }
   });
@@ -100,7 +94,8 @@ export const useImageEditing = () => {
     selectedGenerationId,
     currentProject,
     seed,
-    temperature 
+    temperature,
+    setApiKeyError,
   } = useAppStore();
 
   const editMutation = useMutation({
@@ -209,7 +204,7 @@ export const useImageEditing = () => {
         referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
         maskImage,
         temperature,
-        seed
+        seed: seed || undefined
       };
       
       const images = await geminiService.editImage(request);
@@ -220,7 +215,7 @@ export const useImageEditing = () => {
     },
     onSuccess: ({ images, maskedReferenceImage }, instruction) => {
       if (images.length > 0) {
-        const outputAssets: Asset[] = images.map((base64, index) => ({
+        const outputAssets: Asset[] = images.map((base64) => ({
           id: generateId(),
           type: 'output',
           url: `data:image/png;base64,${base64}`,
@@ -263,6 +258,7 @@ export const useImageEditing = () => {
     },
     onError: (error) => {
       console.error('Edit failed:', error);
+      setApiKeyError(error.message || 'An unknown error occurred during edit.');
       setIsGenerating(false);
     }
   });
