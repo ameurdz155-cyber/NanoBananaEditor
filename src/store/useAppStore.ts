@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { Project, Generation, Edit, SegmentationMask, BrushStroke } from '../types';
+import { Project, Generation, Edit, BrushStroke } from '../types';
+import { Language } from '../i18n/translations';
 
 interface AppState {
   // Current project
@@ -37,6 +38,9 @@ interface AppState {
   // UI state
   selectedTool: 'generate' | 'edit' | 'mask';
   
+  // Language
+  language: Language;
+  
   // Actions
   setCurrentProject: (project: Project | null) => void;
   setCanvasImage: (url: string | null) => void;
@@ -70,11 +74,13 @@ interface AppState {
   setShowPromptPanel: (show: boolean) => void;
   
   setSelectedTool: (tool: 'generate' | 'edit' | 'mask') => void;
+  
+  setLanguage: (language: Language) => void;
 }
 
 export const useAppStore = create<AppState>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       // Initial state
       currentProject: null,
       canvasImage: null,
@@ -100,6 +106,8 @@ export const useAppStore = create<AppState>()(
       showPromptPanel: true,
       
       selectedTool: 'generate',
+      
+      language: (typeof localStorage !== 'undefined' && localStorage.getItem('ai-pod-language') as Language) || 'en',
       
       // Actions
       setCurrentProject: (project) => set({ currentProject: project }),
@@ -158,6 +166,13 @@ export const useAppStore = create<AppState>()(
       setShowPromptPanel: (show) => set({ showPromptPanel: show }),
       
       setSelectedTool: (tool) => set({ selectedTool: tool }),
+      
+      setLanguage: (language) => {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('ai-pod-language', language);
+        }
+        set({ language: language });
+      },
     }),
     { name: 'ai-studio-pro-store' }
   )

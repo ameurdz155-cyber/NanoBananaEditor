@@ -3,8 +3,12 @@ import { Button } from './ui/Button';
 import { HelpCircle, Settings, Sparkles } from 'lucide-react';
 import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
+import { useAppStore } from '../store/useAppStore';
+import { getTranslation } from '../i18n/translations';
 
 export const Header: React.FC = () => {
+  const { language } = useAppStore();
+  const t = getTranslation(language);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   
@@ -31,16 +35,16 @@ export const Header: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <h1 className="text-xl font-bold text-gradient hidden md:block" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                AI Image Studio Pro
+                {t.appName}
               </h1>
               <h1 className="text-xl font-bold text-gradient md:hidden" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                AI Studio Pro
+                {t.appName}
               </h1>
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Professional Edition</span>
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{t.appSubtitle}</span>
             </div>
           </div>
           <div className="px-3 py-1 rounded-full glass-hover glass text-xs font-semibold" style={{ color: 'var(--accent-cyan)' }}>
-            v2.0 PRO
+            {t.versionBadge}
           </div>
         </div>
 

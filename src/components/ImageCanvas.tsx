@@ -245,22 +245,26 @@ export const ImageCanvas: React.FC = () => {
       >
         {!image && !isGenerating && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="relative inline-block mb-4">
-                <div className="absolute inset-0 gradient-glow opacity-40 blur-2xl rounded-full"></div>
-                <div className="relative w-20 h-20 gradient-primary rounded-2xl flex items-center justify-center shadow-2xl mx-auto">
-                  <Sparkles className="h-12 w-12 text-white" />
+            <div className="text-center max-w-md px-6">
+              <div className="relative inline-block mb-6">
+                <div className="absolute inset-0 gradient-glow opacity-40 blur-3xl rounded-full"></div>
+                <div className="relative w-24 h-24 gradient-primary rounded-3xl flex items-center justify-center shadow-2xl mx-auto transform hover:scale-105 transition-transform">
+                  <Sparkles className="h-14 w-14 text-white" />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-gradient mb-2">
-                AI Image Studio Pro
+              <h2 className="text-3xl font-bold text-gradient mb-3">
+                Create with AI
               </h2>
-              <p className="text-gray-500 max-w-md">
+              <p className="text-gray-400 text-base leading-relaxed mb-6">
                 {selectedTool === 'generate' 
-                  ? 'Start by describing what you want to create in the prompt box'
-                  : 'Upload an image to begin editing'
+                  ? 'Enter your prompt to generate stunning images powered by Gemini AI'
+                  : 'Upload an image to start editing with AI assistance'
                 }
               </p>
+              <div className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"></div>
+                <span className="text-sm text-purple-300">Ready to create</span>
+              </div>
             </div>
           </div>
         )}

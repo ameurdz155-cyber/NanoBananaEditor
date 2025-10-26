@@ -1,11 +1,11 @@
-# 🎨 AI Image Studio Pro
-Release Version: (v2.0)
+# 🎨 AI POD Lite
+Release Version: (v1.0)
 
 ---
 
-**Professional AI Image Generation & Conversational Editing Platform**
+**AI Image Generation & Conversational Editing Platform**
 
-A production-ready React + TypeScript application for delightful image generation and conversational, region-aware revisions using Google's Gemini 2.5 Flash Image model. Built with modern web technologies and designed for both creators and developers.
+A modern React + TypeScript application for image generation and conversational, region-aware editing using Google's Gemini 2.5 Flash Image model. Built with modern web technologies and designed for creators.
 
 
 ## ✨ Key Features

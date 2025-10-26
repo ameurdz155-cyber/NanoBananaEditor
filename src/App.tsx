@@ -20,7 +20,7 @@ const queryClient = new QueryClient({
 function AppContent() {
   useKeyboardShortcuts();
   
-  const { showPromptPanel, setShowPromptPanel, showHistory, setShowHistory } = useAppStore();
+  const { showPromptPanel, setShowPromptPanel, setShowHistory } = useAppStore();
   
   // Set mobile defaults on mount
   React.useEffect(() => {

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Save, Eye, EyeOff, Key, Sparkles, Shield, CheckCircle, AlertCircle, FlaskConical } from 'lucide-react';
+import { X, Save, Eye, EyeOff, Key, Sparkles, Shield, CheckCircle, AlertCircle, FlaskConical, Globe } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { validateApiKey } from '../services/geminiService';
+import { useAppStore } from '../store/useAppStore';
+import { getTranslation, Language } from '../i18n/translations';
 
 interface SettingsModalProps {
   open: boolean;
@@ -11,6 +13,9 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange }) => {
+  const { language, setLanguage } = useAppStore();
+  const t = getTranslation(language);
+  
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -40,9 +45,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
         setIsValidating(false);
 
         if (validation.valid) {
-          setValidationStatus({ valid: true, message: 'API key is working correctly!' });
+          setValidationStatus({ valid: true, message: t.apiKeyValid });
         } else {
-          setValidationStatus({ valid: false, message: validation.error || 'API key test failed' });
+          setValidationStatus({ valid: false, message: validation.error || t.apiKeyInvalid });
           // Restore previous key if test failed
           if (previousKey) {
             localStorage.setItem('gemini_api_key', previousKey);
@@ -52,7 +57,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
         }
       } catch (error) {
         setIsValidating(false);
-        setValidationStatus({ valid: false, message: 'Failed to test API key' });
+        setValidationStatus({ valid: false, message: t.apiKeyInvalid });
         // Restore previous key on error
         if (previousKey) {
           localStorage.setItem('gemini_api_key', previousKey);
@@ -61,7 +66,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
         }
       }
     } else {
-      setValidationStatus({ valid: false, message: 'Please enter an API key to test' });
+      setValidationStatus({ valid: false, message: t.enterApiKeyToTest });
     }
   };
 
@@ -78,14 +83,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
       setIsValidating(false);
 
       if (validation.valid) {
-        setValidationStatus({ valid: true, message: 'API key saved and validated!' });
+        setValidationStatus({ valid: true, message: t.apiKeySaved });
         setIsSaved(true);
         setTimeout(() => {
           setIsSaved(false);
           onOpenChange(false);
         }, 1500);
       } else {
-        setValidationStatus({ valid: false, message: validation.error || 'Invalid API key' });
+        setValidationStatus({ valid: false, message: validation.error || t.apiKeyInvalid });
       }
     }
   };
@@ -108,7 +113,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                   <Key className="h-5 w-5 text-purple-400" />
                 </div>
                 <Dialog.Title className="text-xl font-bold text-gradient">
-                  Settings
+                  {t.settings}
                 </Dialog.Title>
               </div>
               <Dialog.Close asChild>
@@ -119,11 +124,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
             </div>
           
             <div className="space-y-4">
+              {/* Language Selector */}
+              <div className="p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
+                <div className="flex items-center mb-3">
+                  <Globe className="h-4 w-4 text-blue-400 mr-2" />
+                  <label htmlFor="language" className="text-sm font-medium text-blue-300">
+                    {t.language}
+                  </label>
+                </div>
+                <select
+                  id="language"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as Language)}
+                  className="w-full h-10 px-3 bg-gray-900 border border-gray-700 rounded-lg text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="en">English</option>
+                  <option value="zh">中文 (Chinese)</option>
+                </select>
+                <p className="text-xs text-gray-400 mt-2">
+                  {t.selectLanguage}
+                </p>
+              </div>
+              
+              {/* API Key Section */}
               <div className="p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl">
                 <div className="flex items-center mb-3">
                   <Shield className="h-4 w-4 text-purple-400 mr-2" />
                   <label htmlFor="api-key" className="text-sm font-medium text-purple-300">
-                    Gemini API Key
+                    {t.geminiApiKey}
                   </label>
                 </div>
               <div className="relative">
@@ -132,7 +160,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                   type={showApiKey ? 'text' : 'password'}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="Enter your Gemini API key"
+                  placeholder={t.enterApiKey}
                   className="pr-10"
                 />
                 <button
@@ -158,18 +186,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                 {isValidating && (
                   <div className="mt-2 flex items-center text-xs text-purple-400">
                     <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-400 mr-2" />
-                    Validating API key...
+                    {t.validatingApiKey}
                   </div>
                 )}
                 <p className="text-xs text-gray-400 mt-2">
-                Get your API key from{' '}
+                {language === 'en' ? 'Get your API key from' : '从此处获取API密钥'}{' '}
                 <a
                   href="https://aistudio.google.com/app/apikey"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-purple-400 hover:text-purple-300 underline"
                 >
-                  Google AI Studio
+                  {t.getApiKey}
                 </a>
                 </p>
               </div>
@@ -182,7 +210,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                   className="w-full"
                 >
                   <FlaskConical className="h-4 w-4 mr-2" />
-                  {isValidating ? 'Testing...' : 'Test API Key'}
+                  {isValidating ? t.testing : t.testApiKey}
                 </Button>
               </div>
             </div>
@@ -193,7 +221,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                 onClick={handleClear}
                 disabled={!apiKey}
               >
-                Clear
+                {t.clear}
               </Button>
               <Button
                 onClick={handleSave}
@@ -203,12 +231,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                 {isSaved ? (
                   <div className="flex items-center">
                     <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
-                    Saved!
+                    {t.saved}
                   </div>
                 ) : (
                   <div className="flex items-center">
                     <Save className="h-4 w-4 mr-2" />
-                    Save
+                    {t.save}
                   </div>
                 )}
               </Button>
