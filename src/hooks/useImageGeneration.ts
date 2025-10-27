@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { geminiService, GenerationRequest, EditRequest } from '../services/geminiService';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore, Board } from '../store/useAppStore';
 import { generateId } from '../utils/imageUtils';
 import { Generation, Edit, Asset } from '../types';
 
@@ -51,7 +51,28 @@ export const useImageGeneration = () => {
         };
 
         addGeneration(generation);
-        
+
+        const store = useAppStore.getState();
+        let targetBoard = store.boards.find((board) => board.id === 'unassociated')
+          || store.boards.find((board) => board.id === 'default');
+
+        if (!targetBoard) {
+          const newBoard: Board = {
+            id: 'unassociated',
+            name: 'Unassociated',
+            description: 'Images that are not assigned to a specific board yet',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            imageIds: []
+          };
+          store.addBoard(newBoard);
+          targetBoard = newBoard;
+        }
+
+        outputAssets.forEach((asset) => {
+          store.addImageToBoard(targetBoard!.id, asset.url);
+        });
+
         setCanvasImage(outputAssets[0].url);
         
         // Create project if none exists

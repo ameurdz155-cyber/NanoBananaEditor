@@ -1,20 +1,12 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { History, Save, Image as ImageIcon, Layers, Folder, FolderOpen, Plus, ChevronDown, ChevronRight } from 'lucide-react';
+import { History, Save, Image as ImageIcon, Layers, Folder } from 'lucide-react';
 import { saveImageWithDialog } from '../utils/fileSaver';
 import { cn } from '../utils/cn';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { Generation, Edit } from '../types';
-
-interface Board {
-  id: string;
-  name: string;
-  emoji?: string;
-  itemCount: number;
-  createdAt: number;
-  updatedAt: number;
-}
+import { BoardsView } from './BoardsView';
 
 export const HistoryPanel: React.FC = () => {
   const {
@@ -27,31 +19,10 @@ export const HistoryPanel: React.FC = () => {
     showHistory,
     setShowHistory,
     setCanvasImage,
-    selectedTool
+    selectedTool,
   } = useAppStore();
 
   const [activeTab, setActiveTab] = React.useState<'history' | 'boards'>('history');
-  const [expandedBoards, setExpandedBoards] = React.useState<string[]>(['uncategorized']);
-  const [selectedBoard, setSelectedBoard] = React.useState<string | null>('uncategorized');
-  
-  // Mock boards data
-  const [boards, setBoards] = React.useState<Board[]>([
-    {
-      id: 'uncategorized',
-      name: 'Uncategorized',
-      itemCount: 9,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    },
-    {
-      id: 'test-board',
-      name: '正式',
-      emoji: '📝',
-      itemCount: 7,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    }
-  ]);
 
   const [previewModal, setPreviewModal] = React.useState<{
     open: boolean;
@@ -83,6 +54,24 @@ export const HistoryPanel: React.FC = () => {
     }
   }, [canvasImage]);
 
+  const resolveImageUrl = React.useCallback((imageId: string) => {
+    if (imageId.startsWith('data:') || imageId.startsWith('blob:') || imageId.startsWith('http')) {
+      return imageId;
+    }
+
+    const generation = generations.find(g => g.id === imageId);
+    if (generation?.outputAssets[0]?.url) {
+      return generation.outputAssets[0].url;
+    }
+
+    const edit = edits.find(e => e.id === imageId);
+    if (edit?.outputAssets[0]?.url) {
+      return edit.outputAssets[0].url;
+    }
+
+    return null;
+  }, [generations, edits]);
+
   if (!showHistory) {
     return (
       <div className="w-8 bg-gray-950 border-l border-gray-800 flex flex-col items-center justify-center">
@@ -100,28 +89,6 @@ export const HistoryPanel: React.FC = () => {
       </div>
     );
   }
-
-  const toggleBoard = (boardId: string) => {
-    setExpandedBoards(prev => 
-      prev.includes(boardId) 
-        ? prev.filter(id => id !== boardId)
-        : [...prev, boardId]
-    );
-  };
-
-  const handleCreateBoard = () => {
-    const name = prompt('Enter board name:');
-    if (name) {
-      const newBoard: Board = {
-        id: Date.now().toString(),
-        name,
-        itemCount: 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-      setBoards([...boards, newBoard]);
-    }
-  };
 
   return (
     <div className="w-80 bg-gray-950 border-l border-gray-800 p-4 flex flex-col h-full overflow-hidden">
@@ -515,135 +482,24 @@ export const HistoryPanel: React.FC = () => {
 
       {/* Boards Tab Content */}
       {activeTab === 'boards' && (
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Boards Header */}
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-800 flex-shrink-0">
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-              My Boards
-            </h4>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCreateBoard}
-              className="h-6 w-6"
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-          </div>
-
-          {/* Boards List */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {boards.map(board => (
-              <div key={board.id} className="mb-2">
-                <button
-                  onClick={() => {
-                    setSelectedBoard(board.id);
-                    toggleBoard(board.id);
-                  }}
-                  className={cn(
-                    "w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all group",
-                    selectedBoard === board.id
-                      ? "bg-purple-500/20 text-purple-300 border border-purple-500/50"
-                      : "hover:bg-gray-800/50 text-gray-400 border border-transparent"
-                  )}
-                >
-                  <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    {expandedBoards.includes(board.id) ? (
-                      <ChevronDown className="h-3 w-3 flex-shrink-0" />
-                    ) : (
-                      <ChevronRight className="h-3 w-3 flex-shrink-0" />
-                    )}
-                    {board.emoji ? (
-                      <span className="text-base flex-shrink-0">{board.emoji}</span>
-                    ) : (
-                      <FolderOpen className="h-4 w-4 flex-shrink-0" />
-                    )}
-                    <span className="text-sm font-medium truncate">{board.name}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {board.id === 'uncategorized' && (
-                      <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-semibold">
-                        AUTO
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-500">{board.itemCount}</span>
-                    <span className="text-gray-700">|</span>
-                    <span className="text-xs text-gray-500">0</span>
-                    <span className="text-gray-700">|</span>
-                    <span className="text-xs text-gray-500">1</span>
-                  </div>
-                </button>
-
-                {/* Board Images - Show when expanded */}
-                {expandedBoards.includes(board.id) && (
-                  <div className="mt-2 ml-9 grid grid-cols-2 gap-2">
-                    {generations.slice(0, board.id === 'uncategorized' ? 4 : 3).map((gen, index) => (
-                      <button
-                        key={gen.id}
-                        onClick={() => {
-                          selectGeneration(gen.id);
-                          selectEdit(null);
-                          if (gen.outputAssets[0]) {
-                            setCanvasImage(gen.outputAssets[0].url);
-                          }
-                        }}
-                        className={cn(
-                          "relative aspect-square rounded-lg overflow-hidden border-2 transition-all group",
-                          selectedGenerationId === gen.id
-                            ? "border-purple-500 ring-1 ring-purple-500/30"
-                            : "border-gray-800 hover:border-gray-600"
-                        )}
-                      >
-                        {gen.outputAssets[0] ? (
-                          <>
-                            <img
-                              src={gen.outputAssets[0].url}
-                              alt={`${board.name} ${index + 1}`}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                            />
-                            {/* Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            {/* Index */}
-                            <div className="absolute top-1 left-1 bg-gray-900/90 text-[10px] px-1.5 py-0.5 rounded font-medium">
-                              #{index + 1}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500" />
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Board Info */}
-          {selectedBoard && (
-            <div className="mt-4 p-3 bg-gray-900 rounded-lg border border-gray-700 flex-shrink-0">
-              <h4 className="text-xs font-medium text-gray-400 mb-2">
-                {boards.find(b => b.id === selectedBoard)?.name || 'Board'}
-              </h4>
-              <div className="space-y-1 text-xs text-gray-500">
-                <div className="flex justify-between">
-                  <span>Total Items:</span>
-                  <span className="text-gray-300">
-                    {boards.find(b => b.id === selectedBoard)?.itemCount || 0}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Created:</span>
-                  <span className="text-gray-300">
-                    {new Date(boards.find(b => b.id === selectedBoard)?.createdAt || Date.now()).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <BoardsView
+          generations={generations}
+          edits={edits}
+          resolveImageUrl={resolveImageUrl}
+          onImageSelect={(imageUrl, imageId, type) => {
+            setCanvasImage(imageUrl);
+            if (type === 'generation') {
+              selectGeneration(imageId);
+              selectEdit(null);
+            } else if (type === 'edit') {
+              selectEdit(imageId);
+              selectGeneration(null);
+            } else {
+              selectGeneration(null);
+              selectEdit(null);
+            }
+          }}
+        />
       )}
       
       {/* Image Preview Modal */}

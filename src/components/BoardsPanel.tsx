@@ -12,20 +12,14 @@ import {
   Edit2,
   X,
   Eye,
-  Download
+  Download,
+  ChevronUp,
+  ChevronDown,
+  Settings,
+  Upload
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { saveImageWithDialog } from '../utils/fileSaver';
-
-interface Board {
-  id: string;
-  name: string;
-  emoji?: string;
-  description?: string;
-  createdAt: number;
-  updatedAt: number;
-  imageIds: string[]; // IDs of generations/edits in this board
-}
 
 export const BoardsPanel: React.FC = () => {
   const { 
@@ -33,39 +27,23 @@ export const BoardsPanel: React.FC = () => {
     setCanvasImage,
     selectGeneration,
     selectEdit,
+    boards,
+    addBoard,
+    updateBoard,
+    deleteBoard,
+    addImageToBoard,
+    removeImageFromBoard,
+    moveImageToBoard,
   } = useAppStore();
   
   const [showBoardsPanel, setShowBoardsPanel] = useState(false);
   const [viewMode, setViewMode] = useState<'boards' | 'templates'>('boards');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBoard, setSelectedBoard] = useState<string | null>(null);
-  const [boards, setBoards] = useState<Board[]>(() => {
-    // Load boards from localStorage
-    const saved = localStorage.getItem('ai-pod-boards');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return [];
-      }
-    }
-    return [
-      {
-        id: 'default',
-        name: 'My Creations',
-        emoji: '🎨',
-        description: 'All your generated images',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        imageIds: []
-      }
-    ];
-  });
-
-  // Save boards to localStorage whenever they change
-  React.useEffect(() => {
-    localStorage.setItem('ai-pod-boards', JSON.stringify(boards));
-  }, [boards]);
+  const [boardsExpanded, setBoardsExpanded] = useState(true);
+  const [imagesExpanded, setImagesExpanded] = useState(true);
+  const [currentTab, setCurrentTab] = useState<'images' | 'videos' | 'assets'>('images');
+  const [showAddToBoard, setShowAddToBoard] = useState<string | null>(null);
 
   const generations = currentProject?.generations || [];
   const edits = currentProject?.edits || [];
@@ -78,17 +56,15 @@ export const BoardsPanel: React.FC = () => {
   const handleCreateBoard = () => {
     const name = prompt('Enter board name:');
     if (name && name.trim()) {
-      const emoji = prompt('Enter an emoji (optional):') || '📁';
-      const newBoard: Board = {
+      const newBoard = {
         id: `board-${Date.now()}`,
         name: name.trim(),
-        emoji,
         description: '',
         createdAt: Date.now(),
         updatedAt: Date.now(),
         imageIds: []
       };
-      setBoards([...boards, newBoard]);
+      addBoard(newBoard);
     }
   };
 
@@ -98,11 +74,7 @@ export const BoardsPanel: React.FC = () => {
     
     const newName = prompt('Enter new name:', board.name);
     if (newName && newName.trim()) {
-      setBoards(boards.map(b => 
-        b.id === boardId 
-          ? { ...b, name: newName.trim(), updatedAt: Date.now() }
-          : b
-      ));
+      updateBoard(boardId, { name: newName.trim() });
     }
   };
 
@@ -113,27 +85,11 @@ export const BoardsPanel: React.FC = () => {
     }
     
     if (confirm('Are you sure you want to delete this board?')) {
-      setBoards(boards.filter(b => b.id !== boardId));
+      deleteBoard(boardId);
       if (selectedBoard === boardId) {
         setSelectedBoard(null);
       }
     }
-  };
-
-  const handleAddToBoard = (boardId: string, imageId: string) => {
-    setBoards(boards.map(b => 
-      b.id === boardId
-        ? { ...b, imageIds: [...b.imageIds, imageId], updatedAt: Date.now() }
-        : b
-    ));
-  };
-
-  const handleRemoveFromBoard = (boardId: string, imageId: string) => {
-    setBoards(boards.map(b => 
-      b.id === boardId
-        ? { ...b, imageIds: b.imageIds.filter(id => id !== imageId), updatedAt: Date.now() }
-        : b
-    ));
   };
 
   const getCurrentBoardImages = () => {
@@ -171,154 +127,238 @@ export const BoardsPanel: React.FC = () => {
       
       {/* Main Panel */}
       <div className="relative w-full max-w-7xl mx-auto my-8 bg-gray-950 flex flex-col overflow-hidden shadow-2xl rounded-2xl border border-gray-800">
-        {/* Top Navigation */}
-        <div className="flex-shrink-0 h-16 bg-gray-900/50 border-b border-gray-800 flex items-center justify-between px-6">
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                <Sparkles className="h-5 w-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold text-gray-100">AI POD</h1>
-            </div>
-            
-            {/* View Mode Tabs */}
-            <div className="flex bg-gray-800 rounded-lg p-1">
+        {/* Content Area - Split View */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Top Section - Boards List */}
+          <div className="flex-shrink-0 border-b border-gray-800">
+            {/* Boards Header */}
+            <div className="bg-gray-900/50 border-b border-gray-800">
               <button
-                onClick={() => setViewMode('boards')}
-                className={cn(
-                  "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
-                  viewMode === 'boards' 
-                    ? "bg-purple-600 text-white shadow-lg" 
-                    : "text-gray-400 hover:text-gray-200"
-                )}
+                onClick={() => setBoardsExpanded(!boardsExpanded)}
+                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-900/70 transition-colors"
               >
-                <Folder className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-                My Boards
-              </button>
-              <button
-                onClick={() => setViewMode('templates')}
-                className={cn(
-                  "px-4 py-1.5 rounded-md text-sm font-medium transition-all",
-                  viewMode === 'templates' 
-                    ? "bg-purple-600 text-white shadow-lg" 
-                    : "text-gray-400 hover:text-gray-200"
-                )}
-              >
-                <Grid className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-                All Images
+                <div className="flex items-center space-x-3">
+                  {boardsExpanded ? (
+                    <ChevronUp className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  )}
+                  <span className="text-base font-bold text-gray-200">Boards</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-400">{currentProject?.title || 'My Project'}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Settings action
+                    }}
+                    className="h-8 w-8 hover:bg-gray-800"
+                  >
+                    <Settings className="h-4 w-4 text-gray-400" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchQuery('');
+                    }}
+                    className="h-8 w-8 hover:bg-gray-800"
+                  >
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </Button>
+                </div>
               </button>
             </div>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search boards..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-64 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500"
-              />
-            </div>
-            
-            <Button
-              onClick={handleCreateBoard}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Board
-            </Button>
-            
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowBoardsPanel(false)}
-              className="h-9 w-9 hover:bg-gray-800"
-            >
-              <X className="h-5 w-5 text-gray-400" />
-            </Button>
-          </div>
-        </div>
 
-        {/* Content Area */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar - Boards List */}
-          {viewMode === 'boards' && (
-            <div className="w-64 border-r border-gray-800 bg-gray-900/30 overflow-y-auto p-4">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-                Boards ({boards.length})
-              </h3>
-              <div className="space-y-1">
-                {filteredBoards.map(board => {
-                  const boardImages = allImages.filter(img => board.imageIds.includes(img.id));
-                  return (
-                    <div
-                      key={board.id}
-                      className={cn(
-                        "group relative rounded-lg p-3 cursor-pointer transition-all",
-                        selectedBoard === board.id
-                          ? "bg-purple-500/20 border border-purple-500/50"
-                          : "hover:bg-gray-800 border border-transparent"
-                      )}
-                      onClick={() => setSelectedBoard(board.id)}
+            {/* Boards Content - Collapsible */}
+            {boardsExpanded && (
+              <div className="bg-gray-950">
+                <div className="border-b border-gray-800 px-6 py-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Boards</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleCreateBoard}
+                      className="h-6 w-6 hover:bg-gray-800"
+                      title="Add Board"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-2 flex-1 min-w-0">
-                          <span className="text-xl flex-shrink-0">{board.emoji}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-200 truncate">
-                              {board.name}
+                      <Plus className="h-4 w-4 text-gray-400" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Boards List - Horizontal Scroll */}
+                <div className="px-6 py-4">
+                  <div className="flex space-x-3 overflow-x-auto pb-2">
+                    {filteredBoards.map(board => {
+                      const boardImages = allImages.filter(img => board.imageIds.includes(img.id));
+                      const isSelected = selectedBoard === board.id;
+                      
+                      return (
+                        <div
+                          key={board.id}
+                          className={cn(
+                            "group relative flex-shrink-0 w-64 px-3 py-2.5 cursor-pointer transition-all border-l-4 rounded bg-gray-900/30",
+                            isSelected
+                              ? "border-purple-500 bg-gray-800/50"
+                              : "border-transparent hover:bg-gray-800/40 hover:border-gray-700"
+                          )}
+                          onClick={() => setSelectedBoard(isSelected ? null : board.id)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-2 flex-1 min-w-0">
+                              {board.emoji ? (
+                                <span className="text-xl flex-shrink-0">{board.emoji}</span>
+                              ) : (
+                                <div className="w-10 h-10 rounded flex-shrink-0 bg-gray-800 flex items-center justify-center">
+                                  <Folder className="h-5 w-5 text-gray-500" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className={cn(
+                                  "text-sm font-semibold truncate",
+                                  isSelected ? "text-gray-100" : "text-gray-300"
+                                )}>
+                                  {board.name}
+                                </div>
+                                {board.id === 'default' && (
+                                  <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded text-[10px] font-semibold">
+                                    AUTO
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {boardImages.length} images
+                            
+                            {/* Counts */}
+                            <div className="flex items-center space-x-1 text-xs text-gray-500 ml-2">
+                              <span className={cn(isSelected && "text-gray-400")}>{boardImages.length}</span>
+                              <span>|</span>
+                              <span className={cn(isSelected && "text-gray-400")}>0</span>
+                              <span>|</span>
+                              <span className={cn(isSelected && "text-gray-400")}>0</span>
                             </div>
                           </div>
                         </div>
-                        
-                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRenameBoard(board.id);
-                            }}
-                            className="p-1 hover:bg-gray-700 rounded"
-                          >
-                            <Edit2 className="h-3 w-3 text-gray-400" />
-                          </button>
-                          {board.id !== 'default' && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteBoard(board.id);
-                              }}
-                              className="p-1 hover:bg-red-500/20 rounded"
-                            >
-                              <Trash2 className="h-3 w-3 text-red-400" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Main Content - Images Grid */}
-          <div className="flex-1 overflow-y-auto p-8">
-            {viewMode === 'boards' && selectedBoard ? (
-              <>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-100 mb-2">
-                    {boards.find(b => b.id === selectedBoard)?.emoji} {boards.find(b => b.id === selectedBoard)?.name}
-                  </h2>
-                  <p className="text-sm text-gray-400">
-                    {getCurrentBoardImages().length} images in this board
-                  </p>
+                      );
+                    })}
+                  </div>
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Section - Images Gallery */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Gallery Header */}
+            <div className="flex-shrink-0 bg-gray-900/50 border-b border-gray-800">
+              <button
+                onClick={() => setImagesExpanded(!imagesExpanded)}
+                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-900/70 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  {imagesExpanded ? (
+                    <ChevronUp className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  )}
+                  <span className="text-base font-bold text-gray-200">
+                    {selectedBoard ? boards.find(b => b.id === selectedBoard)?.name : 'Uncategorized'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center space-x-3">
+                  {/* Tabs */}
+                  <div className="flex bg-gray-800 rounded-lg overflow-hidden">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentTab('images');
+                      }}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-semibold transition-colors",
+                        currentTab === 'images'
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-400 hover:text-gray-200"
+                      )}
+                    >
+                      Images
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentTab('videos');
+                      }}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-semibold transition-colors",
+                        currentTab === 'videos'
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-400 hover:text-gray-200"
+                      )}
+                    >
+                      Videos
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentTab('assets');
+                      }}
+                      className={cn(
+                        "px-3 py-1.5 text-xs font-semibold transition-colors",
+                        currentTab === 'assets'
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-400 hover:text-gray-200"
+                      )}
+                    >
+                      Assets
+                    </button>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="h-8 w-8 hover:bg-gray-800"
+                    title="Upload Image(s)"
+                  >
+                    <Upload className="h-4 w-4 text-gray-400" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="h-8 w-8 hover:bg-gray-800"
+                  >
+                    <Settings className="h-4 w-4 text-gray-400" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchQuery('');
+                    }}
+                    className="h-8 w-8 hover:bg-gray-800"
+                  >
+                    <Search className="h-4 w-4 text-gray-400" />
+                  </Button>
+                </div>
+              </button>
+            </div>
+
+            {/* Gallery Content */}
+            {imagesExpanded && (
+              <div className="flex-1 overflow-y-auto bg-gray-950 p-6">
+            {selectedBoard ? (
+              <>
 
                 {getCurrentBoardImages().length === 0 ? (
                   <div className="text-center py-20">
@@ -329,7 +369,7 @@ export const BoardsPanel: React.FC = () => {
                     <p className="text-sm text-gray-600">Start adding images to organize your work</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
                     {getCurrentBoardImages().map(({ type, item, id }) => {
                       const imageUrl = type === 'generation' 
                         ? item.outputAssets[0]?.url 
@@ -389,13 +429,77 @@ export const BoardsPanel: React.FC = () => {
                                   className="bg-white/10 hover:bg-white/20"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleRemoveFromBoard(selectedBoard, id);
+                                    setShowAddToBoard(id);
+                                  }}
+                                  title="Move to another board"
+                                >
+                                  <Folder className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  className="bg-white/10 hover:bg-white/20"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeImageFromBoard(selectedBoard, id);
                                   }}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </div>
+
+                            {/* Add to Board Menu for current board view */}
+                            {showAddToBoard === id && (
+                              <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 z-10">
+                                <div className="bg-gray-900 rounded-lg p-3 w-full max-h-[200px] overflow-y-auto">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-semibold text-gray-300">Move to Board</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowAddToBoard(null);
+                                      }}
+                                      className="text-gray-400 hover:text-gray-200"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <div className="space-y-1">
+                                    {boards.filter(b => b.id !== selectedBoard).map(board => {
+                                      const isInBoard = board.imageIds.includes(id);
+                                      return (
+                                        <button
+                                          key={board.id}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            // Move image to selected board (remove from current, add to target)
+                                            moveImageToBoard(board.id, id);
+                                            setShowAddToBoard(null);
+                                          }}
+                                          className={cn(
+                                            "w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center justify-between",
+                                            isInBoard 
+                                              ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30" 
+                                              : "text-gray-300 hover:bg-gray-800"
+                                          )}
+                                        >
+                                          <span className="flex items-center space-x-1.5">
+                                            {board.emoji ? (
+                                              <span>{board.emoji}</span>
+                                            ) : (
+                                              <Folder className="h-3 w-3 text-gray-500" />
+                                            )}
+                                            <span className="truncate">{board.name}</span>
+                                          </span>
+                                          {isInBoard && <span className="text-purple-400">✓</span>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Type Badge */}
                             <div className={cn(
@@ -415,12 +519,6 @@ export const BoardsPanel: React.FC = () => {
               </>
             ) : (
               <>
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-100 mb-2">All Images</h2>
-                  <p className="text-sm text-gray-400">
-                    {allImages.length} total images • {generations.length} generations • {edits.length} edits
-                  </p>
-                </div>
 
                 {allImages.length === 0 ? (
                   <div className="text-center py-20">
@@ -479,14 +577,68 @@ export const BoardsPanel: React.FC = () => {
                                   className="h-7 w-7 bg-black/50 hover:bg-black/70 p-0"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    const boardId = prompt('Enter board ID to add to (or leave empty for default):') || 'default';
-                                    handleAddToBoard(boardId, id);
+                                    setShowAddToBoard(id);
                                   }}
                                 >
                                   <Plus className="h-3 w-3" />
                                 </Button>
                               </div>
                             </div>
+
+                            {/* Add to Board Menu */}
+                            {showAddToBoard === id && (
+                              <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 z-10">
+                                <div className="bg-gray-900 rounded-lg p-3 w-full max-h-[200px] overflow-y-auto">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-semibold text-gray-300">Add to Board</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowAddToBoard(null);
+                                      }}
+                                      className="text-gray-400 hover:text-gray-200"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                  <div className="space-y-1">
+                                    {boards.map(board => {
+                                      const isInBoard = board.imageIds.includes(id);
+                                      return (
+                                        <button
+                                          key={board.id}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (isInBoard) {
+                                            removeImageFromBoard(board.id, id);
+                                          } else {
+                                            addImageToBoard(board.id, id);
+                                          }
+                                          setShowAddToBoard(null);
+                                        }}
+                                          className={cn(
+                                            "w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center justify-between",
+                                            isInBoard 
+                                              ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30" 
+                                              : "text-gray-300 hover:bg-gray-800"
+                                          )}
+                                        >
+                                          <span className="flex items-center space-x-1.5">
+                                            {board.emoji ? (
+                                              <span>{board.emoji}</span>
+                                            ) : (
+                                              <Folder className="h-3 w-3 text-gray-500" />
+                                            )}
+                                            <span className="truncate">{board.name}</span>
+                                          </span>
+                                          {isInBoard && <span className="text-purple-400">✓</span>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Type Badge */}
                             <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded-md bg-gray-900/90 backdrop-blur-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -499,6 +651,8 @@ export const BoardsPanel: React.FC = () => {
                   </div>
                 )}
               </>
+            )}
+              </div>
             )}
           </div>
         </div>

@@ -3,9 +3,22 @@ import { devtools, persist } from 'zustand/middleware';
 import { Project, Generation, Edit, BrushStroke } from '../types';
 import { Language } from '../i18n/translations';
 
+export interface Board {
+  id: string;
+  name: string;
+  emoji?: string;
+  description?: string;
+  createdAt: number;
+  updatedAt: number;
+  imageIds: string[];
+}
+
 interface AppState {
   // Current project
   currentProject: Project | null;
+  
+  // Boards management
+  boards: Board[];
   
   // Canvas state
   canvasImage: string | null;
@@ -82,6 +95,15 @@ interface AppState {
   setApiKey: (key: string | null) => void;
   apiKeyError: string | null;
   setApiKeyError: (error: string | null) => void;
+  
+  // Boards actions
+  setBoards: (boards: Board[]) => void;
+  addBoard: (board: Board) => void;
+  updateBoard: (boardId: string, updates: Partial<Board>) => void;
+  deleteBoard: (boardId: string) => void;
+  addImageToBoard: (boardId: string, imageId: string) => void;
+  removeImageFromBoard: (boardId: string, imageId: string) => void;
+  moveImageToBoard: (targetBoardId: string, imageId: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -90,6 +112,18 @@ export const useAppStore = create<AppState>()(
       (set) => ({
       // Initial state
       currentProject: null,
+      
+      boards: [
+        {
+          id: 'default',
+          name: 'My Creations',
+          description: 'All your generated images',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          imageIds: []
+        }
+      ],
+      
       canvasImage: null,
       canvasZoom: 1,
       canvasPan: { x: 0, y: 0 },
@@ -187,11 +221,57 @@ export const useAppStore = create<AppState>()(
       
       setApiKey: (key) => set({ apiKey: key }),
       setApiKeyError: (error) => set({ apiKeyError: error }),
+      
+      // Boards actions
+      setBoards: (boards) => set({ boards }),
+      
+      addBoard: (board) => set((state) => ({
+        boards: [...state.boards, board]
+      })),
+      
+      updateBoard: (boardId, updates) => set((state) => ({
+        boards: state.boards.map(b =>
+          b.id === boardId
+            ? { ...b, ...updates, updatedAt: Date.now() }
+            : b
+        )
+      })),
+      
+      deleteBoard: (boardId) => set((state) => ({
+        boards: state.boards.filter(b => b.id !== boardId)
+      })),
+      
+      addImageToBoard: (boardId, imageId) => set((state) => ({
+        boards: state.boards.map(b =>
+          b.id === boardId
+            ? { ...b, imageIds: [...new Set([...b.imageIds, imageId])], updatedAt: Date.now() }
+            : b
+        )
+      })),
+      
+      removeImageFromBoard: (boardId, imageId) => set((state) => ({
+        boards: state.boards.map(b =>
+          b.id === boardId
+            ? { ...b, imageIds: b.imageIds.filter(id => id !== imageId), updatedAt: Date.now() }
+            : b
+        )
+      })),
+      
+      moveImageToBoard: (targetBoardId, imageId) => set((state) => ({
+        boards: state.boards.map(b => {
+          if (b.id === targetBoardId) {
+            return { ...b, imageIds: [...new Set([...b.imageIds, imageId])], updatedAt: Date.now() };
+          } else {
+            return { ...b, imageIds: b.imageIds.filter(id => id !== imageId), updatedAt: Date.now() };
+          }
+        })
+      })),
       }),
       {
         name: 'ai-pod-storage',
         partialize: (state) => ({
           currentProject: state.currentProject,
+          boards: state.boards,
           language: state.language,
           apiKey: state.apiKey,
           brushSize: state.brushSize,

@@ -3,8 +3,7 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Upload, Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check } from 'lucide-react';
-import { blobToBase64 } from '../utils/imageUtils';
+import { Upload, Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, FolderPlus, ArrowRightLeft, Folder } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
@@ -65,20 +64,22 @@ export const PromptComposer: React.FC = () => {
     setSeed,
     isGenerating,
     uploadedImages,
-    addUploadedImage,
     removeUploadedImage,
     clearUploadedImages,
     editReferenceImages,
-    addEditReferenceImage,
     removeEditReferenceImage,
     clearEditReferenceImages,
-    canvasImage,
     setCanvasImage,
     showPromptPanel,
     setShowPromptPanel,
     clearBrushStrokes,
     apiKeyError,
     setApiKeyError,
+    boards,
+    addBoard,
+    addImageToBoard,
+    removeImageFromBoard,
+    moveImageToBoard,
   } = useAppStore();
 
   const { generate } = useImageGeneration();
@@ -91,8 +92,8 @@ export const PromptComposer: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState('none');
   const [isImproving, setIsImproving] = useState(false);
   const [improvedPrompt, setImprovedPrompt] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const templateDropdownRef = useRef<HTMLDivElement>(null);
+  const [showBoardMenu, setShowBoardMenu] = useState<number | null>(null);
 
   // Clean up images when switching tools
   React.useEffect(() => {
@@ -151,6 +152,26 @@ export const PromptComposer: React.FC = () => {
     setImprovedPrompt(null);
   };
 
+  const isImageInBoard = (boardId: string, imageUrl: string) => {
+    const board = boards.find(b => b.id === boardId);
+    return board?.imageIds.includes(imageUrl) || false;
+  };
+
+  const handleCreateBoard = () => {
+    const name = prompt('Enter board name:');
+    if (name && name.trim()) {
+      const newBoard = {
+        id: `board-${Date.now()}`,
+        name: name.trim(),
+        description: '',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        imageIds: []
+      };
+      addBoard(newBoard);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!currentPrompt.trim()) return;
     
@@ -180,45 +201,6 @@ export const PromptComposer: React.FC = () => {
       });
     } else if (selectedTool === 'edit' || selectedTool === 'mask') {
       edit(currentPrompt);
-    }
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      try {
-        const base64 = await blobToBase64(file);
-        const dataUrl = `data:${file.type};base64,${base64}`;
-        
-        if (selectedTool === 'generate') {
-          // Add to reference images (max 2)
-          if (uploadedImages.length < 2) {
-            addUploadedImage(dataUrl);
-          }
-        } else if (selectedTool === 'edit') {
-          // For edit mode, add to separate edit reference images (max 2)
-          if (editReferenceImages.length < 2) {
-            addEditReferenceImage(dataUrl);
-          }
-          // Set as canvas image if none exists
-          if (!canvasImage) {
-            setCanvasImage(dataUrl);
-          }
-        } else if (selectedTool === 'mask') {
-          // For mask mode, replace canvas image and clear brush strokes
-          clearUploadedImages();
-          clearBrushStrokes();
-          addUploadedImage(dataUrl);
-          setCanvasImage(dataUrl);
-        }
-        
-        // Reset the file input to allow re-uploading the same file
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-      } catch (error) {
-        console.error('Failed to upload image:', error);
-      }
     }
   };
 
@@ -319,6 +301,160 @@ export const PromptComposer: React.FC = () => {
         </div>
       </div>
 
+      {/* Artboards Section - Images Generated */}
+      <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
+              <Upload className="h-5 w-5 text-gray-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-200">Artboards</h3>
+              <p className="text-xs text-gray-500">Images generated</p>
+            </div>
+          </div>
+          <span className="text-xs px-2 py-1 bg-gray-800 rounded text-gray-400">
+            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length} / 2
+          </span>
+        </div>
+        
+        {/* Artboards Grid */}
+        {((selectedTool === 'generate' && uploadedImages.length > 0) || 
+          (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={image}
+                  alt={`Artboard ${index + 1}`}
+                  className="w-full h-24 object-cover rounded-lg border-2 border-gray-700 group-hover:border-purple-500 transition-colors"
+                />
+                
+                {/* Action Buttons */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 bg-white/10 hover:bg-white/20 backdrop-blur-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowBoardMenu(showBoardMenu === index ? null : index);
+                      }}
+                      title="Add to board"
+                    >
+                      <FolderPlus className="h-4 w-4 text-white" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 bg-white/10 hover:bg-red-500/50 backdrop-blur-sm"
+                      onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
+                      title="Remove"
+                    >
+                      <X className="h-4 w-4 text-white" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Board Selection Menu */}
+                {showBoardMenu === index && (
+                  <div className="absolute inset-0 bg-black/95 backdrop-blur-sm rounded-lg z-10 p-2 overflow-y-auto">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-gray-200">Manage Board</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowBoardMenu(null);
+                        }}
+                        className="text-gray-400 hover:text-gray-200"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                    
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {boards.map(board => {
+                        const isInBoard = isImageInBoard(board.id, image);
+                        return (
+                          <div key={board.id} className="space-y-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isInBoard) {
+                                  removeImageFromBoard(board.id, image);
+                                } else {
+                                  addImageToBoard(board.id, image);
+                                }
+                              }}
+                              className={cn(
+                                "w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center justify-between group",
+                                isInBoard 
+                                  ? "bg-purple-500/30 text-purple-200 hover:bg-purple-500/40" 
+                                  : "text-gray-300 hover:bg-gray-800"
+                              )}
+                            >
+                              <span className="flex items-center space-x-1.5 truncate">
+                                {board.emoji ? (
+                                  <span>{board.emoji}</span>
+                                ) : (
+                                  <Folder className="h-3 w-3 text-gray-500" />
+                                )}
+                                <span className="truncate">{board.name}</span>
+                              </span>
+                              <div className="flex items-center space-x-1">
+                                {isInBoard && <span className="text-purple-300 text-sm">✓</span>}
+                                {!isInBoard && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      moveImageToBoard(board.id, image);
+                                      setShowBoardMenu(null);
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Move to this board only"
+                                  >
+                                    <ArrowRightLeft className="h-3 w-3 text-gray-500 hover:text-blue-400" />
+                                  </button>
+                                )}
+                              </div>
+                            </button>
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Create New Board Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCreateBoard();
+                          setShowBoardMenu(null);
+                        }}
+                        className="w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center space-x-1.5 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 mt-2"
+                      >
+                        <FolderPlus className="h-3 w-3" />
+                        <span>Create New Board</span>
+                      </button>
+                    </div>
+                    
+                    {/* Action Hint */}
+                    <div className="mt-2 pt-2 border-t border-gray-700">
+                      <p className="text-[10px] text-gray-500 text-center">
+                        Click to add/remove • Hover & click → to move
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-xs px-2 py-1 rounded text-white font-medium">
+                  Artboard {index + 1}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Prompt Template Selector */}
       <div className="bg-gray-900/50 rounded-xl border border-gray-800 hover:border-gray-700 transition-all relative" ref={templateDropdownRef}>
         <button
@@ -384,77 +520,6 @@ export const PromptComposer: React.FC = () => {
                 </button>
               ))}
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* File Upload - Inspired Card Design */}
-      <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition-all">
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
-            <Upload className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <label className="text-sm font-semibold text-gray-200 mb-1 block">
-              {selectedTool === 'generate' ? 'Add Reference Images' : selectedTool === 'edit' ? 'Style References' : 'Upload Image to Edit'}
-            </label>
-            {selectedTool === 'mask' && (
-              <p className="text-xs text-gray-400 mb-3">Upload an image to edit with masks</p>
-            )}
-            {selectedTool === 'generate' && (
-              <p className="text-xs text-gray-500 mb-3">Add images to guide the generation (optional, max 2)</p>
-            )}
-            {selectedTool === 'edit' && (
-              <p className="text-xs text-gray-500 mb-3">
-                {canvasImage ? 'Add style references (optional, max 2)' : 'Upload an image to start editing (max 2)'}
-              </p>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full mt-2 bg-gray-800 hover:bg-gray-750 border-gray-700"
-              disabled={
-                (selectedTool === 'generate' && uploadedImages.length >= 2) ||
-                (selectedTool === 'edit' && editReferenceImages.length >= 2)
-              }
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {selectedTool === 'mask' && (uploadedImages.length > 0 || canvasImage) 
-                ? 'Replace Image' 
-                : 'Choose File'}
-            </Button>
-          </div>
-        </div>
-        
-        {/* Show uploaded images preview */}
-        {((selectedTool === 'generate' && uploadedImages.length > 0) || 
-          (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={image}
-                  alt={`Reference ${index + 1}`}
-                  className="w-full h-24 object-cover rounded-lg border-2 border-gray-700 group-hover:border-gray-600 transition-colors"
-                />
-                <button
-                  onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
-                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-lg transition-all opacity-0 group-hover:opacity-100"
-                >
-                  ×
-                </button>
-                <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-xs px-2 py-1 rounded text-white font-medium">
-                  Ref {index + 1}
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>
