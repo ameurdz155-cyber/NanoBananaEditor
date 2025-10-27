@@ -1,12 +1,24 @@
 # 🎨 AI POD Lite
 Release Version: (v1.0)
 
+<<<<<<< HEAD
+=======
+### **⏬ Get Your 1-Click Install Copy + Instant Access to More Project Downloads, Vibe Coding Courses, Live Sessions, Community & More!** 
+Join the [Vibe Coding is Life Skool Community](https://www.skool.com/vibe-coding-is-life/about?ref=456537abaf37491cbcc6976f3c26af41) and get a **1-click ⚡Bolt.new installation clone**  of this app, plus access to live build sessions, exclusive project downloads, AI prompts, masterclasses, and the best vibe coding community on the web!
+
+>>>>>>> 6723e68a746718f5e4fb3687c645c1516839bc78
 ---
 
 **AI Image Generation & Conversational Editing Platform**
 
 A modern React + TypeScript application for image generation and conversational, region-aware editing using Google's Gemini 2.5 Flash Image model. Built with modern web technologies and designed for creators.
 
+<<<<<<< HEAD
+=======
+[![Nano Banana Image Editor](https://getsmartgpt.com/nano-banana-editor.jpg)](https://nanobananaeditor.dev)
+
+🍌 [Try the LIVE Demo](https://nanobananaeditor.dev) - **NOTE**: Due to high demand, free credits are no longer available.
+>>>>>>> 6723e68a746718f5e4fb3687c645c1516839bc78
 
 ## ✨ Key Features
 
