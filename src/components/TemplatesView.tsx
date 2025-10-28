@@ -18,6 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { getTranslation } from '../i18n/translations';
 
 export interface PromptTemplate {
   id: string;
@@ -105,7 +106,8 @@ interface TemplatesViewProps {
 }
 
 export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }) => {
-  const { setCurrentPrompt, selectedTemplate, setSelectedTemplate } = useAppStore();
+  const { setCurrentPrompt, selectedTemplate, setSelectedTemplate, language } = useAppStore();
+  const t = getTranslation(language);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [myTemplates, setMyTemplates] = React.useState<PromptTemplate[]>([]);
   const [expandedSections, setExpandedSections] = React.useState<Record<string, boolean>>({
@@ -505,7 +507,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-900 border border-gray-700 rounded-lg p-6 w-full max-w-2xl z-50 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <Dialog.Title className="text-lg font-semibold text-gray-100">
-                {editingTemplate ? 'Edit Prompt Template' : 'Create Prompt Template'}
+                {editingTemplate ? t.editPromptTemplate : t.createPromptTemplate}
               </Dialog.Title>
               <Dialog.Close asChild>
                 <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -521,7 +523,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   {formData.name.charAt(0).toUpperCase() || '📝'}
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">{t.name}</label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -534,12 +536,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Description (Optional)
+                  {t.descriptionOptional}
                 </label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Brief description of this template"
+                  placeholder={t.briefDescription}
                   className="w-full"
                 />
               </div>
@@ -574,7 +576,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-sm font-medium text-gray-300">
-                    Positive Prompt
+                    {t.positivePrompt}
                   </label>
                   <button
                     onClick={() => {
@@ -585,7 +587,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     }}
                     className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
                   >
-                    Insert placeholder
+                    {t.insertPlaceholder}
                   </button>
                 </div>
                 <Textarea
@@ -596,7 +598,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   data-field="positivePrompt"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Use the placeholder string <code className="px-1 py-0.5 bg-gray-800 rounded">{'{prompt}'}</code> to specify where your prompt should be included in the template.
+                  {t.usePlaceholder.replace('{prompt}', '')}
+                  <code className="px-1 py-0.5 bg-gray-800 rounded">{'{prompt}'}</code>
+                  {t.usePlaceholder.split('{prompt}')[1]}
                 </p>
               </div>
 
@@ -604,7 +608,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-sm font-medium text-gray-300">
-                    Negative Prompt
+                    {t.negativePrompt}
                   </label>
                   <button
                     onClick={() => {
@@ -615,7 +619,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     }}
                     className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
                   >
-                    Insert placeholder
+                    {t.insertPlaceholder}
                   </button>
                 </div>
                 <Textarea
@@ -629,9 +633,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
               {/* Info Text */}
               <div className="text-xs text-gray-500 space-y-1">
-                <p>Prompt templates add text to the prompts you write in the prompt box.</p>
+                <p>{t.templateExplanation}</p>
                 <p>
-                  If you omit the placeholder, the template will be appended to the end of your prompt.
+                  {t.templateOmitPlaceholder}
                 </p>
               </div>
 
@@ -641,13 +645,13 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   variant="ghost"
                   onClick={() => setShowCreateModal(false)}
                 >
-                  Cancel
+                  {t.cancel}
                 </Button>
                 <Button
                   onClick={handleSaveTemplate}
                   className="bg-gray-700 hover:bg-gray-600"
                 >
-                  Save
+                  {t.save}
                 </Button>
               </div>
             </div>

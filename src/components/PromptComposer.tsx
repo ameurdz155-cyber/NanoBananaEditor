@@ -78,7 +78,7 @@ export const PromptComposer: React.FC = () => {
     setApiKeyError(null);
     
     try {
-      const improved = await improvePromptText(currentPrompt);
+      const improved = await improvePromptText(currentPrompt, language);
       setImprovedPrompt(improved);
     } catch (error: any) {
       console.error('Failed to improve prompt:', error);
@@ -250,7 +250,9 @@ export const PromptComposer: React.FC = () => {
             </div>
             <div>
               <span className="text-sm font-semibold text-gray-200 block">
-                {selectedTemplate !== 'none' ? selectedTemplate : t.templates}
+                {selectedTemplate !== 'none' 
+                  ? (DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate)?.name || selectedTemplate)
+                  : t.templates}
               </span>
               <span className="text-xs text-gray-500">
                 {showTemplatesPanel ? t.clickToCollapse : t.clickToManageTemplates}
@@ -544,7 +546,7 @@ export const PromptComposer: React.FC = () => {
             {/* Temperature */}
             <div>
               <label className="text-xs text-gray-400 mb-2 block">
-                Creativity ({temperature})
+                {t.creativity} ({temperature})
               </label>
               <input
                 type="range"
@@ -560,13 +562,13 @@ export const PromptComposer: React.FC = () => {
             {/* Seed */}
             <div>
               <label className="text-xs text-gray-400 mb-2 block">
-                Seed (optional)
+                {t.seed}
               </label>
               <input
                 type="number"
                 value={seed || ''}
                 onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : null)}
-                placeholder="Random"
+                placeholder={t.random}
                 className="w-full h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100"
               />
             </div>

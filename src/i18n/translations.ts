@@ -177,6 +177,40 @@ export interface Translations {
   boardName: string;
   enterBoardName: string;
   create: string;
+  
+  // Prompt Hints
+  promptQualityTips: string;
+  subject: string;
+  subjectHint: string;
+  subjectExample: string;
+  scene: string;
+  sceneHint: string;
+  sceneExample: string;
+  action: string;
+  actionHint: string;
+  actionExample: string;
+  style: string;
+  styleHint: string;
+  styleExample: string;
+  camera: string;
+  cameraHint: string;
+  cameraExample: string;
+  bestPractice: string;
+  bestPracticeHint: string;
+  
+  // Template Modal
+  createPromptTemplate: string;
+  editPromptTemplate: string;
+  name: string;
+  description: string;
+  descriptionOptional: string;
+  briefDescription: string;
+  positivePrompt: string;
+  negativePrompt: string;
+  insertPlaceholder: string;
+  templateExplanation: string;
+  templateOmitPlaceholder: string;
+  usePlaceholder: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -357,6 +391,40 @@ export const translations: Record<Language, Translations> = {
     boardName: 'Board Name',
     enterBoardName: 'Enter board name...',
     create: 'Create',
+    
+    // Prompt Hints
+    promptQualityTips: 'Prompt Quality Tips',
+    subject: 'subject',
+    subjectHint: 'Be specific about the main subject',
+    subjectExample: '"A vintage red bicycle" vs "bicycle"',
+    scene: 'scene',
+    sceneHint: 'Describe the environment and setting',
+    sceneExample: '"in a cobblestone alley during golden hour"',
+    action: 'action',
+    actionHint: 'Include movement or activity',
+    actionExample: '"cyclist pedaling through puddles"',
+    style: 'style',
+    styleHint: 'Specify artistic style or mood',
+    styleExample: '"cinematic photography, moody lighting"',
+    camera: 'camera',
+    cameraHint: 'Add camera perspective details',
+    cameraExample: '"shot with 85mm lens, shallow depth of field"',
+    bestPractice: 'Best practice:',
+    bestPracticeHint: 'Write full sentences that describe the complete scene, not just keywords. Think "paint me a picture with words."',
+    
+    // Template Modal
+    createPromptTemplate: 'Create Prompt Template',
+    editPromptTemplate: 'Edit Prompt Template',
+    name: 'Name',
+    description: 'Description',
+    descriptionOptional: 'Description (Optional)',
+    briefDescription: 'Brief description of this template',
+    positivePrompt: 'Positive Prompt',
+    negativePrompt: 'Negative Prompt',
+    insertPlaceholder: 'Insert placeholder',
+    templateExplanation: 'Prompt templates add text to the prompts you write in the prompt box.',
+    templateOmitPlaceholder: 'If you omit the placeholder, the template will be appended to the end of your prompt.',
+    usePlaceholder: 'Use the placeholder string {prompt} to specify where your prompt should be included in the template.',
   },
   zh: {
     // Header
@@ -535,6 +603,40 @@ export const translations: Record<Language, Translations> = {
     boardName: '画板名称',
     enterBoardName: '输入画板名称...',
     create: '创建',
+    
+    // Prompt Hints
+    promptQualityTips: '提示词质量技巧',
+    subject: '主题',
+    subjectHint: '对主要主题进行具体描述',
+    subjectExample: '"一辆复古红色自行车" vs "自行车"',
+    scene: '场景',
+    sceneHint: '描述环境和设置',
+    sceneExample: '"在鹅卵石小巷中，黄金时段"',
+    action: '动作',
+    actionHint: '包含运动或活动',
+    actionExample: '"骑车人踩踏水坑"',
+    style: '风格',
+    styleHint: '指定艺术风格或情绪',
+    styleExample: '"电影摄影，忧郁灯光"',
+    camera: '相机',
+    cameraHint: '添加相机视角细节',
+    cameraExample: '"使用85mm镜头拍摄，浅景深"',
+    bestPractice: '最佳实践：',
+    bestPracticeHint: '写完整的句子来描述完整场景，而不仅仅是关键词。把它想象成"用文字画一幅画"。',
+    
+    // Template Modal
+    createPromptTemplate: '创建提示词模板',
+    editPromptTemplate: '编辑提示词模板',
+    name: '名称',
+    description: '描述',
+    descriptionOptional: '描述（可选）',
+    briefDescription: '此模板的简要描述',
+    positivePrompt: '正面提示词',
+    negativePrompt: '负面提示词',
+    insertPlaceholder: '插入占位符',
+    templateExplanation: '提示词模板会将文本添加到您在提示框中编写的提示词中。',
+    templateOmitPlaceholder: '如果省略占位符，模板将附加到提示词的末尾。',
+    usePlaceholder: '使用占位符字符串 {prompt} 来指定您的提示词应包含在模板中的位置。',
   },
 };
 

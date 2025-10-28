@@ -268,10 +268,14 @@ Preserve image quality and ensure the edit looks professional and realistic.`;
 export const geminiService = new GeminiService();
 
 // Text helper: improve a user prompt for image generation
-export async function improvePromptText(prompt: string): Promise<string> {
+export async function improvePromptText(prompt: string, language: 'en' | 'zh' = 'en'): Promise<string> {
   try {
+    const instructionText = language === 'zh' 
+      ? `改进以下图像生成提示词，使其更具描述性、更有电影感和更具体，同时保留任何占位符（如 [主题]）。只返回改进后的提示词文本，不要添加额外的评论。\n\n原始提示词:\n${prompt}`
+      : `Improve the following image generation prompt by making it more descriptive, cinematic, and specific while preserving any placeholders like [subject]. Return only the improved prompt text without extra commentary.\n\nOriginal Prompt:\n${prompt}`;
+
     const contents = [
-      { text: `Improve the following image generation prompt by making it more descriptive, cinematic, and specific while preserving any placeholders like [subject]. Return only the improved prompt text without extra commentary.\n\nOriginal Prompt:\n${prompt}` }
+      { text: instructionText }
     ];
 
     const response = await getGenAI().models.generateContent({

@@ -54,7 +54,7 @@ export const Header: React.FC = () => {
             variant="ghost" 
             size="icon"
             onClick={() => setShowSettingsModal(true)}
-            title="Settings"
+            title={t.settings}
           >
             <Settings className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
           </Button>
@@ -62,11 +62,8 @@ export const Header: React.FC = () => {
             className="glass glass-hover" 
             variant="ghost" 
             size="icon"
-            onClick={() => {
-              // Auto-approved improvements - modal disabled
-              console.log('Info improvements auto-applied');
-            }}
-            title="About"
+            onClick={() => setShowInfoModal(true)}
+            title={t.about}
           >
             <HelpCircle className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
           </Button>
