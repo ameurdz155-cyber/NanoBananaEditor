@@ -534,7 +534,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   );
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="flex flex-col w-full h-full min-h-0">
       {/* Search and Actions */}
       <div className="flex-shrink-0 mb-3 space-y-2">
         <Input
@@ -587,7 +587,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       </div>
 
       {/* Templates List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-3">
         {/* My Templates Section */}
         <div>
           <button
