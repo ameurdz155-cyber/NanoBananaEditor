@@ -1,43 +1,37 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { 
-  Layers, 
-  Search, 
-  Grid, 
-  Sparkles,
+import {
+  Layers,
+  Search,
   Plus,
   Folder,
   Trash2,
-  Edit2,
   X,
   Eye,
   Download,
   ChevronUp,
   ChevronDown,
   Settings,
-  Upload
+  Upload,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { saveImageWithDialog } from '../utils/fileSaver';
 
 export const BoardsPanel: React.FC = () => {
-  const { 
-    currentProject, 
+  const {
+    currentProject,
     setCanvasImage,
     selectGeneration,
     selectEdit,
     boards,
     addBoard,
-    updateBoard,
-    deleteBoard,
     addImageToBoard,
     removeImageFromBoard,
     moveImageToBoard,
   } = useAppStore();
-  
+
   const [showBoardsPanel, setShowBoardsPanel] = useState(false);
-  const [viewMode, setViewMode] = useState<'boards' | 'templates'>('boards');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBoard, setSelectedBoard] = useState<string | null>(null);
   const [boardsExpanded, setBoardsExpanded] = useState(true);
@@ -68,29 +62,7 @@ export const BoardsPanel: React.FC = () => {
     }
   };
 
-  const handleRenameBoard = (boardId: string) => {
-    const board = boards.find(b => b.id === boardId);
-    if (!board) return;
-    
-    const newName = prompt('Enter new name:', board.name);
-    if (newName && newName.trim()) {
-      updateBoard(boardId, { name: newName.trim() });
-    }
-  };
-
-  const handleDeleteBoard = (boardId: string) => {
-    if (boardId === 'default') {
-      alert('Cannot delete the default board');
-      return;
-    }
-    
-    if (confirm('Are you sure you want to delete this board?')) {
-      deleteBoard(boardId);
-      if (selectedBoard === boardId) {
-        setSelectedBoard(null);
-      }
-    }
-  };
+  // Renaming and deletion handled elsewhere for now
 
   const getCurrentBoardImages = () => {
     if (!selectedBoard) return allImages;
@@ -191,9 +163,9 @@ export const BoardsPanel: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Boards List - Horizontal Scroll */}
+                {/* Boards List - Scrollable grid when many boards */}
                 <div className="px-6 py-4">
-                  <div className="flex space-x-3 overflow-x-auto pb-2">
+                  <div className="grid gap-3 overflow-y-auto max-h-64 pr-1 sm:grid-cols-2 xl:grid-cols-3">
                     {filteredBoards.map(board => {
                       const boardImages = allImages.filter(img => board.imageIds.includes(img.id));
                       const isSelected = selectedBoard === board.id;
@@ -202,7 +174,7 @@ export const BoardsPanel: React.FC = () => {
                         <div
                           key={board.id}
                           className={cn(
-                            "group relative flex-shrink-0 w-64 px-3 py-2.5 cursor-pointer transition-all border-l-4 rounded bg-gray-900/30",
+                            "group relative w-full px-3 py-2.5 cursor-pointer transition-all border-l-4 rounded bg-gray-900/30",
                             isSelected
                               ? "border-purple-500 bg-gray-800/50"
                               : "border-transparent hover:bg-gray-800/40 hover:border-gray-700"

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
@@ -31,6 +31,7 @@ export const PromptComposer: React.FC = () => {
     apiKeyError,
     setApiKeyError,
     selectedTemplate,
+    setSelectedTemplate,
     language,
   } = useAppStore();
 
@@ -42,11 +43,9 @@ export const PromptComposer: React.FC = () => {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showHintsModal, setShowHintsModal] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
-  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
-  const [showTemplatesPanel, setShowTemplatesPanel] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [isImproving, setIsImproving] = useState(false);
   const [improvedPrompt, setImprovedPrompt] = useState<string | null>(null);
-  const templateDropdownRef = useRef<HTMLDivElement>(null);
 
   // Clean up images when switching tools
   React.useEffect(() => {
@@ -57,19 +56,6 @@ export const PromptComposer: React.FC = () => {
     };
   }, [selectedTool]);
 
-  // Close template dropdown when clicking outside
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (templateDropdownRef.current && !templateDropdownRef.current.contains(event.target as Node)) {
-        setShowTemplateDropdown(false);
-      }
-    };
-
-    if (showTemplateDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showTemplateDropdown]);
 
   const handleImprovePrompt = async () => {
     if (!currentPrompt.trim()) return;
@@ -235,38 +221,34 @@ export const PromptComposer: React.FC = () => {
       </div>
 
       {/* Prompt Template Selector */}
-      <div className="bg-gray-900/50 rounded-xl border border-gray-800 hover:border-gray-700 transition-all">
+      <div className="rounded-xl border border-gray-850 bg-gray-950/80">
         <button
-          onClick={() => setShowTemplatesPanel(!showTemplatesPanel)}
-          className="w-full p-4 flex items-center justify-between text-left group hover:bg-gray-900/30 transition-all rounded-xl"
+          type="button"
+          onClick={() => setShowTemplatesModal(true)}
+          className="w-full rounded-xl px-3 py-2.5 flex items-center justify-between text-left transition-all hover:bg-gray-900/40"
         >
-          <div className="flex items-center space-x-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center group-hover:bg-gray-750 transition-all">
-              <FileText className="h-5 w-5 text-gray-400" />
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800 bg-gray-900 text-gray-400">
+              <FileText className="h-4 w-4" />
             </div>
-            <div>
-              <span className="text-sm font-semibold text-gray-200 block">
+            <div className="flex flex-col">
+              <span className="text-[13px] font-medium text-gray-100">
                 {selectedTemplate !== 'none' 
                   ? (DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate)?.name || selectedTemplate)
                   : t.templates}
               </span>
-              <span className="text-xs text-gray-500">
-                {showTemplatesPanel ? t.clickToCollapse : t.clickToManageTemplates}
+              <span className="text-[11px] text-gray-500">
+                {t.clickToManageTemplates}
               </span>
             </div>
           </div>
-          <ChevronDown className={cn(
-            "h-5 w-5 text-gray-400 transition-transform duration-200",
-            showTemplatesPanel && "rotate-180"
-          )} />
-        </button>
-
-        {/* Templates Panel */}
-        {showTemplatesPanel && (
-          <div className="border-t border-gray-800 p-4 max-h-96 overflow-y-auto">
-            <TemplatesView onTemplateSelect={() => setShowTemplatesPanel(false)} />
+          <div className={cn(
+            "flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-500 transition-all",
+            showTemplatesModal && "rotate-180 border-gray-700 bg-gray-900 text-gray-200"
+          )}>
+            <ChevronDown className="h-4 w-4" />
           </div>
-        )}
+        </button>
       </div>
 
       {/* Prompt Input - Enhanced Card Design */}
@@ -291,7 +273,14 @@ export const PromptComposer: React.FC = () => {
           if (!template) return null;
           
           return (
-            <div className="mb-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+            <div className="mb-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg relative">
+              <button
+                onClick={() => setSelectedTemplate(null)}
+                className="absolute right-2 top-2 rounded-full p-1 text-purple-200/80 hover:text-purple-100 hover:bg-purple-500/20 transition-colors"
+                aria-label={t.cancel}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
               <div className="flex items-start gap-2">
                 <div className="flex-shrink-0 mt-0.5">
                   <Sparkles className="h-4 w-4 text-purple-400" />
@@ -603,6 +592,37 @@ export const PromptComposer: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* Templates Modal */}
+    <Dialog.Root open={showTemplatesModal} onOpenChange={setShowTemplatesModal}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/55 backdrop-blur-sm z-50" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[min(90vw,26rem)] max-h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-gray-800 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-900 p-5 shadow-2xl focus:outline-none">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-600/20 text-purple-300">
+                <FileText className="h-4 w-4" />
+              </div>
+              <Dialog.Title className="text-lg font-semibold text-gray-100">
+                {t.templates}
+              </Dialog.Title>
+            </div>
+            <Dialog.Close asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-200 hover:bg-gray-800">
+                <X className="h-4 w-4" />
+              </Button>
+            </Dialog.Close>
+          </div>
+          <p className="mt-3 text-xs text-gray-500">
+            {t.clickToManageTemplates}
+          </p>
+          <div className="mt-4 h-[60vh] flex min-h-0">
+            <TemplatesView onTemplateSelect={() => setShowTemplatesModal(false)} />
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+
     {/* Prompt Hints Modal */}
     <PromptHints open={showHintsModal} onOpenChange={setShowHintsModal} />
     </>
