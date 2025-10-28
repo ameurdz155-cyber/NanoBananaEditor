@@ -7,6 +7,7 @@ import { cn } from '../utils/cn';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { Generation, Edit } from '../types';
 import { BoardsView } from './BoardsView';
+import { getTranslation } from '../i18n/translations';
 
 export const HistoryPanel: React.FC = () => {
   const {
@@ -20,7 +21,10 @@ export const HistoryPanel: React.FC = () => {
     setShowHistory,
     setCanvasImage,
     selectedTool,
+    language,
   } = useAppStore();
+
+  const t = getTranslation(language);
 
   const [activeTab, setActiveTab] = React.useState<'history' | 'boards'>('history');
 
@@ -99,8 +103,8 @@ export const HistoryPanel: React.FC = () => {
             <History className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-200">Your Creations</h3>
-            <p className="text-xs text-gray-500">{generations.length + edits.length} items</p>
+            <h3 className="text-sm font-semibold text-gray-200">{t.myCreations}</h3>
+            <p className="text-xs text-gray-500">{generations.length + edits.length} {t.items}</p>
           </div>
         </div>
         <Button
@@ -126,7 +130,7 @@ export const HistoryPanel: React.FC = () => {
           )}
         >
           <History className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-          History
+          {t.history}
         </button>
         <button
           onClick={() => setActiveTab('boards')}
@@ -138,7 +142,7 @@ export const HistoryPanel: React.FC = () => {
           )}
         >
           <Folder className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-          Boards
+          {t.boards}
         </button>
       </div>
 

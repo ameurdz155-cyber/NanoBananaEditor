@@ -9,50 +9,7 @@ import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
 import { TemplatesView, DEFAULT_TEMPLATES } from './TemplatesView';
 import * as Dialog from '@radix-ui/react-dialog';
-
-// Prompt templates
-const promptTemplates = [
-  { 
-    id: 'none',
-    name: 'None',
-    prompt: ''
-  },
-  {
-    id: 'landscape',
-    name: 'Landscape Photography',
-    prompt: 'A breathtaking landscape photograph of [subject], golden hour lighting, dramatic clouds, vibrant colors, ultra detailed, 8k resolution, professional photography'
-  },
-  {
-    id: 'portrait',
-    name: 'Portrait Photography',
-    prompt: 'Professional portrait photography of [subject], studio lighting, shallow depth of field, sharp focus on eyes, elegant pose, high quality, Canon EOS R5'
-  },
-  {
-    id: 'digital-art',
-    name: 'Digital Art',
-    prompt: 'Digital art illustration of [subject], vibrant colors, detailed, trending on artstation, concept art, smooth, sharp focus, illustration, art by artgerm and greg rutkowski'
-  },
-  {
-    id: 'photorealistic',
-    name: 'Photorealistic',
-    prompt: 'Photorealistic image of [subject], highly detailed, 8k uhd, high quality, cinematic lighting, professional photography, dslr'
-  },
-  {
-    id: 'anime',
-    name: 'Anime Style',
-    prompt: 'Anime style illustration of [subject], detailed, colorful, studio ghibli style, trending on pixiv, high quality artwork'
-  },
-  {
-    id: 'watercolor',
-    name: 'Watercolor Art',
-    prompt: 'Beautiful watercolor painting of [subject], soft colors, artistic, detailed, high quality, watercolor paper texture'
-  },
-  {
-    id: '3d-render',
-    name: '3D Render',
-    prompt: '3D render of [subject], octane render, unreal engine 5, highly detailed, volumetric lighting, 8k, photorealistic'
-  },
-];
+import { getTranslation } from '../i18n/translations';
 
 export const PromptComposer: React.FC = () => {
   const {
@@ -74,7 +31,10 @@ export const PromptComposer: React.FC = () => {
     apiKeyError,
     setApiKeyError,
     selectedTemplate,
+    language,
   } = useAppStore();
+
+  const t = getTranslation(language);
 
   const { generate } = useImageGeneration();
   const { edit } = useImageEditing();
@@ -218,8 +178,8 @@ export const PromptComposer: React.FC = () => {
 
   return (
     <>
-    <div className="w-80 lg:w-72 xl:w-80 h-full bg-gray-950 border-r border-gray-800 p-6 flex flex-col space-y-6 overflow-y-auto">
-      <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800">
+    <div className="w-80 lg:w-72 xl:w-80 h-full min-h-screen bg-gray-950 border-r border-gray-800 p-6 flex flex-col space-y-6 overflow-y-auto">
+      <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-200">Select Mode</h3>
@@ -290,10 +250,10 @@ export const PromptComposer: React.FC = () => {
             </div>
             <div>
               <span className="text-sm font-semibold text-gray-200 block">
-                {selectedTemplate !== 'none' ? selectedTemplate : 'Prompt Templates'}
+                {selectedTemplate !== 'none' ? selectedTemplate : t.templates}
               </span>
               <span className="text-xs text-gray-500">
-                {showTemplatesPanel ? 'Click to collapse' : 'Click to manage templates'}
+                {showTemplatesPanel ? t.clickToCollapse : t.clickToManageTemplates}
               </span>
             </div>
           </div>
@@ -312,7 +272,7 @@ export const PromptComposer: React.FC = () => {
       </div>
 
       {/* Prompt Input - Enhanced Card Design */}
-      <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition-all">
+      <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition-all flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
           <label className="text-sm font-semibold text-gray-200 flex items-center">
             <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mr-2"></span>
@@ -339,13 +299,13 @@ export const PromptComposer: React.FC = () => {
                   <Sparkles className="h-4 w-4 text-purple-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-purple-300 mb-1">Active Template: {template.name}</p>
+                  <p className="text-xs font-medium text-purple-300 mb-1">{t.activeTemplate}: {template.name}</p>
                   <p className="text-xs text-gray-300 break-words mb-2">
-                    <span className="text-purple-400 font-medium">Positive:</span> {template.positivePrompt}
+                    <span className="text-purple-400 font-medium">{t.positive}:</span> {template.positivePrompt}
                   </p>
                   {template.negativePrompt && (
                     <p className="text-xs text-gray-400 break-words">
-                      <span className="text-red-400 font-medium">Negative:</span> {template.negativePrompt}
+                      <span className="text-red-400 font-medium">{t.negative}:</span> {template.negativePrompt}
                     </p>
                   )}
                 </div>
@@ -357,7 +317,7 @@ export const PromptComposer: React.FC = () => {
         <p className="text-xs text-gray-500 mb-3">
           {selectedTool === 'generate' 
             ? selectedTemplate 
-              ? 'Enter your custom prompt (will be combined with the template above)'
+              ? t.enterCustomPrompt
               : 'Enter a prompt and Invoke.'
             : 'Describe the changes you want to make.'}
         </p>
@@ -386,12 +346,12 @@ export const PromptComposer: React.FC = () => {
             {isImproving ? (
               <>
                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-400 mr-2" />
-                <span>Improving...</span>
+                <span>{t.improving}</span>
               </>
             ) : (
               <>
                 <Sparkles className="h-3 w-3 mr-2" />
-                <span>Improve Prompt</span>
+                <span>{t.improvePrompt}</span>
               </>
             )}
           </Button>
@@ -504,7 +464,7 @@ export const PromptComposer: React.FC = () => {
       )}
 
       {/* Generate Button - Inspired by Reference UI */}
-      <div className="space-y-2">
+      <div className="space-y-2 flex-shrink-0">
         <Button
           onClick={handleGenerate}
           disabled={isGenerating || isValidating || !currentPrompt.trim()}
@@ -615,7 +575,7 @@ export const PromptComposer: React.FC = () => {
       </div>
 
       {/* Keyboard Shortcuts */}
-      <div className="pt-4 border-t border-gray-800">
+      <div className="pt-4 border-t border-gray-800 flex-shrink-0">
         <h4 className="text-xs font-medium text-gray-400 mb-2">Shortcuts</h4>
         <div className="space-y-1 text-xs text-gray-500">
           <div className="flex justify-between">

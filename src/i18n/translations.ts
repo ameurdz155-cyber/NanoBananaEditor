@@ -122,6 +122,53 @@ export interface Translations {
   // Info modal
   about: string;
   tipsHelp: string;
+  
+  // Info modal content
+  appDescription: string;
+  aiGeneration: string;
+  aiGenerationDesc: string;
+  smartEditing: string;
+  smartEditingDesc: string;
+  desktopOptimized: string;
+  desktopOptimizedDesc: string;
+  infiniteVariations: string;
+  infiniteVariationsDesc: string;
+  professionalQuality: string;
+  professionalQualityDesc: string;
+  advancedControls: string;
+  advancedControlsDesc: string;
+  
+  // Prompt Composer
+  promptTips: string;
+  hidePromptPanel: string;
+  showPromptPanel: string;
+  templates: string;
+  clickToManageTemplates: string;
+  clickToCollapse: string;
+  improvePrompt: string;
+  improving: string;
+  activeTemplate: string;
+  positive: string;
+  negative: string;
+  enterCustomPrompt: string;
+  
+  // History Panel tabs
+  boards: string;
+  myCreations: string;
+  images: string;
+  assets: string;
+  noImagesYet: string;
+  createImagesMessage: string;
+  
+  // Boards
+  createBoard: string;
+  renameBoard: string;
+  deleteBoard: string;
+  cannotDeleteDefault: string;
+  confirmDelete: string;
+  uploadImages: string;
+  removeFromBoard: string;
+  moveToBoard: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -247,6 +294,53 @@ export const translations: Record<Language, Translations> = {
     // Info modal
     about: 'About',
     tipsHelp: 'Tips & Help',
+    
+    // Info modal content
+    appDescription: 'Professional AI-powered image generation and editing for desktop',
+    aiGeneration: 'AI Generation',
+    aiGenerationDesc: 'Create stunning images from text descriptions',
+    smartEditing: 'Smart Editing',
+    smartEditingDesc: 'Intelligent image modifications with AI',
+    desktopOptimized: 'Desktop Optimized',
+    desktopOptimizedDesc: 'Designed for professional workflows',
+    infiniteVariations: 'Infinite Variations',
+    infiniteVariationsDesc: 'Generate unlimited creative possibilities',
+    professionalQuality: 'Professional Quality',
+    professionalQualityDesc: 'High-resolution output for any project',
+    advancedControls: 'Advanced Controls',
+    advancedControlsDesc: 'Fine-tune every aspect of generation',
+    
+    // Prompt Composer
+    promptTips: 'Prompt tips',
+    hidePromptPanel: 'Hide Prompt Panel',
+    showPromptPanel: 'Show Prompt Panel',
+    templates: 'Templates',
+    clickToManageTemplates: 'Click to manage templates',
+    clickToCollapse: 'Click to collapse',
+    improvePrompt: 'Improve Prompt',
+    improving: 'Improving...',
+    activeTemplate: 'Active Template',
+    positive: 'Positive',
+    negative: 'Negative',
+    enterCustomPrompt: 'Enter your custom prompt (will be combined with the template above)',
+    
+    // History Panel tabs
+    boards: 'Boards',
+    myCreations: 'My Creations',
+    images: 'Images',
+    assets: 'Assets',
+    noImagesYet: 'No generated images yet',
+    createImagesMessage: 'Create some images to see them here.',
+    
+    // Boards
+    createBoard: 'Create Board',
+    renameBoard: 'Rename Board',
+    deleteBoard: 'Delete Board',
+    cannotDeleteDefault: 'Cannot delete the default board',
+    confirmDelete: 'Are you sure you want to delete this board?',
+    uploadImages: 'Upload Images',
+    removeFromBoard: 'Remove from board',
+    moveToBoard: 'Move to board',
   },
   zh: {
     // Header
@@ -370,6 +464,53 @@ export const translations: Record<Language, Translations> = {
     // Info modal
     about: '关于',
     tipsHelp: '提示与帮助',
+    
+    // Info modal content
+    appDescription: '专业的AI驱动图像生成和编辑桌面应用',
+    aiGeneration: 'AI生成',
+    aiGenerationDesc: '从文字描述创造精美图像',
+    smartEditing: '智能编辑',
+    smartEditingDesc: '使用AI进行智能图像修改',
+    desktopOptimized: '桌面优化',
+    desktopOptimizedDesc: '专为专业工作流程设计',
+    infiniteVariations: '无限变化',
+    infiniteVariationsDesc: '生成无限创意可能性',
+    professionalQuality: '专业品质',
+    professionalQualityDesc: '适用于任何项目的高分辨率输出',
+    advancedControls: '高级控制',
+    advancedControlsDesc: '微调生成的每个方面',
+    
+    // Prompt Composer
+    promptTips: '提示技巧',
+    hidePromptPanel: '隐藏提示面板',
+    showPromptPanel: '显示提示面板',
+    templates: '模板',
+    clickToManageTemplates: '点击管理模板',
+    clickToCollapse: '点击折叠',
+    improvePrompt: '改进提示词',
+    improving: '改进中...',
+    activeTemplate: '活动模板',
+    positive: '正向',
+    negative: '负向',
+    enterCustomPrompt: '输入您的自定义提示词（将与上面的模板组合）',
+    
+    // History Panel tabs
+    boards: '画板',
+    myCreations: '我的创作',
+    images: '图片',
+    assets: '素材',
+    noImagesYet: '还没有生成图片',
+    createImagesMessage: '创建一些图片以在此处查看。',
+    
+    // Boards
+    createBoard: '创建画板',
+    renameBoard: '重命名画板',
+    deleteBoard: '删除画板',
+    cannotDeleteDefault: '无法删除默认画板',
+    confirmDelete: '您确定要删除此画板吗？',
+    uploadImages: '上传图片',
+    removeFromBoard: '从画板中移除',
+    moveToBoard: '移动到画板',
   },
 };
 

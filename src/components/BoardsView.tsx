@@ -4,6 +4,7 @@ import { Button } from './ui/Button';
 import { Folder, FolderOpen, Plus, ChevronDown, ChevronRight, Trash2, Edit2, Upload } from 'lucide-react';
 import { blobToBase64 } from '../utils/imageUtils';
 import { cn } from '../utils/cn';
+import { getTranslation } from '../i18n/translations';
 
 interface BoardsViewProps {
   generations: any[];
@@ -27,8 +28,11 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     updateBoard,
     deleteBoard,
     removeImageFromBoard,
-    moveImageToBoard
+    moveImageToBoard,
+    language,
   } = useAppStore();
+
+  const t = getTranslation(language);
 
   const [activeBoardImageMenu, setActiveBoardImageMenu] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = React.useState<'images' | 'assets'>('images');
@@ -84,7 +88,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   const handleRenameBoard = (boardId: string) => {
     const board = boards.find(b => b.id === boardId);
     if (!board) return;
-    const newName = prompt('Enter new name:', board.name);
+    const newName = prompt(t.renameBoard, board.name);
     if (newName && newName.trim()) {
       updateBoard(boardId, { name: newName.trim() });
     }
@@ -92,10 +96,10 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
 
   const handleDeleteBoard = (boardId: string) => {
     if (boardId === 'default') {
-      alert('Cannot delete the default board');
+      alert(t.cannotDeleteDefault);
       return;
     }
-    if (confirm('Are you sure you want to delete this board?')) {
+    if (confirm(t.confirmDelete)) {
       deleteBoard(boardId);
       if (selectedBoardId === boardId) {
         setSelectedBoardId(boards.length > 1 ? boards[0].id : null);
@@ -154,7 +158,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       {/* Boards Header */}
       <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-800 flex-shrink-0">
         <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-          Boards
+          {t.boards}
         </h4>
         <Button
           variant="ghost"
@@ -170,7 +174,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       <div className="flex-shrink-0 mb-3">
         {boards.length === 0 ? (
           <div className="text-center py-6 text-sm text-gray-500">
-            No boards yet. Create one to start organizing your images.
+            {t.noImagesYet}
           </div>
         ) : (
           <div className="space-y-1">
@@ -280,7 +284,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                 )}
                 onClick={() => setActiveTab('images')}
               >
-                Images
+                {t.images}
               </button>
               <button
                 className={cn(
@@ -291,7 +295,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                 )}
                 onClick={() => setActiveTab('assets')}
               >
-                Assets
+                {t.assets}
               </button>
             </div>
           </div>
@@ -305,8 +309,8 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                 </div>
                 <div className="text-xs text-gray-500">
                   {activeTab === 'assets'
-                    ? 'No assets uploaded yet. Click the upload button to add files.'
-                    : 'No generated images yet. Create some images to see them here.'}
+                    ? t.uploadImages
+                    : t.createImagesMessage}
                 </div>
               </div>
             ) : (
