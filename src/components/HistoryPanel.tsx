@@ -26,7 +26,7 @@ export const HistoryPanel: React.FC = () => {
 
   const t = getTranslation(language);
 
-  const [activeTab, setActiveTab] = React.useState<'history' | 'boards'>('history');
+  const [activeTab, setActiveTab] = React.useState<'history' | 'boards'>('boards');
 
   const [previewModal, setPreviewModal] = React.useState<{
     open: boolean;
