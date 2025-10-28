@@ -11,6 +11,7 @@ export interface Asset {
 export interface Generation {
   id: string;
   prompt: string;
+  negativePrompt?: string;
   parameters: {
     aspectRatio?: string;
     seed?: number;

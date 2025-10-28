@@ -87,6 +87,7 @@ export const validateApiKey = async (): Promise<{ valid: boolean; error?: string
 
 export interface GenerationRequest {
   prompt: string;
+  negativePrompt?: string;
   referenceImages?: string[]; // base64 array
   temperature?: number;
   seed?: number;
@@ -109,7 +110,13 @@ export interface SegmentationRequest {
 export class GeminiService {
   async generateImage(request: GenerationRequest): Promise<string[]> {
     try {
-      const contents: any[] = [{ text: request.prompt }];
+      // Combine prompt with negative prompt if provided
+      let fullPrompt = request.prompt;
+      if (request.negativePrompt && request.negativePrompt.trim()) {
+        fullPrompt = `${request.prompt}\n\nNegative prompt: ${request.negativePrompt}`;
+      }
+      
+      const contents: any[] = [{ text: fullPrompt }];
       
       // Add reference images if provided
       if (request.referenceImages && request.referenceImages.length > 0) {

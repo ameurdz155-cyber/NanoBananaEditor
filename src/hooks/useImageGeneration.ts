@@ -31,6 +31,7 @@ export const useImageGeneration = () => {
         const generation: Generation = {
           id: generateId(),
           prompt: request.prompt,
+          negativePrompt: request.negativePrompt,
           parameters: {
             aspectRatio: '1:1',
             seed: request.seed,
@@ -53,14 +54,23 @@ export const useImageGeneration = () => {
         addGeneration(generation);
 
         const store = useAppStore.getState();
-        let targetBoard = store.boards.find((board) => board.id === 'unassociated')
-          || store.boards.find((board) => board.id === 'default');
-
+        
+        // Use the selected board, or fall back to default board
+        let targetBoard = store.selectedBoardId 
+          ? store.boards.find((board) => board.id === store.selectedBoardId)
+          : null;
+        
+        // If no board is selected or selected board doesn't exist, use default
+        if (!targetBoard) {
+          targetBoard = store.boards.find((board) => board.id === 'default');
+        }
+        
+        // If default board doesn't exist, create it
         if (!targetBoard) {
           const newBoard: Board = {
-            id: 'unassociated',
-            name: 'Unassociated',
-            description: 'Images that are not assigned to a specific board yet',
+            id: 'default',
+            name: 'My Creations',
+            description: 'All your generated images',
             createdAt: Date.now(),
             updatedAt: Date.now(),
             imageIds: []
@@ -268,6 +278,37 @@ export const useImageEditing = () => {
         };
 
         addEdit(edit);
+        
+        // Add edited images to the selected board
+        const store = useAppStore.getState();
+        
+        // Use the selected board, or fall back to default board
+        let targetBoard = store.selectedBoardId 
+          ? store.boards.find((board) => board.id === store.selectedBoardId)
+          : null;
+        
+        // If no board is selected or selected board doesn't exist, use default
+        if (!targetBoard) {
+          targetBoard = store.boards.find((board) => board.id === 'default');
+        }
+        
+        // If default board doesn't exist, create it
+        if (!targetBoard) {
+          const newBoard: Board = {
+            id: 'default',
+            name: 'My Creations',
+            description: 'All your generated images',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            imageIds: []
+          };
+          store.addBoard(newBoard);
+          targetBoard = newBoard;
+        }
+
+        outputAssets.forEach((asset) => {
+          store.addImageToBoard(targetBoard!.id, asset.url);
+        });
         
         // Automatically load the edited image in the canvas
         const { selectEdit, selectGeneration } = useAppStore.getState();

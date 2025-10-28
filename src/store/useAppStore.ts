@@ -19,6 +19,7 @@ interface AppState {
   
   // Boards management
   boards: Board[];
+  selectedBoardId: string | null;
   
   // Canvas state
   canvasImage: string | null;
@@ -39,6 +40,7 @@ interface AppState {
   currentPrompt: string;
   temperature: number;
   seed: number | null;
+  selectedTemplate: string | null;
   
   // History and variants
   selectedGenerationId: string | null;
@@ -77,6 +79,7 @@ interface AppState {
   setCurrentPrompt: (prompt: string) => void;
   setTemperature: (temp: number) => void;
   setSeed: (seed: number | null) => void;
+  setSelectedTemplate: (template: string | null) => void;
   
   addGeneration: (generation: Generation) => void;
   addEdit: (edit: Edit) => void;
@@ -98,6 +101,7 @@ interface AppState {
   
   // Boards actions
   setBoards: (boards: Board[]) => void;
+  setSelectedBoardId: (boardId: string | null) => void;
   addBoard: (board: Board) => void;
   updateBoard: (boardId: string, updates: Partial<Board>) => void;
   deleteBoard: (boardId: string) => void;
@@ -123,6 +127,7 @@ export const useAppStore = create<AppState>()(
           imageIds: []
         }
       ],
+      selectedBoardId: 'default',
       
       canvasImage: null,
       canvasZoom: 1,
@@ -139,6 +144,7 @@ export const useAppStore = create<AppState>()(
       currentPrompt: '',
       temperature: 0.7,
       seed: null,
+      selectedTemplate: null,
       
       selectedGenerationId: null,
       selectedEditId: null,
@@ -187,6 +193,7 @@ export const useAppStore = create<AppState>()(
       setCurrentPrompt: (prompt) => set({ currentPrompt: prompt }),
       setTemperature: (temp) => set({ temperature: temp }),
       setSeed: (seed) => set({ seed: seed }),
+      setSelectedTemplate: (template) => set({ selectedTemplate: template }),
       
       addGeneration: (generation) => set((state) => ({
         currentProject: state.currentProject ? {
@@ -224,6 +231,7 @@ export const useAppStore = create<AppState>()(
       
       // Boards actions
       setBoards: (boards) => set({ boards }),
+      setSelectedBoardId: (boardId) => set({ selectedBoardId: boardId }),
       
       addBoard: (board) => set((state) => ({
         boards: [...state.boards, board]

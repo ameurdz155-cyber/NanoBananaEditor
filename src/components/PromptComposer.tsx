@@ -3,10 +3,12 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Upload, Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, FolderPlus, ArrowRightLeft, Folder } from 'lucide-react';
+import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
+import { TemplatesView, DEFAULT_TEMPLATES } from './TemplatesView';
+import * as Dialog from '@radix-ui/react-dialog';
 
 // Prompt templates
 const promptTemplates = [
@@ -63,11 +65,7 @@ export const PromptComposer: React.FC = () => {
     seed,
     setSeed,
     isGenerating,
-    uploadedImages,
-    removeUploadedImage,
     clearUploadedImages,
-    editReferenceImages,
-    removeEditReferenceImage,
     clearEditReferenceImages,
     setCanvasImage,
     showPromptPanel,
@@ -75,11 +73,7 @@ export const PromptComposer: React.FC = () => {
     clearBrushStrokes,
     apiKeyError,
     setApiKeyError,
-    boards,
-    addBoard,
-    addImageToBoard,
-    removeImageFromBoard,
-    moveImageToBoard,
+    selectedTemplate,
   } = useAppStore();
 
   const { generate } = useImageGeneration();
@@ -89,11 +83,10 @@ export const PromptComposer: React.FC = () => {
   const [showHintsModal, setShowHintsModal] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState('none');
+  const [showTemplatesPanel, setShowTemplatesPanel] = useState(false);
   const [isImproving, setIsImproving] = useState(false);
   const [improvedPrompt, setImprovedPrompt] = useState<string | null>(null);
   const templateDropdownRef = useRef<HTMLDivElement>(null);
-  const [showBoardMenu, setShowBoardMenu] = useState<number | null>(null);
 
   // Clean up images when switching tools
   React.useEffect(() => {
@@ -117,12 +110,6 @@ export const PromptComposer: React.FC = () => {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showTemplateDropdown]);
-
-  const handleTemplateSelect = (template: { id: string; name: string; prompt: string }) => {
-    setSelectedTemplate(template.name);
-    setCurrentPrompt(template.prompt);
-    setShowTemplateDropdown(false);
-  };
 
   const handleImprovePrompt = async () => {
     if (!currentPrompt.trim()) return;
@@ -152,26 +139,6 @@ export const PromptComposer: React.FC = () => {
     setImprovedPrompt(null);
   };
 
-  const isImageInBoard = (boardId: string, imageUrl: string) => {
-    const board = boards.find(b => b.id === boardId);
-    return board?.imageIds.includes(imageUrl) || false;
-  };
-
-  const handleCreateBoard = () => {
-    const name = prompt('Enter board name:');
-    if (name && name.trim()) {
-      const newBoard = {
-        id: `board-${Date.now()}`,
-        name: name.trim(),
-        description: '',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        imageIds: []
-      };
-      addBoard(newBoard);
-    }
-  };
-
   const handleGenerate = async () => {
     if (!currentPrompt.trim()) return;
     
@@ -188,14 +155,24 @@ export const PromptComposer: React.FC = () => {
       return;
     }
     
+    // Get the selected template if any
+    const template = selectedTemplate ? DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) : null;
+    
+    // Combine user prompt with template
+    let finalPrompt = currentPrompt;
+    let negativePrompt = '';
+    
+    if (template) {
+      // Replace {prompt} placeholder in template with user's actual prompt
+      finalPrompt = template.positivePrompt.replace('{prompt}', currentPrompt);
+      negativePrompt = template.negativePrompt || '';
+    }
+    
     if (selectedTool === 'generate') {
-      const referenceImages = uploadedImages
-        .filter(img => img.includes('base64,'))
-        .map(img => img.split('base64,')[1]);
-        
       generate({
-        prompt: currentPrompt,
-        referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+        prompt: finalPrompt,
+        negativePrompt: negativePrompt || undefined,
+        referenceImages: undefined,
         temperature,
         seed: seed || undefined
       });
@@ -301,164 +278,10 @@ export const PromptComposer: React.FC = () => {
         </div>
       </div>
 
-      {/* Artboards Section - Images Generated */}
-      <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center">
-              <Upload className="h-5 w-5 text-gray-400" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-200">Artboards</h3>
-              <p className="text-xs text-gray-500">Images generated</p>
-            </div>
-          </div>
-          <span className="text-xs px-2 py-1 bg-gray-800 rounded text-gray-400">
-            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length} / 2
-          </span>
-        </div>
-        
-        {/* Artboards Grid */}
-        {((selectedTool === 'generate' && uploadedImages.length > 0) || 
-          (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={image}
-                  alt={`Artboard ${index + 1}`}
-                  className="w-full h-24 object-cover rounded-lg border-2 border-gray-700 group-hover:border-purple-500 transition-colors"
-                />
-                
-                {/* Action Buttons */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 bg-white/10 hover:bg-white/20 backdrop-blur-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowBoardMenu(showBoardMenu === index ? null : index);
-                      }}
-                      title="Add to board"
-                    >
-                      <FolderPlus className="h-4 w-4 text-white" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 bg-white/10 hover:bg-red-500/50 backdrop-blur-sm"
-                      onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
-                      title="Remove"
-                    >
-                      <X className="h-4 w-4 text-white" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Board Selection Menu */}
-                {showBoardMenu === index && (
-                  <div className="absolute inset-0 bg-black/95 backdrop-blur-sm rounded-lg z-10 p-2 overflow-y-auto">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-gray-200">Manage Board</span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowBoardMenu(null);
-                        }}
-                        className="text-gray-400 hover:text-gray-200"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                    
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {boards.map(board => {
-                        const isInBoard = isImageInBoard(board.id, image);
-                        return (
-                          <div key={board.id} className="space-y-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (isInBoard) {
-                                  removeImageFromBoard(board.id, image);
-                                } else {
-                                  addImageToBoard(board.id, image);
-                                }
-                              }}
-                              className={cn(
-                                "w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center justify-between group",
-                                isInBoard 
-                                  ? "bg-purple-500/30 text-purple-200 hover:bg-purple-500/40" 
-                                  : "text-gray-300 hover:bg-gray-800"
-                              )}
-                            >
-                              <span className="flex items-center space-x-1.5 truncate">
-                                {board.emoji ? (
-                                  <span>{board.emoji}</span>
-                                ) : (
-                                  <Folder className="h-3 w-3 text-gray-500" />
-                                )}
-                                <span className="truncate">{board.name}</span>
-                              </span>
-                              <div className="flex items-center space-x-1">
-                                {isInBoard && <span className="text-purple-300 text-sm">✓</span>}
-                                {!isInBoard && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      moveImageToBoard(board.id, image);
-                                      setShowBoardMenu(null);
-                                    }}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                    title="Move to this board only"
-                                  >
-                                    <ArrowRightLeft className="h-3 w-3 text-gray-500 hover:text-blue-400" />
-                                  </button>
-                                )}
-                              </div>
-                            </button>
-                          </div>
-                        );
-                      })}
-                      
-                      {/* Create New Board Button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCreateBoard();
-                          setShowBoardMenu(null);
-                        }}
-                        className="w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center space-x-1.5 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 mt-2"
-                      >
-                        <FolderPlus className="h-3 w-3" />
-                        <span>Create New Board</span>
-                      </button>
-                    </div>
-                    
-                    {/* Action Hint */}
-                    <div className="mt-2 pt-2 border-t border-gray-700">
-                      <p className="text-[10px] text-gray-500 text-center">
-                        Click to add/remove • Hover & click → to move
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-xs px-2 py-1 rounded text-white font-medium">
-                  Artboard {index + 1}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Prompt Template Selector */}
-      <div className="bg-gray-900/50 rounded-xl border border-gray-800 hover:border-gray-700 transition-all relative" ref={templateDropdownRef}>
+      <div className="bg-gray-900/50 rounded-xl border border-gray-800 hover:border-gray-700 transition-all">
         <button
-          onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
+          onClick={() => setShowTemplatesPanel(!showTemplatesPanel)}
           className="w-full p-4 flex items-center justify-between text-left group hover:bg-gray-900/30 transition-all rounded-xl"
         >
           <div className="flex items-center space-x-3">
@@ -467,59 +290,23 @@ export const PromptComposer: React.FC = () => {
             </div>
             <div>
               <span className="text-sm font-semibold text-gray-200 block">
-                {selectedTemplate ? selectedTemplate : 'Choose Prompt Template'}
+                {selectedTemplate !== 'none' ? selectedTemplate : 'Prompt Templates'}
               </span>
-              {selectedTemplate && (
-                <span className="text-xs text-gray-500">Click to change template</span>
-              )}
+              <span className="text-xs text-gray-500">
+                {showTemplatesPanel ? 'Click to collapse' : 'Click to manage templates'}
+              </span>
             </div>
           </div>
           <ChevronDown className={cn(
             "h-5 w-5 text-gray-400 transition-transform duration-200",
-            showTemplateDropdown && "rotate-180"
+            showTemplatesPanel && "rotate-180"
           )} />
         </button>
 
-        {/* Dropdown Menu */}
-        {showTemplateDropdown && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
-            <div className="p-2 space-y-1">
-              {promptTemplates.map((template) => (
-                <button
-                  key={template.id}
-                  onClick={() => handleTemplateSelect(template)}
-                  className={cn(
-                    "w-full text-left p-3 rounded-lg transition-all duration-200 group",
-                    selectedTemplate === template.name
-                      ? "bg-purple-500/20 border border-purple-500/50"
-                      : "hover:bg-gray-800 border border-transparent"
-                  )}
-                >
-                  <div className="flex items-start space-x-3">
-                    <FileText className={cn(
-                      "h-5 w-5 flex-shrink-0 mt-0.5",
-                      selectedTemplate === template.name ? "text-purple-400" : "text-gray-400 group-hover:text-gray-300"
-                    )} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={cn(
-                          "text-sm font-semibold",
-                          selectedTemplate === template.name ? "text-purple-300" : "text-gray-200"
-                        )}>
-                          {template.name}
-                        </span>
-                        {selectedTemplate === template.name && (
-                          <span className="text-xs text-purple-400">✓ Selected</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-400 line-clamp-2">
-                        {template.prompt}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+        {/* Templates Panel */}
+        {showTemplatesPanel && (
+          <div className="border-t border-gray-800 p-4 max-h-96 overflow-y-auto">
+            <TemplatesView onTemplateSelect={() => setShowTemplatesPanel(false)} />
           </div>
         )}
       </div>
@@ -539,9 +326,39 @@ export const PromptComposer: React.FC = () => {
             <HelpCircle className="h-4 w-4" />
           </button>
         </div>
+        
+        {/* Template Instruction */}
+        {selectedTemplate && (() => {
+          const template = selectedTemplate ? DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) : null;
+          if (!template) return null;
+          
+          return (
+            <div className="mb-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+              <div className="flex items-start gap-2">
+                <div className="flex-shrink-0 mt-0.5">
+                  <Sparkles className="h-4 w-4 text-purple-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-purple-300 mb-1">Active Template: {template.name}</p>
+                  <p className="text-xs text-gray-300 break-words mb-2">
+                    <span className="text-purple-400 font-medium">Positive:</span> {template.positivePrompt}
+                  </p>
+                  {template.negativePrompt && (
+                    <p className="text-xs text-gray-400 break-words">
+                      <span className="text-red-400 font-medium">Negative:</span> {template.negativePrompt}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+        
         <p className="text-xs text-gray-500 mb-3">
           {selectedTool === 'generate' 
-            ? 'Enter a prompt and Invoke.'
+            ? selectedTemplate 
+              ? 'Enter your custom prompt (will be combined with the template above)'
+              : 'Enter a prompt and Invoke.'
             : 'Describe the changes you want to make.'}
         </p>
         <Textarea
@@ -549,20 +366,22 @@ export const PromptComposer: React.FC = () => {
           onChange={(e) => setCurrentPrompt(e.target.value)}
           placeholder={
             selectedTool === 'generate'
-              ? 'A serene mountain landscape at sunset with a lake reflecting the golden sky, photorealistic, detailed...'
+              ? selectedTemplate
+                ? 'a majestic dragon, sunset lighting...'
+                : 'A serene mountain landscape at sunset with a lake reflecting the golden sky, photorealistic, detailed...'
               : 'Make the sky more dramatic, add storm clouds, enhance lighting...'
           }
           className="min-h-[120px] resize-none bg-gray-800 border-gray-700 focus:border-purple-500 transition-colors"
         />
         
         {/* Improve Prompt Button */}
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleImprovePrompt}
-            disabled={isImproving || !currentPrompt.trim() || !!improvedPrompt}
-            className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border-purple-500/30"
+            disabled={isImproving || !currentPrompt.trim()}
+            className="w-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border-purple-500/30"
           >
             {isImproving ? (
               <>
@@ -578,42 +397,64 @@ export const PromptComposer: React.FC = () => {
           </Button>
         </div>
         
-        {/* Improved Prompt Preview */}
-        {improvedPrompt && (
-          <div className="mt-3 p-3 bg-gradient-to-br from-purple-900/30 to-pink-900/30 border border-purple-500/30 rounded-lg">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="h-4 w-4 text-purple-400" />
-                <span className="text-xs font-semibold text-purple-300">Improved Prompt</span>
+        {/* Improved Prompt Modal */}
+        <Dialog.Root open={!!improvedPrompt} onOpenChange={(open) => !open && handleRejectImprovedPrompt()}>
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />
+            <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-purple-500/30 rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto z-50 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-purple-600/20 rounded-lg">
+                    <Sparkles className="h-5 w-5 text-purple-400" />
+                  </div>
+                  <Dialog.Title className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                    Improved Prompt
+                  </Dialog.Title>
+                </div>
+                <Dialog.Close asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-800">
+                    <X className="h-5 w-5" />
+                  </Button>
+                </Dialog.Close>
               </div>
-              <button
-                onClick={handleRejectImprovedPrompt}
-                className="text-gray-400 hover:text-gray-300 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="text-sm text-gray-200 mb-3 leading-relaxed">{improvedPrompt}</p>
-            <div className="flex space-x-2">
-              <Button
-                size="sm"
-                onClick={handleAcceptImprovedPrompt}
-                className="flex-1 bg-purple-600 hover:bg-purple-700"
-              >
-                <Check className="h-3 w-3 mr-1" />
-                Accept
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleRejectImprovedPrompt}
-                className="flex-1"
-              >
-                Reject
-              </Button>
-            </div>
-          </div>
-        )}
+              
+              <div className="space-y-4">
+                {/* Original Prompt */}
+                <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                  <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Original Prompt</h4>
+                  <p className="text-sm text-gray-300 leading-relaxed">{currentPrompt}</p>
+                </div>
+                
+                {/* Improved Prompt */}
+                <div className="p-4 bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-lg border border-purple-500/30">
+                  <h4 className="text-xs font-semibold text-purple-300 mb-2 uppercase tracking-wider">Improved Version</h4>
+                  <p className="text-sm text-gray-200 leading-relaxed">{improvedPrompt}</p>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex space-x-3 pt-2">
+                  <Button
+                    size="lg"
+                    onClick={handleAcceptImprovedPrompt}
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold"
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    Accept & Use This
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={handleRejectImprovedPrompt}
+                    className="flex-1 border-gray-600 hover:bg-gray-800"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Keep Original
+                  </Button>
+                </div>
+              </div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
         
         {/* Prompt Quality Indicator */}
         <div className="mt-3 flex items-center justify-between text-xs">

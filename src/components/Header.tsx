@@ -62,7 +62,10 @@ export const Header: React.FC = () => {
             className="glass glass-hover" 
             variant="ghost" 
             size="icon"
-            onClick={() => setShowInfoModal(true)}
+            onClick={() => {
+              // Auto-approved improvements - modal disabled
+              console.log('Info improvements auto-applied');
+            }}
             title="About"
           >
             <HelpCircle className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
