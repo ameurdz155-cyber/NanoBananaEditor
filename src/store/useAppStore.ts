@@ -148,7 +148,7 @@ export const useAppStore = create<AppState>()(
       
       selectedGenerationId: null,
       selectedEditId: null,
-      showHistory: false,
+      showHistory: true,
       
       showPromptPanel: true,
       
