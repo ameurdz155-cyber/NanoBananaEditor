@@ -544,8 +544,8 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 />
               </div>
 
-              {/* Image URL */}
-              <div>
+              {/* Image URL - Hidden to show only emoji icons */}
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   Thumbnail Image URL (Optional)
                 </label>
@@ -568,7 +568,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     <span className="text-xs text-gray-500">Preview</span>
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {/* Positive Prompt */}
               <div>

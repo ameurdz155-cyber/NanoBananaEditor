@@ -154,7 +154,7 @@ export const useAppStore = create<AppState>()(
       
       selectedTool: 'generate',
       
-      language: (typeof localStorage !== 'undefined' && localStorage.getItem('ai-pod-language') as Language) || 'en',
+      language: (typeof localStorage !== 'undefined' && localStorage.getItem('ai-pod-language') as Language) || 'zh',
       
       // API Key state
       apiKey: null,

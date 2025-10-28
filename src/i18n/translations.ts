@@ -151,6 +151,11 @@ export interface Translations {
   positive: string;
   negative: string;
   enterCustomPrompt: string;
+  improvedPromptTitle: string;
+  originalPrompt: string;
+  improvedVersion: string;
+  acceptAndUse: string;
+  keepOriginal: string;
   
   // History Panel tabs
   boards: string;
@@ -169,6 +174,9 @@ export interface Translations {
   uploadImages: string;
   removeFromBoard: string;
   moveToBoard: string;
+  boardName: string;
+  enterBoardName: string;
+  create: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -323,6 +331,11 @@ export const translations: Record<Language, Translations> = {
     positive: 'Positive',
     negative: 'Negative',
     enterCustomPrompt: 'Enter your custom prompt (will be combined with the template above)',
+    improvedPromptTitle: 'Improved Prompt',
+    originalPrompt: 'Original Prompt',
+    improvedVersion: 'Improved Version',
+    acceptAndUse: 'Accept & Use This',
+    keepOriginal: 'Keep Original',
     
     // History Panel tabs
     boards: 'Boards',
@@ -341,6 +354,9 @@ export const translations: Record<Language, Translations> = {
     uploadImages: 'Upload Images',
     removeFromBoard: 'Remove from board',
     moveToBoard: 'Move to board',
+    boardName: 'Board Name',
+    enterBoardName: 'Enter board name...',
+    create: 'Create',
   },
   zh: {
     // Header
@@ -493,6 +509,11 @@ export const translations: Record<Language, Translations> = {
     positive: '正向',
     negative: '负向',
     enterCustomPrompt: '输入您的自定义提示词（将与上面的模板组合）',
+    improvedPromptTitle: '改进的提示词',
+    originalPrompt: '原始提示词',
+    improvedVersion: '改进版本',
+    acceptAndUse: '接受并使用',
+    keepOriginal: '保持原样',
     
     // History Panel tabs
     boards: '画板',
@@ -511,6 +532,9 @@ export const translations: Record<Language, Translations> = {
     uploadImages: '上传图片',
     removeFromBoard: '从画板中移除',
     moveToBoard: '移动到画板',
+    boardName: '画板名称',
+    enterBoardName: '输入画板名称...',
+    create: '创建',
   },
 };
 

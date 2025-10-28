@@ -5,6 +5,7 @@ import { Button } from './ui/Button';
 import { ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Sparkles } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { saveImageWithDialog } from '../utils/fileSaver';
+import { getTranslation } from '../i18n/translations';
 
 export const ImageCanvas: React.FC = () => {
   const {
@@ -21,8 +22,11 @@ export const ImageCanvas: React.FC = () => {
     selectedTool,
     isGenerating,
     brushSize,
-    setBrushSize
+    setBrushSize,
+    language,
   } = useAppStore();
+
+  const t = getTranslation(language);
 
   const stageRef = useRef<any>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -225,13 +229,13 @@ export const ImageCanvas: React.FC = () => {
               className={cn(showMasks && 'bg-purple-500/10 border-purple-500/50')}
             >
               {showMasks ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              <span className="hidden sm:inline ml-2">Masks</span>
+              <span className="hidden sm:inline ml-2">{t.masks}</span>
             </Button>
             
             {canvasImage && (
               <Button variant="secondary" size="sm" onClick={handleSave}>
                 <Save className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Save</span>
+                <span className="hidden sm:inline">{t.save}</span>
               </Button>
             )}
           </div>
@@ -253,17 +257,17 @@ export const ImageCanvas: React.FC = () => {
                 </div>
               </div>
               <h2 className="text-3xl font-bold text-gradient mb-3">
-                Create with AI
+                {t.createWithAI}
               </h2>
               <p className="text-gray-400 text-base leading-relaxed mb-6">
                 {selectedTool === 'generate' 
-                  ? 'Enter your prompt to generate stunning images powered by Gemini AI'
-                  : 'Upload an image to start editing with AI assistance'
+                  ? t.enterPromptToGenerate
+                  : t.uploadToStartEditing
                 }
               </p>
               <div className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg">
                 <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"></div>
-                <span className="text-sm text-purple-300">Ready to create</span>
+                <span className="text-sm text-purple-300">{t.readyToCreate}</span>
               </div>
             </div>
           </div>
@@ -273,7 +277,7 @@ export const ImageCanvas: React.FC = () => {
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mb-4" />
-              <p className="text-gray-300">Creating your image...</p>
+              <p className="text-gray-300">{t.creatingYourImage}</p>
             </div>
           </div>
         )}

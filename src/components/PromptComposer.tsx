@@ -153,9 +153,9 @@ export const PromptComposer: React.FC = () => {
   };
 
   const tools = [
-    { id: 'generate', icon: Wand2, label: 'Generate', description: 'Create from text' },
-    { id: 'edit', icon: Edit3, label: 'Edit', description: 'Modify existing' },
-    { id: 'mask', icon: MousePointer, label: 'Select', description: 'Click to select' },
+    { id: 'generate', icon: Wand2, label: t.generate, description: t.createFromText },
+    { id: 'edit', icon: Edit3, label: t.edit, description: t.modifyExisting },
+    { id: 'mask', icon: MousePointer, label: t.select, description: t.clickToSelect },
   ] as const;
 
   if (!showPromptPanel) {
@@ -164,7 +164,7 @@ export const PromptComposer: React.FC = () => {
         <button
           onClick={() => setShowPromptPanel(true)}
           className="w-6 h-16 bg-gray-800 hover:bg-gray-700 rounded-r-lg border border-l-0 border-gray-700 flex items-center justify-center transition-colors group"
-          title="Show Prompt Panel"
+          title={t.showPromptPanel}
         >
           <div className="flex flex-col space-y-1">
             <div className="w-1 h-1 bg-gray-500 group-hover:bg-gray-400 rounded-full"></div>
@@ -182,8 +182,8 @@ export const PromptComposer: React.FC = () => {
       <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-sm font-semibold text-gray-200">Select Mode</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Choose how you want to create</p>
+            <h3 className="text-sm font-semibold text-gray-200">{t.selectMode}</h3>
+            <p className="text-xs text-gray-500 mt-0.5">{t.chooseHowToCreate}</p>
           </div>
           <div className="flex items-center space-x-1">
             <Button
@@ -191,7 +191,7 @@ export const PromptComposer: React.FC = () => {
               size="icon"
               onClick={() => setShowHintsModal(true)}
               className="h-7 w-7 hover:bg-gray-800"
-              title="Tips & Help"
+              title={t.promptTips}
             >
               <HelpCircle className="h-4 w-4" />
             </Button>
@@ -200,7 +200,7 @@ export const PromptComposer: React.FC = () => {
               size="icon"
               onClick={() => setShowPromptPanel(false)}
               className="h-7 w-7 hover:bg-gray-800"
-              title="Hide Prompt Panel"
+              title={t.hidePromptPanel}
             >
               ×
             </Button>
@@ -276,12 +276,12 @@ export const PromptComposer: React.FC = () => {
         <div className="flex items-center justify-between mb-3">
           <label className="text-sm font-semibold text-gray-200 flex items-center">
             <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mr-2"></span>
-            {selectedTool === 'generate' ? 'Generate from Text' : 'Edit Instructions'}
+            {selectedTool === 'generate' ? t.generateFromText : t.editInstructions}
           </label>
           <button 
             onClick={() => setShowHintsModal(true)}
             className="text-gray-400 hover:text-gray-300 transition-colors"
-            title="Prompt tips"
+            title={t.promptTips}
           >
             <HelpCircle className="h-4 w-4" />
           </button>
@@ -318,8 +318,8 @@ export const PromptComposer: React.FC = () => {
           {selectedTool === 'generate' 
             ? selectedTemplate 
               ? t.enterCustomPrompt
-              : 'Enter a prompt and Invoke.'
-            : 'Describe the changes you want to make.'}
+              : t.enterPromptAndInvoke
+            : t.describeChanges}
         </p>
         <Textarea
           value={currentPrompt}
@@ -327,9 +327,9 @@ export const PromptComposer: React.FC = () => {
           placeholder={
             selectedTool === 'generate'
               ? selectedTemplate
-                ? 'a majestic dragon, sunset lighting...'
-                : 'A serene mountain landscape at sunset with a lake reflecting the golden sky, photorealistic, detailed...'
-              : 'Make the sky more dramatic, add storm clouds, enhance lighting...'
+                ? t.promptPlaceholderGenerate
+                : t.promptPlaceholderGenerate
+              : t.promptPlaceholderEdit
           }
           className="min-h-[120px] resize-none bg-gray-800 border-gray-700 focus:border-purple-500 transition-colors"
         />
@@ -368,7 +368,7 @@ export const PromptComposer: React.FC = () => {
                     <Sparkles className="h-5 w-5 text-purple-400" />
                   </div>
                   <Dialog.Title className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                    Improved Prompt
+                    {t.improvedPromptTitle}
                   </Dialog.Title>
                 </div>
                 <Dialog.Close asChild>
@@ -381,13 +381,13 @@ export const PromptComposer: React.FC = () => {
               <div className="space-y-4">
                 {/* Original Prompt */}
                 <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                  <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Original Prompt</h4>
+                  <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">{t.originalPrompt}</h4>
                   <p className="text-sm text-gray-300 leading-relaxed">{currentPrompt}</p>
                 </div>
                 
                 {/* Improved Prompt */}
                 <div className="p-4 bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-lg border border-purple-500/30">
-                  <h4 className="text-xs font-semibold text-purple-300 mb-2 uppercase tracking-wider">Improved Version</h4>
+                  <h4 className="text-xs font-semibold text-purple-300 mb-2 uppercase tracking-wider">{t.improvedVersion}</h4>
                   <p className="text-sm text-gray-200 leading-relaxed">{improvedPrompt}</p>
                 </div>
                 
@@ -399,7 +399,7 @@ export const PromptComposer: React.FC = () => {
                     className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold"
                   >
                     <Check className="h-4 w-4 mr-2" />
-                    Accept & Use This
+                    {t.acceptAndUse}
                   </Button>
                   <Button
                     size="lg"
@@ -408,7 +408,7 @@ export const PromptComposer: React.FC = () => {
                     className="flex-1 border-gray-600 hover:bg-gray-800"
                   >
                     <X className="h-4 w-4 mr-2" />
-                    Keep Original
+                    {t.keepOriginal}
                   </Button>
                 </div>
               </div>
@@ -422,21 +422,21 @@ export const PromptComposer: React.FC = () => {
             {currentPrompt.length < 20 ? (
               <>
                 <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-red-400">Needs more detail</span>
+                <span className="text-red-400">{t.needsMoreDetail}</span>
               </>
             ) : currentPrompt.length < 50 ? (
               <>
                 <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                <span className="text-yellow-400">Good prompt</span>
+                <span className="text-yellow-400">{t.goodPrompt}</span>
               </>
             ) : (
               <>
                 <div className="h-2 w-2 rounded-full bg-green-500" />
-                <span className="text-green-400">Excellent prompt</span>
+                <span className="text-green-400">{t.excellentPrompt}</span>
               </>
             )}
           </div>
-          <span className="text-gray-500">{currentPrompt.length} characters</span>
+          <span className="text-gray-500">{currentPrompt.length} {t.characters}</span>
         </div>
       </div>
 
@@ -485,13 +485,13 @@ export const PromptComposer: React.FC = () => {
             <div className="flex items-center justify-center">
               <Wand2 className="h-5 w-5 mr-2" />
               <span className="text-white">
-                {selectedTool === 'generate' ? 'Invoke' : 'Apply Edit'}
+                {selectedTool === 'generate' ? t.invoke : t.applyEdit}
               </span>
             </div>
           )}
         </Button>
         <p className="text-xs text-center text-gray-500">
-          Press <kbd className="px-1.5 py-0.5 bg-gray-800 rounded text-gray-400">Ctrl + Enter</kbd> to generate
+          {t.pressCtrlEnter}
         </p>
       </div>
 
@@ -502,7 +502,7 @@ export const PromptComposer: React.FC = () => {
           className="flex items-center text-sm text-gray-400 hover:text-gray-300 transition-colors duration-200"
         >
           {showAdvanced ? <ChevronDown className="h-4 w-4 mr-1" /> : <ChevronRight className="h-4 w-4 mr-1" />}
-          {showAdvanced ? 'Hide' : 'Show'} Advanced Controls
+          {showAdvanced ? t.hideAdvancedControls : t.showAdvancedControls}
         </button>
         
         <button
@@ -510,13 +510,13 @@ export const PromptComposer: React.FC = () => {
           className="flex items-center text-sm text-gray-400 hover:text-red-400 transition-colors duration-200 mt-2"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
-          Clear Session
+          {t.clearSession}
         </button>
         
         {showClearConfirm && (
           <div className="mt-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
             <p className="text-xs text-gray-300 mb-3">
-              Are you sure you want to clear this session? This will remove all uploads, prompts, and canvas content.
+              {t.clearSessionConfirm}
             </p>
             <div className="flex space-x-2">
               <Button
@@ -525,7 +525,7 @@ export const PromptComposer: React.FC = () => {
                 onClick={handleClearSession}
                 className="flex-1"
               >
-                Yes, Clear
+                {t.yesClear}
               </Button>
               <Button
                 variant="outline"
@@ -533,7 +533,7 @@ export const PromptComposer: React.FC = () => {
                 onClick={() => setShowClearConfirm(false)}
                 className="flex-1"
               >
-                Cancel
+                {t.cancel}
               </Button>
             </div>
           </div>
@@ -576,30 +576,30 @@ export const PromptComposer: React.FC = () => {
 
       {/* Keyboard Shortcuts */}
       <div className="pt-4 border-t border-gray-800 flex-shrink-0">
-        <h4 className="text-xs font-medium text-gray-400 mb-2">Shortcuts</h4>
+        <h4 className="text-xs font-medium text-gray-400 mb-2">{t.shortcuts}</h4>
         <div className="space-y-1 text-xs text-gray-500">
           <div className="flex justify-between">
-            <span>Save Image</span>
+            <span>{t.saveImage}</span>
             <span>Ctrl + S</span>
           </div>
           <div className="flex justify-between">
-            <span>Generate</span>
+            <span>{t.generate}</span>
             <span>Ctrl + Enter</span>
           </div>
           <div className="flex justify-between">
-            <span>Re-roll</span>
+            <span>{t.reRoll}</span>
             <span>Shift + R</span>
           </div>
           <div className="flex justify-between">
-            <span>Edit mode</span>
+            <span>{t.editMode}</span>
             <span>E</span>
           </div>
           <div className="flex justify-between">
-            <span>History</span>
+            <span>{t.history}</span>
             <span>H</span>
           </div>
           <div className="flex justify-between">
-            <span>Toggle Panel</span>
+            <span>{t.togglePanel}</span>
             <span>P</span>
           </div>
         </div>
