@@ -322,13 +322,13 @@ export const PromptComposer: React.FC = () => {
             <div className="space-y-1.5">
               <p className="text-xs text-cyan-400 font-medium flex items-center">
                 <Sparkles className="h-3 w-3 mr-1.5" />
-                Generate Mode
+                {t.generateModeTitle}
               </p>
               <p className="text-xs text-gray-400 leading-relaxed">
-                Creates a <span className="text-gray-300 font-medium">completely new image</span> from your text description. Not related to any image on the artboard.
+                {t.generateModeDescription}
               </p>
               <p className="text-xs text-purple-400 italic">
-                💡 Tip: Use the <span className="font-medium">Seed</span> in Advanced Controls to preserve series work and create consistent variations.
+                {t.generateModeTip}
               </p>
             </div>
           )}
@@ -337,10 +337,10 @@ export const PromptComposer: React.FC = () => {
             <div className="space-y-1.5">
               <p className="text-xs text-cyan-400 font-medium flex items-center">
                 <Edit3 className="h-3 w-3 mr-1.5" />
-                Edit Mode
+                {t.editModeTitle}
               </p>
               <p className="text-xs text-gray-400 leading-relaxed">
-                Modifies the <span className="text-gray-300 font-medium">entire image on the artboard</span>. Describe the changes you want to make to the whole image.
+                {t.editModeDescription}
               </p>
             </div>
           )}
@@ -349,13 +349,13 @@ export const PromptComposer: React.FC = () => {
             <div className="space-y-1.5">
               <p className="text-xs text-cyan-400 font-medium flex items-center">
                 <MousePointer className="h-3 w-3 mr-1.5" />
-                Select Mode
+                {t.selectModeTitle}
               </p>
               <p className="text-xs text-gray-400 leading-relaxed">
-                Edits <span className="text-gray-300 font-medium">only the areas you brush</span> on the artboard. Paint with your brush to select regions, then describe the changes.
+                {t.selectModeDescription}
               </p>
               <p className="text-xs text-orange-400">
-                ⚠️ Only brushed areas will be affected. Unmasked areas remain unchanged.
+                {t.selectModeWarning}
               </p>
             </div>
           )}
@@ -494,23 +494,23 @@ export const PromptComposer: React.FC = () => {
         <div className="flex items-center justify-between mb-3">
           <label className="text-sm font-semibold text-gray-200 flex items-center">
             <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 mr-2"></span>
-            {selectedTool === 'generate' ? t.addReferenceImages : selectedTool === 'edit' ? 'Style References' : 'Upload Image'}
+            {selectedTool === 'generate' ? t.addReferenceImages : selectedTool === 'edit' ? t.styleReferences : t.uploadImage}
           </label>
         </div>
         
         {selectedTool === 'mask' && (
           <p className="text-xs text-gray-500 mb-3">
-            Upload an image to edit with mask painting
+            {t.uploadImageForMaskPainting}
           </p>
         )}
         {selectedTool === 'edit' && (
           <p className="text-xs text-gray-500 mb-3">
-            {canvasImage ? 'Optional style references, up to 2 images' : 'Upload image to edit, up to 2 images'}
+            {canvasImage ? t.optionalStyleReferencesUpTo2 : t.uploadImageForEditUpTo2}
           </p>
         )}
         {selectedTool === 'generate' && (
           <p className="text-xs text-gray-500 mb-3">
-            Upload up to 2 reference images to guide the style and composition
+            {t.uploadReferenceImagesUpTo2}
           </p>
         )}
         
@@ -532,7 +532,7 @@ export const PromptComposer: React.FC = () => {
           }
         >
           <Upload className="h-4 w-4 mr-2" />
-          Upload
+          {t.upload}
         </Button>
 
         {/* Show uploaded images preview */}
@@ -549,7 +549,7 @@ export const PromptComposer: React.FC = () => {
                 <button
                   onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
                   className="absolute top-1 right-1 bg-gray-900/90 text-gray-400 hover:text-red-400 rounded-full p-1.5 transition-colors opacity-0 group-hover:opacity-100"
-                  title="Remove image"
+                  title={t.removeImage}
                 >
                   <X className="h-4 w-4" />
                 </button>

@@ -47,6 +47,13 @@ export interface Translations {
   uploadToStartEditing: string;
   chooseFile: string;
   replaceImage: string;
+  uploadImage: string;
+  uploadImageForMaskPainting: string;
+  uploadImageForEditUpTo2: string;
+  optionalStyleReferencesUpTo2: string;
+  uploadReferenceImagesUpTo2: string;
+  upload: string;
+  removeImage: string;
   
   // Prompt
   generateFromText: string;
@@ -59,6 +66,16 @@ export interface Translations {
   goodPrompt: string;
   excellentPrompt: string;
   characters: string;
+  
+  // Mode help text
+  generateModeTitle: string;
+  generateModeDescription: string;
+  generateModeTip: string;
+  editModeTitle: string;
+  editModeDescription: string;
+  selectModeTitle: string;
+  selectModeDescription: string;
+  selectModeWarning: string;
   
   // Generate button
   invoke: string;
@@ -270,6 +287,13 @@ export const translations: Record<Language, Translations> = {
     uploadToStartEditing: 'Upload an image to start editing (max 2)',
     chooseFile: 'Choose File',
     replaceImage: 'Replace Image',
+    uploadImage: 'Upload Image',
+    uploadImageForMaskPainting: 'Upload an image to edit with mask painting',
+    uploadImageForEditUpTo2: 'Upload image to edit, up to 2 images',
+    optionalStyleReferencesUpTo2: 'Optional style references, up to 2 images',
+    uploadReferenceImagesUpTo2: 'Upload up to 2 reference images to guide the style and composition',
+    upload: 'Upload',
+    removeImage: 'Remove image',
     
     // Prompt
     generateFromText: 'Generate from Text',
@@ -282,6 +306,16 @@ export const translations: Record<Language, Translations> = {
     goodPrompt: 'Good prompt',
     excellentPrompt: 'Excellent prompt',
     characters: 'characters',
+    
+    // Mode help text
+    generateModeTitle: 'Generate Mode',
+    generateModeDescription: 'Creates a completely new image from your text description. Not related to any image on the artboard.',
+    generateModeTip: '💡 Tip: Use the Seed in Advanced Controls to preserve series work and create consistent variations.',
+    editModeTitle: 'Edit Mode',
+    editModeDescription: 'Modifies the entire image on the artboard. Describe the changes you want to make to the whole image.',
+    selectModeTitle: 'Select Mode',
+    selectModeDescription: 'Edits only the areas you brush on the artboard. Paint with your brush to select regions, then describe the changes.',
+    selectModeWarning: '⚠️ Only brushed areas will be affected. Unmasked areas remain unchanged.',
     
     // Generate button
     invoke: 'Invoke',
@@ -491,6 +525,13 @@ export const translations: Record<Language, Translations> = {
     uploadToStartEditing: '上传图片开始编辑（最多2张）',
     chooseFile: '选择文件',
     replaceImage: '替换图片',
+    uploadImage: '上传图片',
+    uploadImageForMaskPainting: '上传图片以使用蒙版绘画编辑',
+    uploadImageForEditUpTo2: '上传要编辑的图片，最多2张',
+    optionalStyleReferencesUpTo2: '可选风格参考，最多2张',
+    uploadReferenceImagesUpTo2: '上传最多2张参考图片来引导风格和构图',
+    upload: '上传',
+    removeImage: '删除图片',
     
     // Prompt
     generateFromText: '从文本生成',
@@ -503,6 +544,16 @@ export const translations: Record<Language, Translations> = {
     goodPrompt: '不错的提示',
     excellentPrompt: '优秀的提示',
     characters: '个字符',
+    
+    // Mode help text
+    generateModeTitle: '生成模式',
+    generateModeDescription: '根据您的文字描述创建全新的图像。与画板上的任何图像无关。',
+    generateModeTip: '💡 提示：使用高级控制中的种子来保留系列作品并创建一致的变体。',
+    editModeTitle: '编辑模式',
+    editModeDescription: '修改画板上的整个图像。描述您想对整个图像做的更改。',
+    selectModeTitle: '选择模式',
+    selectModeDescription: '仅编辑您在画板上刷涂的区域。用画笔绘制选择区域，然后描述更改。',
+    selectModeWarning: '⚠️ 只有刷涂的区域会受到影响。未遮罩区域保持不变。',
     
     // Generate button
     invoke: '调用',
