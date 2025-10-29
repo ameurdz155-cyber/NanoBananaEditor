@@ -229,7 +229,9 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       ) : (
                         <FolderOpen className="h-4 w-4 flex-shrink-0" />
                       )}
-                      <span className="text-sm font-medium truncate">{board.name}</span>
+                      <span className="text-sm font-medium truncate">
+                        {board.id === 'default' ? t.myCreations : board.name}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Button
@@ -240,7 +242,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                           event.stopPropagation();
                           boardFileInputsRef.current[board.id]?.click();
                         }}
-                        title="Upload images"
+                        title={t.uploadImages}
                       >
                         <Upload className="h-3 w-3" />
                       </Button>
@@ -252,7 +254,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                           event.stopPropagation();
                           handleRenameBoard(board.id);
                         }}
-                        title="Rename board"
+                        title={t.renameBoard}
                       >
                         <Edit2 className="h-3 w-3" />
                       </Button>
@@ -265,7 +267,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                             event.stopPropagation();
                             handleDeleteBoard(board.id);
                           }}
-                          title="Delete board"
+                          title={t.deleteBoard}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

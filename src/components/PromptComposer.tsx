@@ -488,12 +488,12 @@ export const PromptComposer: React.FC = () => {
           {isValidating ? (
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-              <span className="text-white">Validating...</span>
+              <span className="text-white">{t.validating}</span>
             </div>
           ) : isGenerating ? (
             <div className="flex items-center justify-center">
               <X className="h-5 w-5 mr-2" />
-              <span className="text-white">Stop Generation</span>
+              <span className="text-white">{t.stopGeneration}</span>
             </div>
           ) : (
             <div className="flex items-center justify-center">

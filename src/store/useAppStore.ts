@@ -320,6 +320,34 @@ export const useAppStore = create<AppState>()(
         partialize: (state) => ({
           // Don't persist currentProject to avoid storage quota issues
           // Images are stored in IndexedDB or can be re-generated
+          // But we save a lightweight version for history
+          currentProject: state.currentProject ? {
+            id: state.currentProject.id,
+            title: state.currentProject.title,
+            createdAt: state.currentProject.createdAt,
+            updatedAt: state.currentProject.updatedAt,
+            // Save generations but without heavy base64 images
+            generations: state.currentProject.generations.map(g => ({
+              ...g,
+              sourceAssets: [],  // Don't save source images
+              outputAssets: g.outputAssets.map(a => ({
+                ...a,
+                url: a.url.length > 100 ? a.url.substring(0, 100) + '...[truncated]' : a.url  // Keep reference but truncate data
+              }))
+            })),
+            // Save edits but without heavy base64 images
+            edits: state.currentProject.edits.map(e => ({
+              ...e,
+              maskReferenceAsset: e.maskReferenceAsset ? {
+                ...e.maskReferenceAsset,
+                url: e.maskReferenceAsset.url.length > 100 ? e.maskReferenceAsset.url.substring(0, 100) + '...[truncated]' : e.maskReferenceAsset.url
+              } : undefined,
+              outputAssets: e.outputAssets.map(a => ({
+                ...a,
+                url: a.url.length > 100 ? a.url.substring(0, 100) + '...[truncated]' : a.url
+              }))
+            }))
+          } : null,
           boards: state.boards,
           customTemplates: state.customTemplates,
           language: state.language,

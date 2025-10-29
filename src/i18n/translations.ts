@@ -64,6 +64,7 @@ export interface Translations {
   invoke: string;
   applyEdit: string;
   validating: string;
+  stopGeneration: string;
   generating: string;
   pressCtrlEnter: string;
   
@@ -278,6 +279,7 @@ export const translations: Record<Language, Translations> = {
     invoke: 'Invoke',
     applyEdit: 'Apply Edit',
     validating: 'Validating...',
+    stopGeneration: 'Stop Generation',
     generating: 'Generating...',
     pressCtrlEnter: 'to generate',
     
@@ -490,6 +492,7 @@ export const translations: Record<Language, Translations> = {
     invoke: '调用',
     applyEdit: '应用编辑',
     validating: '验证中...',
+    stopGeneration: '停止生成',
     generating: '生成中...',
     pressCtrlEnter: '生成',
     
