@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
 import { History, Layers, Folder } from 'lucide-react';
@@ -7,6 +7,7 @@ import { ImagePreviewModal } from './ImagePreviewModal';
 import { Generation, Edit } from '../types';
 import { BoardsView } from './BoardsView';
 import { getTranslation } from '../i18n/translations';
+import { getImageById } from '../utils/galleryStorage';
 
 export const HistoryPanel: React.FC = () => {
   const {
@@ -19,6 +20,7 @@ export const HistoryPanel: React.FC = () => {
     setShowHistory,
     setCanvasImage,
     language,
+    boards,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -40,9 +42,47 @@ export const HistoryPanel: React.FC = () => {
   const generations = currentProject?.generations || [];
   const edits = currentProject?.edits || [];
 
+  const [galleryImages, setGalleryImages] = React.useState<Record<string, string>>({});
+
+  // Load gallery images from IndexedDB on mount and when boards change
+  useEffect(() => {
+    const loadGalleryImages = async () => {
+      const imageMap: Record<string, string> = {};
+      
+      // Get all image IDs from all boards
+      const allImageIds = boards.flatMap(board => board.imageIds);
+      
+      // Fetch each image from IndexedDB
+      for (const imageId of allImageIds) {
+        const image = await getImageById(imageId);
+        if (image) {
+          imageMap[imageId] = image.url;
+        }
+      }
+      
+      setGalleryImages(imageMap);
+    };
+    
+    loadGalleryImages();
+    
+    // Listen for gallery updates
+    const handleGalleryUpdate = () => {
+      console.log('Gallery updated, reloading images...');
+      loadGalleryImages();
+    };
+    
+    window.addEventListener('galleryUpdated', handleGalleryUpdate);
+    return () => window.removeEventListener('galleryUpdated', handleGalleryUpdate);
+  }, [boards]);
+
   const resolveImageUrl = React.useCallback((imageId: string) => {
     if (imageId.startsWith('data:') || imageId.startsWith('blob:') || imageId.startsWith('http')) {
       return imageId;
+    }
+
+    // Check gallery images first (from IndexedDB)
+    if (galleryImages[imageId]) {
+      return galleryImages[imageId];
     }
 
     const generation = generations.find(g => g.id === imageId);
@@ -56,7 +96,7 @@ export const HistoryPanel: React.FC = () => {
     }
 
     return null;
-  }, [generations, edits]);
+  }, [generations, edits, galleryImages]);
 
   if (!showHistory) {
     return (

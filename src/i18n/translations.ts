@@ -390,7 +390,7 @@ export const translations: Record<Language, Translations> = {
     exportTemplates: 'Export Templates',
     
     // History Panel tabs
-    boards: 'Boards',
+    boards: 'Gallery',
     myCreations: 'My Creations',
     images: 'Images',
     assets: 'Assets',
@@ -611,7 +611,7 @@ export const translations: Record<Language, Translations> = {
     exportTemplates: '导出模板',
     
     // History Panel tabs
-    boards: '画板',
+    boards: '画廊',
     myCreations: '我的创作',
     images: '图片',
     assets: '素材',

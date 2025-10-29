@@ -178,11 +178,18 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       // Check if imageId is a direct URL (asset) or a generation/edit ID
       const isDirectUrl = imageId.startsWith('data:') || imageId.startsWith('blob:') || imageId.startsWith('http');
       
+      // Check if it's a saved gallery image (from Save button)
+      const isSavedGalleryImage = imageId.startsWith('img-');
+      
       let isGeneration = false;
       let isEdit = false;
       let type: 'generation' | 'edit' | 'asset' = 'asset';
       
-      if (!isDirectUrl) {
+      if (isSavedGalleryImage) {
+        // Saved gallery images should appear in "Images" tab, so mark as generation
+        type = 'generation';
+        isGeneration = true;
+      } else if (!isDirectUrl) {
         // Only check generations/edits if it's not a direct URL
         isGeneration = generations.some(g => g.id === imageId);
         isEdit = edits.some(e => e.id === imageId);

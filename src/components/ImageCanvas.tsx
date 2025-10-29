@@ -1,10 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Image as KonvaImage, Line } from 'react-konva';
 import { useAppStore } from '../store/useAppStore';
-import { Button } from './ui/Button';
-import { ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Sparkles } from 'lucide-react';
-import { cn } from '../utils/cn';
-import { saveImageWithDialog } from '../utils/fileSaver';
+import { Sparkles } from 'lucide-react';
 import { getTranslation } from '../i18n/translations';
 
 export const ImageCanvas: React.FC = () => {
@@ -16,13 +13,10 @@ export const ImageCanvas: React.FC = () => {
     setCanvasPan,
     brushStrokes,
     addBrushStroke,
-    clearBrushStrokes,
     showMasks,
-    setShowMasks,
     selectedTool,
     isGenerating,
     brushSize,
-    setBrushSize,
     language,
   } = useAppStore();
 
@@ -147,103 +141,8 @@ export const ImageCanvas: React.FC = () => {
     setCurrentStroke([]);
   };
 
-  const handleZoom = (delta: number) => {
-    const newZoom = Math.max(0.1, Math.min(3, canvasZoom + delta));
-    setCanvasZoom(newZoom);
-  };
-
-  const handleReset = () => {
-    if (image) {
-      const isMobile = window.innerWidth < 768;
-      const padding = isMobile ? 0.9 : 0.8;
-      const scaleX = (stageSize.width * padding) / image.width;
-      const scaleY = (stageSize.height * padding) / image.height;
-      const maxZoom = isMobile ? 0.3 : 0.8;
-      const optimalZoom = Math.min(scaleX, scaleY, maxZoom);
-      
-      setCanvasZoom(optimalZoom);
-      setCanvasPan({ x: 0, y: 0 });
-    }
-  };
-
-  const handleSave = async () => {
-    if (canvasImage) {
-      const saved = await saveImageWithDialog(canvasImage);
-      if (saved) {
-        // Show success feedback (you could add a toast notification here)
-        console.log('Image saved successfully!');
-      }
-    }
-  };
-
   return (
     <div className="flex flex-col h-full">
-      {/* Toolbar */}
-      <div className="p-3 border-b border-gray-800 bg-gray-950">
-        <div className="flex items-center justify-between">
-          {/* Left side - Zoom controls */}
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={() => handleZoom(-0.1)}>
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-gray-400 min-w-[60px] text-center">
-              {Math.round(canvasZoom * 100)}%
-            </span>
-            <Button variant="outline" size="sm" onClick={() => handleZoom(0.1)}>
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleReset}>
-              <RotateCcw className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Right side - Tools and actions */}
-          <div className="flex items-center space-x-2">
-            {selectedTool === 'mask' && (
-              <>
-                <div className="flex items-center space-x-2 mr-2">
-                  <span className="text-xs text-gray-400">Brush:</span>
-                  <input
-                    type="range"
-                    min="5"
-                    max="50"
-                    value={brushSize}
-                    onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                    className="w-16 h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <span className="text-xs text-gray-400 w-6">{brushSize}</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearBrushStrokes}
-                  disabled={brushStrokes.length === 0}
-                >
-                  <Eraser className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowMasks(!showMasks)}
-              className={cn(showMasks && 'bg-purple-500/10 border-purple-500/50')}
-            >
-              {showMasks ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-              <span className="hidden sm:inline ml-2">{t.masks}</span>
-            </Button>
-            
-            {canvasImage && (
-              <Button variant="secondary" size="sm" onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">{t.save}</span>
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Canvas Area */}
       <div 
         id="canvas-container" 

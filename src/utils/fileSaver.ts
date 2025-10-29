@@ -1,5 +1,6 @@
 import { save } from '@tauri-apps/plugin-dialog';
-import { writeFile } from '@tauri-apps/plugin-fs';
+import { writeFile, mkdir, BaseDirectory } from '@tauri-apps/plugin-fs';
+import { join, appDataDir } from '@tauri-apps/api/path';
 
 /**
  * Convert base64 string to Uint8Array
@@ -162,5 +163,59 @@ export async function saveImageWithDialog(source: string, defaultName?: string):
     }
     
     return false;
+  }
+}
+
+/**
+ * Check if running in Tauri environment
+ */
+function isTauriEnvironment(): boolean {
+  return typeof window !== 'undefined' && 
+         '__TAURI_INTERNALS__' in window;
+}
+
+/**
+ * Save an image automatically to the selected board/gallery folder
+ */
+export async function saveImageToGallery(
+  source: string, 
+  boardName: string = 'default',
+  defaultName?: string
+): Promise<{ success: boolean; imageId: string; path?: string }> {
+  const imageId = `img-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+  
+  try {
+    const payload = await getImagePayload(source);
+    const filename = appendExtension(defaultName ?? `image-${Date.now()}`, payload.extension);
+    
+    // Check if we're in Tauri environment before trying to use Tauri APIs
+    if (isTauriEnvironment()) {
+      try {
+        const appData = await appDataDir();
+        const galleryPath = await join(appData, 'AI_POD', 'Gallery', boardName);
+        
+        // Create directory if it doesn't exist
+        await mkdir(galleryPath, { recursive: true });
+        
+        const filePath = await join(galleryPath, filename);
+        await writeFile(filePath, payload.bytes);
+        
+        console.log(`Image saved to gallery: ${filePath}`);
+        return { success: true, imageId, path: filePath };
+      } catch (tauriError: any) {
+        console.error('Tauri save failed:', tauriError);
+        throw tauriError;
+      }
+    } else {
+      // Browser environment - save to IndexedDB (no download)
+      console.log('Browser environment detected, saving to IndexedDB gallery');
+      
+      // Return success - IndexedDB storage will be handled by caller
+      // This avoids storing the image twice
+      return { success: true, imageId };
+    }
+  } catch (error) {
+    console.error('Error saving image to gallery:', error);
+    return { success: false, imageId };
   }
 }
