@@ -91,6 +91,7 @@ export interface GenerationRequest {
   referenceImages?: string[]; // base64 array
   temperature?: number;
   seed?: number;
+  signal?: AbortSignal; // Add abort signal support
 }
 
 export interface EditRequest {
@@ -100,6 +101,7 @@ export interface EditRequest {
   maskImage?: string; // base64
   temperature?: number;
   seed?: number;
+  signal?: AbortSignal; // Add abort signal support
 }
 
 export interface SegmentationRequest {
@@ -110,6 +112,11 @@ export interface SegmentationRequest {
 export class GeminiService {
   async generateImage(request: GenerationRequest): Promise<string[]> {
     try {
+      // Check if request was aborted before starting
+      if (request.signal?.aborted) {
+        throw new DOMException('Request was cancelled', 'AbortError');
+      }
+
       // Combine prompt with negative prompt if provided
       let fullPrompt = request.prompt;
       if (request.negativePrompt && request.negativePrompt.trim()) {
@@ -130,10 +137,24 @@ export class GeminiService {
         });
       }
 
-      const response = await getGenAI().models.generateContent({
+      // Create a promise that rejects when abort signal is triggered
+      const abortPromise = new Promise((_, reject) => {
+        if (request.signal) {
+          request.signal.addEventListener('abort', () => {
+            reject(new DOMException('Request was cancelled', 'AbortError'));
+          });
+        }
+      });
+
+      // Race between the API call and the abort signal
+      const apiPromise = getGenAI().models.generateContent({
         model: "gemini-2.5-flash-image-preview",
         contents,
       });
+
+      const response: any = request.signal 
+        ? await Promise.race([apiPromise, abortPromise])
+        : await apiPromise;
 
       if (!response.candidates || response.candidates.length === 0) {
         throw new Error('No response from API. Please try again.');
@@ -153,6 +174,11 @@ export class GeminiService {
 
       return images;
     } catch (error: any) {
+      // Re-throw AbortError without modification
+      if (error.name === 'AbortError') {
+        throw error;
+      }
+      
       console.error('❌ Error generating image:', error);
       if (error.message.includes('429')) {
         throw new Error('API quota exceeded. Please check your usage limits or try again later.');
@@ -163,6 +189,11 @@ export class GeminiService {
 
   async editImage(request: EditRequest): Promise<string[]> {
     try {
+      // Check if request was aborted before starting
+      if (request.signal?.aborted) {
+        throw new DOMException('Request was cancelled', 'AbortError');
+      }
+
       const contents = [
         { text: this.buildEditPrompt(request) },
         {
@@ -194,10 +225,24 @@ export class GeminiService {
         });
       }
 
-      const response = await getGenAI().models.generateContent({
+      // Create a promise that rejects when abort signal is triggered
+      const abortPromise = new Promise((_, reject) => {
+        if (request.signal) {
+          request.signal.addEventListener('abort', () => {
+            reject(new DOMException('Request was cancelled', 'AbortError'));
+          });
+        }
+      });
+
+      // Race between the API call and the abort signal
+      const apiPromise = getGenAI().models.generateContent({
         model: "gemini-2.5-flash-image-preview",
         contents,
       });
+
+      const response: any = request.signal 
+        ? await Promise.race([apiPromise, abortPromise])
+        : await apiPromise;
 
       const images: string[] = [];
 
@@ -208,7 +253,12 @@ export class GeminiService {
       }
 
       return images;
-    } catch (error) {
+    } catch (error: any) {
+      // Re-throw AbortError without modification
+      if (error.name === 'AbortError') {
+        throw error;
+      }
+      
       console.error('Error editing image:', error);
       throw new Error('Failed to edit image. Please try again.');
     }

@@ -3,13 +3,21 @@ import { geminiService, GenerationRequest, EditRequest } from '../services/gemin
 import { useAppStore, Board } from '../store/useAppStore';
 import { generateId } from '../utils/imageUtils';
 import { Generation, Edit, Asset } from '../types';
+import { useRef } from 'react';
 
 export const useImageGeneration = () => {
   const { addGeneration, setIsGenerating, setCanvasImage, setCurrentProject, currentProject, setApiKeyError } = useAppStore();
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const generateMutation = useMutation({
     mutationFn: async (request: GenerationRequest) => {
-      const images = await geminiService.generateImage(request);
+      // Create new AbortController for this request
+      abortControllerRef.current = new AbortController();
+      
+      const images = await geminiService.generateImage({
+        ...request,
+        signal: abortControllerRef.current.signal
+      });
       return images;
     },
     onMutate: () => {
@@ -101,15 +109,28 @@ export const useImageGeneration = () => {
       setIsGenerating(false);
     },
     onError: (error) => {
-      setApiKeyError(error.message || 'An unknown error occurred.');
+      // Don't show error if it was intentionally cancelled
+      if (error.name !== 'AbortError') {
+        setApiKeyError(error.message || 'An unknown error occurred.');
+      }
       setIsGenerating(false);
+      abortControllerRef.current = null;
     }
   });
+
+  const cancelGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsGenerating(false);
+    }
+  };
 
   return {
     generate: generateMutation.mutate,
     isGenerating: generateMutation.isPending,
-    error: generateMutation.error
+    error: generateMutation.error,
+    cancelGeneration
   };
 };
 
@@ -128,9 +149,14 @@ export const useImageEditing = () => {
     temperature,
     setApiKeyError,
   } = useAppStore();
+  
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const editMutation = useMutation({
     mutationFn: async (instruction: string) => {
+      // Create new AbortController for this request
+      abortControllerRef.current = new AbortController();
+      
       // Always use canvas image as primary target if available, otherwise use first uploaded image
       const sourceImage = canvasImage || uploadedImages[0];
       if (!sourceImage) throw new Error('No image to edit');
@@ -235,7 +261,8 @@ export const useImageEditing = () => {
         referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
         maskImage,
         temperature,
-        seed: seed || undefined
+        seed: seed || undefined,
+        signal: abortControllerRef.current?.signal
       };
       
       const images = await geminiService.editImage(request);
@@ -317,17 +344,31 @@ export const useImageEditing = () => {
         selectGeneration(null);
       }
       setIsGenerating(false);
+      abortControllerRef.current = null;
     },
     onError: (error) => {
-      console.error('Edit failed:', error);
-      setApiKeyError(error.message || 'An unknown error occurred during edit.');
+      // Don't log or show error if it was intentionally cancelled
+      if (error.name !== 'AbortError') {
+        console.error('Edit failed:', error);
+        setApiKeyError(error.message || 'An unknown error occurred during edit.');
+      }
       setIsGenerating(false);
+      abortControllerRef.current = null;
     }
   });
+
+  const cancelEdit = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsGenerating(false);
+    }
+  };
 
   return {
     edit: editMutation.mutate,
     isEditing: editMutation.isPending,
-    error: editMutation.error
+    error: editMutation.error,
+    cancelEdit
   };
 };

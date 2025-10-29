@@ -274,10 +274,21 @@ export const ImageCanvas: React.FC = () => {
         )}
 
         {isGenerating && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mb-4" />
-              <p className="text-gray-300">{t.creatingYourImage}</p>
+              <div className="relative inline-flex items-center justify-center mb-4">
+                {/* Outer rotating ring */}
+                <div className="absolute w-16 h-16 border-2 border-purple-500/20 rounded-full animate-spin" 
+                     style={{ 
+                       borderTopColor: 'rgb(168 85 247)', 
+                       animationDuration: '1s' 
+                     }} 
+                />
+                {/* Inner pulsing circle */}
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full animate-pulse opacity-50" />
+              </div>
+              <p className="text-base font-medium text-gray-200 mb-1">{t.creatingYourImage}</p>
+              <p className="text-xs text-gray-400">This may take a few moments</p>
             </div>
           </div>
         )}

@@ -37,8 +37,8 @@ export const PromptComposer: React.FC = () => {
 
   const t = getTranslation(language);
 
-  const { generate } = useImageGeneration();
-  const { edit } = useImageEditing();
+  const { generate, cancelGeneration } = useImageGeneration();
+  const { edit, cancelEdit } = useImageEditing();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showHintsModal, setShowHintsModal] = useState(false);
@@ -58,6 +58,12 @@ export const PromptComposer: React.FC = () => {
 
 
   const handleImprovePrompt = async () => {
+    // If already improving, stop the improvement
+    if (isImproving) {
+      setIsImproving(false);
+      return;
+    }
+
     if (!currentPrompt.trim()) return;
     
     setIsImproving(true);
@@ -86,6 +92,16 @@ export const PromptComposer: React.FC = () => {
   };
 
   const handleGenerate = async () => {
+    // If already generating, stop the generation
+    if (isGenerating) {
+      if (selectedTool === 'generate') {
+        cancelGeneration();
+      } else {
+        cancelEdit();
+      }
+      return;
+    }
+
     if (!currentPrompt.trim()) return;
     
     // Clear previous errors
@@ -327,13 +343,13 @@ export const PromptComposer: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handleImprovePrompt}
-            disabled={isImproving || !currentPrompt.trim()}
+            disabled={!currentPrompt.trim() && !isImproving}
             className="w-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border-purple-500/30"
           >
             {isImproving ? (
               <>
-                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-400 mr-2" />
-                <span>{t.improving}</span>
+                <X className="h-3 w-3 mr-2" />
+                <span>Cancel</span>
               </>
             ) : (
               <>
@@ -375,7 +391,13 @@ export const PromptComposer: React.FC = () => {
                 {/* Improved Prompt */}
                 <div className="p-4 bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-lg border border-purple-500/30">
                   <h4 className="text-xs font-semibold text-purple-300 mb-2 uppercase tracking-wider">{t.improvedVersion}</h4>
-                  <p className="text-sm text-gray-200 leading-relaxed">{improvedPrompt}</p>
+                  <Textarea
+                    value={improvedPrompt || ''}
+                    onChange={(e) => setImprovedPrompt(e.target.value)}
+                    className="min-h-[120px] resize-none bg-gray-800/50 border-purple-500/30 focus:border-purple-500 text-gray-200 text-sm leading-relaxed"
+                    placeholder="Improved prompt will appear here..."
+                  />
+                  <p className="text-xs text-gray-400 mt-2">✏️ You can edit this improved version before accepting</p>
                 </div>
                 
                 {/* Action Buttons */}
@@ -454,7 +476,7 @@ export const PromptComposer: React.FC = () => {
       <div className="space-y-2 flex-shrink-0">
         <Button
           onClick={handleGenerate}
-          disabled={isGenerating || isValidating || !currentPrompt.trim()}
+          disabled={isValidating || (!isGenerating && !currentPrompt.trim())}
           className="relative w-full h-14 text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           size="lg"
         >
@@ -465,8 +487,8 @@ export const PromptComposer: React.FC = () => {
             </div>
           ) : isGenerating ? (
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-              <span className="text-white">Generating...</span>
+              <X className="h-5 w-5 mr-2" />
+              <span className="text-white">Stop Generation</span>
             </div>
           ) : (
             <div className="flex items-center justify-center">

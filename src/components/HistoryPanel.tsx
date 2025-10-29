@@ -1,8 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { History, Save, Image as ImageIcon, Layers, Folder } from 'lucide-react';
-import { saveImageWithDialog } from '../utils/fileSaver';
+import { History, Layers, Folder } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { Generation, Edit } from '../types';
@@ -12,7 +11,6 @@ import { getTranslation } from '../i18n/translations';
 export const HistoryPanel: React.FC = () => {
   const {
     currentProject,
-    canvasImage,
     selectedGenerationId,
     selectedEditId,
     selectGeneration,
@@ -20,7 +18,6 @@ export const HistoryPanel: React.FC = () => {
     showHistory,
     setShowHistory,
     setCanvasImage,
-    selectedTool,
     language,
   } = useAppStore();
 
@@ -42,21 +39,6 @@ export const HistoryPanel: React.FC = () => {
 
   const generations = currentProject?.generations || [];
   const edits = currentProject?.edits || [];
-
-  // Get current image dimensions
-  const [imageDimensions, setImageDimensions] = React.useState<{ width: number; height: number } | null>(null);
-  
-  React.useEffect(() => {
-    if (canvasImage) {
-      const img = new Image();
-      img.onload = () => {
-        setImageDimensions({ width: img.width, height: img.height });
-      };
-      img.src = canvasImage;
-    } else {
-      setImageDimensions(null);
-    }
-  }, [canvasImage]);
 
   const resolveImageUrl = React.useCallback((imageId: string) => {
     if (imageId.startsWith('data:') || imageId.startsWith('blob:') || imageId.startsWith('http')) {
@@ -281,205 +263,6 @@ export const HistoryPanel: React.FC = () => {
               })}
           </div>
         )}
-      </div>
-
-      {/* Current Image Info */}
-      {(canvasImage || imageDimensions) && (
-        <div className="mb-4 p-3 bg-gray-900 rounded-lg border border-gray-700 flex-shrink-0">
-          <h4 className="text-xs font-medium text-gray-400 mb-2">Current Image</h4>
-          <div className="space-y-1 text-xs text-gray-500">
-            {imageDimensions && (
-              <div className="flex justify-between">
-                <span>Dimensions:</span>
-                <span className="text-gray-300">{imageDimensions.width} × {imageDimensions.height}</span>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <span>Mode:</span>
-              <span className="text-gray-300 capitalize">{selectedTool}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Generation Details */}
-      <div className="mb-6 p-4 bg-gray-900 rounded-lg border border-gray-700 flex-shrink-0 max-h-80 overflow-y-auto">
-        <h4 className="text-xs font-medium text-gray-400 mb-2 sticky top-0 bg-gray-900 pb-2">Generation Details</h4>
-        {(() => {
-          const gen = generations.find(g => g.id === selectedGenerationId);
-          const selectedEdit = edits.find(e => e.id === selectedEditId);
-          
-          if (gen) {
-            return (
-              <div className="space-y-3">
-                <div className="space-y-2 text-xs text-gray-500">
-                  <div>
-                    <span className="text-gray-400">Prompt:</span>
-                    <p className="text-gray-300 mt-1">{gen.prompt}</p>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Model:</span>
-                    <span>{gen.modelVersion}</span>
-                  </div>
-                  {gen.parameters.seed && (
-                    <div className="flex justify-between">
-                      <span>Seed:</span>
-                      <span>{gen.parameters.seed}</span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Reference Images */}
-                {gen.sourceAssets.length > 0 && (
-                  <div>
-                    <h5 className="text-xs font-medium text-gray-400 mb-2">Reference Images</h5>
-                    <div className="grid grid-cols-2 gap-2">
-                      {gen.sourceAssets.map((asset, index) => (
-                        <button
-                          key={asset.id}
-                          onClick={() => setPreviewModal({
-                            open: true,
-                            imageUrl: asset.url,
-                            title: `Reference Image ${index + 1}`,
-                            description: 'This reference image was used to guide the generation'
-                          })}
-                          className="relative aspect-square rounded border border-gray-700 hover:border-gray-600 transition-colors overflow-hidden group"
-                        >
-                          <img
-                            src={asset.url}
-                            alt={`Reference ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                            <ImageIcon className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                          <div className="absolute bottom-1 left-1 bg-gray-900/80 text-xs px-1 py-0.5 rounded text-gray-300">
-                            Ref {index + 1}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          } else if (selectedEdit) {
-            const parentGen = generations.find(g => g.id === selectedEdit.parentGenerationId);
-            return (
-              <div className="space-y-3">
-                <div className="space-y-2 text-xs text-gray-500">
-                  <div>
-                    <span className="text-gray-400">Edit Instruction:</span>
-                    <p className="text-gray-300 mt-1">{selectedEdit.instruction}</p>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Type:</span>
-                    <span>Image Edit</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Created:</span>
-                    <span>{new Date(selectedEdit.timestamp).toLocaleTimeString()}</span>
-                  </div>
-                  {selectedEdit.maskAssetId && (
-                    <div className="flex justify-between">
-                      <span>Mask:</span>
-                      <span className="text-purple-400">Applied</span>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Parent Generation Reference */}
-                {parentGen && (
-                  <div>
-                    <h5 className="text-xs font-medium text-gray-400 mb-2">Original Image</h5>
-                    <button
-                      onClick={() => setPreviewModal({
-                        open: true,
-                        imageUrl: parentGen.outputAssets[0]?.url || '',
-                        title: 'Original Image',
-                        description: 'The base image that was edited'
-                      })}
-                      className="relative aspect-square w-16 rounded border border-gray-700 hover:border-gray-600 transition-colors overflow-hidden group"
-                    >
-                      <img
-                        src={parentGen.outputAssets[0]?.url}
-                        alt="Original"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <ImageIcon className="h-3 w-3 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </button>
-                  </div>
-                )}
-                
-                {/* Mask Visualization */}
-                {selectedEdit.maskReferenceAsset && (
-                  <div>
-                    <h5 className="text-xs font-medium text-gray-400 mb-2">Masked Reference</h5>
-                    <button
-                      onClick={() => setPreviewModal({
-                        open: true,
-                        imageUrl: selectedEdit.maskReferenceAsset!.url,
-                        title: 'Masked Reference Image',
-                        description: 'This image with mask overlay was sent to the AI model to guide the edit'
-                      })}
-                      className="relative aspect-square w-16 rounded border border-gray-700 hover:border-gray-600 transition-colors overflow-hidden group"
-                    >
-                      <img
-                        src={selectedEdit.maskReferenceAsset.url}
-                        alt="Masked reference"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <ImageIcon className="h-3 w-3 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <div className="absolute bottom-1 left-1 bg-purple-900/80 text-xs px-1 py-0.5 rounded text-purple-300">
-                        Mask
-                      </div>
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          } else {
-            return (
-              <div className="space-y-2 text-xs text-gray-500">
-                <p className="text-gray-400">Select a generation or edit to view details</p>
-              </div>
-            );
-          }
-        })()}
-      </div>
-
-      {/* Actions */}
-      <div className="space-y-3 flex-shrink-0">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full"
-          onClick={async () => {
-            // Find the currently displayed image (either generation or edit)
-            let imageUrl: string | null = null;
-            
-            if (selectedGenerationId) {
-              const gen = generations.find(g => g.id === selectedGenerationId);
-              imageUrl = gen?.outputAssets[0]?.url || null;
-            } else {
-              // If no generation selected, try to get the current canvas image
-              const { canvasImage } = useAppStore.getState();
-              imageUrl = canvasImage;
-            }
-            
-            if (imageUrl) {
-              await saveImageWithDialog(imageUrl);
-            }
-          }}
-          disabled={!selectedGenerationId && !useAppStore.getState().canvasImage}
-        >
-          <Save className="h-4 w-4 mr-2" />
-          Save
-        </Button>
       </div>
         </>
       )}

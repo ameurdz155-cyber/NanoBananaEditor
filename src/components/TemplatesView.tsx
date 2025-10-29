@@ -426,11 +426,11 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   );
 
   const renderTemplateCard = (template: PromptTemplate, isCustom: boolean) => (
-    <button
+    <div
       key={template.id}
       onClick={() => handleApplyTemplate(template)}
       className={cn(
-        "group relative bg-gray-900 rounded-lg border transition-all overflow-visible text-left w-full",
+        "group relative bg-gray-900 rounded-lg border transition-all overflow-visible text-left w-full cursor-pointer",
         selectedTemplate === template.id 
           ? "border-purple-500 bg-purple-500/10" 
           : "border-gray-800 hover:border-gray-700"
@@ -530,7 +530,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           </div>
         </div>
       )}
-    </button>
+    </div>
   );
 
   return (

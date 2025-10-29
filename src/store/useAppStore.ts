@@ -278,13 +278,15 @@ export const useAppStore = create<AppState>()(
       {
         name: 'ai-pod-storage',
         partialize: (state) => ({
-          currentProject: state.currentProject,
+          // Don't persist currentProject to avoid storage quota issues
+          // Images are stored in IndexedDB or can be re-generated
           boards: state.boards,
           language: state.language,
           apiKey: state.apiKey,
           brushSize: state.brushSize,
           temperature: state.temperature,
           selectedTool: state.selectedTool,
+          selectedTemplate: state.selectedTemplate,
         }),
       }
     ),
