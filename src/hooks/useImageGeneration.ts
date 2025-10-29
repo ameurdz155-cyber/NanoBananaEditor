@@ -143,6 +143,7 @@ export const useImageEditing = () => {
     uploadedImages,
     editReferenceImages,
     brushStrokes,
+    clearBrushStrokes,
     selectedGenerationId,
     currentProject,
     seed,
@@ -341,6 +342,9 @@ export const useImageEditing = () => {
         setCanvasImage(outputAssets[0].url);
         selectEdit(edit.id);
         selectGeneration(null);
+        
+        // Clear brush strokes after successful edit
+        clearBrushStrokes();
       }
       setIsGenerating(false);
       abortControllerRef.current = null;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { Folder, FolderOpen, Plus, ChevronDown, ChevronRight, Trash2, Edit2, Upload, X } from 'lucide-react';
+import { Folder, FolderOpen, Plus, ChevronDown, ChevronRight, Trash2, Edit2, Upload, X, AlertCircle } from 'lucide-react';
 import { blobToBase64 } from '../utils/imageUtils';
 import { cn } from '../utils/cn';
 import { getTranslation } from '../i18n/translations';
@@ -39,7 +39,14 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   const [activeBoardImageMenu, setActiveBoardImageMenu] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = React.useState<'images' | 'assets'>('images');
   const [showCreateBoardModal, setShowCreateBoardModal] = React.useState(false);
+  const [showEditBoardModal, setShowEditBoardModal] = React.useState(false);
+  const [showDeleteBoardModal, setShowDeleteBoardModal] = React.useState(false);
+  const [editingBoardId, setEditingBoardId] = React.useState<string | null>(null);
+  const [deletingBoardId, setDeletingBoardId] = React.useState<string | null>(null);
   const [newBoardName, setNewBoardName] = React.useState('');
+  const [editBoardName, setEditBoardName] = React.useState('');
+  const [createBoardError, setCreateBoardError] = React.useState('');
+  const [editBoardError, setEditBoardError] = React.useState('');
   const boardFileInputsRef = React.useRef<Record<string, HTMLInputElement | null>>({});
 
   const handleBoardFileUpload = React.useCallback(async (
@@ -76,20 +83,37 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   }, [boards, selectedBoardId, setSelectedBoardId]);
 
   const handleCreateBoard = () => {
+    setCreateBoardError('');
     setShowCreateBoardModal(true);
   };
 
   const handleConfirmCreateBoard = () => {
     if (newBoardName && newBoardName.trim()) {
+      // Check if board name already exists
+      const isDuplicate = boards.some(
+        board => board.name.toLowerCase() === newBoardName.trim().toLowerCase()
+      );
+      
+      if (isDuplicate) {
+        setCreateBoardError('A board with this name already exists');
+        return;
+      }
+      
+      // Generate unique ID using timestamp and random number
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 15);
+      const uniqueId = `board-${timestamp}-${random}`;
+      
       addBoard({
-        id: `board-${Date.now()}`,
+        id: uniqueId,
         name: newBoardName.trim(),
         description: '',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: timestamp,
+        updatedAt: timestamp,
         imageIds: []
       });
       setNewBoardName('');
+      setCreateBoardError('');
       setShowCreateBoardModal(false);
     }
   };
@@ -97,9 +121,30 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   const handleRenameBoard = (boardId: string) => {
     const board = boards.find(b => b.id === boardId);
     if (!board) return;
-    const newName = prompt(t.renameBoard, board.name);
-    if (newName && newName.trim()) {
-      updateBoard(boardId, { name: newName.trim() });
+    setEditingBoardId(boardId);
+    setEditBoardName(board.name);
+    setEditBoardError('');
+    setShowEditBoardModal(true);
+  };
+
+  const handleConfirmEditBoard = () => {
+    if (editingBoardId && editBoardName && editBoardName.trim()) {
+      // Check if board name already exists (excluding current board)
+      const isDuplicate = boards.some(
+        board => board.id !== editingBoardId && 
+                 board.name.toLowerCase() === editBoardName.trim().toLowerCase()
+      );
+      
+      if (isDuplicate) {
+        setEditBoardError('A board with this name already exists');
+        return;
+      }
+      
+      updateBoard(editingBoardId, { name: editBoardName.trim() });
+      setEditBoardName('');
+      setEditingBoardId(null);
+      setEditBoardError('');
+      setShowEditBoardModal(false);
     }
   };
 
@@ -108,11 +153,18 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       alert(t.cannotDeleteDefault);
       return;
     }
-    if (confirm(t.confirmDelete)) {
-      deleteBoard(boardId);
-      if (selectedBoardId === boardId) {
+    setDeletingBoardId(boardId);
+    setShowDeleteBoardModal(true);
+  };
+
+  const handleConfirmDeleteBoard = () => {
+    if (deletingBoardId) {
+      deleteBoard(deletingBoardId);
+      if (selectedBoardId === deletingBoardId) {
         setSelectedBoardId(boards.length > 1 ? boards[0].id : null);
       }
+      setDeletingBoardId(null);
+      setShowDeleteBoardModal(false);
     }
   };
 
@@ -472,7 +524,10 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                 </label>
                 <Input
                   value={newBoardName}
-                  onChange={(e) => setNewBoardName(e.target.value)}
+                  onChange={(e) => {
+                    setNewBoardName(e.target.value);
+                    setCreateBoardError('');
+                  }}
                   placeholder={t.enterBoardName}
                   className="w-full"
                   autoFocus
@@ -482,6 +537,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     }
                   }}
                 />
+                {createBoardError && (
+                  <p className="text-xs text-red-400 mt-2 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {createBoardError}
+                  </p>
+                )}
               </div>
               
               <div className="flex space-x-3 pt-2">
@@ -499,6 +560,145 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                   onClick={() => {
                     setShowCreateBoardModal(false);
                     setNewBoardName('');
+                    setCreateBoardError('');
+                  }}
+                  className="flex-1 border-gray-600 hover:bg-gray-800"
+                >
+                  {t.cancel}
+                </Button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Edit Board Modal */}
+      <Dialog.Root open={showEditBoardModal} onOpenChange={setShowEditBoardModal}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-purple-500/30 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-purple-600/20 rounded-lg">
+                  <Edit2 className="h-5 w-5 text-purple-400" />
+                </div>
+                <Dialog.Title className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                  {t.renameBoard}
+                </Dialog.Title>
+              </div>
+              <Dialog.Close asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-800">
+                  <X className="h-5 w-5" />
+                </Button>
+              </Dialog.Close>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-300 mb-2 block">
+                  {t.boardName}
+                </label>
+                <Input
+                  value={editBoardName}
+                  onChange={(e) => {
+                    setEditBoardName(e.target.value);
+                    setEditBoardError('');
+                  }}
+                  placeholder={t.enterBoardName}
+                  className="w-full"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && editBoardName.trim()) {
+                      handleConfirmEditBoard();
+                    }
+                  }}
+                />
+                {editBoardError && (
+                  <p className="text-xs text-red-400 mt-2 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {editBoardError}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex space-x-3 pt-2">
+                <Button
+                  size="lg"
+                  onClick={handleConfirmEditBoard}
+                  disabled={!editBoardName.trim()}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold"
+                >
+                  {t.save}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditBoardModal(false);
+                    setEditBoardName('');
+                    setEditingBoardId(null);
+                    setEditBoardError('');
+                  }}
+                  className="flex-1 border-gray-600 hover:bg-gray-800"
+                >
+                  {t.cancel}
+                </Button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Delete Board Confirmation Modal */}
+      <Dialog.Root open={showDeleteBoardModal} onOpenChange={setShowDeleteBoardModal}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
+          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-red-500/30 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-red-600/20 rounded-lg">
+                  <Trash2 className="h-5 w-5 text-red-400" />
+                </div>
+                <Dialog.Title className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">
+                  {t.deleteBoard}
+                </Dialog.Title>
+              </div>
+              <Dialog.Close asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-800">
+                  <X className="h-5 w-5" />
+                </Button>
+              </Dialog.Close>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <p className="text-sm text-gray-300">
+                  {t.confirmDelete}
+                </p>
+                {deletingBoardId && (() => {
+                  const board = boards.find(b => b.id === deletingBoardId);
+                  return board ? (
+                    <p className="text-sm font-semibold text-red-400 mt-2">
+                      "{board.name}"
+                    </p>
+                  ) : null;
+                })()}
+              </div>
+              
+              <div className="flex space-x-3 pt-2">
+                <Button
+                  size="lg"
+                  onClick={handleConfirmDeleteBoard}
+                  className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-semibold"
+                >
+                  {t.yesClear || 'Yes, Delete'}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => {
+                    setShowDeleteBoardModal(false);
+                    setDeletingBoardId(null);
                   }}
                   className="flex-1 border-gray-600 hover:bg-gray-800"
                 >

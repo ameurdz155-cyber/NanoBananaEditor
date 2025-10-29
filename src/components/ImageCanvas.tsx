@@ -83,11 +83,11 @@ export const ImageCanvas: React.FC = () => {
   }, []);
 
   const handleMouseDown = (e: any) => {
-    if (selectedTool !== 'mask' || !image) return;
+    // Disable drawing when generating
+    if (selectedTool !== 'mask' || !image || isGenerating) return;
     
     setIsDrawing(true);
     const stage = e.target.getStage();
-    const pos = stage.getPointerPosition();
     
     // Use Konva's getRelativePointerPosition for accurate coordinates
     const relativePos = stage.getRelativePointerPosition();
@@ -107,10 +107,10 @@ export const ImageCanvas: React.FC = () => {
   };
 
   const handleMouseMove = (e: any) => {
-    if (!isDrawing || selectedTool !== 'mask' || !image) return;
+    // Disable drawing when generating
+    if (!isDrawing || selectedTool !== 'mask' || !image || isGenerating) return;
     
     const stage = e.target.getStage();
-    const pos = stage.getPointerPosition();
     
     // Use Konva's getRelativePointerPosition for accurate coordinates
     const relativePos = stage.getRelativePointerPosition();
@@ -130,7 +130,8 @@ export const ImageCanvas: React.FC = () => {
   };
 
   const handleMouseUp = () => {
-    if (!isDrawing || currentStroke.length < 4) {
+    // Disable drawing when generating
+    if (!isDrawing || currentStroke.length < 4 || isGenerating) {
       setIsDrawing(false);
       setCurrentStroke([]);
       return;
@@ -141,6 +142,7 @@ export const ImageCanvas: React.FC = () => {
       id: `stroke-${Date.now()}`,
       points: currentStroke,
       brushSize,
+      color: '#A855F7',
     });
     setCurrentStroke([]);
   };
@@ -274,21 +276,43 @@ export const ImageCanvas: React.FC = () => {
         )}
 
         {isGenerating && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90 backdrop-blur-md z-50">
             <div className="text-center">
-              <div className="relative inline-flex items-center justify-center mb-4">
+              <div className="relative inline-flex items-center justify-center mb-6">
                 {/* Outer rotating ring */}
-                <div className="absolute w-16 h-16 border-2 border-purple-500/20 rounded-full animate-spin" 
+                <div className="absolute w-20 h-20 border-3 border-purple-500/30 rounded-full animate-spin" 
                      style={{ 
                        borderTopColor: 'rgb(168 85 247)', 
+                       borderWidth: '3px',
                        animationDuration: '1s' 
                      }} 
                 />
+                {/* Middle rotating ring */}
+                <div className="absolute w-14 h-14 border-2 border-pink-500/30 rounded-full animate-spin" 
+                     style={{ 
+                       borderTopColor: 'rgb(236 72 153)', 
+                       animationDuration: '1.5s',
+                       animationDirection: 'reverse'
+                     }} 
+                />
                 {/* Inner pulsing circle */}
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full animate-pulse opacity-50" />
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full animate-pulse shadow-lg shadow-purple-500/50" />
               </div>
-              <p className="text-base font-medium text-gray-200 mb-1">{t.creatingYourImage}</p>
-              <p className="text-xs text-gray-400">This may take a few moments</p>
+              <div className="space-y-2 px-8">
+                <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                  {t.creatingYourImage}
+                </p>
+                <p className="text-sm text-gray-400">
+                  {selectedTool === 'edit' || selectedTool === 'mask' 
+                    ? 'Applying your edits...' 
+                    : 'This may take a few moments'}
+                </p>
+                <div className="flex items-center justify-center space-x-1 mt-4">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -301,18 +325,21 @@ export const ImageCanvas: React.FC = () => {
           scaleY={canvasZoom}
           x={canvasPan.x * canvasZoom}
           y={canvasPan.y * canvasZoom}
-          draggable={selectedTool !== 'mask'}
+          draggable={selectedTool !== 'mask' && !isGenerating}
           onDragEnd={(e) => {
-            setCanvasPan({ 
-              x: e.target.x() / canvasZoom, 
-              y: e.target.y() / canvasZoom 
-            });
+            if (!isGenerating) {
+              setCanvasPan({ 
+                x: e.target.x() / canvasZoom, 
+                y: e.target.y() / canvasZoom 
+              });
+            }
           }}
           onMouseDown={handleMouseDown}
           onMousemove={handleMouseMove}
           onMouseup={handleMouseUp}
           style={{ 
-            cursor: selectedTool === 'mask' ? 'crosshair' : 'default' 
+            cursor: isGenerating ? 'wait' : (selectedTool === 'mask' ? 'crosshair' : 'default'),
+            pointerEvents: isGenerating ? 'none' : 'auto'
           }}
         >
           <Layer>
