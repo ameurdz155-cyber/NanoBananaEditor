@@ -304,7 +304,7 @@ Only segment the specific object or region requested. The mask should be a binar
 
   private buildEditPrompt(request: EditRequest): string {
     const maskInstruction = request.maskImage 
-      ? "\n\nIMPORTANT: Apply changes ONLY where the mask image shows white pixels (value 255). Leave all other areas completely unchanged. Respect the mask boundaries precisely and maintain seamless blending at the edges."
+      ? "\n\n⚠️ CRITICAL MASK INSTRUCTION: A mask image has been provided showing the EXACT regions to edit. Apply the requested changes ONLY within the white areas (value 255) of the mask. The black areas (value 0) of the mask MUST remain completely untouched and unchanged. Respect the mask boundaries with pixel-perfect precision and ensure seamless, natural blending at the edges where masked and unmasked areas meet."
       : "";
 
     return `Edit this image according to the following instruction: ${request.instruction}
