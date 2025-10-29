@@ -325,6 +325,51 @@ export const PromptComposer: React.FC = () => {
           );
         })()}
         
+        {/* Mode-specific help text */}
+        <div className="mb-3 p-3 bg-gray-800/50 border border-gray-700/50 rounded-lg">
+          {selectedTool === 'generate' && (
+            <div className="space-y-1.5">
+              <p className="text-xs text-cyan-400 font-medium flex items-center">
+                <Sparkles className="h-3 w-3 mr-1.5" />
+                Generate Mode
+              </p>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Creates a <span className="text-gray-300 font-medium">completely new image</span> from your text description. Not related to any image on the artboard.
+              </p>
+              <p className="text-xs text-purple-400 italic">
+                💡 Tip: Use the <span className="font-medium">Seed</span> in Advanced Controls to preserve series work and create consistent variations.
+              </p>
+            </div>
+          )}
+          
+          {selectedTool === 'edit' && (
+            <div className="space-y-1.5">
+              <p className="text-xs text-cyan-400 font-medium flex items-center">
+                <Edit3 className="h-3 w-3 mr-1.5" />
+                Edit Mode
+              </p>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Modifies the <span className="text-gray-300 font-medium">entire image on the artboard</span>. Describe the changes you want to make to the whole image.
+              </p>
+            </div>
+          )}
+          
+          {selectedTool === 'mask' && (
+            <div className="space-y-1.5">
+              <p className="text-xs text-cyan-400 font-medium flex items-center">
+                <MousePointer className="h-3 w-3 mr-1.5" />
+                Select Mode
+              </p>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Edits <span className="text-gray-300 font-medium">only the areas you brush</span> on the artboard. Paint with your brush to select regions, then describe the changes.
+              </p>
+              <p className="text-xs text-orange-400">
+                ⚠️ Only brushed areas will be affected. Unmasked areas remain unchanged.
+              </p>
+            </div>
+          )}
+        </div>
+        
         <p className="text-xs text-gray-500 mb-3">
           {selectedTool === 'generate' 
             ? selectedTemplate 
