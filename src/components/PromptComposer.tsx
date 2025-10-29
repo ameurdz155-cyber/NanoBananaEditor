@@ -7,7 +7,7 @@ import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, Rota
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
-import { TemplatesView, getDefaultTemplates } from './TemplatesView';
+import { TemplatesView } from './TemplatesView';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
 
@@ -37,16 +37,10 @@ export const PromptComposer: React.FC = () => {
     clearBrushStrokes,
     apiKeyError,
     setApiKeyError,
-    selectedTemplate,
-    setSelectedTemplate,
     language,
-    customTemplates,
   } = useAppStore();
 
   const t = getTranslation(language);
-  
-  // Get localized templates based on current language
-  const localizedTemplates = React.useMemo(() => getDefaultTemplates(language), [language]);
 
   const { generate, cancelGeneration } = useImageGeneration();
   const { edit, cancelEdit } = useImageEditing();
@@ -128,29 +122,14 @@ export const PromptComposer: React.FC = () => {
       return;
     }
     
-    // Get the selected template from both default and custom templates
-    const template = selectedTemplate 
-      ? (localizedTemplates.find(t => t.id === selectedTemplate) || customTemplates.find(t => t.id === selectedTemplate))
-      : null;
-    
-    // Combine user prompt with template
-    let finalPrompt = currentPrompt;
-    let negativePrompt = '';
-    
-    if (template) {
-      // Replace {prompt} placeholder in template with user's actual prompt
-      finalPrompt = template.positivePrompt.replace('{prompt}', currentPrompt);
-      negativePrompt = template.negativePrompt || '';
-    }
-    
     if (selectedTool === 'generate') {
       const referenceImages = uploadedImages
         .filter(img => img.includes('base64,'))
         .map(img => img.split('base64,')[1]);
       
       generate({
-        prompt: finalPrompt,
-        negativePrompt: negativePrompt || undefined,
+        prompt: currentPrompt,
+        negativePrompt: undefined,
         referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
         temperature,
         seed: seed || undefined
@@ -305,9 +284,7 @@ export const PromptComposer: React.FC = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-[13px] font-medium text-gray-100">
-                {selectedTemplate !== 'none' 
-                  ? ((localizedTemplates.find(t => t.id === selectedTemplate) || customTemplates.find(t => t.id === selectedTemplate))?.name || selectedTemplate)
-                  : t.templates}
+                {t.templates}
               </span>
               <span className="text-[11px] text-gray-500">
                 {t.clickToManageTemplates}
@@ -338,42 +315,6 @@ export const PromptComposer: React.FC = () => {
             <HelpCircle className="h-4 w-4" />
           </button>
         </div>
-        
-        {/* Template Instruction */}
-        {selectedTemplate && (() => {
-          // Look for template in both localized default templates and custom templates
-          const template = localizedTemplates.find(t => t.id === selectedTemplate) 
-            || customTemplates.find(t => t.id === selectedTemplate);
-          if (!template) return null;
-          
-          return (
-            <div className="mb-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg relative">
-              <button
-                onClick={() => setSelectedTemplate(null)}
-                className="absolute right-2 top-2 rounded-full p-1 text-purple-200/80 hover:text-purple-100 hover:bg-purple-500/20 transition-colors"
-                aria-label={t.cancel}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-              <div className="flex items-start gap-2">
-                <div className="flex-shrink-0 mt-0.5">
-                  <Sparkles className="h-4 w-4 text-purple-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-purple-300 mb-1">{t.activeTemplate}: {template.name}</p>
-                  <p className="text-xs text-gray-300 break-words mb-2">
-                    <span className="text-purple-400 font-medium">{t.positive}:</span> {template.positivePrompt}
-                  </p>
-                  {template.negativePrompt && (
-                    <p className="text-xs text-gray-400 break-words">
-                      <span className="text-red-400 font-medium">{t.negative}:</span> {template.negativePrompt}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })()}
         
         {/* Mode-specific help text */}
         <div className="mb-3 p-3 bg-gray-800/50 border border-gray-700/50 rounded-lg">
@@ -422,9 +363,7 @@ export const PromptComposer: React.FC = () => {
         
         <p className="text-xs text-gray-500 mb-3">
           {selectedTool === 'generate' 
-            ? selectedTemplate 
-              ? t.enterCustomPrompt
-              : t.enterPromptAndInvoke
+            ? t.enterPromptAndInvoke
             : t.describeChanges}
         </p>
         <Textarea
@@ -432,9 +371,7 @@ export const PromptComposer: React.FC = () => {
           onChange={(e) => setCurrentPrompt(e.target.value)}
           placeholder={
             selectedTool === 'generate'
-              ? selectedTemplate
-                ? t.promptPlaceholderGenerate
-                : t.promptPlaceholderGenerate
+              ? t.promptPlaceholderGenerate
               : t.promptPlaceholderEdit
           }
           className="min-h-[120px] resize-none bg-gray-800 border-gray-700 focus:border-purple-500 transition-colors"

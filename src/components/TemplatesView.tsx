@@ -432,12 +432,19 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const handleApplyTemplate = (template: PromptTemplate) => {
-    // Set the template as selected
-    setSelectedTemplate(template.id);
+    // Insert template text directly into the prompt input
+    // Include both positive and negative prompts in a formatted way
+    let promptText = template.positivePrompt;
     
-    // Clear the prompt so user can enter their custom text
-    // The template will be applied when they click "Invoke"
-    setCurrentPrompt('');
+    // If there's a negative prompt, append it in a clear format
+    if (template.negativePrompt && template.negativePrompt.trim()) {
+      promptText = `${template.positivePrompt}\n\nNegative prompt: ${template.negativePrompt}`;
+    }
+    
+    setCurrentPrompt(promptText);
+    
+    // Don't save the template as "selected" - just insert the text
+    setSelectedTemplate(null);
     
     // Close the templates panel
     if (onTemplateSelect) {
