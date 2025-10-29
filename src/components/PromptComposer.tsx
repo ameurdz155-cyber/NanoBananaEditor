@@ -7,7 +7,7 @@ import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, Rota
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
-import { TemplatesView, DEFAULT_TEMPLATES } from './TemplatesView';
+import { TemplatesView, getDefaultTemplates } from './TemplatesView';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
 
@@ -37,6 +37,9 @@ export const PromptComposer: React.FC = () => {
   } = useAppStore();
 
   const t = getTranslation(language);
+  
+  // Get localized templates based on current language
+  const localizedTemplates = React.useMemo(() => getDefaultTemplates(language), [language]);
 
   const { generate, cancelGeneration } = useImageGeneration();
   const { edit, cancelEdit } = useImageEditing();
@@ -120,7 +123,7 @@ export const PromptComposer: React.FC = () => {
     
     // Get the selected template from both default and custom templates
     const template = selectedTemplate 
-      ? (DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) || customTemplates.find(t => t.id === selectedTemplate))
+      ? (localizedTemplates.find(t => t.id === selectedTemplate) || customTemplates.find(t => t.id === selectedTemplate))
       : null;
     
     // Combine user prompt with template
@@ -253,7 +256,7 @@ export const PromptComposer: React.FC = () => {
             <div className="flex flex-col">
               <span className="text-[13px] font-medium text-gray-100">
                 {selectedTemplate !== 'none' 
-                  ? ((DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) || customTemplates.find(t => t.id === selectedTemplate))?.name || selectedTemplate)
+                  ? ((localizedTemplates.find(t => t.id === selectedTemplate) || customTemplates.find(t => t.id === selectedTemplate))?.name || selectedTemplate)
                   : t.templates}
               </span>
               <span className="text-[11px] text-gray-500">
@@ -288,8 +291,8 @@ export const PromptComposer: React.FC = () => {
         
         {/* Template Instruction */}
         {selectedTemplate && (() => {
-          // Look for template in both default and custom templates
-          const template = DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) 
+          // Look for template in both localized default templates and custom templates
+          const template = localizedTemplates.find(t => t.id === selectedTemplate) 
             || customTemplates.find(t => t.id === selectedTemplate);
           if (!template) return null;
           

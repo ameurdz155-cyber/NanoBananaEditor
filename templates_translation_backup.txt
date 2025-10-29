@@ -1,0 +1,279 @@
+// Complete getDefaultTemplates function with ALL translations
+// Use this to manually replace the existing function if needed
+
+const getDefaultTemplates = (language: string): PromptTemplate[] => {
+  const isZh = language === 'zh';
+  
+  return [
+  {
+    id: 'anime',
+    name: isZh ? '动漫' : 'Anime',
+    emoji: '🎨',
+    image: templateThumbnails['anime'],
+    description: isZh ? '动漫风格，粗线条和赛璐璐着色' : 'Anime style with bold outlines and cel-shaded coloring',
+    positivePrompt: isZh 
+      ? '{prompt} 动漫风格, 粗线条, 赛璐璐着色, 少年漫画, 青年漫画'
+      : '{prompt} anime++, bold outline, cel-shaded coloring, shounen, seinen',
+    negativePrompt: isZh 
+      ? '{photo}+++, 灰度, 纯黑, 绘画'
+      : '{photo}+++, greyscale, solid black, painting',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'architectural',
+    name: isZh ? '建筑可视化' : 'Architectural Visualization',
+    emoji: '🏛️',
+    image: templateThumbnails['architectural'],
+    description: isZh ? '专业建筑渲染' : 'Professional architectural renders',
+    positivePrompt: isZh
+      ? '{prompt} 建筑可视化, 照片级渲染, 简洁线条, 柔和日光'
+      : '{prompt} architectural visualization, photoreal render, clean lines, soft daylight',
+    negativePrompt: isZh
+      ? '草图, 手绘, 噪点, 低质量'
+      : 'sketch, hand-drawn, noisy, low quality',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'concept-art-character',
+    name: isZh ? '概念艺术（角色）' : 'Concept Art (Character)',
+    emoji: '🎭',
+    image: templateThumbnails['concept-art-character'],
+    description: isZh ? '角色概念艺术，动态姿势' : 'Character concept art with dynamic posing',
+    positivePrompt: isZh
+      ? '{prompt} 角色概念艺术, 动态姿势, 富有表现力的光照, 详细服装'
+      : '{prompt} character concept art, dynamic pose, expressive lighting, detailed costume',
+    negativePrompt: isZh
+      ? '平面着色, 僵硬姿势, 低细节, 杂乱背景'
+      : 'flat shading, stiff pose, low detail, cluttered background',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'concept-art-fantasy',
+    name: isZh ? '概念艺术（奇幻）' : 'Concept Art (Fantasy)',
+    emoji: '🐉',
+    image: templateThumbnails['concept-art-fantasy'],
+    description: isZh ? '奇幻概念艺术，魔法氛围' : 'Fantasy concept art with magical atmosphere',
+    positivePrompt: isZh
+      ? '{prompt} 奇幻概念艺术, 魔法氛围, 详细环境, 史诗规模'
+      : '{prompt} fantasy concept art, magical atmosphere, detailed environment, epic scale',
+    negativePrompt: isZh
+      ? '现代, 写实, 照片, 当代'
+      : 'modern, realistic, photo, contemporary',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'concept-art-painterly',
+    name: isZh ? '概念艺术（绘画风）' : 'Concept Art (Painterly)',
+    emoji: '🖌️',
+    image: templateThumbnails['concept-art-painterly'],
+    description: isZh ? '绘画风概念艺术，大胆笔触' : 'Painterly concept art with bold brush strokes',
+    positivePrompt: isZh
+      ? '{prompt} 绘画风概念艺术, 可见笔触, 丰富色彩渐变, 高度奇幻'
+      : '{prompt} painterly concept art, visible brush strokes, rich color gradients, high fantasy',
+    negativePrompt: isZh
+      ? '照片级写实, 无菌, 低对比度, 平面色彩'
+      : 'photorealistic, sterile, low contrast, flat color',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'concept-art-scifi',
+    name: isZh ? '概念艺术（科幻）' : 'Concept Art (Sci-Fi)',
+    emoji: '🚀',
+    image: templateThumbnails['concept-art-scifi'],
+    description: isZh ? '未来科幻概念艺术' : 'Futuristic sci-fi concept art',
+    positivePrompt: isZh
+      ? '{prompt} 科幻概念艺术, 未来主义, 先进科技, 电影感'
+      : '{prompt} sci-fi concept art, futuristic, advanced technology, cinematic',
+    negativePrompt: isZh
+      ? '中世纪, 奇幻, 历史, 复古'
+      : 'medieval, fantasy, historical, vintage',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'environment-art',
+    name: isZh ? '环境艺术' : 'Environment Art',
+    emoji: '🌄',
+    image: templateThumbnails['environment-art'],
+    description: isZh ? '环境概念艺术，电影般的景观' : 'Environment concept art with cinematic vistas',
+    positivePrompt: isZh
+      ? '{prompt} 环境概念艺术, 壮丽景色, 体积光照, 大气透视'
+      : '{prompt} environment concept art, sweeping vista, volumetric lighting, atmospheric perspective',
+    negativePrompt: isZh
+      ? '拥挤, 暗淡光照, 低细节, 噪点'
+      : 'crowded, dull lighting, low detail, noisy',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'illustration',
+    name: isZh ? '插画' : 'Illustration',
+    emoji: '🖼️',
+    image: templateThumbnails['illustration'],
+    description: isZh ? '数字插画，鲜艳色彩' : 'Digital illustration with vibrant colors',
+    positivePrompt: isZh
+      ? '{prompt} 数字插画, 鲜艳色彩, 风格化, 艺术感'
+      : '{prompt} digital illustration, vibrant colors, stylized, artistic',
+    negativePrompt: isZh
+      ? '照片, 写实, 3D渲染'
+      : 'photo, realistic, 3d render',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'interior-design',
+    name: isZh ? '室内设计（可视化）' : 'Interior Design (Visualization)',
+    emoji: '🛋️',
+    image: templateThumbnails['interior-design'],
+    description: isZh ? '照片级室内设计可视化' : 'Photoreal interior design visualization',
+    positivePrompt: isZh
+      ? '{prompt} 室内设计可视化, 现代家具风格, 全局光照, 照片级渲染'
+      : '{prompt} interior design visualization, modern furniture styling, global illumination, photoreal rendering',
+    negativePrompt: isZh
+      ? '杂乱, 凌乱, 低光照, 未完成'
+      : 'clutter, messy, low light, unfinished',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'line-art',
+    name: isZh ? '线稿' : 'Line Art',
+    emoji: '✍️',
+    image: templateThumbnails['line-art'],
+    description: isZh ? '清晰线稿，墨水细节' : 'Clean line art with inking detail',
+    positivePrompt: isZh
+      ? '{prompt} 清晰线稿, 清脆轮廓, 墨水绘制, 高对比度'
+      : '{prompt} clean line art, crisp outlines, inked drawing, high contrast',
+    negativePrompt: isZh
+      ? '彩色, 阴影, 渐变, 绘画'
+      : 'color, shading, gradients, paint',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'photography-black-white',
+    name: isZh ? '摄影（黑白）' : 'Photography (Black and White)',
+    emoji: '📷',
+    image: templateThumbnails['photography-black-white'],
+    description: isZh ? '高对比度黑白摄影' : 'High contrast black and white photography',
+    positivePrompt: isZh
+      ? '{prompt} 黑白摄影, 戏剧性光照, 细颗粒, 高对比度'
+      : '{prompt} black and white photography, dramatic lighting, fine grain, high contrast',
+    negativePrompt: isZh
+      ? '彩色, 过度饱和, 卡通, 插画'
+      : 'colorful, oversaturated, cartoon, illustration',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'photography-general',
+    name: isZh ? '摄影（通用）' : 'Photography (General)',
+    emoji: '📸',
+    image: templateThumbnails['photography-general'],
+    description: isZh ? '通用多功能摄影' : 'Versatile general-purpose photography',
+    positivePrompt: isZh
+      ? '{prompt} 专业摄影, 锐利对焦, 自然光照, 景深'
+      : '{prompt} professional photography, sharp focus, natural lighting, depth of field',
+    negativePrompt: isZh
+      ? '模糊, 噪点, 低分辨率, 业余快照'
+      : 'blurry, noisy, low resolution, amateur snapshot',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'photography-landscape',
+    name: isZh ? '摄影（风景）' : 'Photography (Landscape)',
+    emoji: '🏞️',
+    image: templateThumbnails['photography-landscape'],
+    description: isZh ? '风景摄影，戏剧性光照' : 'Landscape photography with dramatic lighting',
+    positivePrompt: isZh
+      ? '{prompt} 风景摄影, 黄金时刻, 广阔景色, 戏剧性天空'
+      : '{prompt} landscape photography, golden hour, expansive scenery, dramatic sky',
+    negativePrompt: isZh
+      ? '室内, 工作室, 人工光照, 杂乱前景'
+      : 'indoor, studio, artificial lighting, cluttered foreground',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'photography-portrait',
+    name: isZh ? '摄影（肖像）' : 'Photography (Portrait)',
+    emoji: '👤',
+    image: templateThumbnails['photography-portrait'],
+    description: isZh ? '专业肖像摄影，工作室灯光' : 'Professional portrait photography with studio lighting',
+    positivePrompt: isZh
+      ? '{prompt} 肖像摄影, 专业照明, 虚化背景, 锐利对焦'
+      : '{prompt} portrait photography, professional lighting, bokeh background, sharp focus',
+    negativePrompt: isZh
+      ? '插画, 绘画, 素描, 卡通, 动漫'
+      : 'illustration, painting, drawing, cartoon, anime',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'photography-studio',
+    name: isZh ? '摄影（工作室灯光）' : 'Photography (Studio Lighting)',
+    emoji: '💡',
+    image: templateThumbnails['photography-studio'],
+    description: isZh ? '工作室肖像摄影，可控照明' : 'Studio portrait photography with controlled lighting',
+    positivePrompt: isZh
+      ? '{prompt} 工作室肖像, 柔光箱照明, 轮廓光, 干净背景, 超级细节'
+      : '{prompt} studio portrait, softbox lighting, rim light, clean backdrop, ultra detailed',
+    negativePrompt: isZh
+      ? '强烈闪光, 颗粒感, 低光照, 抓拍快照'
+      : 'harsh flash, grainy, low light, candid snapshot',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'product-rendering',
+    name: isZh ? '产品渲染' : 'Product Rendering',
+    emoji: '📦',
+    image: templateThumbnails['product-rendering'],
+    description: isZh ? '精致产品渲染，用于营销' : 'Polished product renders for marketing',
+    positivePrompt: isZh
+      ? '{prompt} 产品渲染, 工作室照明, 无缝背景, 光泽反射, 广告质量'
+      : '{prompt} product render, studio lighting, seamless background, glossy reflections, advertising quality',
+    negativePrompt: isZh
+      ? '划痕, 指纹, 噪点, 低多边形'
+      : 'scratches, fingerprints, noisy, low poly',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'sketch',
+    name: isZh ? '草图' : 'Sketch',
+    emoji: '✏️',
+    image: templateThumbnails['sketch'],
+    description: isZh ? '宽松铅笔草图风格' : 'Loose pencil sketch style',
+    positivePrompt: isZh
+      ? '{prompt} 铅笔草图, 构图线, 宽松阴影, 概念草稿'
+      : '{prompt} pencil sketch, construction lines, loose shading, concept rough',
+    negativePrompt: isZh
+      ? '数字绘画, 全彩色, 精细, 照片级'
+      : 'digital painting, full color, polished, photoreal',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+  {
+    id: 'vehicles',
+    name: isZh ? '车辆' : 'Vehicles',
+    emoji: '🚗',
+    image: templateThumbnails['vehicles'],
+    description: isZh ? '车辆概念艺术，动态感' : 'Vehicle concept art with motion',
+    positivePrompt: isZh
+      ? '{prompt} 车辆概念艺术, 动态视角, 运动模糊, 反射材质'
+      : '{prompt} vehicle concept art, dynamic perspective, motion blur, reflective materials',
+    negativePrompt: isZh
+      ? '静态侧面, 低细节, 卡通化, 低多边形'
+      : 'static profile, low detail, cartoonish, low poly',
+    isDefault: true,
+    createdAt: Date.now(),
+  },
+];
+};
