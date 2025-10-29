@@ -33,6 +33,7 @@ export const PromptComposer: React.FC = () => {
     selectedTemplate,
     setSelectedTemplate,
     language,
+    customTemplates,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -117,8 +118,10 @@ export const PromptComposer: React.FC = () => {
       return;
     }
     
-    // Get the selected template if any
-    const template = selectedTemplate ? DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) : null;
+    // Get the selected template from both default and custom templates
+    const template = selectedTemplate 
+      ? (DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) || customTemplates.find(t => t.id === selectedTemplate))
+      : null;
     
     // Combine user prompt with template
     let finalPrompt = currentPrompt;
@@ -250,7 +253,7 @@ export const PromptComposer: React.FC = () => {
             <div className="flex flex-col">
               <span className="text-[13px] font-medium text-gray-100">
                 {selectedTemplate !== 'none' 
-                  ? (DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate)?.name || selectedTemplate)
+                  ? ((DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) || customTemplates.find(t => t.id === selectedTemplate))?.name || selectedTemplate)
                   : t.templates}
               </span>
               <span className="text-[11px] text-gray-500">
@@ -285,7 +288,9 @@ export const PromptComposer: React.FC = () => {
         
         {/* Template Instruction */}
         {selectedTemplate && (() => {
-          const template = selectedTemplate ? DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) : null;
+          // Look for template in both default and custom templates
+          const template = DEFAULT_TEMPLATES.find(t => t.id === selectedTemplate) 
+            || customTemplates.find(t => t.id === selectedTemplate);
           if (!template) return null;
           
           return (

@@ -13,6 +13,18 @@ export interface Board {
   imageIds: string[];
 }
 
+export interface PromptTemplate {
+  id: string;
+  name: string;
+  emoji?: string;
+  image?: string;
+  positivePrompt: string;
+  negativePrompt: string;
+  description?: string;
+  isDefault?: boolean;
+  createdAt: number;
+}
+
 interface AppState {
   // Current project
   currentProject: Project | null;
@@ -20,6 +32,9 @@ interface AppState {
   // Boards management
   boards: Board[];
   selectedBoardId: string | null;
+  
+  // Custom Templates
+  customTemplates: PromptTemplate[];
   
   // Canvas state
   canvasImage: string | null;
@@ -108,6 +123,12 @@ interface AppState {
   addImageToBoard: (boardId: string, imageId: string) => void;
   removeImageFromBoard: (boardId: string, imageId: string) => void;
   moveImageToBoard: (targetBoardId: string, imageId: string) => void;
+  
+  // Custom Templates actions
+  setCustomTemplates: (templates: PromptTemplate[]) => void;
+  addCustomTemplate: (template: PromptTemplate) => void;
+  updateCustomTemplate: (templateId: string, updates: Partial<PromptTemplate>) => void;
+  deleteCustomTemplate: (templateId: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -128,6 +149,8 @@ export const useAppStore = create<AppState>()(
         }
       ],
       selectedBoardId: 'default',
+      
+      customTemplates: [],
       
       canvasImage: null,
       canvasZoom: 1,
@@ -274,6 +297,23 @@ export const useAppStore = create<AppState>()(
           }
         })
       })),
+      
+      // Custom Templates actions
+      setCustomTemplates: (templates) => set({ customTemplates: templates }),
+      
+      addCustomTemplate: (template) => set((state) => ({
+        customTemplates: [template, ...state.customTemplates]
+      })),
+      
+      updateCustomTemplate: (templateId, updates) => set((state) => ({
+        customTemplates: state.customTemplates.map(t =>
+          t.id === templateId ? { ...t, ...updates } : t
+        )
+      })),
+      
+      deleteCustomTemplate: (templateId) => set((state) => ({
+        customTemplates: state.customTemplates.filter(t => t.id !== templateId)
+      })),
       }),
       {
         name: 'ai-pod-storage',
@@ -281,6 +321,7 @@ export const useAppStore = create<AppState>()(
           // Don't persist currentProject to avoid storage quota issues
           // Images are stored in IndexedDB or can be re-generated
           boards: state.boards,
+          customTemplates: state.customTemplates,
           language: state.language,
           apiKey: state.apiKey,
           brushSize: state.brushSize,

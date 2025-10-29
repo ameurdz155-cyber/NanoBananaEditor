@@ -126,7 +126,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({ open, onOpenChange }) => {
 
             <div className="pt-4 border-t border-gray-700">
               <p className="text-xs text-gray-500 text-center">
-                Version 1.0.0 • Built with React & Vite • Powered by Google Gemini
+                Version 1.0.0 
               </p>
             </div>
           </div>

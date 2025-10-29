@@ -259,10 +259,18 @@ interface TemplatesViewProps {
 }
 
 export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }) => {
-  const { setCurrentPrompt, selectedTemplate, setSelectedTemplate, language } = useAppStore();
+  const { 
+    setCurrentPrompt, 
+    selectedTemplate, 
+    setSelectedTemplate, 
+    language,
+    customTemplates,
+    addCustomTemplate,
+    updateCustomTemplate,
+    deleteCustomTemplate
+  } = useAppStore();
   const t = getTranslation(language);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [myTemplates, setMyTemplates] = React.useState<PromptTemplate[]>([]);
   const [expandedSections, setExpandedSections] = React.useState<Record<string, boolean>>({
     my: true,
     default: true,
@@ -279,6 +287,27 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     description: '',
     image: '',
   });
+
+  // No longer needed - templates are now in Zustand store which persists automatically
+  // React.useEffect(() => {
+  //   try {
+  //     const savedTemplates = localStorage.getItem('my-prompt-templates');
+  //     if (savedTemplates) {
+  //       const parsed = JSON.parse(savedTemplates);
+  //       setMyTemplates(parsed);
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to load templates:', error);
+  //   }
+  // }, []);
+
+  // React.useEffect(() => {
+  //   try {
+  //     localStorage.setItem('my-prompt-templates', JSON.stringify(myTemplates));
+  //   } catch (error) {
+  //     console.error('Failed to save templates:', error);
+  //   }
+  // }, [myTemplates]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -321,10 +350,13 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const handleApplyTemplate = (template: PromptTemplate) => {
-    // Just activate the template, don't modify the current prompt
+    // Set the template as selected
     setSelectedTemplate(template.id);
+    
     // Clear the prompt so user can enter their custom text
+    // The template will be applied when they click "Invoke"
     setCurrentPrompt('');
+    
     // Close the templates panel
     if (onTemplateSelect) {
       onTemplateSelect();
@@ -339,20 +371,13 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
     if (editingTemplate) {
       // Update existing template
-      setMyTemplates(prev =>
-        prev.map(t =>
-          t.id === editingTemplate.id
-            ? {
-                ...t,
-                name: formData.name.trim(),
-                positivePrompt: formData.positivePrompt.trim(),
-                negativePrompt: formData.negativePrompt.trim(),
-                description: formData.description.trim(),
-                image: formData.image.trim() || undefined,
-              }
-            : t
-        )
-      );
+      updateCustomTemplate(editingTemplate.id, {
+        name: formData.name.trim(),
+        positivePrompt: formData.positivePrompt.trim(),
+        negativePrompt: formData.negativePrompt.trim(),
+        description: formData.description.trim(),
+        image: formData.image.trim() || undefined,
+      });
     } else {
       // Create new template
       const newTemplate: PromptTemplate = {
@@ -364,7 +389,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         image: formData.image.trim() || undefined,
         createdAt: Date.now(),
       };
-      setMyTemplates(prev => [newTemplate, ...prev]);
+      addCustomTemplate(newTemplate);
     }
 
     setShowCreateModal(false);
@@ -372,7 +397,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
   const handleDeleteTemplate = (templateId: string) => {
     if (confirm('Are you sure you want to delete this template?')) {
-      setMyTemplates(prev => prev.filter(t => t.id !== templateId));
+      deleteCustomTemplate(templateId);
     }
   };
 
@@ -390,7 +415,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           const content = event.target?.result as string;
           const imported = JSON.parse(content);
           if (Array.isArray(imported)) {
-            setMyTemplates(prev => [...imported, ...prev]);
+            imported.forEach((template: PromptTemplate) => addCustomTemplate(template));
           }
         } catch (error) {
           alert('Failed to import templates. Please check the file format.');
@@ -402,12 +427,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const handleExportTemplates = () => {
-    if (myTemplates.length === 0) {
+    if (customTemplates.length === 0) {
       alert('No templates to export');
       return;
     }
 
-    const dataStr = JSON.stringify(myTemplates, null, 2);
+    const dataStr = JSON.stringify(customTemplates, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -417,7 +442,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     URL.revokeObjectURL(url);
   };
 
-  const filteredMyTemplates = myTemplates.filter(t =>
+  const filteredMyTemplates = customTemplates.filter(t =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -438,7 +463,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     >
       <div className="flex items-center gap-3 p-3">
         {/* Template Thumbnail */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center text-2xl border border-gray-800 overflow-hidden">
+        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border border-gray-800 overflow-hidden">
           {template.image ? (
             <img 
               src={template.image} 
@@ -446,11 +471,16 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = template.emoji || '📝';
+                const firstLetter = template.name.charAt(0).toUpperCase();
+                e.currentTarget.parentElement!.innerHTML = `<span class="text-2xl font-bold text-purple-400">${firstLetter}</span>`;
               }}
             />
+          ) : template.emoji ? (
+            <span className="text-2xl">{template.emoji}</span>
           ) : (
-            template.emoji || '📝'
+            <span className="text-2xl font-bold text-purple-400">
+              {template.name.charAt(0).toUpperCase()}
+            </span>
           )}
         </div>
 
@@ -577,7 +607,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             variant="ghost"
             size="icon"
             onClick={handleExportTemplates}
-            disabled={myTemplates.length === 0}
+            disabled={customTemplates.length === 0}
             title="Export Templates"
             className="h-8 w-8"
           >
@@ -602,7 +632,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               )}
               <h3 className="text-sm font-semibold text-gray-300">My Templates</h3>
             </div>
-            <span className="text-xs text-gray-500">{myTemplates.length}</span>
+            <span className="text-xs text-gray-500">{customTemplates.length}</span>
           </button>
 
           {expandedSections.my && (
@@ -672,8 +702,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             <div className="space-y-4">
               {/* Template Icon/Preview */}
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center text-3xl border border-gray-800">
-                  {formData.name.charAt(0).toUpperCase() || '📝'}
+                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border border-gray-800">
+                  <span className="text-3xl font-bold text-purple-400">
+                    {formData.name.charAt(0).toUpperCase() || '?'}
+                  </span>
                 </div>
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-300 mb-1">{t.name}</label>
