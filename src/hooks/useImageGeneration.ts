@@ -87,9 +87,8 @@ export const useImageGeneration = () => {
           targetBoard = newBoard;
         }
 
-        outputAssets.forEach((asset) => {
-          store.addImageToBoard(targetBoard!.id, asset.url);
-        });
+        // Add generation ID to board (not the asset URL)
+        store.addImageToBoard(targetBoard!.id, generation.id);
 
         setCanvasImage(outputAssets[0].url);
         
@@ -333,9 +332,8 @@ export const useImageEditing = () => {
           targetBoard = newBoard;
         }
 
-        outputAssets.forEach((asset) => {
-          store.addImageToBoard(targetBoard!.id, asset.url);
-        });
+        // Add edit ID to board (not the asset URL)
+        store.addImageToBoard(targetBoard!.id, edit.id);
         
         // Automatically load the edited image in the canvas
         const { selectEdit, selectGeneration } = useAppStore.getState();

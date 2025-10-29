@@ -257,7 +257,7 @@ export const BoardsPanel: React.FC = () => {
                           : "text-gray-400 hover:text-gray-200"
                       )}
                     >
-                      Images
+                      Generated Images
                     </button>
                     <button
                       onClick={(e) => {
