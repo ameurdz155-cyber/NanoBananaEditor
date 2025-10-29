@@ -5,7 +5,7 @@ import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
-import logoHeader from '../assets/logo_header.png';
+import logoHeader from '../assets/AI-POD-lite-logo.png';
 
 export const Header: React.FC = () => {
   const { language } = useAppStore();
