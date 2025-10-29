@@ -405,7 +405,7 @@ export const PromptComposer: React.FC = () => {
                     className="min-h-[120px] resize-none bg-gray-800/50 border-purple-500/30 focus:border-purple-500 text-gray-200 text-sm leading-relaxed"
                     placeholder="Improved prompt will appear here..."
                   />
-                  <p className="text-xs text-gray-400 mt-2">✏️ You can edit this improved version before accepting</p>
+                  <p className="text-xs text-gray-400 mt-2">{t.canEditImproved}</p>
                 </div>
                 
                 {/* Action Buttons */}

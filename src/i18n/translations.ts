@@ -157,6 +157,7 @@ export interface Translations {
   improvedVersion: string;
   acceptAndUse: string;
   keepOriginal: string;
+  canEditImproved: string;
   
   // History Panel tabs
   boards: string;
@@ -372,6 +373,7 @@ export const translations: Record<Language, Translations> = {
     improvedVersion: 'Improved Version',
     acceptAndUse: 'Accept & Use This',
     keepOriginal: 'Keep Original',
+    canEditImproved: '✏️ You can edit this improved version before accepting',
     
     // History Panel tabs
     boards: 'Boards',
@@ -585,6 +587,7 @@ export const translations: Record<Language, Translations> = {
     improvedVersion: '改进版本',
     acceptAndUse: '接受并使用',
     keepOriginal: '保持原样',
+    canEditImproved: '✏️ 您可以在接受前编辑此改进版本',
     
     // History Panel tabs
     boards: '画板',
