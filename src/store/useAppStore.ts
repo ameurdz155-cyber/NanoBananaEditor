@@ -318,35 +318,13 @@ export const useAppStore = create<AppState>()(
       {
         name: 'ai-pod-storage',
         partialize: (state) => ({
-          // Don't persist currentProject to avoid storage quota issues
-          // Images are stored in IndexedDB or can be re-generated
-          // But we save a lightweight version for history
+          // Persist with smart truncation to avoid quota errors
           currentProject: state.currentProject ? {
-            id: state.currentProject.id,
-            title: state.currentProject.title,
-            createdAt: state.currentProject.createdAt,
-            updatedAt: state.currentProject.updatedAt,
-            // Save generations but without heavy base64 images
-            generations: state.currentProject.generations.map(g => ({
-              ...g,
-              sourceAssets: [],  // Don't save source images
-              outputAssets: g.outputAssets.map(a => ({
-                ...a,
-                url: a.url.length > 100 ? a.url.substring(0, 100) + '...[truncated]' : a.url  // Keep reference but truncate data
-              }))
-            })),
-            // Save edits but without heavy base64 images
-            edits: state.currentProject.edits.map(e => ({
-              ...e,
-              maskReferenceAsset: e.maskReferenceAsset ? {
-                ...e.maskReferenceAsset,
-                url: e.maskReferenceAsset.url.length > 100 ? e.maskReferenceAsset.url.substring(0, 100) + '...[truncated]' : e.maskReferenceAsset.url
-              } : undefined,
-              outputAssets: e.outputAssets.map(a => ({
-                ...a,
-                url: a.url.length > 100 ? a.url.substring(0, 100) + '...[truncated]' : a.url
-              }))
-            }))
+            ...state.currentProject,
+            // Limit to last 20 generations to save space
+            generations: state.currentProject.generations.slice(-20),
+            // Limit to last 20 edits to save space
+            edits: state.currentProject.edits.slice(-20)
           } : null,
           boards: state.boards,
           customTemplates: state.customTemplates,
@@ -357,6 +335,41 @@ export const useAppStore = create<AppState>()(
           selectedTool: state.selectedTool,
           selectedTemplate: state.selectedTemplate,
         }),
+        storage: {
+          getItem: (name) => {
+            const str = localStorage.getItem(name);
+            return str ? JSON.parse(str) : null;
+          },
+          setItem: (name, value) => {
+            try {
+              localStorage.setItem(name, JSON.stringify(value));
+            } catch (error) {
+              // Handle quota exceeded error gracefully
+              if (error instanceof Error && error.name === 'QuotaExceededError') {
+                console.warn('⚠️ Storage quota exceeded. Clearing old data...');
+                // Try to clear some space by removing old generations
+                try {
+                  const currentData = JSON.parse(localStorage.getItem(name) || '{}');
+                  if (currentData.state?.currentProject) {
+                    // Keep only last 10 items
+                    currentData.state.currentProject.generations = currentData.state.currentProject.generations?.slice(-10) || [];
+                    currentData.state.currentProject.edits = currentData.state.currentProject.edits?.slice(-10) || [];
+                    localStorage.setItem(name, JSON.stringify(currentData));
+                  }
+                } catch (cleanupError) {
+                  console.error('Failed to cleanup storage:', cleanupError);
+                  // Last resort: clear all storage
+                  localStorage.removeItem(name);
+                }
+              } else {
+                console.error('Storage error:', error);
+              }
+            }
+          },
+          removeItem: (name) => {
+            localStorage.removeItem(name);
+          },
+        },
       }
     ),
     { name: 'ai-studio-pro-store' }

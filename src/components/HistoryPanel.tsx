@@ -180,17 +180,25 @@ export const HistoryPanel: React.FC = () => {
                         }
                       }}
                     >
-                      {generation.outputAssets[0] ? (
+                      {generation.outputAssets[0] && generation.outputAssets[0].url ? (
                         <img
                           src={generation.outputAssets[0].url}
                           alt={`Generation ${genIndex + 1}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          onError={(e) => {
+                            // Hide broken images
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            // Show fallback
+                            if (target.nextSibling) {
+                              (target.nextSibling as HTMLElement).style.display = 'flex';
+                            }
+                          }}
                         />
-                      ) : (
-                        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
-                        </div>
-                      )}
+                      ) : null}
+                      <div className="w-full h-full bg-gray-800 flex items-center justify-center" style={{ display: generation.outputAssets[0] && generation.outputAssets[0].url ? 'none' : 'flex' }}>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
+                      </div>
                       
                       {/* Overlay on hover */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -226,17 +234,25 @@ export const HistoryPanel: React.FC = () => {
                         }
                       }}
                     >
-                      {edit.outputAssets[0] ? (
+                      {edit.outputAssets[0] && edit.outputAssets[0].url ? (
                         <img
                           src={edit.outputAssets[0].url}
                           alt={`Edit ${editIndex + 1}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          onError={(e) => {
+                            // Hide broken images
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            // Show fallback
+                            if (target.nextSibling) {
+                              (target.nextSibling as HTMLElement).style.display = 'flex';
+                            }
+                          }}
                         />
-                      ) : (
-                        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
-                        </div>
-                      )}
+                      ) : null}
+                      <div className="w-full h-full bg-gray-800 flex items-center justify-center" style={{ display: edit.outputAssets[0] && edit.outputAssets[0].url ? 'none' : 'flex' }}>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
+                      </div>
                       
                       {/* Overlay on hover */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

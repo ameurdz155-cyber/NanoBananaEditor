@@ -121,8 +121,9 @@ export const useImageGeneration = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
-      setIsGenerating(false);
     }
+    // Always reset generating state immediately
+    setIsGenerating(false);
   };
 
   return {
@@ -359,8 +360,9 @@ export const useImageEditing = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
-      setIsGenerating(false);
     }
+    // Always reset generating state immediately
+    setIsGenerating(false);
   };
 
   return {
