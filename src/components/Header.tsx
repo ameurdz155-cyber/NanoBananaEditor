@@ -34,7 +34,7 @@ export const Header: React.FC = () => {
               className="h-10 object-contain"
             />
           </div>
-          <div className="px-3 py-1 rounded-full glass-hover glass text-xs font-semibold" style={{ color: 'var(--accent-cyan)' }}>
+          <div className="px-3 py-1 text-xs font-semibold" style={{ color: 'var(--accent-cyan)', border: 'none', background: 'transparent' }}>
             {t.versionBadge}
           </div>
         </div>
