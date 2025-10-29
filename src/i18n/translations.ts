@@ -159,6 +159,13 @@ export interface Translations {
   keepOriginal: string;
   canEditImproved: string;
   
+  // Templates actions
+  hidePreview: string;
+  showPreview: string;
+  createTemplate: string;
+  importTemplates: string;
+  exportTemplates: string;
+  
   // History Panel tabs
   boards: string;
   myCreations: string;
@@ -375,6 +382,13 @@ export const translations: Record<Language, Translations> = {
     keepOriginal: 'Keep Original',
     canEditImproved: '✏️ You can edit this improved version before accepting',
     
+    // Templates actions
+    hidePreview: 'Hide Previews',
+    showPreview: 'Show Previews',
+    createTemplate: 'Create Template',
+    importTemplates: 'Import Templates',
+    exportTemplates: 'Export Templates',
+    
     // History Panel tabs
     boards: 'Boards',
     myCreations: 'My Creations',
@@ -588,6 +602,13 @@ export const translations: Record<Language, Translations> = {
     acceptAndUse: '接受并使用',
     keepOriginal: '保持原样',
     canEditImproved: '✏️ 您可以在接受前编辑此改进版本',
+    
+    // Templates actions
+    hidePreview: '隐藏预览',
+    showPreview: '显示预览',
+    createTemplate: '创建模板',
+    importTemplates: '导入模板',
+    exportTemplates: '导出模板',
     
     // History Panel tabs
     boards: '画板',

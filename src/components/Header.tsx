@@ -5,6 +5,7 @@ import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
+import logoHeader from '../assets/logo_header.png';
 
 export const Header: React.FC = () => {
   const { language } = useAppStore();
@@ -28,7 +29,7 @@ export const Header: React.FC = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
             <img 
-              src="/logo/logo_header.png" 
+              src={logoHeader} 
               alt={t.appName}
               className="h-10 object-contain"
             />

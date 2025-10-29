@@ -661,39 +661,11 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setShowPreviews(!showPreviews)}
-            title={showPreviews ? "Hide Previews" : "Show Previews"}
-            className="h-8 w-8"
-          >
-            {showPreviews ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
             onClick={openCreateModal}
-            title="Create Template"
+            title={t.createTemplate}
             className="h-8 w-8"
           >
             <Plus className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleImportTemplates}
-            title="Import Templates"
-            className="h-8 w-8"
-          >
-            <Upload className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleExportTemplates}
-            disabled={customTemplates.length === 0}
-            title="Export Templates"
-            className="h-8 w-8"
-          >
-            <Download className="h-4 w-4" />
           </Button>
         </div>
       </div>
