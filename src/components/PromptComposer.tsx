@@ -3,7 +3,7 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check } from 'lucide-react';
+import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
@@ -22,8 +22,15 @@ export const PromptComposer: React.FC = () => {
     seed,
     setSeed,
     isGenerating,
+    uploadedImages,
+    addUploadedImage,
+    removeUploadedImage,
     clearUploadedImages,
+    editReferenceImages,
+    addEditReferenceImage,
+    removeEditReferenceImage,
     clearEditReferenceImages,
+    canvasImage,
     setCanvasImage,
     showPromptPanel,
     setShowPromptPanel,
@@ -137,16 +144,59 @@ export const PromptComposer: React.FC = () => {
     }
     
     if (selectedTool === 'generate') {
+      const referenceImages = uploadedImages
+        .filter(img => img.includes('base64,'))
+        .map(img => img.split('base64,')[1]);
+      
       generate({
         prompt: finalPrompt,
         negativePrompt: negativePrompt || undefined,
-        referenceImages: undefined,
+        referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
         temperature,
         seed: seed || undefined
       });
     } else if (selectedTool === 'edit' || selectedTool === 'mask') {
       edit(currentPrompt);
     }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      try {
+        // Read file as data URL (includes the data:image/...;base64, prefix)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          
+          if (selectedTool === 'generate') {
+            // Add to reference images (max 2)
+            if (uploadedImages.length < 2) {
+              addUploadedImage(dataUrl);
+            }
+          } else if (selectedTool === 'edit') {
+            // For edit mode, add to separate edit reference images (max 2)
+            if (editReferenceImages.length < 2) {
+              addEditReferenceImage(dataUrl);
+            }
+            // Set as canvas image if none exists
+            if (!canvasImage) {
+              setCanvasImage(dataUrl);
+            }
+          } else if (selectedTool === 'mask') {
+            // For mask mode, set as canvas image immediately
+            clearUploadedImages();
+            addUploadedImage(dataUrl);
+            setCanvasImage(dataUrl);
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+      }
+    }
+    // Reset the input so the same file can be selected again
+    event.target.value = '';
   };
 
   const handleClearSession = () => {
@@ -500,6 +550,76 @@ export const PromptComposer: React.FC = () => {
           </div>
           <span className="text-gray-500">{currentPrompt.length} {t.characters}</span>
         </div>
+      </div>
+
+      {/* Reference Images Upload */}
+      <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition-all flex-shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <label className="text-sm font-semibold text-gray-200 flex items-center">
+            <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 mr-2"></span>
+            {selectedTool === 'generate' ? t.addReferenceImages : selectedTool === 'edit' ? 'Style References' : 'Upload Image'}
+          </label>
+        </div>
+        
+        {selectedTool === 'mask' && (
+          <p className="text-xs text-gray-500 mb-3">
+            Upload an image to edit with mask painting
+          </p>
+        )}
+        {selectedTool === 'edit' && (
+          <p className="text-xs text-gray-500 mb-3">
+            {canvasImage ? 'Optional style references, up to 2 images' : 'Upload image to edit, up to 2 images'}
+          </p>
+        )}
+        {selectedTool === 'generate' && (
+          <p className="text-xs text-gray-500 mb-3">
+            Upload up to 2 reference images to guide the style and composition
+          </p>
+        )}
+        
+        <input
+          type="file"
+          id="reference-image-upload"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+        <Button
+          onClick={() => document.getElementById('reference-image-upload')?.click()}
+          variant="outline"
+          size="sm"
+          className="w-full"
+          disabled={
+            (selectedTool === 'generate' && uploadedImages.length >= 2) ||
+            (selectedTool === 'edit' && editReferenceImages.length >= 2)
+          }
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Upload
+        </Button>
+
+        {/* Show uploaded images preview */}
+        {((selectedTool === 'generate' && uploadedImages.length > 0) ||
+          (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
+          <div className="mt-3 space-y-2">
+            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={image}
+                  alt={`Reference ${index + 1}`}
+                  className="w-full h-20 object-cover rounded-lg border border-gray-700"
+                />
+                <button
+                  onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
+                  className="absolute top-1 right-1 bg-gray-900/90 text-gray-400 hover:text-red-400 rounded-full p-1.5 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Remove image"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
 
