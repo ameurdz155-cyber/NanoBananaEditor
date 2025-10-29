@@ -184,21 +184,33 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       let isGeneration = false;
       let isEdit = false;
       let type: 'generation' | 'edit' | 'asset' = 'asset';
+      let timestamp = 0;
       
       if (isSavedGalleryImage) {
         // Saved gallery images should appear in "Images" tab, so mark as generation
         type = 'generation';
         isGeneration = true;
+        // Extract timestamp from imageId (format: img-{timestamp}-{random})
+        const parts = imageId.split('-');
+        if (parts.length >= 2) {
+          timestamp = parseInt(parts[1]) || 0;
+        }
       } else if (!isDirectUrl) {
         // Only check generations/edits if it's not a direct URL
-        isGeneration = generations.some(g => g.id === imageId);
-        isEdit = edits.some(e => e.id === imageId);
+        const generation = generations.find(g => g.id === imageId);
+        const edit = edits.find(e => e.id === imageId);
+        isGeneration = !!generation;
+        isEdit = !!edit;
         type = isGeneration ? 'generation' : isEdit ? 'edit' : 'asset';
+        timestamp = generation?.timestamp || edit?.timestamp || 0;
       } else {
         // If it's a direct URL, check if it belongs to any generation or edit output
-        isGeneration = generations.some(g => g.outputAssets.some((a: any) => a.url === imageId));
-        isEdit = edits.some(e => e.outputAssets.some((a: any) => a.url === imageId));
+        const generation = generations.find(g => g.outputAssets.some((a: any) => a.url === imageId));
+        const edit = edits.find(e => e.outputAssets.some((a: any) => a.url === imageId));
+        isGeneration = !!generation;
+        isEdit = !!edit;
         type = isGeneration ? 'generation' : isEdit ? 'edit' : 'asset';
+        timestamp = generation?.timestamp || edit?.timestamp || 0;
       }
 
       return {
@@ -206,7 +218,8 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
         imageUrl,
         type,
         isGeneration,
-        isEdit
+        isEdit,
+        timestamp
       };
     })
     .filter(Boolean) as Array<{
@@ -215,10 +228,14 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       type: 'generation' | 'edit' | 'asset';
       isGeneration: boolean;
       isEdit: boolean;
+      timestamp: number;
     }> : [];
 
-  const assetItems = boardItems.filter(item => item.type === 'asset');
-  const imageItems = boardItems.filter(item => item.type !== 'asset');
+  // Sort items by timestamp (most recent first)
+  const sortedBoardItems = [...boardItems].sort((a, b) => b.timestamp - a.timestamp);
+
+  const assetItems = sortedBoardItems.filter(item => item.type === 'asset');
+  const imageItems = sortedBoardItems.filter(item => item.type !== 'asset');
   const itemsToRender = activeTab === 'assets' ? assetItems : imageItems;
 
   return (

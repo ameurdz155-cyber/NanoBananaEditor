@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { geminiService, GenerationRequest, EditRequest } from '../services/geminiService';
-import { useAppStore, Board } from '../store/useAppStore';
+import { useAppStore } from '../store/useAppStore';
 import { generateId } from '../utils/imageUtils';
 import { Generation, Edit, Asset } from '../types';
 import { useRef } from 'react';
@@ -61,35 +61,9 @@ export const useImageGeneration = () => {
 
         addGeneration(generation);
 
-        const store = useAppStore.getState();
+        // Images are now only saved to history, not automatically added to gallery
+        // Users can manually save to gallery using the Save button
         
-        // Use the selected board, or fall back to default board
-        let targetBoard = store.selectedBoardId 
-          ? store.boards.find((board) => board.id === store.selectedBoardId)
-          : null;
-        
-        // If no board is selected or selected board doesn't exist, use default
-        if (!targetBoard) {
-          targetBoard = store.boards.find((board) => board.id === 'default');
-        }
-        
-        // If default board doesn't exist, create it
-        if (!targetBoard) {
-          const newBoard: Board = {
-            id: 'default',
-            name: 'My Creations',
-            description: 'All your generated images',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            imageIds: []
-          };
-          store.addBoard(newBoard);
-          targetBoard = newBoard;
-        }
-
-        // Add generation ID to board (not the asset URL)
-        store.addImageToBoard(targetBoard!.id, generation.id);
-
         setCanvasImage(outputAssets[0].url);
         
         // Create project if none exists
@@ -307,35 +281,8 @@ export const useImageEditing = () => {
 
         addEdit(edit);
         
-        // Add edited images to the selected board
-        const store = useAppStore.getState();
-        
-        // Use the selected board, or fall back to default board
-        let targetBoard = store.selectedBoardId 
-          ? store.boards.find((board) => board.id === store.selectedBoardId)
-          : null;
-        
-        // If no board is selected or selected board doesn't exist, use default
-        if (!targetBoard) {
-          targetBoard = store.boards.find((board) => board.id === 'default');
-        }
-        
-        // If default board doesn't exist, create it
-        if (!targetBoard) {
-          const newBoard: Board = {
-            id: 'default',
-            name: 'My Creations',
-            description: 'All your generated images',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            imageIds: []
-          };
-          store.addBoard(newBoard);
-          targetBoard = newBoard;
-        }
-
-        // Add edit ID to board (not the asset URL)
-        store.addImageToBoard(targetBoard!.id, edit.id);
+        // Edits are now only saved to history, not automatically added to gallery
+        // Users can manually save to gallery using the Save button
         
         // Automatically load the edited image in the canvas
         const { selectEdit, selectGeneration } = useAppStore.getState();
