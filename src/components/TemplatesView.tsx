@@ -333,7 +333,7 @@ export const getDefaultTemplates = (language: string): PromptTemplate[] => {
 export const DEFAULT_TEMPLATES: PromptTemplate[] = getDefaultTemplates('en');
 
 interface TemplatesViewProps {
-  onTemplateSelect?: () => void;
+  onTemplateSelect?: (templateInfo: { name: string; image?: string; emoji?: string }) => void;
 }
 
 export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }) => {
@@ -446,9 +446,13 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     // Don't save the template as "selected" - just insert the text
     setSelectedTemplate(null);
     
-    // Close the templates panel
+    // Close the templates panel and pass the template info
     if (onTemplateSelect) {
-      onTemplateSelect();
+      onTemplateSelect({
+        name: template.name,
+        image: template.image,
+        emoji: template.emoji
+      });
     }
   };
 

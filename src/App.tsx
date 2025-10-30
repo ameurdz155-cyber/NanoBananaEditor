@@ -7,6 +7,7 @@ import { ImageCanvas } from './components/ImageCanvas';
 import { HistoryPanel } from './components/HistoryPanel';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAppStore } from './store/useAppStore';
+import { getTranslation } from './i18n/translations';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,7 +21,13 @@ const queryClient = new QueryClient({
 function AppContent() {
   useKeyboardShortcuts();
   
-  const { showPromptPanel, setShowPromptPanel, setShowHistory } = useAppStore();
+  const { showPromptPanel, setShowPromptPanel, setShowHistory, language } = useAppStore();
+  
+  // Update page title when language changes
+  React.useEffect(() => {
+    const t = getTranslation(language);
+    document.title = t.pageTitle;
+  }, [language]);
   
   // Set mobile defaults on mount
   React.useEffect(() => {

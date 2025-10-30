@@ -5,6 +5,7 @@ export interface Translations {
   appName: string;
   appSubtitle: string;
   versionBadge: string;
+  pageTitle: string;
   
   // Settings
   settings: string;
@@ -245,6 +246,7 @@ export const translations: Record<Language, Translations> = {
     appName: 'AI POD Lite',
     appSubtitle: 'Free Edition',
     versionBadge: 'V2.0 Free Version',
+    pageTitle: 'AI POD Lite - AI Image Generator & Editor',
     
     // Settings
     settings: 'Settings',
@@ -483,6 +485,7 @@ export const translations: Record<Language, Translations> = {
     appName: 'AI POD Lite',
     appSubtitle: '专业版',
     versionBadge: 'V2.0 免费版',
+    pageTitle: 'AI POD Lite - AI图像生成器和编辑器',
     
     // Settings
     settings: '设置',
@@ -586,7 +589,7 @@ export const translations: Record<Language, Translations> = {
     // History panel
     yourCreations: '您的创作',
     items: '项',
-    gallery: '画廊',
+    gallery: '图库',
     total: '总计',
     noCreationsYet: '还没有创作',
     generatedImagesWillAppear: '您生成的图片将显示在这里',
@@ -662,7 +665,7 @@ export const translations: Record<Language, Translations> = {
     exportTemplates: '导出模板',
     
     // History Panel tabs
-    boards: '画廊',
+    boards: '图库',
     myCreations: '我的创作',
     images: '图片',
     assets: '素材',

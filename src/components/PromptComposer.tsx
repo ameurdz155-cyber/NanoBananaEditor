@@ -51,6 +51,7 @@ export const PromptComposer: React.FC = () => {
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [isImproving, setIsImproving] = useState(false);
   const [improvedPrompt, setImprovedPrompt] = useState<string | null>(null);
+  const [lastSelectedTemplate, setLastSelectedTemplate] = useState<{ name: string; image?: string; emoji?: string } | null>(null);
 
   // Clean up images when switching tools
   React.useEffect(() => {
@@ -279,15 +280,38 @@ export const PromptComposer: React.FC = () => {
           className="w-full rounded-xl px-3 py-2.5 flex items-center justify-between text-left transition-all hover:bg-gray-900/40"
         >
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800 bg-gray-900 text-gray-400">
-              <FileText className="h-4 w-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800 bg-gray-900 text-gray-400 overflow-hidden">
+              {lastSelectedTemplate?.image ? (
+                <img 
+                  src={lastSelectedTemplate.image} 
+                  alt={lastSelectedTemplate.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      parent.innerHTML = lastSelectedTemplate.emoji 
+                        ? `<span class="text-lg">${lastSelectedTemplate.emoji}</span>`
+                        : `<span class="text-lg font-bold text-purple-400">${lastSelectedTemplate.name.charAt(0).toUpperCase()}</span>`;
+                    }
+                  }}
+                />
+              ) : lastSelectedTemplate?.emoji ? (
+                <span className="text-lg">{lastSelectedTemplate.emoji}</span>
+              ) : lastSelectedTemplate ? (
+                <span className="text-lg font-bold text-purple-400">
+                  {lastSelectedTemplate.name.charAt(0).toUpperCase()}
+                </span>
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
             </div>
             <div className="flex flex-col">
               <span className="text-[13px] font-medium text-gray-100">
-                {t.templates}
+                {lastSelectedTemplate?.name || t.templates}
               </span>
               <span className="text-[11px] text-gray-500">
-                {t.clickToManageTemplates}
+                {lastSelectedTemplate ? t.templates : t.clickToManageTemplates}
               </span>
             </div>
           </div>
@@ -540,12 +564,14 @@ export const PromptComposer: React.FC = () => {
           (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
           <div className="mt-3 space-y-2">
             {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={image}
-                  alt={`Reference ${index + 1}`}
-                  className="w-full h-20 object-cover rounded-lg border border-gray-700"
-                />
+              <div key={index} className="relative group bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
+                <div className="w-full h-32 flex items-center justify-center p-2">
+                  <img
+                    src={image}
+                    alt={`Reference ${index + 1}`}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
                 <button
                   onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
                   className="absolute top-1 right-1 bg-gray-900/90 text-gray-400 hover:text-red-400 rounded-full p-1.5 transition-colors opacity-0 group-hover:opacity-100"
@@ -749,7 +775,10 @@ export const PromptComposer: React.FC = () => {
             {t.clickToManageTemplates}
           </p>
           <div className="mt-4 h-[60vh] flex min-h-0">
-            <TemplatesView onTemplateSelect={() => setShowTemplatesModal(false)} />
+            <TemplatesView onTemplateSelect={(templateInfo) => {
+              setLastSelectedTemplate(templateInfo);
+              setShowTemplatesModal(false);
+            }} />
           </div>
         </Dialog.Content>
       </Dialog.Portal>
