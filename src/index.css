@@ -50,9 +50,14 @@ body::before {
   background: linear-gradient(180deg, rgb(147 51 234) 0%, rgb(236 72 153) 100%);
 }
 
-/* Custom scrollbar class for specific elements */
+/* Custom scrollbar class for specific elements - auto-hide on idle */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 2px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -60,12 +65,90 @@ body::before {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(75 85 99);
+  background: transparent;
   border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+/* Show scrollbar on hover or when scrolling */
+.custom-scrollbar:hover::-webkit-scrollbar-thumb,
+.custom-scrollbar.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgb(124 58 237) 0%, rgb(219 39 119) 100%);
+  background: linear-gradient(180deg, rgb(124 58 237) 0%, rgb(219 39 119) 100%) !important;
+}
+
+/* Firefox scrollbar */
+.custom-scrollbar:hover,
+.custom-scrollbar.is-scrolling {
+  scrollbar-color: rgb(75 85 99) transparent;
+}
+
+/* Sidebar scrollbar - compact and auto-hiding with shorter thumb */
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  position: relative;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 33.33% 0; /* This creates the effect of a shorter track/thumb */
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  transform: scaleX(0.8);
+}
+
+/* Show scrollbar on hover or when scrolling with animation */
+.sidebar-scrollbar:hover::-webkit-scrollbar-thumb,
+.sidebar-scrollbar.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.5);
+  opacity: 1;
+  transform: scaleX(1);
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.3);
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, 
+    rgba(124, 58, 237, 0.8) 0%, 
+    rgba(219, 39, 119, 0.8) 100%) !important;
+  opacity: 1;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+}
+
+/* Firefox scrollbar for sidebar */
+.sidebar-scrollbar:hover,
+.sidebar-scrollbar.is-scrolling {
+  scrollbar-color: rgba(124, 58, 237, 0.5) transparent;
+}
+
+/* Add fade-in animation */
+@keyframes scrollbar-fadein {
+  from {
+    opacity: 0;
+    transform: translateX(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sidebar-scrollbar.is-scrolling::-webkit-scrollbar-thumb {
+  animation: scrollbar-fadein 0.2s ease-out;
 }
 
 /* Custom range slider styling */

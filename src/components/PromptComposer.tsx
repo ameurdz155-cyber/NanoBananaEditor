@@ -216,7 +216,7 @@ export const PromptComposer: React.FC = () => {
 
   return (
     <>
-    <div className="w-80 lg:w-72 xl:w-80 h-full bg-gray-950 border-r border-gray-800 p-6 flex flex-col space-y-6 overflow-y-auto">
+    <div className="w-80 lg:w-72 xl:w-80 h-full bg-gray-950 border-r border-gray-800 p-6 flex flex-col space-y-6 overflow-y-auto sidebar-scrollbar">
       <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>

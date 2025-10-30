@@ -29,6 +29,56 @@ function AppContent() {
     document.title = t.pageTitle;
   }, [language]);
   
+  // Auto-hide scrollbar when not scrolling
+  React.useEffect(() => {
+    const scrollTimeouts = new Map<Element, NodeJS.Timeout>();
+    
+    const handleScrollbarVisibility = () => {
+      const scrollableElements = document.querySelectorAll('.custom-scrollbar, .sidebar-scrollbar');
+      
+      scrollableElements.forEach((element) => {
+        // Remove old listener if exists
+        const oldListener = (element as any)._scrollListener;
+        if (oldListener) {
+          element.removeEventListener('scroll', oldListener);
+        }
+        
+        const handleScroll = () => {
+          element.classList.add('is-scrolling');
+          
+          const existingTimeout = scrollTimeouts.get(element);
+          if (existingTimeout) {
+            clearTimeout(existingTimeout);
+          }
+          
+          const timeout = setTimeout(() => {
+            element.classList.remove('is-scrolling');
+            scrollTimeouts.delete(element);
+          }, 1000); // Hide after 1 second of no scrolling
+          
+          scrollTimeouts.set(element, timeout);
+        };
+        
+        // Store listener reference for cleanup
+        (element as any)._scrollListener = handleScroll;
+        element.addEventListener('scroll', handleScroll);
+      });
+    };
+    
+    // Initial setup
+    handleScrollbarVisibility();
+    
+    // Re-run when DOM changes (for dynamically added elements)
+    const observer = new MutationObserver(handleScrollbarVisibility);
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    return () => {
+      observer.disconnect();
+      scrollTimeouts.forEach(timeout => clearTimeout(timeout));
+      scrollTimeouts.clear();
+    };
+  }, []);
+  
   // Set mobile defaults on mount
   React.useEffect(() => {
     const checkMobile = () => {
