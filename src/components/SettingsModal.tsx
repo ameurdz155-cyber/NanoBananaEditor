@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Save, Eye, EyeOff, Key, Sparkles, Shield, CheckCircle, AlertCircle, FlaskConical, Globe } from 'lucide-react';
+import { X, Save, Eye, EyeOff, Key, Sparkles, Shield, CheckCircle, AlertCircle, FlaskConical, Globe, Folder, FolderOpen } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { validateApiKey } from '../services/geminiService';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation, Language } from '../i18n/translations';
+import { isTauriEnvironment } from '../utils/fileSaver';
 
 interface SettingsModalProps {
   open: boolean;
@@ -13,8 +14,9 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange }) => {
-  const { language, setLanguage } = useAppStore();
+  const { language, setLanguage, savePath, setSavePath } = useAppStore();
   const t = getTranslation(language);
+  const isTauri = isTauriEnvironment();
   
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -100,6 +102,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
     setApiKey('');
   };
 
+  const handleChooseFolder = async () => {
+    if (!isTauri) return;
+    
+    try {
+      const { open } = await import('@tauri-apps/plugin-dialog');
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: t.chooseFolder,
+      });
+      
+      if (selected && typeof selected === 'string') {
+        setSavePath(selected);
+      }
+    } catch (error) {
+      console.error('Error choosing folder:', error);
+    }
+  };
+
+  const handleOpenFolder = async () => {
+    if (!isTauri || !savePath) return;
+    
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('plugin:shell|open', { path: savePath });
+    } catch (error) {
+      console.error('Error opening folder:', error);
+    }
+  };
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -143,6 +175,58 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                 </select>
                 <p className="text-xs text-gray-400 mt-2">
                   {t.selectLanguage}
+                </p>
+              </div>
+
+              {/* Save Path Section - Desktop App Only */}
+              <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-xl">
+                <div className="flex items-center mb-3">
+                  <Folder className="h-4 w-4 text-green-400 mr-2" />
+                  <label className="text-sm font-medium text-green-300">
+                    {t.savePath}
+                  </label>
+                </div>
+                
+                {isTauri ? (
+                  <>
+                    <div className="mb-3 p-2 bg-gray-900/50 rounded-lg border border-gray-700">
+                      <p className="text-xs text-gray-300 break-all">
+                        {savePath || t.defaultSavePath}
+                      </p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        onClick={handleChooseFolder}
+                        className="flex-1"
+                      >
+                        <Folder className="h-4 w-4 mr-2" />
+                        {t.chooseFolder}
+                      </Button>
+                      
+                      {savePath && (
+                        <Button
+                          variant="secondary"
+                          onClick={handleOpenFolder}
+                          className="flex-1"
+                        >
+                          <FolderOpen className="h-4 w-4 mr-2" />
+                          {t.openFolder}
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-3 bg-gray-900/50 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400 text-center">
+                      {t.desktopAppOnly}
+                    </p>
+                  </div>
+                )}
+                
+                <p className="text-xs text-gray-400 mt-2">
+                  {t.savePathDescription}
                 </p>
               </div>
               

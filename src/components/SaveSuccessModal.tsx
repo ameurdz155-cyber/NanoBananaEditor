@@ -1,18 +1,52 @@
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { CheckCircle, X } from 'lucide-react';
+import { CheckCircle, X, Download, FolderOpen } from 'lucide-react';
+import { useAppStore } from '../store/useAppStore';
+import { getTranslation } from '../i18n/translations';
+import { isTauriEnvironment } from '../utils/fileSaver';
 
 interface SaveSuccessModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   galleryName: string;
+  savedPath?: string;
+  imageData?: string;
 }
 
 export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
   open,
   onOpenChange,
   galleryName,
+  savedPath,
+  imageData,
 }) => {
+  const { language } = useAppStore();
+  const t = getTranslation(language);
+  const isTauri = isTauriEnvironment();
+
+  const handleDownload = () => {
+    if (!imageData) return;
+    
+    const link = document.createElement('a');
+    link.href = imageData;
+    link.download = `ai-pod-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleOpenFolder = async () => {
+    if (!isTauri || !savedPath) return;
+    
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      // Get the directory path from the file path
+      const dirPath = savedPath.substring(0, savedPath.lastIndexOf('/'));
+      await invoke('plugin:shell|open', { path: dirPath });
+    } catch (error) {
+      console.error('Error opening folder:', error);
+    }
+  };
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -36,23 +70,59 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
 
             {/* Title */}
             <Dialog.Title className="text-xl font-bold text-center text-white mb-2">
-              Image Saved Successfully!
+              {t.imageSavedSuccessfully}
             </Dialog.Title>
 
             {/* Description */}
-            <Dialog.Description className="text-center text-gray-300 mb-6">
-              Your image has been saved to{' '}
+            <Dialog.Description className="text-center text-gray-300 mb-4">
+              {t.imageSavedToGallery}{' '}
               <span className="font-semibold text-cyan-400">"{galleryName}"</span>{' '}
               gallery.
             </Dialog.Description>
 
-            {/* OK Button */}
-            <button
-              onClick={() => onOpenChange(false)}
-              className="w-full py-3 px-4 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-green-500/25"
-            >
-              OK
-            </button>
+            {/* Path or Browser Note */}
+            {isTauri && savedPath ? (
+              <div className="mb-6 p-3 bg-gray-900/50 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400 mb-1">{t.savedToPath}:</p>
+                <p className="text-xs text-gray-300 break-all font-mono">{savedPath}</p>
+              </div>
+            ) : (
+              <div className="mb-6 p-3 bg-blue-900/20 rounded-lg border border-blue-500/30">
+                <p className="text-xs text-blue-300 text-center">
+                  {t.browserStorageNote}
+                </p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              {!isTauri && imageData && (
+                <button
+                  onClick={handleDownload}
+                  className="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-blue-500/25 flex items-center justify-center"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {t.downloadImage}
+                </button>
+              )}
+              
+              {isTauri && savedPath && (
+                <button
+                  onClick={handleOpenFolder}
+                  className="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-purple-500/25 flex items-center justify-center"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  {t.openFolder}
+                </button>
+              )}
+              
+              <button
+                onClick={() => onOpenChange(false)}
+                className="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-green-500/25"
+              >
+                OK
+              </button>
+            </div>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

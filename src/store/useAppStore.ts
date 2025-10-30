@@ -114,6 +114,10 @@ interface AppState {
   apiKeyError: string | null;
   setApiKeyError: (error: string | null) => void;
   
+  // Save Path state (Desktop app only)
+  savePath: string | null;
+  setSavePath: (path: string | null) => void;
+  
   // Boards actions
   setBoards: (boards: Board[]) => void;
   setSelectedBoardId: (boardId: string | null) => void;
@@ -183,6 +187,9 @@ export const useAppStore = create<AppState>()(
       apiKey: null,
       apiKeyError: null,
       
+      // Save Path state (Desktop app only)
+      savePath: null,
+      
       // Actions
       setCurrentProject: (project) => set({ currentProject: project }),
       setCanvasImage: (url) => set({ canvasImage: url }),
@@ -251,6 +258,8 @@ export const useAppStore = create<AppState>()(
       
       setApiKey: (key) => set({ apiKey: key }),
       setApiKeyError: (error) => set({ apiKeyError: error }),
+      
+      setSavePath: (path) => set({ savePath: path }),
       
       // Boards actions
       setBoards: (boards) => set({ boards }),
@@ -330,6 +339,7 @@ export const useAppStore = create<AppState>()(
           customTemplates: state.customTemplates,
           language: state.language,
           apiKey: state.apiKey,
+          savePath: state.savePath,
           brushSize: state.brushSize,
           temperature: state.temperature,
           selectedTool: state.selectedTool,

@@ -28,12 +28,15 @@ export const Header: React.FC = () => {
     boards,
     selectedBoardId,
     addImageToBoard,
+    savePath,
   } = useAppStore();
   const t = getTranslation(language);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
   const [savedGalleryName, setSavedGalleryName] = useState('');
+  const [savedImagePath, setSavedImagePath] = useState<string | undefined>();
+  const [savedImageData, setSavedImageData] = useState<string | undefined>();
   
   // Listen for custom event to open settings
   useEffect(() => {
@@ -68,7 +71,7 @@ export const Header: React.FC = () => {
     }
     
     // Save image to the gallery folder (disk or IndexedDB)
-    const result = await saveImageToGallery(canvasImage, boardName);
+    const result = await saveImageToGallery(canvasImage, boardName, undefined, savePath);
     
     if (result.success && selectedBoardId) {
       // Add the image to the board tracking
@@ -85,8 +88,10 @@ export const Header: React.FC = () => {
       
       if (saved) {
         console.log(`✅ Image saved to "${boardName}" gallery!`);
-        // Show success modal
+        // Show success modal with path and image data
         setSavedGalleryName(boardName);
+        setSavedImagePath(result.path);
+        setSavedImageData(canvasImage);
         setShowSaveSuccessModal(true);
         
         // Trigger a small update to refresh the gallery view
@@ -206,6 +211,8 @@ export const Header: React.FC = () => {
         open={showSaveSuccessModal} 
         onOpenChange={setShowSaveSuccessModal}
         galleryName={savedGalleryName}
+        savedPath={savedImagePath}
+        imageData={savedImageData}
       />
     </>
   );

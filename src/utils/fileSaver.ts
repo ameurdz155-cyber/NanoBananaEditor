@@ -1,5 +1,5 @@
 import { save } from '@tauri-apps/plugin-dialog';
-import { writeFile, mkdir, BaseDirectory } from '@tauri-apps/plugin-fs';
+import { writeFile, mkdir } from '@tauri-apps/plugin-fs';
 import { join, appDataDir } from '@tauri-apps/api/path';
 
 /**
@@ -169,7 +169,7 @@ export async function saveImageWithDialog(source: string, defaultName?: string):
 /**
  * Check if running in Tauri environment
  */
-function isTauriEnvironment(): boolean {
+export function isTauriEnvironment(): boolean {
   return typeof window !== 'undefined' && 
          '__TAURI_INTERNALS__' in window;
 }
@@ -180,7 +180,8 @@ function isTauriEnvironment(): boolean {
 export async function saveImageToGallery(
   source: string, 
   boardName: string = 'default',
-  defaultName?: string
+  defaultName?: string,
+  customSavePath?: string | null
 ): Promise<{ success: boolean; imageId: string; path?: string }> {
   const imageId = `img-${Date.now()}-${Math.random().toString(36).substring(7)}`;
   
@@ -191,8 +192,15 @@ export async function saveImageToGallery(
     // Check if we're in Tauri environment before trying to use Tauri APIs
     if (isTauriEnvironment()) {
       try {
-        const appData = await appDataDir();
-        const galleryPath = await join(appData, 'AI_POD', 'Gallery', boardName);
+        let galleryPath: string;
+        
+        // Use custom save path if provided, otherwise use default app data path
+        if (customSavePath) {
+          galleryPath = await join(customSavePath, 'AI_POD', 'Gallery', boardName);
+        } else {
+          const appData = await appDataDir();
+          galleryPath = await join(appData, 'AI_POD', 'Gallery', boardName);
+        }
         
         // Create directory if it doesn't exist
         await mkdir(galleryPath, { recursive: true });

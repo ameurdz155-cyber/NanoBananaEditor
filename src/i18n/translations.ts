@@ -20,6 +20,12 @@ export interface Translations {
   clear: string;
   language: string;
   selectLanguage: string;
+  savePath: string;
+  savePathDescription: string;
+  chooseFolder: string;
+  openFolder: string;
+  defaultSavePath: string;
+  desktopAppOnly: string;
   
   // Validation messages
   apiKeyValid: string;
@@ -105,6 +111,13 @@ export interface Translations {
   editMode: string;
   history: string;
   togglePanel: string;
+  
+  // Save success modal
+  imageSavedSuccessfully: string;
+  imageSavedToGallery: string;
+  savedToPath: string;
+  downloadImage: string;
+  browserStorageNote: string;
   
   // History panel
   yourCreations: string;
@@ -261,6 +274,12 @@ export const translations: Record<Language, Translations> = {
     clear: 'Clear',
     language: 'Language',
     selectLanguage: 'Select Language',
+    savePath: 'Save Path',
+    savePathDescription: 'Images will be automatically saved to this folder',
+    chooseFolder: 'Choose Folder',
+    openFolder: 'Open Folder',
+    defaultSavePath: 'Default: ~/Documents/AI POD Lite',
+    desktopAppOnly: 'Desktop App Only',
     
     // Validation messages
     apiKeyValid: 'API key is working correctly!',
@@ -346,6 +365,13 @@ export const translations: Record<Language, Translations> = {
     editMode: 'Edit mode',
     history: 'History',
     togglePanel: 'Toggle Panel',
+    
+    // Save success modal
+    imageSavedSuccessfully: 'Image Saved Successfully!',
+    imageSavedToGallery: 'Your image has been saved to',
+    savedToPath: 'Saved to',
+    downloadImage: 'Download Image',
+    browserStorageNote: 'Saved to browser storage. Download to save permanently.',
     
     // History panel
     yourCreations: 'Your Creations',
@@ -500,6 +526,12 @@ export const translations: Record<Language, Translations> = {
     clear: '清除',
     language: '语言',
     selectLanguage: '选择语言',
+    savePath: '保存路径',
+    savePathDescription: '图片将自动保存到此文件夹',
+    chooseFolder: '选择文件夹',
+    openFolder: '打开文件夹',
+    defaultSavePath: '默认：~/Documents/AI POD Lite',
+    desktopAppOnly: '仅限桌面应用',
     
     // Validation messages
     apiKeyValid: 'API密钥工作正常！',
@@ -585,6 +617,13 @@ export const translations: Record<Language, Translations> = {
     editMode: '编辑模式',
     history: '历史记录',
     togglePanel: '切换面板',
+    
+    // Save success modal
+    imageSavedSuccessfully: '图片保存成功！',
+    imageSavedToGallery: '您的图片已保存到',
+    savedToPath: '保存到',
+    downloadImage: '下载图片',
+    browserStorageNote: '已保存到浏览器存储。下载以永久保存。',
     
     // History panel
     yourCreations: '您的创作',
