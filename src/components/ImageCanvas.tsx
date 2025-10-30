@@ -28,6 +28,9 @@ export const ImageCanvas: React.FC = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState<number[]>([]);
 
+  // Track if we've already auto-fitted the current image
+  const [lastAutoFitImage, setLastAutoFitImage] = useState<string | null>(null);
+
   // Load image and auto-fit when canvasImage changes
   useEffect(() => {
     if (canvasImage) {
@@ -35,29 +38,33 @@ export const ImageCanvas: React.FC = () => {
       img.onload = () => {
         setImage(img);
         
-        // Only auto-fit if this is a new image (no existing zoom/pan state)
-        if (canvasZoom === 1 && canvasPan.x === 0 && canvasPan.y === 0) {
+        // Only auto-fit if this is a NEW image (different from last one)
+        if (canvasImage !== lastAutoFitImage) {
           // Auto-fit image to canvas
           const isMobile = window.innerWidth < 768;
-          const padding = isMobile ? 0.9 : 0.8; // Use more of the screen on mobile
+          const padding = isMobile ? 0.9 : 0.85; // Use more of the screen on mobile
           
           const scaleX = (stageSize.width * padding) / img.width;
           const scaleY = (stageSize.height * padding) / img.height;
           
-          const maxZoom = isMobile ? 0.3 : 0.8;
-          const optimalZoom = Math.min(scaleX, scaleY, maxZoom);
+          // Remove maxZoom limit - let it scale to fit naturally
+          const optimalZoom = Math.min(scaleX, scaleY);
           
           setCanvasZoom(optimalZoom);
           
           // Center the image
           setCanvasPan({ x: 0, y: 0 });
+          
+          // Mark this image as auto-fitted
+          setLastAutoFitImage(canvasImage);
         }
       };
       img.src = canvasImage;
     } else {
       setImage(null);
+      setLastAutoFitImage(null);
     }
-  }, [canvasImage, stageSize, setCanvasZoom, setCanvasPan, canvasZoom, canvasPan]);
+  }, [canvasImage, stageSize, setCanvasZoom, setCanvasPan, lastAutoFitImage]);
 
   // Handle stage resize
   useEffect(() => {

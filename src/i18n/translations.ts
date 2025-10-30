@@ -118,6 +118,7 @@ export interface Translations {
   savedToPath: string;
   downloadImage: string;
   browserStorageNote: string;
+  ok: string;
   
   // History panel
   yourCreations: string;
@@ -372,6 +373,7 @@ export const translations: Record<Language, Translations> = {
     savedToPath: 'Saved to',
     downloadImage: 'Download Image',
     browserStorageNote: 'Saved to browser storage. Download to save permanently.',
+    ok: 'OK',
     
     // History panel
     yourCreations: 'Your Creations',
@@ -624,6 +626,7 @@ export const translations: Record<Language, Translations> = {
     savedToPath: '保存到',
     downloadImage: '下载图片',
     browserStorageNote: '已保存到浏览器存储。下载以永久保存。',
+    ok: '确定',
     
     // History panel
     yourCreations: '您的创作',

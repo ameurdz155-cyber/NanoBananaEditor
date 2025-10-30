@@ -120,7 +120,7 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
                 onClick={() => onOpenChange(false)}
                 className="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-green-500/25"
               >
-                OK
+                {t.ok}
               </button>
             </div>
           </div>
