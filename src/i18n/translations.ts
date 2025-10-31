@@ -252,6 +252,12 @@ export interface Translations {
   templateExplanation: string;
   templateOmitPlaceholder: string;
   usePlaceholder: string;
+  
+  // Error messages
+  prohibitedContent: string;
+  prohibitedContentMessage: string;
+  placeholderWarning: string;
+  placeholderWarningMessage: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -507,6 +513,12 @@ export const translations: Record<Language, Translations> = {
     templateExplanation: 'Prompt templates add text to the prompts you write in the prompt box.',
     templateOmitPlaceholder: 'If you omit the placeholder, the template will be appended to the end of your prompt.',
     usePlaceholder: 'Use the placeholder string {prompt} to specify where your prompt should be included in the template.',
+    
+    // Error messages
+    prohibitedContent: 'Content Prohibited',
+    prohibitedContentMessage: 'Your prompt contains content that violates safety guidelines. Please modify your prompt and try again.',
+    placeholderWarning: 'Placeholder Detected',
+    placeholderWarningMessage: 'Your prompt contains placeholders like {prompt} or {photo}. Please replace them with your actual content before invoking.',
   },
   zh: {
     // Header
@@ -760,6 +772,12 @@ export const translations: Record<Language, Translations> = {
     templateExplanation: '提示词模板会将文本添加到您在提示框中编写的提示词中。',
     templateOmitPlaceholder: '如果省略占位符，模板将附加到提示词的末尾。',
     usePlaceholder: '使用占位符字符串 {prompt} 来指定您的提示词应包含在模板中的位置。',
+    
+    // Error messages
+    prohibitedContent: '内容被禁止',
+    prohibitedContentMessage: '您的提示词包含违反安全准则的内容。请修改您的提示词后重试。',
+    placeholderWarning: '检测到占位符',
+    placeholderWarningMessage: '您的提示词包含占位符（如 {prompt} 或 {photo}）。请在调用前将其替换为实际内容。',
   },
 };
 

@@ -110,6 +110,12 @@ export const PromptComposer: React.FC = () => {
 
     if (!currentPrompt.trim()) return;
     
+    // Check if prompt contains {prompt} or {photo} placeholders
+    if (currentPrompt.includes('{prompt}') || currentPrompt.includes('{photo}')) {
+      setApiKeyError('PLACEHOLDER_WARNING');
+      return;
+    }
+    
     // Clear previous errors
     setApiKeyError(null);
     
@@ -588,21 +594,41 @@ export const PromptComposer: React.FC = () => {
 
       {/* API Key Error Message */}
       {apiKeyError && (
-        <div className="glass border border-red-500/30 bg-red-900/20 rounded-xl p-4 mb-4">
+        <div className={`glass rounded-xl p-4 mb-4 ${
+          apiKeyError === 'PLACEHOLDER_WARNING' 
+            ? 'border border-yellow-500/30 bg-yellow-900/20' 
+            : 'border border-red-500/30 bg-red-900/20'
+        }`}>
           <div className="flex items-start space-x-3">
-            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <AlertCircle className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+              apiKeyError === 'PLACEHOLDER_WARNING' ? 'text-yellow-400' : 'text-red-400'
+            }`} />
             <div className="flex-1">
-              <p className="text-sm text-red-300 font-medium">{apiKeyError}</p>
-              <button
-                onClick={() => {
-                  const event = new CustomEvent('openSettings');
-                  window.dispatchEvent(event);
-                }}
-                className="mt-2 flex items-center text-xs text-purple-400 hover:text-purple-300 transition-colors"
-              >
-                <Settings className="h-3 w-3 mr-1" />
-                Open Settings to configure API key
-              </button>
+              {apiKeyError === 'PROHIBITED_CONTENT' ? (
+                <>
+                  <p className="text-sm text-red-300 font-semibold mb-1">{t.prohibitedContent}</p>
+                  <p className="text-xs text-red-200">{t.prohibitedContentMessage}</p>
+                </>
+              ) : apiKeyError === 'PLACEHOLDER_WARNING' ? (
+                <>
+                  <p className="text-sm text-yellow-300 font-semibold mb-1">{t.placeholderWarning}</p>
+                  <p className="text-xs text-yellow-200">{t.placeholderWarningMessage}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-red-300 font-medium">{apiKeyError}</p>
+                  <button
+                    onClick={() => {
+                      const event = new CustomEvent('openSettings');
+                      window.dispatchEvent(event);
+                    }}
+                    className="mt-2 flex items-center text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                  >
+                    <Settings className="h-3 w-3 mr-1" />
+                    Open Settings to configure API key
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

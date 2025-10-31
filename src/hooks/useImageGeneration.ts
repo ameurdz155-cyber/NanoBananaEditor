@@ -81,10 +81,15 @@ export const useImageGeneration = () => {
       }
       setIsGenerating(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       // Don't show error if it was intentionally cancelled
       if (error.name !== 'AbortError') {
-        setApiKeyError(error.message || 'An unknown error occurred.');
+        // Check if it's a prohibited content error
+        if (error.message === 'PROHIBITED_CONTENT' || error.isProhibited) {
+          setApiKeyError('PROHIBITED_CONTENT');
+        } else {
+          setApiKeyError(error.message || 'An unknown error occurred.');
+        }
       }
       setIsGenerating(false);
       abortControllerRef.current = null;
@@ -296,11 +301,16 @@ export const useImageEditing = () => {
       setIsGenerating(false);
       abortControllerRef.current = null;
     },
-    onError: (error) => {
+    onError: (error: any) => {
       // Don't log or show error if it was intentionally cancelled
       if (error.name !== 'AbortError') {
         console.error('Edit failed:', error);
-        setApiKeyError(error.message || 'An unknown error occurred during edit.');
+        // Check if it's a prohibited content error
+        if (error.message === 'PROHIBITED_CONTENT' || error.isProhibited) {
+          setApiKeyError('PROHIBITED_CONTENT');
+        } else {
+          setApiKeyError(error.message || 'An unknown error occurred during edit.');
+        }
       }
       setIsGenerating(false);
       abortControllerRef.current = null;

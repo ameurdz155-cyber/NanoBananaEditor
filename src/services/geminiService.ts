@@ -156,6 +156,13 @@ export class GeminiService {
         ? await Promise.race([apiPromise, abortPromise])
         : await apiPromise;
 
+      // Check for prohibited content block
+      if (response.promptFeedback?.blockReason === 'PROHIBITED_CONTENT') {
+        const error = new Error('PROHIBITED_CONTENT');
+        (error as any).isProhibited = true;
+        throw error;
+      }
+
       if (!response.candidates || response.candidates.length === 0) {
         throw new Error('No response from API. Please try again.');
       }
@@ -176,6 +183,11 @@ export class GeminiService {
     } catch (error: any) {
       // Re-throw AbortError without modification
       if (error.name === 'AbortError') {
+        throw error;
+      }
+      
+      // Re-throw PROHIBITED_CONTENT error without modification
+      if (error.message === 'PROHIBITED_CONTENT' || error.isProhibited) {
         throw error;
       }
       
@@ -244,6 +256,13 @@ export class GeminiService {
         ? await Promise.race([apiPromise, abortPromise])
         : await apiPromise;
 
+      // Check for prohibited content block
+      if (response.promptFeedback?.blockReason === 'PROHIBITED_CONTENT') {
+        const error = new Error('PROHIBITED_CONTENT');
+        (error as any).isProhibited = true;
+        throw error;
+      }
+
       const images: string[] = [];
 
       for (const part of response.candidates[0].content.parts) {
@@ -256,6 +275,11 @@ export class GeminiService {
     } catch (error: any) {
       // Re-throw AbortError without modification
       if (error.name === 'AbortError') {
+        throw error;
+      }
+      
+      // Re-throw PROHIBITED_CONTENT error without modification
+      if (error.message === 'PROHIBITED_CONTENT' || error.isProhibited) {
         throw error;
       }
       
