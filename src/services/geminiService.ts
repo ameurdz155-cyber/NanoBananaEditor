@@ -92,6 +92,8 @@ export interface GenerationRequest {
   temperature?: number;
   seed?: number;
   aspectRatio?: string;
+  width?: number;
+  height?: number;
   signal?: AbortSignal; // Add abort signal support
 }
 
@@ -323,7 +325,10 @@ Only segment the specific object or region requested. The mask should be a binar
         contents: prompt,
       });
 
-      const responseText = response.candidates[0].content.parts[0].text;
+      const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!responseText) {
+        throw new Error('No valid response received from segmentation API');
+      }
       return JSON.parse(responseText);
     } catch (error) {
       console.error('Error segmenting image:', error);

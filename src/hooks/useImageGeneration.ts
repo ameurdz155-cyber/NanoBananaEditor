@@ -42,6 +42,8 @@ export const useImageGeneration = () => {
           negativePrompt: request.negativePrompt,
           parameters: {
             aspectRatio: request.aspectRatio || '1:1',
+            width: request.width,
+            height: request.height,
             seed: request.seed,
             temperature: request.temperature
           },

@@ -14,6 +14,8 @@ export interface Generation {
   negativePrompt?: string;
   parameters: {
     aspectRatio?: string;
+    width?: number;
+    height?: number;
     seed?: number;
     temperature?: number;
   };

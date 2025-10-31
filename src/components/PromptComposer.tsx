@@ -62,6 +62,35 @@ export const PromptComposer: React.FC = () => {
   const [imageHeight, setImageHeight] = useState<number>(1024);
   const [randomSeed, setRandomSeed] = useState<boolean>(true);
 
+  // Update width/height when aspect ratio changes
+  const handleAspectRatioChange = (newRatio: string) => {
+    setAspectRatio(newRatio);
+    const [w, h] = newRatio.split(':').map(Number);
+    const ratio = w / h;
+    
+    // Keep width, adjust height
+    const newHeight = Math.round(imageWidth / ratio / 64) * 64;
+    setImageHeight(Math.max(64, Math.min(1536, newHeight)));
+  };
+
+  // Update height when width changes (maintain aspect ratio)
+  const handleWidthChange = (newWidth: number) => {
+    setImageWidth(newWidth);
+    const [w, h] = aspectRatio.split(':').map(Number);
+    const ratio = w / h;
+    const newHeight = Math.round(newWidth / ratio / 64) * 64;
+    setImageHeight(Math.max(64, Math.min(1536, newHeight)));
+  };
+
+  // Update width when height changes (maintain aspect ratio)
+  const handleHeightChange = (newHeight: number) => {
+    setImageHeight(newHeight);
+    const [w, h] = aspectRatio.split(':').map(Number);
+    const ratio = w / h;
+    const newWidth = Math.round(newHeight * ratio / 64) * 64;
+    setImageWidth(Math.max(64, Math.min(1536, newWidth)));
+  };
+
   // Clean up images when switching tools
   React.useEffect(() => {
     // When switching away from mask mode, clear brush strokes
@@ -152,7 +181,9 @@ export const PromptComposer: React.FC = () => {
         referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
         temperature,
         seed: seed || undefined,
-        aspectRatio
+        aspectRatio,
+        width: imageWidth,
+        height: imageHeight
       });
     } else if (selectedTool === 'edit' || selectedTool === 'mask') {
       edit(currentPrompt);
@@ -443,212 +474,8 @@ export const PromptComposer: React.FC = () => {
 
         </div>
         
-        {/* Image Settings Controls - Only show for Generate mode */}
-        {selectedTool === 'generate' && (
-          <div className="mt-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700/50 space-y-4">
-            {/* Aspect Ratio */}
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <label className="text-xs text-gray-400 mb-1.5 block">Aspect</label>
-                <select
-                  value={aspectRatio}
-                  onChange={(e) => setAspectRatio(e.target.value)}
-                  className="w-full h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100 cursor-pointer focus:border-purple-500 focus:outline-none"
-                >
-                  <option value="1:1">1:1</option>
-                  <option value="21:9">21:9</option>
-                  <option value="16:9">16:9</option>
-                  <option value="3:2">3:2</option>
-                  <option value="4:3">4:3</option>
-                  <option value="3:4">3:4</option>
-                  <option value="2:3">2:3</option>
-                  <option value="9:16">9:16</option>
-                  <option value="9:21">9:21</option>
-                </select>
-              </div>
-              <button
-                type="button"
-                className="h-8 w-8 flex items-center justify-center bg-gray-900 border border-gray-700 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
-                title="Swap dimensions"
-                onClick={() => {
-                  const [w, h] = aspectRatio.split(':');
-                  setAspectRatio(`${h}:${w}`);
-                }}
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 256 256">
-                  <path d="M120.49,167.51a12,12,0,0,1,0,17l-32,32a12,12,0,0,1-17,0l-32-32a12,12,0,1,1,17-17L68,179V48a12,12,0,0,1,24,0V179l11.51-11.52A12,12,0,0,1,120.49,167.51Zm96-96-32-32a12,12,0,0,0-17,0l-32,32a12,12,0,0,0,17,17L164,77V208a12,12,0,0,0,24,0V77l11.51,11.52a12,12,0,0,0,17-17Z"/>
-                </svg>
-              </button>
-              <button
-                type="button"
-                className="h-8 w-8 flex items-center justify-center bg-gray-900 border border-gray-700 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
-                title="Lock aspect ratio"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 256 256">
-                  <path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96Z"/>
-                </svg>
-              </button>
-              <button
-                type="button"
-                className="h-8 w-8 flex items-center justify-center bg-gray-900 border border-gray-700 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
-                title="Optimize size"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 256 256">
-                  <path d="M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z"/>
-                </svg>
-              </button>
-            </div>
 
-            {/* Width Control */}
-            <div>
-              <label className="text-xs text-gray-400 mb-1.5 block">Width</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="64"
-                  max="1536"
-                  step="64"
-                  value={imageWidth}
-                  onChange={(e) => setImageWidth(parseInt(e.target.value))}
-                  className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    background: `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${((imageWidth - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) ${((imageWidth - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) 100%)`
-                  }}
-                />
-                <div className="flex items-center">
-                  <input
-                    type="number"
-                    value={imageWidth}
-                    onChange={(e) => setImageWidth(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
-                    className="w-16 h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100 text-center focus:border-purple-500 focus:outline-none"
-                    min="64"
-                    max="1536"
-                  />
-                  <div className="flex flex-col ml-1">
-                    <button
-                      type="button"
-                      className="h-4 w-4 flex items-center justify-center text-gray-400 hover:text-gray-200"
-                      onClick={() => setImageWidth(Math.min(1536, imageWidth + 64))}
-                    >
-                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/>
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      className="h-4 w-4 flex items-center justify-center text-gray-400 hover:text-gray-200"
-                      onClick={() => setImageWidth(Math.max(64, imageWidth - 64))}
-                    >
-                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Height Control */}
-            <div>
-              <label className="text-xs text-gray-400 mb-1.5 block">Height</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="64"
-                  max="1536"
-                  step="64"
-                  value={imageHeight}
-                  onChange={(e) => setImageHeight(parseInt(e.target.value))}
-                  className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                  style={{
-                    background: `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${((imageHeight - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) ${((imageHeight - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) 100%)`
-                  }}
-                />
-                <div className="flex items-center">
-                  <input
-                    type="number"
-                    value={imageHeight}
-                    onChange={(e) => setImageHeight(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
-                    className="w-16 h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100 text-center focus:border-purple-500 focus:outline-none"
-                    min="64"
-                    max="1536"
-                  />
-                  <div className="flex flex-col ml-1">
-                    <button
-                      type="button"
-                      className="h-4 w-4 flex items-center justify-center text-gray-400 hover:text-gray-200"
-                      onClick={() => setImageHeight(Math.min(1536, imageHeight + 64))}
-                    >
-                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/>
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      className="h-4 w-4 flex items-center justify-center text-gray-400 hover:text-gray-200"
-                      onClick={() => setImageHeight(Math.max(64, imageHeight - 64))}
-                    >
-                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Seed Controls */}
-            <div className="flex items-end gap-2 pt-2 border-t border-gray-700/50">
-              <div className="flex-1">
-                <label className="text-xs text-gray-400 mb-1.5 block">{t.seed}</label>
-                <input
-                  type="number"
-                  value={seed || 0}
-                  onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : null)}
-                  placeholder="0"
-                  disabled={randomSeed}
-                  className="w-full h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100 focus:border-purple-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 mb-1.5 block">{t.random || 'Random'}</label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRandomSeed(!randomSeed);
-                    if (!randomSeed) setSeed(null);
-                  }}
-                  className={cn(
-                    "h-8 w-12 rounded transition-all relative",
-                    randomSeed
-                      ? "bg-cyan-500"
-                      : "bg-gray-700"
-                  )}
-                >
-                  <span className={cn(
-                    "absolute top-1 h-6 w-6 rounded bg-white transition-all",
-                    randomSeed ? "right-1" : "left-1"
-                  )}></span>
-                </button>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setRandomSeed(false);
-                  setSeed(Math.floor(Math.random() * 4294967295));
-                }}
-                disabled={randomSeed}
-                className="h-8 px-3 flex items-center gap-1.5 bg-gray-900 border border-gray-700 rounded text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Shuffle Seed"
-              >
-                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 256 256">
-                  <path d="M240.49,175.51a12,12,0,0,1,0,17l-24,24a12,12,0,0,1-17-17L203,196h-2.09a76.17,76.17,0,0,1-61.85-31.83L97.38,105.78A52.1,52.1,0,0,0,55.06,84H32a12,12,0,0,1,0-24H55.06a76.17,76.17,0,0,1,61.85,31.83l41.71,58.39A52.1,52.1,0,0,0,200.94,172H203l-3.52-3.51a12,12,0,0,1,17-17Zm-95.62-72.62a12,12,0,0,0,16.93-1.13A52,52,0,0,1,200.94,84H203l-3.52,3.51a12,12,0,0,0,17,17l24-24a12,12,0,0,0,0-17l-24-24a12,12,0,0,0-17,17L203,60h-2.09a76,76,0,0,0-57.2,26A12,12,0,0,0,144.87,102.89Zm-33.74,50.22a12,12,0,0,0-16.93,1.13A52,52,0,0,1,55.06,172H32a12,12,0,0,0,0,24H55.06a76,76,0,0,0,57.2-26A12,12,0,0,0,111.13,153.11Z"/>
-                </svg>
-                <span className="whitespace-nowrap">Shuffle Seed</span>
-              </button>
-            </div>
-          </div>
-        )}        {/* Improve Prompt Button */}
+        {/* Improve Prompt Button */}
         <div className="mt-2">
           <Button
             variant="outline"
@@ -792,24 +619,11 @@ export const PromptComposer: React.FC = () => {
           onChange={handleFileUpload}
           className="hidden"
         />
-        <Button
-          onClick={() => document.getElementById('reference-image-upload')?.click()}
-          variant="outline"
-          size="sm"
-          className="w-full"
-          disabled={
-            (selectedTool === 'generate' && uploadedImages.length >= 2) ||
-            (selectedTool === 'edit' && editReferenceImages.length >= 2)
-          }
-        >
-          <Upload className="h-4 w-4 mr-2" />
-          {t.upload}
-        </Button>
 
-        {/* Show uploaded images preview */}
+        {/* Show uploaded images preview or empty state */}
         {((selectedTool === 'generate' && uploadedImages.length > 0) ||
-          (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
-          <div className="mt-3 space-y-2">
+          (selectedTool === 'edit' && editReferenceImages.length > 0)) ? (
+          <div className="space-y-2">
             {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
               <div key={index} className="relative group bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
                 <div className="w-full h-32 flex items-center justify-center p-2">
@@ -828,7 +642,30 @@ export const PromptComposer: React.FC = () => {
                 </button>
               </div>
             ))}
+            {/* Upload button below images */}
+            {((selectedTool === 'generate' && uploadedImages.length < 2) ||
+              (selectedTool === 'edit' && editReferenceImages.length < 2)) && (
+              <Button
+                onClick={() => document.getElementById('reference-image-upload')?.click()}
+                variant="outline"
+                size="sm"
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {t.upload}
+              </Button>
+            )}
           </div>
+        ) : (
+          <button
+            onClick={() => document.getElementById('reference-image-upload')?.click()}
+            className="w-full py-6 flex flex-col items-center justify-center bg-gray-800/30 hover:bg-gray-800/50 rounded-lg border border-gray-700/50 border-dashed hover:border-gray-600 transition-all cursor-pointer"
+          >
+            <div className="w-12 h-12 mb-3 rounded-xl bg-gray-800 flex items-center justify-center text-2xl">
+              📁
+            </div>
+            <div className="text-xs text-gray-500">Upload Images</div>
+          </button>
         )}
       </div>
 
@@ -906,6 +743,134 @@ export const PromptComposer: React.FC = () => {
           {t.pressCtrlEnter}
         </p>
       </div>
+
+      {/* Image Settings Controls - Only show for Generate mode */}
+      {selectedTool === 'generate' && (
+        <div className="mt-3 p-4 bg-gradient-to-br from-gray-900/40 to-gray-800/40 rounded-xl border border-gray-700/40 space-y-4 backdrop-blur-sm">
+          {/* Aspect Ratio */}
+          <div>
+            <label className="text-xs font-semibold text-gray-200 mb-2 block tracking-wide">Aspect Ratio</label>
+            <select
+              value={aspectRatio}
+              onChange={(e) => handleAspectRatioChange(e.target.value)}
+              className="w-full h-10 px-3 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-100 font-medium cursor-pointer hover:border-gray-600/80 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
+            >
+              <option value="1:1">1:1 (Square)</option>
+              <option value="21:9">21:9 (Ultrawide)</option>
+              <option value="16:9">16:9 (Widescreen)</option>
+              <option value="3:2">3:2 (Classic Photo)</option>
+              <option value="4:3">4:3 (Standard)</option>
+              <option value="3:4">3:4 (Portrait)</option>
+              <option value="2:3">2:3 (Classic Portrait)</option>
+              <option value="9:16">9:16 (Vertical)</option>
+              <option value="9:21">9:21 (Tall)</option>
+            </select>
+          </div>
+
+          {/* Width Control */}
+          <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/20">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-gray-200 tracking-wide">Width</label>
+              <input
+                type="number"
+                value={imageWidth}
+                onChange={(e) => handleWidthChange(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
+                className="w-16 h-8 px-2 bg-gray-900/90 border border-gray-700/60 rounded-md text-sm text-gray-100 font-medium text-center hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
+                min="64"
+                max="1536"
+              />
+            </div>
+            <input
+              type="range"
+              min="64"
+              max="1536"
+              step="64"
+              value={imageWidth}
+              onChange={(e) => handleWidthChange(parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-700/40 rounded-full appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${((imageWidth - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) ${((imageWidth - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) 100%)`
+              }}
+            />
+          </div>
+
+          {/* Height Control */}
+          <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/20">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-gray-200 tracking-wide">Height</label>
+              <input
+                type="number"
+                value={imageHeight}
+                onChange={(e) => handleHeightChange(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
+                className="w-16 h-8 px-2 bg-gray-900/90 border border-gray-700/60 rounded-md text-sm text-gray-100 font-medium text-center hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
+                min="64"
+                max="1536"
+              />
+            </div>
+            <input
+              type="range"
+              min="64"
+              max="1536"
+              step="64"
+              value={imageHeight}
+              onChange={(e) => handleHeightChange(parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-700/40 rounded-full appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${((imageHeight - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) ${((imageHeight - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) 100%)`
+              }}
+            />
+          </div>
+
+          {/* Seed Controls */}
+          <div className="pt-3 border-t border-gray-700/40">
+            <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/20 space-y-3">
+              <label className="text-xs font-semibold text-gray-200 block tracking-wide">{t.seed}</label>
+              <input
+                type="number"
+                value={seed || 0}
+                onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : null)}
+                placeholder="0"
+                disabled={randomSeed}
+                className="w-full h-10 px-3 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-100 font-medium hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRandomSeed(!randomSeed);
+                    if (!randomSeed) setSeed(null);
+                  }}
+                  className={cn(
+                    "flex-1 h-10 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm font-medium text-sm",
+                    randomSeed
+                      ? "bg-gradient-to-br from-cyan-500 to-cyan-600 text-white"
+                      : "bg-gray-900/90 border border-gray-700/60 text-gray-400 hover:text-gray-200 hover:border-gray-600"
+                  )}
+                >
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm40-68a28,28,0,1,1-28-28A28,28,0,0,1,168,148Z"/>
+                  </svg>
+                  <span>{t.random || 'Random'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRandomSeed(false);
+                    setSeed(Math.floor(Math.random() * 4294967295));
+                  }}
+                  disabled={randomSeed}
+                  className="flex-1 h-10 flex items-center justify-center gap-2 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-300 font-medium hover:text-gray-100 hover:border-gray-600 hover:bg-gray-800/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
+                >
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M240.49,175.51a12,12,0,0,1,0,17l-24,24a12,12,0,0,1-17-17L203,196h-2.09a76.17,76.17,0,0,1-61.85-31.83L97.38,105.78A52.1,52.1,0,0,0,55.06,84H32a12,12,0,0,1,0-24H55.06a76.17,76.17,0,0,1,61.85,31.83l41.71,58.39A52.1,52.1,0,0,0,200.94,172H203l-3.52-3.51a12,12,0,0,1,17-17Zm-95.62-72.62a12,12,0,0,0,16.93-1.13A52,52,0,0,1,200.94,84H203l-3.52,3.51a12,12,0,0,0,17,17l24-24a12,12,0,0,0,0-17l-24-24a12,12,0,0,0-17,17L203,60h-2.09a76,76,0,0,0-57.2,26A12,12,0,0,0,144.87,102.89Zm-33.74,50.22a12,12,0,0,0-16.93,1.13A52,52,0,0,1,55.06,172H32a12,12,0,0,0,0,24H55.06a76,76,0,0,0,57.2-26A12,12,0,0,0,111.13,153.11Z"/>
+                  </svg>
+                  <span>Shuffle</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Advanced Controls */}
       <div>

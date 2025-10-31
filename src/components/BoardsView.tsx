@@ -59,6 +59,26 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   const [editingBoardId, setEditingBoardId] = React.useState<string | null>(null);
   const [deletingBoardId, setDeletingBoardId] = React.useState<string | null>(null);
   const [newBoardName, setNewBoardName] = React.useState('');
+
+  // Handle asset file upload
+  const handleAssetUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/') && selectedBoardId) {
+      try {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          // Add the uploaded asset to the current board
+          addImageToBoard(selectedBoardId, dataUrl);
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Failed to upload asset:', error);
+      }
+    }
+    // Reset the input so the same file can be selected again
+    event.target.value = '';
+  };
   const [editBoardName, setEditBoardName] = React.useState('');
   const [createBoardError, setCreateBoardError] = React.useState('');
   const [editBoardError, setEditBoardError] = React.useState('');
@@ -608,14 +628,35 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {itemsToRender.length === 0 ? (
               <div className="text-center py-6">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gray-800 flex items-center justify-center">
-                  {activeTab === 'assets' ? '📁' : '🖼️'}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {activeTab === 'assets'
-                    ? t.uploadImages
-                    : t.createImagesMessage}
-                </div>
+                {activeTab === 'assets' ? (
+                  <>
+                    <input
+                      type="file"
+                      id="asset-upload"
+                      accept="image/*"
+                      onChange={handleAssetUpload}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => document.getElementById('asset-upload')?.click()}
+                      className="w-full flex flex-col items-center justify-center py-8 bg-gray-800/30 hover:bg-gray-800/50 rounded-lg border border-gray-700/50 border-dashed hover:border-gray-600 transition-all cursor-pointer"
+                    >
+                      <div className="w-12 h-12 mb-3 rounded-xl bg-gray-800 flex items-center justify-center text-2xl">
+                        �
+                      </div>
+                      <div className="text-xs text-gray-500">{t.uploadImages}</div>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gray-800 flex items-center justify-center">
+                      🖼️
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {t.createImagesMessage}
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
@@ -731,6 +772,28 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     )}
                   </div>
                 ))}
+                
+                {/* Upload button when in assets tab and there are items */}
+                {activeTab === 'assets' && (
+                  <div className="col-span-2 mt-2">
+                    <input
+                      type="file"
+                      id="asset-upload-grid"
+                      accept="image/*"
+                      onChange={handleAssetUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      onClick={() => document.getElementById('asset-upload-grid')?.click()}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {t.upload}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
