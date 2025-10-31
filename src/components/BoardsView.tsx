@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
 import { Folder, FolderOpen, Plus, ChevronDown, ChevronRight, Trash2, Edit2, Upload, X, AlertCircle } from 'lucide-react';
@@ -35,6 +36,20 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   } = useAppStore();
 
   const t = getTranslation(language);
+
+  // Context menu state for right-click on boards
+  const [contextMenu, setContextMenu] = React.useState<{
+    open: boolean;
+    x: number;
+    y: number;
+    boardId: string | null;
+  }>({ open: false, x: 0, y: 0, boardId: null });
+
+  React.useEffect(() => {
+    const handleGlobalClick = () => setContextMenu({ open: false, x: 0, y: 0, boardId: null });
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
 
   const [activeBoardImageMenu, setActiveBoardImageMenu] = React.useState<string | null>(null);
   const [activeTab, setActiveTab] = React.useState<'images' | 'assets'>('images');
@@ -245,14 +260,83 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
         <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
           {t.boards}
         </h4>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleCreateBoard}
-          className="h-6 w-6"
-        >
-          <Plus className="h-3 w-3" />
-        </Button>
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={async () => {
+              // Download all boards as a single zip
+              try {
+                // @ts-ignore - dynamic import
+                const JSZipModule = await import('jszip');
+                const JSZip = (JSZipModule && (JSZipModule as any).default) || JSZipModule;
+                const zip = new JSZip();
+                
+                for (const board of boards) {
+                  const folder = zip.folder(board.id === 'default' ? t.myCreations : board.name) || zip;
+                  const imageIds = board.imageIds || [];
+                  
+                  for (let i = 0; i < imageIds.length; i++) {
+                    const id = imageIds[i];
+                    const url = resolveImageUrl(id);
+                    if (!url) continue;
+                    
+                    let blob: Blob | null = null;
+                    if (url.startsWith('data:')) {
+                      const parts = url.split(',');
+                      const mime = parts[0].split(':')[1].split(';')[0];
+                      const bstr = atob(parts[1]);
+                      const u8 = new Uint8Array(bstr.length);
+                      for (let j = 0; j < bstr.length; j++) u8[j] = bstr.charCodeAt(j);
+                      blob = new Blob([u8], { type: mime });
+                    } else {
+                      try {
+                        const resp = await fetch(url);
+                        blob = await resp.blob();
+                      } catch (err) {
+                        console.error('Failed to fetch image', err);
+                      }
+                    }
+                    
+                    if (blob) {
+                      const ext = blob.type.split('/').pop() || 'png';
+                      folder.file(`${board.name || board.id}-${i + 1}.${ext}`, blob);
+                    }
+                  }
+                }
+                
+                const content = await zip.generateAsync({ type: 'blob' });
+                const href = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = href;
+                a.download = 'all-boards.zip';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(href);
+              } catch (err) {
+                console.error('Failed to create zip', err);
+                alert('Failed to create zip archive');
+              }
+            }}
+            className="h-6 w-6"
+            title="Download all boards as ZIP"
+          >
+            <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCreateBoard}
+            className="h-6 w-6"
+          >
+            <Plus className="h-3 w-3" />
+          </Button>
+        </div>
       </div>
 
       {/* Boards List */}
@@ -281,6 +365,11 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     role="button"
                     tabIndex={0}
                     onClick={() => setSelectedBoardId(board.id)}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setContextMenu({ open: true, x: e.clientX, y: e.clientY, boardId: board.id });
+                    }}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault();
@@ -356,6 +445,134 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
           </div>
         )}
       </div>
+
+      {/* Context menu for boards (right click) - Using Portal to render outside container */}
+      {contextMenu.open && contextMenu.boardId && ReactDOM.createPortal(
+        <div
+          className="fixed z-[9999] bg-gray-950 border border-gray-800 rounded-md shadow-xl py-1 w-48"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Board Title Header */}
+          <div className="px-3 py-2 border-b border-gray-800">
+            <div className="flex items-center space-x-2">
+              {(() => {
+                const board = boards.find(b => b.id === contextMenu.boardId);
+                if (!board) return null;
+                return (
+                  <>
+                    {board.emoji ? (
+                      <span className="text-base">{board.emoji}</span>
+                    ) : (
+                      <Folder className="h-4 w-4 text-gray-400" />
+                    )}
+                    <span className="text-sm font-semibold text-gray-200 truncate">
+                      {board.id === 'default' ? t.myCreations : board.name}
+                    </span>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+          
+          {/* Rename Board */}
+          <button
+            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 flex items-center space-x-2"
+            onClick={() => {
+              if (contextMenu.boardId) {
+                handleRenameBoard(contextMenu.boardId);
+              }
+              setContextMenu({ open: false, x: 0, y: 0, boardId: null });
+            }}
+          >
+            <Edit2 className="h-4 w-4 text-gray-400" />
+            <span>{t.renameBoard}</span>
+          </button>
+
+          {/* Download as Archive */}
+          <button
+            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 flex items-center space-x-2"
+            onClick={async () => {
+              const board = boards.find(b => b.id === contextMenu.boardId);
+              if (!board) return;
+              // Download as zip
+              try {
+                // Dynamically import JSZip at runtime to avoid build-time module resolution errors
+                // @ts-ignore - dynamic import, types may not be available in this environment
+                const JSZipModule = await import('jszip');
+                const JSZip = (JSZipModule && (JSZipModule as any).default) || JSZipModule;
+                const zip = new JSZip();
+                const folder = zip.folder(board.name || board.id) || zip;
+                const imageIds = board.imageIds || [];
+                for (let i = 0; i < imageIds.length; i++) {
+                  const id = imageIds[i];
+                  const url = resolveImageUrl(id);
+                  if (!url) continue;
+                  let blob: Blob | null = null;
+                  if (url.startsWith('data:')) {
+                    const parts = url.split(',');
+                    const mime = parts[0].split(':')[1].split(';')[0];
+                    const bstr = atob(parts[1]);
+                    const u8 = new Uint8Array(bstr.length);
+                    for (let j = 0; j < bstr.length; j++) u8[j] = bstr.charCodeAt(j);
+                    blob = new Blob([u8], { type: mime });
+                  } else {
+                    try {
+                      const resp = await fetch(url);
+                      blob = await resp.blob();
+                    } catch (err) {
+                      console.error('Failed to fetch image', err);
+                    }
+                  }
+                  if (blob) {
+                    const ext = blob.type.split('/').pop() || 'png';
+                    folder.file(`${board.name || board.id}-${i + 1}.${ext}`, blob);
+                  }
+                }
+
+                const content = await zip.generateAsync({ type: 'blob' });
+                const href = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = href;
+                a.download = `${(board.name || board.id).replace(/[^a-z0-9-_\.]/gi, '_')}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(href);
+              } catch (err) {
+                console.error('Failed to create zip', err);
+                alert('Failed to create zip for board');
+              } finally {
+                setContextMenu({ open: false, x: 0, y: 0, boardId: null });
+              }
+            }}
+          >
+            <svg className="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>{t.downloadBoard}</span>
+          </button>
+
+          {/* Delete Board - Only for non-default boards */}
+          {contextMenu.boardId !== 'default' && (
+            <button
+              className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-900 flex items-center space-x-2"
+              onClick={() => {
+                // Trigger delete confirmation modal
+                setDeletingBoardId(contextMenu.boardId);
+                setShowDeleteBoardModal(true);
+                setContextMenu({ open: false, x: 0, y: 0, boardId: null });
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>{t.deleteBoard}</span>
+            </button>
+          )}
+        </div>,
+        document.body
+      )}
 
       {/* Static Tabs Section - Only show when a board is selected */}
       {selectedBoardId && (

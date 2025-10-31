@@ -155,6 +155,7 @@ export interface Translations {
   // Info modal
   about: string;
   tipsHelp: string;
+  version: string;
   
   // Info modal content
   appDescription: string;
@@ -209,6 +210,7 @@ export interface Translations {
   // Boards
   createBoard: string;
   renameBoard: string;
+  downloadBoard: string;
   deleteBoard: string;
   cannotDeleteDefault: string;
   confirmDelete: string;
@@ -430,6 +432,7 @@ export const translations: Record<Language, Translations> = {
     // Info modal
     about: 'About',
     tipsHelp: 'Tips & Help',
+    version: 'Version 2.0.0',
     
     // Info modal content
     appDescription: 'Professional AI-powered image generation and editing for desktop',
@@ -484,6 +487,7 @@ export const translations: Record<Language, Translations> = {
     // Boards
     createBoard: 'Create Board',
     renameBoard: 'Rename Board',
+  downloadBoard: 'Download Board',
     deleteBoard: 'Delete Board',
     cannotDeleteDefault: 'Cannot delete the default board',
     confirmDelete: 'Are you sure you want to delete this board?',
@@ -703,6 +707,7 @@ export const translations: Record<Language, Translations> = {
     // Info modal
     about: '关于',
     tipsHelp: '提示与帮助',
+    version: '版本 2.0.0',
     
     // Info modal content
     appDescription: '专业的AI驱动图像生成和编辑桌面应用',
@@ -757,6 +762,7 @@ export const translations: Record<Language, Translations> = {
     // Boards
     createBoard: '创建画板',
     renameBoard: '重命名画板',
+  downloadBoard: '下载画板',
     deleteBoard: '删除画板',
     cannotDeleteDefault: '无法删除默认画板',
     confirmDelete: '您确定要删除此画板吗？',

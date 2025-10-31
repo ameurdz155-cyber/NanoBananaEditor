@@ -287,14 +287,14 @@ export const PromptComposer: React.FC = () => {
       </div>
 
       {/* Prompt Template Selector */}
-      <div className="rounded-xl border border-gray-850 bg-gray-950/80">
+      <div className="rounded-xl border border-gray-800/50 bg-gray-950/80">
         <button
           type="button"
           onClick={() => setShowTemplatesModal(true)}
           className="w-full rounded-xl px-3 py-2.5 flex items-center justify-between text-left transition-all hover:bg-gray-900/40"
         >
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800 bg-gray-900 text-gray-400 overflow-hidden">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800/50 bg-gray-900 text-gray-400 overflow-hidden">
               {lastSelectedTemplate?.image ? (
                 <img 
                   src={lastSelectedTemplate.image} 

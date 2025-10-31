@@ -77,7 +77,7 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
             <Dialog.Description className="text-center text-gray-300 mb-4">
               {t.imageSavedToGallery}{' '}
               <span className="font-semibold text-cyan-400">"{galleryName}"</span>{' '}
-              gallery.
+              {t.gallery}.
             </Dialog.Description>
 
             {/* Path or Browser Note */}
