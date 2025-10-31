@@ -57,6 +57,10 @@ export const PromptComposer: React.FC = () => {
   const [lastSelectedTemplate, setLastSelectedTemplate] = useState<{ name: string; image?: string; emoji?: string } | null>(null);
   const [showPromptHistory, setShowPromptHistory] = useState(false);
   const [historySearchQuery, setHistorySearchQuery] = useState('');
+  const [aspectRatio, setAspectRatio] = useState<string>('1:1');
+  const [imageWidth, setImageWidth] = useState<number>(1024);
+  const [imageHeight, setImageHeight] = useState<number>(1024);
+  const [randomSeed, setRandomSeed] = useState<boolean>(true);
 
   // Clean up images when switching tools
   React.useEffect(() => {
@@ -147,7 +151,8 @@ export const PromptComposer: React.FC = () => {
         negativePrompt: undefined,
         referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
         temperature,
-        seed: seed || undefined
+        seed: seed || undefined,
+        aspectRatio
       });
     } else if (selectedTool === 'edit' || selectedTool === 'mask') {
       edit(currentPrompt);
@@ -438,7 +443,212 @@ export const PromptComposer: React.FC = () => {
 
         </div>
         
-        {/* Improve Prompt Button */}
+        {/* Image Settings Controls - Only show for Generate mode */}
+        {selectedTool === 'generate' && (
+          <div className="mt-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700/50 space-y-4">
+            {/* Aspect Ratio */}
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="text-xs text-gray-400 mb-1.5 block">Aspect</label>
+                <select
+                  value={aspectRatio}
+                  onChange={(e) => setAspectRatio(e.target.value)}
+                  className="w-full h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100 cursor-pointer focus:border-purple-500 focus:outline-none"
+                >
+                  <option value="1:1">1:1</option>
+                  <option value="21:9">21:9</option>
+                  <option value="16:9">16:9</option>
+                  <option value="3:2">3:2</option>
+                  <option value="4:3">4:3</option>
+                  <option value="3:4">3:4</option>
+                  <option value="2:3">2:3</option>
+                  <option value="9:16">9:16</option>
+                  <option value="9:21">9:21</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                className="h-8 w-8 flex items-center justify-center bg-gray-900 border border-gray-700 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+                title="Swap dimensions"
+                onClick={() => {
+                  const [w, h] = aspectRatio.split(':');
+                  setAspectRatio(`${h}:${w}`);
+                }}
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M120.49,167.51a12,12,0,0,1,0,17l-32,32a12,12,0,0,1-17,0l-32-32a12,12,0,1,1,17-17L68,179V48a12,12,0,0,1,24,0V179l11.51-11.52A12,12,0,0,1,120.49,167.51Zm96-96-32-32a12,12,0,0,0-17,0l-32,32a12,12,0,0,0,17,17L164,77V208a12,12,0,0,0,24,0V77l11.51,11.52a12,12,0,0,0,17-17Z"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="h-8 w-8 flex items-center justify-center bg-gray-900 border border-gray-700 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+                title="Lock aspect ratio"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96Z"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="h-8 w-8 flex items-center justify-center bg-gray-900 border border-gray-700 rounded text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors"
+                title="Optimize size"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M208,144a15.78,15.78,0,0,1-10.42,14.94L146,178l-19,51.62a15.92,15.92,0,0,1-29.88,0L78,178l-51.62-19a15.92,15.92,0,0,1,0-29.88L78,110l19-51.62a15.92,15.92,0,0,1,29.88,0L146,110l51.62,19A15.78,15.78,0,0,1,208,144ZM152,48h16V64a8,8,0,0,0,16,0V48h16a8,8,0,0,0,0-16H184V16a8,8,0,0,0-16,0V32H152a8,8,0,0,0,0,16Zm88,32h-8V72a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0V96h8a8,8,0,0,0,0-16Z"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Width Control */}
+            <div>
+              <label className="text-xs text-gray-400 mb-1.5 block">Width</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="64"
+                  max="1536"
+                  step="64"
+                  value={imageWidth}
+                  onChange={(e) => setImageWidth(parseInt(e.target.value))}
+                  className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${((imageWidth - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) ${((imageWidth - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) 100%)`
+                  }}
+                />
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    value={imageWidth}
+                    onChange={(e) => setImageWidth(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
+                    className="w-16 h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100 text-center focus:border-purple-500 focus:outline-none"
+                    min="64"
+                    max="1536"
+                  />
+                  <div className="flex flex-col ml-1">
+                    <button
+                      type="button"
+                      className="h-4 w-4 flex items-center justify-center text-gray-400 hover:text-gray-200"
+                      onClick={() => setImageWidth(Math.min(1536, imageWidth + 64))}
+                    >
+                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/>
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="h-4 w-4 flex items-center justify-center text-gray-400 hover:text-gray-200"
+                      onClick={() => setImageWidth(Math.max(64, imageWidth - 64))}
+                    >
+                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Height Control */}
+            <div>
+              <label className="text-xs text-gray-400 mb-1.5 block">Height</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="64"
+                  max="1536"
+                  step="64"
+                  value={imageHeight}
+                  onChange={(e) => setImageHeight(parseInt(e.target.value))}
+                  className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  style={{
+                    background: `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${((imageHeight - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) ${((imageHeight - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) 100%)`
+                  }}
+                />
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    value={imageHeight}
+                    onChange={(e) => setImageHeight(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
+                    className="w-16 h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100 text-center focus:border-purple-500 focus:outline-none"
+                    min="64"
+                    max="1536"
+                  />
+                  <div className="flex flex-col ml-1">
+                    <button
+                      type="button"
+                      className="h-4 w-4 flex items-center justify-center text-gray-400 hover:text-gray-200"
+                      onClick={() => setImageHeight(Math.min(1536, imageHeight + 64))}
+                    >
+                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z"/>
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="h-4 w-4 flex items-center justify-center text-gray-400 hover:text-gray-200"
+                      onClick={() => setImageHeight(Math.max(64, imageHeight - 64))}
+                    >
+                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Seed Controls */}
+            <div className="flex items-end gap-2 pt-2 border-t border-gray-700/50">
+              <div className="flex-1">
+                <label className="text-xs text-gray-400 mb-1.5 block">{t.seed}</label>
+                <input
+                  type="number"
+                  value={seed || 0}
+                  onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : null)}
+                  placeholder="0"
+                  disabled={randomSeed}
+                  className="w-full h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100 focus:border-purple-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 mb-1.5 block">{t.random || 'Random'}</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRandomSeed(!randomSeed);
+                    if (!randomSeed) setSeed(null);
+                  }}
+                  className={cn(
+                    "h-8 w-12 rounded transition-all relative",
+                    randomSeed
+                      ? "bg-cyan-500"
+                      : "bg-gray-700"
+                  )}
+                >
+                  <span className={cn(
+                    "absolute top-1 h-6 w-6 rounded bg-white transition-all",
+                    randomSeed ? "right-1" : "left-1"
+                  )}></span>
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setRandomSeed(false);
+                  setSeed(Math.floor(Math.random() * 4294967295));
+                }}
+                disabled={randomSeed}
+                className="h-8 px-3 flex items-center gap-1.5 bg-gray-900 border border-gray-700 rounded text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Shuffle Seed"
+              >
+                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 256 256">
+                  <path d="M240.49,175.51a12,12,0,0,1,0,17l-24,24a12,12,0,0,1-17-17L203,196h-2.09a76.17,76.17,0,0,1-61.85-31.83L97.38,105.78A52.1,52.1,0,0,0,55.06,84H32a12,12,0,0,1,0-24H55.06a76.17,76.17,0,0,1,61.85,31.83l41.71,58.39A52.1,52.1,0,0,0,200.94,172H203l-3.52-3.51a12,12,0,0,1,17-17Zm-95.62-72.62a12,12,0,0,0,16.93-1.13A52,52,0,0,1,200.94,84H203l-3.52,3.51a12,12,0,0,0,17,17l24-24a12,12,0,0,0,0-17l-24-24a12,12,0,0,0-17,17L203,60h-2.09a76,76,0,0,0-57.2,26A12,12,0,0,0,144.87,102.89Zm-33.74,50.22a12,12,0,0,0-16.93,1.13A52,52,0,0,1,55.06,172H32a12,12,0,0,0,0,24H55.06a76,76,0,0,0,57.2-26A12,12,0,0,0,111.13,153.11Z"/>
+                </svg>
+                <span className="whitespace-nowrap">Shuffle Seed</span>
+              </button>
+            </div>
+          </div>
+        )}        {/* Improve Prompt Button */}
         <div className="mt-2">
           <Button
             variant="outline"

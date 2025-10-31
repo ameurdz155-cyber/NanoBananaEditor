@@ -96,6 +96,7 @@ export interface Translations {
   showAdvancedControls: string;
   hideAdvancedControls: string;
   clearSession: string;
+  aspectRatio: string;
   creativity: string;
   seed: string;
   random: string;
@@ -373,6 +374,7 @@ export const translations: Record<Language, Translations> = {
     showAdvancedControls: 'Show Advanced Controls',
     hideAdvancedControls: 'Hide Advanced Controls',
     clearSession: 'Clear Session',
+    aspectRatio: 'Aspect Ratio',
     creativity: 'Creativity',
     seed: 'Seed',
     random: 'Random',
@@ -648,6 +650,7 @@ export const translations: Record<Language, Translations> = {
     showAdvancedControls: '显示高级控制',
     hideAdvancedControls: '隐藏高级控制',
     clearSession: '清除会话',
+    aspectRatio: '宽高比',
     creativity: '创造力',
     seed: '种子',
     random: '随机',

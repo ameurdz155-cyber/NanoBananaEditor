@@ -17,6 +17,7 @@ interface ImagePreviewModalProps {
     temperature?: number;
     negativePrompt?: string;
     maskUsed?: boolean;
+    aspectRatio?: string;
   };
 }
 
@@ -77,6 +78,13 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                   </div>
                 )}
                 
+                {metadata.aspectRatio && (
+                  <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.aspectRatio}</h4>
+                    <p className="text-sm text-gray-200 font-mono">{metadata.aspectRatio}</p>
+                  </div>
+                )}
+                
                 {metadata.seed !== undefined && metadata.seed !== null && (
                   <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.seed}</h4>
@@ -92,7 +100,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 )}
                 
                 {metadata.maskUsed && (
-                  <div className="bg-purple-900/30 rounded-lg p-3 border border-purple-700">
+                  <div className="bg-purple-900/30 rounded-lg p-3 border border-gray-700">
                     <h4 className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-1">{t.mask}</h4>
                     <p className="text-sm text-purple-200">{t.applied}</p>
                   </div>

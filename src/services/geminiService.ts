@@ -91,6 +91,7 @@ export interface GenerationRequest {
   referenceImages?: string[]; // base64 array
   temperature?: number;
   seed?: number;
+  aspectRatio?: string;
   signal?: AbortSignal; // Add abort signal support
 }
 

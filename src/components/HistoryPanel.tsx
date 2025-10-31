@@ -35,6 +35,7 @@ export const HistoryPanel: React.FC = () => {
     description?: string;
     metadata?: {
       timestamp?: number;
+      aspectRatio?: string;
       seed?: number | null;
       temperature?: number;
       negativePrompt?: string;
@@ -239,6 +240,7 @@ export const HistoryPanel: React.FC = () => {
                           description: generation.prompt,
                           metadata: {
                             timestamp: generation.timestamp,
+                            aspectRatio: generation.parameters?.aspectRatio,
                             seed: generation.parameters?.seed,
                             temperature: generation.parameters?.temperature,
                             negativePrompt: generation.negativePrompt
