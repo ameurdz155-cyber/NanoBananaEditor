@@ -206,17 +206,30 @@ export class GeminiService {
         throw new DOMException('Request was cancelled', 'AbortError');
       }
 
-      const contents = [
+      const contents: any[] = [
         { text: this.buildEditPrompt(request) },
-        {
-          inlineData: {
-            mimeType: "image/png",
-            data: request.originalImage,
-          },
-        },
       ];
 
-      // Add reference images if provided
+      // Image order matters for mask editing:
+      // 1. Original image (required)
+      contents.push({
+        inlineData: {
+          mimeType: "image/png",
+          data: request.originalImage,
+        },
+      });
+
+      // 2. Mask image (if provided) - MUST come before reference images
+      if (request.maskImage) {
+        contents.push({
+          inlineData: {
+            mimeType: "image/png",
+            data: request.maskImage,
+          },
+        });
+      }
+
+      // 3. Reference images (optional style guides)
       if (request.referenceImages && request.referenceImages.length > 0) {
         request.referenceImages.forEach(image => {
           contents.push({
@@ -225,15 +238,6 @@ export class GeminiService {
               data: image,
             },
           });
-        });
-      }
-
-      if (request.maskImage) {
-        contents.push({
-          inlineData: {
-            mimeType: "image/png",
-            data: request.maskImage,
-          },
         });
       }
 
@@ -327,13 +331,31 @@ Only segment the specific object or region requested. The mask should be a binar
   }
 
   private buildEditPrompt(request: EditRequest): string {
-    const maskInstruction = request.maskImage 
-      ? "\n\n⚠️ CRITICAL MASK INSTRUCTION: A mask image has been provided showing the EXACT regions to edit. Apply the requested changes ONLY within the white areas (value 255) of the mask. The black areas (value 0) of the mask MUST remain completely untouched and unchanged. Respect the mask boundaries with pixel-perfect precision and ensure seamless, natural blending at the edges where masked and unmasked areas meet."
-      : "";
+    if (request.maskImage) {
+      return `MASKED REGION EDITING - Follow these instructions precisely:
+
+IMAGE 1 (provided below): Original image to edit
+IMAGE 2 (provided below): Binary mask - WHITE pixels show WHERE to apply changes, BLACK pixels show what to preserve
+
+YOUR TASK: ${request.instruction}
+
+🎯 CRITICAL MASK RULES - MUST FOLLOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Look at IMAGE 2 (the mask) to see exactly WHERE to edit
+2. Apply "${request.instruction}" ONLY in the WHITE (255,255,255) areas of the mask
+3. Keep BLACK (0,0,0) mask areas COMPLETELY UNCHANGED from IMAGE 1
+4. Blend changes seamlessly at mask boundaries
+5. Match original lighting, colors, and textures in the edited areas
+6. The mask is your map - respect it with pixel-perfect accuracy
+
+REMEMBER: White mask = edit here | Black mask = don't touch
+
+Generate the edited version of IMAGE 1 with changes applied only in the white mask regions.`;
+    }
 
     return `Edit this image according to the following instruction: ${request.instruction}
 
-Maintain the original image's lighting, perspective, and overall composition. Make the changes look natural and seamlessly integrated.${maskInstruction}
+Maintain the original image's lighting, perspective, and overall composition. Make the changes look natural and seamlessly integrated.
 
 Preserve image quality and ensure the edit looks professional and realistic.`;
   }

@@ -258,6 +258,20 @@ export interface Translations {
   prohibitedContentMessage: string;
   placeholderWarning: string;
   placeholderWarningMessage: string;
+  
+  // Prompt History Modal
+  promptHistory: string;
+  prompts: string;
+  searchPrompts: string;
+  noPromptHistoryRecorded: string;
+  promptsWillAppearHere: string;
+  noPromptsFound: string;
+  tryDifferentSearch: string;
+  clickToUsePrompt: string;
+  copyToClipboard: string;
+  deletePrompt: string;
+  clickPromptToReuse: string;
+  escToClose: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -519,6 +533,20 @@ export const translations: Record<Language, Translations> = {
     prohibitedContentMessage: 'Your prompt contains content that violates safety guidelines. Please modify your prompt and try again.',
     placeholderWarning: 'Placeholder Detected',
     placeholderWarningMessage: 'Your prompt contains placeholders like {prompt} or {photo}. Please replace them with your actual content before invoking.',
+    
+    // Prompt History Modal
+    promptHistory: 'Prompt History',
+    prompts: 'prompts',
+    searchPrompts: 'Search prompts...',
+    noPromptHistoryRecorded: 'No prompt history recorded',
+    promptsWillAppearHere: 'Your prompts will appear here after you generate images',
+    noPromptsFound: 'No prompts found',
+    tryDifferentSearch: 'Try a different search term',
+    clickToUsePrompt: 'Click to use in prompt field',
+    copyToClipboard: 'Copy to clipboard',
+    deletePrompt: 'Delete prompt',
+    clickPromptToReuse: 'Click a prompt to reuse it',
+    escToClose: 'to close',
   },
   zh: {
     // Header
@@ -778,6 +806,20 @@ export const translations: Record<Language, Translations> = {
     prohibitedContentMessage: '您的提示词包含违反安全准则的内容。请修改您的提示词后重试。',
     placeholderWarning: '检测到占位符',
     placeholderWarningMessage: '您的提示词包含占位符（如 {prompt} 或 {photo}）。请在调用前将其替换为实际内容。',
+    
+    // Prompt History Modal
+    promptHistory: '提示词历史',
+    prompts: '条提示词',
+    searchPrompts: '搜索提示词...',
+    noPromptHistoryRecorded: '暂无提示词历史',
+    promptsWillAppearHere: '生成图像后，您的提示词将显示在这里',
+    noPromptsFound: '未找到提示词',
+    tryDifferentSearch: '尝试不同的搜索词',
+    clickToUsePrompt: '点击以在提示词字段中使用',
+    copyToClipboard: '复制到剪贴板',
+    deletePrompt: '删除提示词',
+    clickPromptToReuse: '点击提示词以重复使用',
+    escToClose: '关闭',
   },
 };
 

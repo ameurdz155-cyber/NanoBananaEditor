@@ -857,14 +857,14 @@ export const PromptComposer: React.FC = () => {
             <div className="flex items-center justify-between mb-3">
               <Dialog.Title className="text-lg font-semibold text-gray-200 flex items-center">
                 <History className="h-5 w-5 mr-3 text-red-400" />
-                Prompt History
+                {t.promptHistory}
               </Dialog.Title>
               <div className="flex items-center space-x-3">
                 <span className="text-sm text-gray-400">
                   {promptHistory.filter(p => 
                     historySearchQuery.trim() === '' || 
                     p.toLowerCase().includes(historySearchQuery.toLowerCase())
-                  ).length} prompts
+                  ).length} {t.prompts}
                 </span>
                 <Dialog.Close asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-800">
@@ -878,7 +878,7 @@ export const PromptComposer: React.FC = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search prompts..."
+                placeholder={t.searchPrompts}
                 value={historySearchQuery}
                 onChange={(e) => setHistorySearchQuery(e.target.value)}
                 className="w-full pl-10 pr-10 py-2.5 bg-gray-800/70 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:bg-gray-800 transition-all"
@@ -910,8 +910,8 @@ export const PromptComposer: React.FC = () => {
                 <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
                   <div className="text-5xl">📝</div>
                 </div>
-                <h4 className="text-base font-medium text-gray-400 mb-2">No prompt history recorded</h4>
-                <p className="text-sm text-gray-600">Your prompts will appear here after you generate images</p>
+                <h4 className="text-base font-medium text-gray-400 mb-2">{t.noPromptHistoryRecorded}</h4>
+                <p className="text-sm text-gray-600">{t.promptsWillAppearHere}</p>
               </div>
             ) : promptHistory
               .filter(prompt => 
@@ -921,8 +921,8 @@ export const PromptComposer: React.FC = () => {
               .length === 0 ? (
               <div className="text-center py-16">
                 <div className="text-5xl mb-4">🔍</div>
-                <p className="text-base text-gray-400 mb-2">No prompts found</p>
-                <p className="text-sm text-gray-600">Try a different search term</p>
+                <p className="text-base text-gray-400 mb-2">{t.noPromptsFound}</p>
+                <p className="text-sm text-gray-600">{t.tryDifferentSearch}</p>
               </div>
             ) : (
               <div className="grid gap-3">
@@ -952,7 +952,7 @@ export const PromptComposer: React.FC = () => {
                               navigator.clipboard.writeText(prompt);
                             }}
                             className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-300 transition-opacity p-1 rounded hover:bg-gray-700/50"
-                            title="Copy to clipboard"
+                            title={t.copyToClipboard}
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -964,7 +964,7 @@ export const PromptComposer: React.FC = () => {
                               deletePromptFromHistory(index);
                             }}
                             className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 transition-opacity p-1 rounded hover:bg-red-500/10"
-                            title="Delete prompt"
+                            title={t.deletePrompt}
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -976,7 +976,7 @@ export const PromptComposer: React.FC = () => {
                         {prompt}
                       </p>
                       <div className="flex items-center justify-between pt-2 border-t border-gray-700/30">
-                        <span className="text-xs text-gray-500">Click to use in prompt field</span>
+                        <span className="text-xs text-gray-500">{t.clickToUsePrompt}</span>
                         <kbd className="px-2 py-1 text-xs bg-gray-700/50 rounded border border-gray-600/50 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                           Enter
                         </kbd>
@@ -991,7 +991,7 @@ export const PromptComposer: React.FC = () => {
           {promptHistory.length > 0 && (
             <div className="px-6 py-3 bg-gray-800/50 border-t border-gray-700/50">
               <p className="text-xs text-gray-500 text-center">
-                Click a prompt to reuse it • <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-gray-600">Esc</kbd> to close
+                {t.clickPromptToReuse} • <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-gray-600">Esc</kbd> {t.escToClose}
               </p>
             </div>
           )}

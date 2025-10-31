@@ -2,6 +2,8 @@ import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { Button } from './ui/Button';
+import { useAppStore } from '../store/useAppStore';
+import { getTranslation } from '../i18n/translations';
 
 interface ImagePreviewModalProps {
   open: boolean;
@@ -26,6 +28,9 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   description,
   metadata
 }) => {
+  const { language } = useAppStore();
+  const t = getTranslation(language);
+  
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -55,7 +60,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
             {/* Prompt */}
             {description && (
               <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Prompt</h4>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{t.prompt}</h4>
                 <p className="text-sm text-gray-200 leading-relaxed">{description}</p>
               </div>
             )}
@@ -65,7 +70,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 {metadata.timestamp && (
                   <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Created</h4>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.created}</h4>
                     <p className="text-sm text-gray-200">
                       {new Date(metadata.timestamp).toLocaleString()}
                     </p>
@@ -74,22 +79,22 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 
                 {metadata.seed !== undefined && metadata.seed !== null && (
                   <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Seed</h4>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.seed}</h4>
                     <p className="text-sm text-gray-200 font-mono">{metadata.seed}</p>
                   </div>
                 )}
                 
                 {metadata.temperature !== undefined && (
                   <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Temperature</h4>
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.creativity}</h4>
                     <p className="text-sm text-gray-200">{metadata.temperature}</p>
                   </div>
                 )}
                 
                 {metadata.maskUsed && (
                   <div className="bg-purple-900/30 rounded-lg p-3 border border-purple-700">
-                    <h4 className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-1">Mask</h4>
-                    <p className="text-sm text-purple-200">Used</p>
+                    <h4 className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-1">{t.mask}</h4>
+                    <p className="text-sm text-purple-200">{t.applied}</p>
                   </div>
                 )}
               </div>
@@ -98,7 +103,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
             {/* Negative Prompt */}
             {metadata?.negativePrompt && (
               <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Negative Prompt</h4>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{t.negativePrompt}</h4>
                 <p className="text-sm text-gray-200 leading-relaxed">{metadata.negativePrompt}</p>
               </div>
             )}
