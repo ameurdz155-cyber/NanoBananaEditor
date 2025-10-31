@@ -3,7 +3,7 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History } from 'lucide-react';
+import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
@@ -589,11 +589,67 @@ export const PromptComposer: React.FC = () => {
 
       {/* Reference Images Upload */}
       <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition-all flex-shrink-0">
+        <input
+          type="file"
+          id="reference-image-upload"
+          accept="image/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+
+        {/* Thumbnails at top if images exist */}
+        {((selectedTool === 'generate' && uploadedImages.length > 0) ||
+          (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
+          <div className="flex gap-2 mb-3">
+            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
+              <div 
+                key={index} 
+                className="relative group w-14 h-14 rounded-lg border-2 border-gray-700 hover:border-red-500 overflow-hidden bg-gray-800 flex-shrink-0 transition-all"
+              >
+                <img
+                  src={image}
+                  alt={`Reference ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
+                  className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  title={t.removeImage}
+                >
+                  <X className="h-5 w-5 text-red-400" />
+                </button>
+              </div>
+            ))}
+            {/* Add more button */}
+            {((selectedTool === 'generate' && uploadedImages.length < 2) ||
+              (selectedTool === 'edit' && editReferenceImages.length < 2)) && (
+              <button
+                onClick={() => document.getElementById('reference-image-upload')?.click()}
+                className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-700 hover:border-gray-600 bg-gray-800/50 hover:bg-gray-800 flex items-center justify-center transition-all text-gray-500 hover:text-gray-300"
+                title="Add more images"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <label className="text-sm font-semibold text-gray-200 flex items-center">
             <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 mr-2"></span>
             {selectedTool === 'generate' ? t.addReferenceImages : selectedTool === 'edit' ? t.styleReferences : t.uploadImage}
           </label>
+          {((selectedTool === 'generate' && uploadedImages.length > 0) ||
+            (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
+            <button
+              onClick={() => document.getElementById('reference-image-upload')?.click()}
+              className="text-xs text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 transition-colors"
+            >
+              <Upload className="h-3 w-3" />
+              {t.upload}
+            </button>
+          )}
         </div>
         
         {selectedTool === 'mask' && (
@@ -611,52 +667,10 @@ export const PromptComposer: React.FC = () => {
             {t.uploadReferenceImagesUpTo2}
           </p>
         )}
-        
-        <input
-          type="file"
-          id="reference-image-upload"
-          accept="image/*"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
 
-        {/* Show uploaded images preview or empty state */}
-        {((selectedTool === 'generate' && uploadedImages.length > 0) ||
-          (selectedTool === 'edit' && editReferenceImages.length > 0)) ? (
-          <div className="space-y-2">
-            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
-              <div key={index} className="relative group bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
-                <div className="w-full h-32 flex items-center justify-center p-2">
-                  <img
-                    src={image}
-                    alt={`Reference ${index + 1}`}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-                <button
-                  onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
-                  className="absolute top-1 right-1 bg-gray-900/90 text-gray-400 hover:text-red-400 rounded-full p-1.5 transition-colors opacity-0 group-hover:opacity-100"
-                  title={t.removeImage}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-            {/* Upload button below images */}
-            {((selectedTool === 'generate' && uploadedImages.length < 2) ||
-              (selectedTool === 'edit' && editReferenceImages.length < 2)) && (
-              <Button
-                onClick={() => document.getElementById('reference-image-upload')?.click()}
-                variant="outline"
-                size="sm"
-                className="w-full"
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {t.upload}
-              </Button>
-            )}
-          </div>
-        ) : (
+        {/* Empty state */}
+        {((selectedTool === 'generate' && uploadedImages.length === 0) ||
+          (selectedTool === 'edit' && editReferenceImages.length === 0)) && (
           <button
             onClick={() => document.getElementById('reference-image-upload')?.click()}
             className="w-full py-6 flex flex-col items-center justify-center bg-gray-800/30 hover:bg-gray-800/50 rounded-lg border border-gray-700/50 border-dashed hover:border-gray-600 transition-all cursor-pointer"
