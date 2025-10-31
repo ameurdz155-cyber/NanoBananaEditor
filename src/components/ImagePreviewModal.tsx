@@ -9,6 +9,13 @@ interface ImagePreviewModalProps {
   imageUrl: string;
   title: string;
   description?: string;
+  metadata?: {
+    timestamp?: number;
+    seed?: number | null;
+    temperature?: number;
+    negativePrompt?: string;
+    maskUsed?: boolean;
+  };
 }
 
 export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ 
@@ -16,7 +23,8 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
   onOpenChange, 
   imageUrl, 
   title, 
-  description 
+  description,
+  metadata
 }) => {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -35,10 +43,7 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
           </div>
           
           <div className="space-y-4">
-            {description && (
-              <p className="text-sm text-gray-400">{description}</p>
-            )}
-            
+            {/* Image */}
             <div className="bg-gray-800 rounded-lg p-4">
               <img
                 src={imageUrl}
@@ -46,6 +51,57 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                 className="w-full h-auto rounded-lg border border-gray-700"
               />
             </div>
+            
+            {/* Prompt */}
+            {description && (
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Prompt</h4>
+                <p className="text-sm text-gray-200 leading-relaxed">{description}</p>
+              </div>
+            )}
+            
+            {/* Metadata Details */}
+            {metadata && (
+              <div className="grid grid-cols-2 gap-3">
+                {metadata.timestamp && (
+                  <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Created</h4>
+                    <p className="text-sm text-gray-200">
+                      {new Date(metadata.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                
+                {metadata.seed !== undefined && metadata.seed !== null && (
+                  <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Seed</h4>
+                    <p className="text-sm text-gray-200 font-mono">{metadata.seed}</p>
+                  </div>
+                )}
+                
+                {metadata.temperature !== undefined && (
+                  <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Temperature</h4>
+                    <p className="text-sm text-gray-200">{metadata.temperature}</p>
+                  </div>
+                )}
+                
+                {metadata.maskUsed && (
+                  <div className="bg-purple-900/30 rounded-lg p-3 border border-purple-700">
+                    <h4 className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-1">Mask</h4>
+                    <p className="text-sm text-purple-200">Used</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Negative Prompt */}
+            {metadata?.negativePrompt && (
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Negative Prompt</h4>
+                <p className="text-sm text-gray-200 leading-relaxed">{metadata.negativePrompt}</p>
+              </div>
+            )}
           </div>
         </Dialog.Content>
       </Dialog.Portal>

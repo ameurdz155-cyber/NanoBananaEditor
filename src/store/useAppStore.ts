@@ -71,8 +71,13 @@ interface AppState {
   // Language
   language: Language;
   
+  // Prompt History
+  promptHistory: string[];
+  
   // Actions
   setCurrentProject: (project: Project | null) => void;
+  addToPromptHistory: (prompt: string) => void;
+  deletePromptFromHistory: (index: number) => void;
   setCanvasImage: (url: string | null) => void;
   setCanvasZoom: (zoom: number) => void;
   setCanvasPan: (pan: { x: number; y: number }) => void;
@@ -183,6 +188,9 @@ export const useAppStore = create<AppState>()(
       
       language: (typeof localStorage !== 'undefined' && localStorage.getItem('ai-pod-language') as Language) || 'zh',
       
+      // Prompt History
+      promptHistory: [],
+      
       // API Key state
       apiKey: null,
       apiKeyError: null,
@@ -255,6 +263,16 @@ export const useAppStore = create<AppState>()(
         }
         set({ language: language });
       },
+      
+      addToPromptHistory: (prompt) => set((state) => {
+        if (!prompt.trim()) return state;
+        const newHistory = [prompt, ...state.promptHistory.filter(p => p !== prompt)].slice(0, 20);
+        return { promptHistory: newHistory };
+      }),
+      
+      deletePromptFromHistory: (index) => set((state) => ({
+        promptHistory: state.promptHistory.filter((_, i) => i !== index)
+      })),
       
       setApiKey: (key) => set({ apiKey: key }),
       setApiKeyError: (error) => set({ apiKeyError: error }),
@@ -337,6 +355,7 @@ export const useAppStore = create<AppState>()(
           } : null,
           boards: state.boards,
           customTemplates: state.customTemplates,
+          promptHistory: state.promptHistory,
           language: state.language,
           apiKey: state.apiKey,
           savePath: state.savePath,

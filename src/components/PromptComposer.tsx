@@ -3,7 +3,7 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload } from 'lucide-react';
+import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
@@ -38,6 +38,9 @@ export const PromptComposer: React.FC = () => {
     apiKeyError,
     setApiKeyError,
     language,
+    promptHistory,
+    addToPromptHistory,
+    deletePromptFromHistory,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -52,6 +55,8 @@ export const PromptComposer: React.FC = () => {
   const [isImproving, setIsImproving] = useState(false);
   const [improvedPrompt, setImprovedPrompt] = useState<string | null>(null);
   const [lastSelectedTemplate, setLastSelectedTemplate] = useState<{ name: string; image?: string; emoji?: string } | null>(null);
+  const [showPromptHistory, setShowPromptHistory] = useState(false);
+  const [historySearchQuery, setHistorySearchQuery] = useState('');
 
   // Clean up images when switching tools
   React.useEffect(() => {
@@ -128,6 +133,9 @@ export const PromptComposer: React.FC = () => {
       setApiKeyError(validation.error || 'Invalid API key. Please check Settings.');
       return;
     }
+    
+    // Add to history
+    addToPromptHistory(currentPrompt);
     
     if (selectedTool === 'generate') {
       const referenceImages = uploadedImages
@@ -396,16 +404,39 @@ export const PromptComposer: React.FC = () => {
             ? t.enterPromptAndInvoke
             : t.describeChanges}
         </p>
-        <Textarea
-          value={currentPrompt}
-          onChange={(e) => setCurrentPrompt(e.target.value)}
-          placeholder={
-            selectedTool === 'generate'
-              ? t.promptPlaceholderGenerate
-              : t.promptPlaceholderEdit
-          }
-          className="min-h-[120px] resize-none bg-gray-800 border-gray-700 focus:border-purple-500 transition-colors"
-        />
+        
+        {/* Textarea with History Button */}
+        <div className="relative">
+          <Textarea
+            value={currentPrompt}
+            onChange={(e) => setCurrentPrompt(e.target.value)}
+            placeholder={
+              selectedTool === 'generate'
+                ? t.promptPlaceholderGenerate
+                : t.promptPlaceholderEdit
+            }
+            className="min-h-[120px] resize-none bg-gray-800 border-gray-700 focus:border-purple-500 transition-colors pr-12"
+          />
+          
+          {/* History Button */}
+          <button
+            type="button"
+            onClick={() => setShowPromptHistory(!showPromptHistory)}
+            className={cn(
+              "absolute top-3 right-3 p-2 rounded-lg transition-all duration-200",
+              "hover:bg-gray-700/50 border-2",
+              showPromptHistory 
+                ? "bg-red-500/20 border-red-500 text-red-400" 
+                : "bg-gray-900/50 border-gray-700 text-gray-400 hover:border-gray-600"
+            )}
+            title="Prompt History"
+            disabled={promptHistory.length === 0}
+          >
+            <History className="h-4 w-4" />
+          </button>
+          
+
+        </div>
         
         {/* Improve Prompt Button */}
         <div className="mt-2">
@@ -812,6 +843,161 @@ export const PromptComposer: React.FC = () => {
 
     {/* Prompt Hints Modal */}
     <PromptHints open={showHintsModal} onOpenChange={setShowHintsModal} />
+
+    {/* Prompt History Modal */}
+    <Dialog.Root open={showPromptHistory} onOpenChange={(open) => {
+      setShowPromptHistory(open);
+      if (!open) setHistorySearchQuery('');
+    }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-900 border-2 border-gray-700 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden z-50 shadow-2xl">
+          {/* Header */}
+          <div className="px-6 py-4 bg-gradient-to-r from-gray-800/80 to-gray-800/60 border-b border-gray-700/50">
+            <div className="flex items-center justify-between mb-3">
+              <Dialog.Title className="text-lg font-semibold text-gray-200 flex items-center">
+                <History className="h-5 w-5 mr-3 text-red-400" />
+                Prompt History
+              </Dialog.Title>
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-400">
+                  {promptHistory.filter(p => 
+                    historySearchQuery.trim() === '' || 
+                    p.toLowerCase().includes(historySearchQuery.toLowerCase())
+                  ).length} prompts
+                </span>
+                <Dialog.Close asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-800">
+                    <X className="h-5 w-5" />
+                  </Button>
+                </Dialog.Close>
+              </div>
+            </div>
+            
+            {/* Search Input */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search prompts..."
+                value={historySearchQuery}
+                onChange={(e) => setHistorySearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-2.5 bg-gray-800/70 border border-gray-700 rounded-lg text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-purple-500/50 focus:bg-gray-800 transition-all"
+                autoFocus
+              />
+              <svg 
+                className="absolute left-3 top-3 h-4 w-4 text-gray-500"
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              {historySearchQuery && (
+                <button
+                  onClick={() => setHistorySearchQuery('')}
+                  className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Prompts List */}
+          <div className="max-h-[calc(85vh-180px)] overflow-y-auto custom-scrollbar p-4">
+            {promptHistory.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                  <div className="text-5xl">📝</div>
+                </div>
+                <h4 className="text-base font-medium text-gray-400 mb-2">No prompt history recorded</h4>
+                <p className="text-sm text-gray-600">Your prompts will appear here after you generate images</p>
+              </div>
+            ) : promptHistory
+              .filter(prompt => 
+                historySearchQuery.trim() === '' || 
+                prompt.toLowerCase().includes(historySearchQuery.toLowerCase())
+              )
+              .length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-5xl mb-4">🔍</div>
+                <p className="text-base text-gray-400 mb-2">No prompts found</p>
+                <p className="text-sm text-gray-600">Try a different search term</p>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {promptHistory
+                  .filter(prompt => 
+                    historySearchQuery.trim() === '' || 
+                    prompt.toLowerCase().includes(historySearchQuery.toLowerCase())
+                  )
+                  .map((prompt, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setCurrentPrompt(prompt);
+                        setShowPromptHistory(false);
+                        setHistorySearchQuery('');
+                      }}
+                      className="w-full text-left p-4 rounded-xl bg-gray-800/40 hover:bg-gray-800/80 border border-gray-700/50 hover:border-purple-500/50 transition-all group"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-xs font-semibold text-purple-400/80 uppercase tracking-wide">
+                          Prompt #{promptHistory.length - index}
+                        </span>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(prompt);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-300 transition-opacity p-1 rounded hover:bg-gray-700/50"
+                            title="Copy to clipboard"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deletePromptFromHistory(index);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 transition-opacity p-1 rounded hover:bg-red-500/10"
+                            title="Delete prompt"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-300 group-hover:text-gray-100 leading-relaxed mb-2">
+                        {prompt}
+                      </p>
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-700/30">
+                        <span className="text-xs text-gray-500">Click to use in prompt field</span>
+                        <kbd className="px-2 py-1 text-xs bg-gray-700/50 rounded border border-gray-600/50 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                          Enter
+                        </kbd>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+          
+          {/* Footer */}
+          {promptHistory.length > 0 && (
+            <div className="px-6 py-3 bg-gray-800/50 border-t border-gray-700/50">
+              <p className="text-xs text-gray-500 text-center">
+                Click a prompt to reuse it • <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-gray-600">Esc</kbd> to close
+              </p>
+            </div>
+          )}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
     </>
   );
 };

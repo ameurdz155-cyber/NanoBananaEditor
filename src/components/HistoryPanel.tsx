@@ -19,6 +19,7 @@ export const HistoryPanel: React.FC = () => {
     showHistory,
     setShowHistory,
     setCanvasImage,
+    setCurrentPrompt,
     language,
     boards,
   } = useAppStore();
@@ -32,11 +33,19 @@ export const HistoryPanel: React.FC = () => {
     imageUrl: string;
     title: string;
     description?: string;
+    metadata?: {
+      timestamp?: number;
+      seed?: number | null;
+      temperature?: number;
+      negativePrompt?: string;
+      maskUsed?: boolean;
+    };
   }>({
     open: false,
     imageUrl: '',
     title: '',
-    description: ''
+    description: '',
+    metadata: undefined
   });
 
   const generations = currentProject?.generations || [];
@@ -141,29 +150,29 @@ export const HistoryPanel: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 mb-4 flex-shrink-0 bg-gray-900/30 rounded-lg p-1">
+      <div className="grid grid-cols-2 gap-1 mb-4 flex-shrink-0 bg-gray-900/30 rounded-lg p-1">
         <button
           onClick={() => setActiveTab('history')}
           className={cn(
-            "flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all",
+            "px-2 py-2 rounded-md text-xs font-medium transition-all",
             activeTab === 'history'
               ? "bg-gray-800 text-gray-200 shadow-sm"
               : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
           )}
         >
-          <History className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+          <History className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
           {t.history}
         </button>
         <button
           onClick={() => setActiveTab('boards')}
           className={cn(
-            "flex-1 px-3 py-2 rounded-md text-sm font-medium transition-all",
+            "px-2 py-2 rounded-md text-xs font-medium transition-all",
             activeTab === 'boards'
               ? "bg-gray-800 text-gray-200 shadow-sm"
               : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
           )}
         >
-          <Folder className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+          <Folder className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
           {t.boards}
         </button>
       </div>
@@ -218,6 +227,23 @@ export const HistoryPanel: React.FC = () => {
                         if (generation.outputAssets[0]) {
                           setCanvasImage(generation.outputAssets[0].url);
                         }
+                        // Set prompt in prompt composer
+                        if (generation.prompt) {
+                          setCurrentPrompt(generation.prompt);
+                        }
+                        // Open modal with prompt details
+                        setPreviewModal({
+                          open: true,
+                          imageUrl: generation.outputAssets[0]?.url || '',
+                          title: `Generation #${genIndex + 1}`,
+                          description: generation.prompt,
+                          metadata: {
+                            timestamp: generation.timestamp,
+                            seed: generation.parameters?.seed,
+                            temperature: generation.parameters?.temperature,
+                            negativePrompt: generation.negativePrompt
+                          }
+                        });
                       }}
                     >
                       {generation.outputAssets[0] && generation.outputAssets[0].url ? (
@@ -272,6 +298,21 @@ export const HistoryPanel: React.FC = () => {
                           selectEdit(edit.id);
                           selectGeneration(null);
                         }
+                        // Set instruction in prompt composer
+                        if (edit.instruction) {
+                          setCurrentPrompt(edit.instruction);
+                        }
+                        // Open modal with prompt details
+                        setPreviewModal({
+                          open: true,
+                          imageUrl: edit.outputAssets[0]?.url || '',
+                          title: `Edit #${editIndex + 1}`,
+                          description: edit.instruction,
+                          metadata: {
+                            timestamp: edit.timestamp,
+                            maskUsed: !!edit.maskAssetId
+                          }
+                        });
                       }}
                     >
                       {edit.outputAssets[0] && edit.outputAssets[0].url ? (
@@ -344,7 +385,7 @@ export const HistoryPanel: React.FC = () => {
           }}
         />
       )}
-      
+
       {/* Image Preview Modal */}
       <ImagePreviewModal
         open={previewModal.open}
@@ -352,6 +393,7 @@ export const HistoryPanel: React.FC = () => {
         imageUrl={previewModal.imageUrl}
         title={previewModal.title}
         description={previewModal.description}
+        metadata={previewModal.metadata}
       />
     </div>
   );
