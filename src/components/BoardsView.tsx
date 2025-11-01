@@ -641,8 +641,8 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       onClick={() => document.getElementById('asset-upload')?.click()}
                       className="w-full flex flex-col items-center justify-center py-8 bg-gray-800/30 hover:bg-gray-800/50 rounded-lg border border-gray-700/50 border-dashed hover:border-gray-600 transition-all cursor-pointer"
                     >
-                      <div className="w-12 h-12 mb-3 rounded-xl bg-gray-800 flex items-center justify-center text-2xl">
-                        �
+                      <div className="w-12 h-12 mb-3 rounded-xl bg-gray-800 flex items-center justify-center">
+                        <Upload className="h-6 w-6 text-cyan-300" />
                       </div>
                       <div className="text-xs text-gray-500">{t.uploadImages}</div>
                     </button>

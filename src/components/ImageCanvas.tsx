@@ -334,29 +334,6 @@ export const ImageCanvas: React.FC = () => {
         </div>
       </div>
 
-      <input
-        id="canvas-context-reference-upload"
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const dataUrl = e.target?.result as string;
-            if (!dataUrl) return;
-            if (selectedTool === 'generate') {
-              addUploadedImage(dataUrl);
-            } else {
-              addEditReferenceImage(dataUrl);
-            }
-          };
-          reader.readAsDataURL(file);
-          event.target.value = '';
-        }}
-      />
-
       {contextMenu.open && createPortal(
         <div className="fixed inset-0 z-[1100]" onClick={() => setContextMenu(prev => ({ ...prev, open: false }))}>
           <div
@@ -379,16 +356,6 @@ export const ImageCanvas: React.FC = () => {
             >
               <span className="text-purple-300">＋</span>
               <span>Add canvas image to references</span>
-            </button>
-            <button
-              className="w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-gray-800 flex items-center gap-2"
-              onClick={() => {
-                document.getElementById('canvas-context-reference-upload')?.click();
-                setContextMenu(prev => ({ ...prev, open: false }));
-              }}
-            >
-              <span className="text-cyan-300">📁</span>
-              <span>Add reference from file…</span>
             </button>
             <button
               className="w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-gray-800 flex items-center gap-2 border-t border-gray-800"
