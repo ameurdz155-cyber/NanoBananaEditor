@@ -896,9 +896,7 @@ export const PromptComposer: React.FC = () => {
             onClick={() => document.getElementById('reference-image-upload')?.click()}
             className="w-full py-6 flex flex-col items-center justify-center bg-gray-800/30 hover:bg-gray-800/50 rounded-lg border border-gray-700/50 border-dashed hover:border-gray-600 transition-all cursor-pointer"
           >
-            <div className="w-12 h-12 mb-3 rounded-xl bg-gray-800 flex items-center justify-center text-2xl">
-              📁
-            </div>
+            <Upload className="h-5 w-5 text-gray-400 mb-2" />
             <div className="text-xs text-gray-500">{t.uploadImages}</div>
           </button>
         )}
