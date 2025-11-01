@@ -1,9 +1,10 @@
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { CheckCircle, X, Download, FolderOpen } from 'lucide-react';
+import { X, Download, FolderOpen } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import { isTauriEnvironment } from '../utils/fileSaver';
+import podIcon from '../assets/AI-POD-Lite-icon.png';
 
 interface SaveSuccessModalProps {
   open: boolean;
@@ -62,8 +63,12 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
             <div className="flex justify-center mb-4">
               <div className="relative">
                 <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl animate-pulse"></div>
-                <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                  <CheckCircle className="h-8 w-8 text-white" strokeWidth={2.5} />
+                <div className="relative w-20 h-20 rounded-full bg-white/10 flex items-center justify-center shadow-lg">
+                  <img
+                    src={podIcon}
+                    alt="AI POD logo"
+                    className="w-14 h-14 object-contain"
+                  />
                 </div>
               </div>
             </div>
