@@ -2,12 +2,13 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { Folder, FolderOpen, Plus, ChevronDown, ChevronRight, Trash2, Edit2, Upload, X, AlertCircle } from 'lucide-react';
+import { Folder, FolderOpen, Plus, ChevronDown, ChevronRight, Trash2, Edit2, Upload, X, AlertCircle, PlusCircle, Download } from 'lucide-react';
 import { blobToBase64 } from '../utils/imageUtils';
 import { cn } from '../utils/cn';
 import { getTranslation } from '../i18n/translations';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Input } from './ui/Input';
+import { saveImageWithDialog } from '../utils/fileSaver';
 
 interface BoardsViewProps {
   generations: any[];
@@ -33,6 +34,9 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     removeImageFromBoard,
     moveImageToBoard,
     language,
+    selectedTool,
+    addUploadedImage,
+    addEditReferenceImage,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -59,6 +63,15 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   const [editingBoardId, setEditingBoardId] = React.useState<string | null>(null);
   const [deletingBoardId, setDeletingBoardId] = React.useState<string | null>(null);
   const [newBoardName, setNewBoardName] = React.useState('');
+  const [boardImageContextMenu, setBoardImageContextMenu] = React.useState<{
+    open: boolean;
+    x: number;
+    y: number;
+    imageId: string | null;
+    imageUrl: string;
+    type: 'generation' | 'edit' | 'asset';
+  }>({ open: false, x: 0, y: 0, imageId: null, imageUrl: '', type: 'asset' });
+  const boardImageMenuRef = React.useRef<HTMLDivElement | null>(null);
 
   // Handle asset file upload
   const handleAssetUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,6 +129,42 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       setSelectedBoardId(boards[0].id);
     }
   }, [boards, selectedBoardId, setSelectedBoardId]);
+
+  React.useEffect(() => {
+    const closeMenu = (event: MouseEvent) => {
+      if (event.button !== 0) return;
+      setBoardImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+    };
+    const handleScroll = () => setBoardImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setBoardImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+      }
+    };
+    window.addEventListener('pointerdown', closeMenu);
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', handleScroll);
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      window.removeEventListener('pointerdown', closeMenu);
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, []);
+
+  React.useLayoutEffect(() => {
+    if (!boardImageContextMenu.open || !boardImageMenuRef.current) return;
+    const rect = boardImageMenuRef.current.getBoundingClientRect();
+    const padding = 12;
+    const maxX = Math.max(padding, window.innerWidth - rect.width - padding);
+    const maxY = Math.max(padding, window.innerHeight - rect.height - padding);
+    const clampedX = Math.min(Math.max(padding, boardImageContextMenu.x), maxX);
+    const clampedY = Math.min(Math.max(padding, boardImageContextMenu.y), maxY);
+    if (clampedX !== boardImageContextMenu.x || clampedY !== boardImageContextMenu.y) {
+      setBoardImageContextMenu(prev => ({ ...prev, x: clampedX, y: clampedY }));
+    }
+  }, [boardImageContextMenu.open, boardImageContextMenu.x, boardImageContextMenu.y]);
 
   const handleCreateBoard = () => {
     setCreateBoardError('');
@@ -665,6 +714,19 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     <button
                       onClick={() => onImageSelect(item.imageUrl, item.imageId, item.type)}
                       className="relative aspect-square w-full rounded-lg overflow-hidden border-2 border-gray-800 hover:border-cyan-500 transition-all"
+                      onContextMenu={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setActiveBoardImageMenu(null);
+                        setBoardImageContextMenu({
+                          open: true,
+                          x: event.clientX,
+                          y: event.clientY,
+                          imageId: item.imageId,
+                          imageUrl: item.imageUrl,
+                          type: item.type
+                        });
+                      }}
                     >
                       <img
                         src={item.imageUrl}
@@ -1013,6 +1075,53 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      {boardImageContextMenu.open && boardImageContextMenu.imageId && selectedBoardId && ReactDOM.createPortal(
+        <div
+          className="fixed z-[9999] min-w-[180px] rounded-lg border border-gray-800 bg-gray-950/95 shadow-xl backdrop-blur p-1"
+          ref={boardImageMenuRef}
+          style={{ left: boardImageContextMenu.x, top: boardImageContextMenu.y }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <button
+            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 rounded-md flex items-center gap-2"
+            onClick={() => {
+              if (!boardImageContextMenu.imageUrl) return;
+              if (selectedTool === 'edit') {
+                addEditReferenceImage(boardImageContextMenu.imageUrl);
+              } else {
+                addUploadedImage(boardImageContextMenu.imageUrl);
+              }
+              setBoardImageContextMenu(prev => ({ ...prev, open: false }));
+            }}
+          >
+            <PlusCircle className="h-4 w-4 text-cyan-300" />
+            <span>{t.addAsReference}</span>
+          </button>
+          <button
+            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 rounded-md flex items-center gap-2"
+            onClick={() => {
+              if (!boardImageContextMenu.imageUrl) return;
+              void saveImageWithDialog(boardImageContextMenu.imageUrl, `${boardImageContextMenu.type}-image`);
+              setBoardImageContextMenu(prev => ({ ...prev, open: false }));
+            }}
+          >
+            <Download className="h-4 w-4 text-gray-300" />
+            <span>{t.downloadImage}</span>
+          </button>
+          <button
+            className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-900 rounded-md flex items-center gap-2"
+            onClick={() => {
+              removeImageFromBoard(selectedBoardId, boardImageContextMenu.imageId as string);
+              setBoardImageContextMenu(prev => ({ ...prev, open: false }));
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-red-400" />
+            <span>{t.removeFromBoard}</span>
+          </button>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

@@ -1,13 +1,15 @@
 import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { History, Layers, Folder } from 'lucide-react';
+import { History, Layers, Folder, Download, Trash2, PlusCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { Generation, Edit } from '../types';
 import { BoardsView } from './BoardsView';
 import { getTranslation } from '../i18n/translations';
 import { getImageById } from '../utils/galleryStorage';
+import { saveImageWithDialog } from '../utils/fileSaver';
 
 export const HistoryPanel: React.FC = () => {
   const {
@@ -22,6 +24,11 @@ export const HistoryPanel: React.FC = () => {
     setCurrentPrompt,
     language,
     boards,
+    selectedTool,
+    addUploadedImage,
+    addEditReferenceImage,
+    deleteGeneration,
+    deleteEdit,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -58,6 +65,15 @@ export const HistoryPanel: React.FC = () => {
   const edits = currentProject?.edits || [];
 
   const [galleryImages, setGalleryImages] = React.useState<Record<string, string>>({});
+  const [imageContextMenu, setImageContextMenu] = React.useState<{
+    open: boolean;
+    x: number;
+    y: number;
+    type: 'generation' | 'edit' | null;
+    itemId: string | null;
+    imageUrl: string;
+  }>({ open: false, x: 0, y: 0, type: null, itemId: null, imageUrl: '' });
+  const imageMenuRef = React.useRef<HTMLDivElement | null>(null);
 
   // Load gallery images from IndexedDB on mount and when boards change
   useEffect(() => {
@@ -89,6 +105,43 @@ export const HistoryPanel: React.FC = () => {
     window.addEventListener('galleryUpdated', handleGalleryUpdate);
     return () => window.removeEventListener('galleryUpdated', handleGalleryUpdate);
   }, [boards]);
+
+  useEffect(() => {
+    const closeMenu = (event: MouseEvent) => {
+      if (event.button !== 0) return;
+      setImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+    };
+    const handleScroll = () => setImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+      }
+    };
+
+    window.addEventListener('pointerdown', closeMenu);
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', handleScroll);
+    window.addEventListener('keydown', handleKey);
+    return () => {
+      window.removeEventListener('pointerdown', closeMenu);
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, []);
+
+  React.useLayoutEffect(() => {
+    if (!imageContextMenu.open || !imageMenuRef.current) return;
+    const rect = imageMenuRef.current.getBoundingClientRect();
+    const padding = 12;
+    const maxX = Math.max(padding, window.innerWidth - rect.width - padding);
+    const maxY = Math.max(padding, window.innerHeight - rect.height - padding);
+    const clampedX = Math.min(Math.max(padding, imageContextMenu.x), maxX);
+    const clampedY = Math.min(Math.max(padding, imageContextMenu.y), maxY);
+    if (clampedX !== imageContextMenu.x || clampedY !== imageContextMenu.y) {
+      setImageContextMenu(prev => ({ ...prev, x: clampedX, y: clampedY }));
+    }
+  }, [imageContextMenu.open, imageContextMenu.x, imageContextMenu.y]);
 
   const resolveImageUrl = React.useCallback((imageId: string) => {
     if (imageId.startsWith('data:') || imageId.startsWith('blob:') || imageId.startsWith('http')) {
@@ -257,6 +310,18 @@ export const HistoryPanel: React.FC = () => {
                           }
                         });
                       }}
+                      onContextMenu={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setImageContextMenu({
+                          open: true,
+                          x: event.clientX,
+                          y: event.clientY,
+                          type: 'generation',
+                          itemId: generation.id,
+                          imageUrl: generation.outputAssets[0]?.url || ''
+                        });
+                      }}
                     >
                       {generation.outputAssets[0] && generation.outputAssets[0].url ? (
                         <img
@@ -324,6 +389,18 @@ export const HistoryPanel: React.FC = () => {
                             timestamp: edit.timestamp,
                             maskUsed: !!edit.maskAssetId
                           }
+                        });
+                      }}
+                      onContextMenu={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setImageContextMenu({
+                          open: true,
+                          x: event.clientX,
+                          y: event.clientY,
+                          type: 'edit',
+                          itemId: edit.id,
+                          imageUrl: edit.outputAssets[0]?.url || ''
                         });
                       }}
                     >
@@ -407,6 +484,59 @@ export const HistoryPanel: React.FC = () => {
         description={previewModal.description}
         metadata={previewModal.metadata}
       />
+
+      {imageContextMenu.open && imageContextMenu.type && imageContextMenu.itemId && ReactDOM.createPortal(
+        <div
+          className="fixed z-[9999] min-w-[180px] rounded-lg border border-gray-800 bg-gray-950/95 shadow-xl backdrop-blur p-1"
+          ref={imageMenuRef}
+          style={{ left: imageContextMenu.x, top: imageContextMenu.y }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <button
+            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 rounded-md flex items-center gap-2"
+            onClick={() => {
+              if (!imageContextMenu.imageUrl) return;
+              if (selectedTool === 'edit') {
+                addEditReferenceImage(imageContextMenu.imageUrl);
+              } else {
+                addUploadedImage(imageContextMenu.imageUrl);
+              }
+              setImageContextMenu(prev => ({ ...prev, open: false }));
+            }}
+          >
+            <PlusCircle className="h-4 w-4 text-cyan-300" />
+            <span>{t.addAsReference}</span>
+          </button>
+          <button
+            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 rounded-md flex items-center gap-2"
+            onClick={() => {
+              if (!imageContextMenu.imageUrl) return;
+              void saveImageWithDialog(imageContextMenu.imageUrl, `${imageContextMenu.type}-image`);
+              setImageContextMenu(prev => ({ ...prev, open: false }));
+            }}
+          >
+            <Download className="h-4 w-4 text-gray-300" />
+            <span>{t.downloadImage}</span>
+          </button>
+          <button
+            className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-900 rounded-md flex items-center gap-2"
+            onClick={() => {
+              if (imageContextMenu.type === 'generation' && imageContextMenu.itemId) {
+                deleteGeneration(imageContextMenu.itemId);
+              }
+              if (imageContextMenu.type === 'edit' && imageContextMenu.itemId) {
+                deleteEdit(imageContextMenu.itemId);
+              }
+              setPreviewModal(prev => prev.imageUrl === imageContextMenu.imageUrl ? { ...prev, open: false } : prev);
+              setImageContextMenu(prev => ({ ...prev, open: false }));
+            }}
+          >
+            <Trash2 className="h-4 w-4 text-red-400" />
+            <span>{t.removeImage}</span>
+          </button>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

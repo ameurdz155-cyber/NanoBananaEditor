@@ -336,6 +336,7 @@ export interface Translations {
   noUploadHistoryYet: string;
   genLabel: string;
   unlimitedUploads: string;
+  addAsReference: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -674,6 +675,7 @@ export const translations: Record<Language, Translations> = {
     noUploadHistoryYet: 'No upload history yet',
     genLabel: 'Gen',
     unlimitedUploads: 'Click on any image to add to references • Unlimited uploads',
+    addAsReference: 'Add as reference',
   },
   zh: {
     // Header
@@ -1010,6 +1012,7 @@ export const translations: Record<Language, Translations> = {
     noUploadHistoryYet: '暂无上传历史',
     genLabel: '生成',
   unlimitedUploads: '点击任意图片添加到参考 • 上传数量不限',
+    addAsReference: '添加为参考',
   },
 };
 

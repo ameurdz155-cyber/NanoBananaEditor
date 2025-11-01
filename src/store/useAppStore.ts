@@ -79,6 +79,8 @@ interface AppState {
   setCurrentProject: (project: Project | null) => void;
   addToPromptHistory: (prompt: string) => void;
   deletePromptFromHistory: (index: number) => void;
+  deleteGeneration: (generationId: string) => void;
+  deleteEdit: (editId: string) => void;
   setCanvasImage: (url: string | null) => void;
   setCanvasZoom: (zoom: number) => void;
   setCanvasPan: (pan: { x: number; y: number }) => void;
@@ -302,6 +304,54 @@ export const useAppStore = create<AppState>()(
       deletePromptFromHistory: (index) => set((state) => ({
         promptHistory: state.promptHistory.filter((_, i) => i !== index)
       })),
+
+      deleteGeneration: (generationId) => set((state) => {
+        if (!state.currentProject) {
+          return {};
+        }
+
+        const generationToRemove = state.currentProject.generations.find(g => g.id === generationId);
+        const updatedGenerations = state.currentProject.generations.filter(g => g.id !== generationId);
+        const primaryUrl = generationToRemove?.outputAssets?.[0]?.url;
+
+        return {
+          currentProject: {
+            ...state.currentProject,
+            generations: updatedGenerations,
+            updatedAt: Date.now()
+          },
+          boards: state.boards.map(board => ({
+            ...board,
+            imageIds: board.imageIds.filter(id => id !== generationId && id !== primaryUrl)
+          })),
+          selectedGenerationId: state.selectedGenerationId === generationId ? null : state.selectedGenerationId,
+          canvasImage: primaryUrl && state.canvasImage === primaryUrl ? null : state.canvasImage
+        };
+      }),
+
+      deleteEdit: (editId) => set((state) => {
+        if (!state.currentProject) {
+          return {};
+        }
+
+        const editToRemove = state.currentProject.edits.find(e => e.id === editId);
+        const updatedEdits = state.currentProject.edits.filter(e => e.id !== editId);
+        const primaryUrl = editToRemove?.outputAssets?.[0]?.url;
+
+        return {
+          currentProject: {
+            ...state.currentProject,
+            edits: updatedEdits,
+            updatedAt: Date.now()
+          },
+          boards: state.boards.map(board => ({
+            ...board,
+            imageIds: board.imageIds.filter(id => id !== editId && id !== primaryUrl)
+          })),
+          selectedEditId: state.selectedEditId === editId ? null : state.selectedEditId,
+          canvasImage: primaryUrl && state.canvasImage === primaryUrl ? null : state.canvasImage
+        };
+      }),
       
       setApiKey: (key) => set({ apiKey: key }),
       setApiKeyError: (error) => set({ apiKeyError: error }),
@@ -395,6 +445,9 @@ export const useAppStore = create<AppState>()(
           temperature: state.temperature,
           selectedTool: state.selectedTool,
           selectedTemplate: state.selectedTemplate,
+          uploadHistory: state.uploadHistory,
+          uploadedImages: state.uploadedImages,
+          editReferenceImages: state.editReferenceImages,
         }),
         storage: {
           getItem: (name) => {
