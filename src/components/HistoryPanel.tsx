@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useAppStore } from '../store/useAppStore';
-import { Button } from './ui/Button';
 import { History, Layers, Folder, Download, Trash2, PlusCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { ImagePreviewModal } from './ImagePreviewModal';
@@ -185,7 +184,19 @@ export const HistoryPanel: React.FC = () => {
   }
 
   return (
-    <div className="w-80 bg-gray-950 border-l border-gray-800 p-4 flex flex-col h-full overflow-hidden">
+    <div className="w-80 bg-gray-950 border-l border-gray-800 p-4 flex flex-col h-full overflow-hidden relative">
+      {/* Hide Button - Positioned Outside */}
+      <button
+        onClick={() => setShowHistory(false)}
+        className="inline-flex items-center justify-center font-semibold duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 overflow-hidden absolute top-6 -left-3 h-8 w-8 rounded-full border border-gray-700 bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors z-[9999] opacity-60 hover:opacity-100 pointer-events-auto shadow-lg"
+        title="Hide History Panel"
+        aria-label="Hide History Panel"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+          <path d="m9 18 6-6-6-6"></path>
+        </svg>
+      </button>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex items-center space-x-2">
@@ -197,15 +208,6 @@ export const HistoryPanel: React.FC = () => {
             <p className="text-xs text-gray-500">{generations.length + edits.length} {t.items}</p>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowHistory(!showHistory)}
-          className="h-8 w-8 hover:bg-gray-800"
-          title="Hide History Panel"
-        >
-          ×
-        </Button>
       </div>
 
       {/* Tabs */}

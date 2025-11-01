@@ -69,6 +69,7 @@ interface AppState {
   
   // UI state
   selectedTool: 'generate' | 'edit' | 'mask';
+  activePrimarySection: 'generate' | 'canvas' | 'upscaling' | 'workflows';
   
   // Language
   language: Language;
@@ -115,6 +116,7 @@ interface AppState {
   setPromptPanelWidth: (width: number) => void;
   
   setSelectedTool: (tool: 'generate' | 'edit' | 'mask') => void;
+  setActivePrimarySection: (section: 'generate' | 'canvas' | 'upscaling' | 'workflows') => void;
   
   setLanguage: (language: Language) => void;
   
@@ -198,6 +200,7 @@ export const useAppStore = create<AppState>()(
   promptPanelWidth: 320,
       
       selectedTool: 'generate',
+  activePrimarySection: 'generate',
       
       language: (typeof localStorage !== 'undefined' && localStorage.getItem('ai-pod-language') as Language) || 'zh',
       
@@ -291,6 +294,7 @@ export const useAppStore = create<AppState>()(
   setPromptPanelWidth: (width) => set({ promptPanelWidth: width }),
       
       setSelectedTool: (tool) => set({ selectedTool: tool }),
+  setActivePrimarySection: (section) => set({ activePrimarySection: section }),
       
       setLanguage: (language) => {
         if (typeof localStorage !== 'undefined') {
@@ -448,6 +452,7 @@ export const useAppStore = create<AppState>()(
           brushSize: state.brushSize,
           temperature: state.temperature,
           selectedTool: state.selectedTool,
+          activePrimarySection: state.activePrimarySection,
           selectedTemplate: state.selectedTemplate,
           uploadHistory: state.uploadHistory,
           uploadedImages: state.uploadedImages,

@@ -1,6 +1,5 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cn } from './utils/cn';
 import { Header } from './components/Header';
 import { PromptComposer } from './components/PromptComposer';
 import { ImageCanvas } from './components/ImageCanvas';
@@ -8,6 +7,7 @@ import { HistoryPanel } from './components/HistoryPanel';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAppStore } from './store/useAppStore';
 import { getTranslation } from './i18n/translations';
+import { SideNavigation } from './components/SideNavigation';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,7 +21,10 @@ const queryClient = new QueryClient({
 function AppContent() {
   useKeyboardShortcuts();
   
-  const { showPromptPanel, setShowPromptPanel, setShowHistory, language } = useAppStore();
+  const setShowPromptPanel = useAppStore((state) => state.setShowPromptPanel);
+  const setShowHistory = useAppStore((state) => state.setShowHistory);
+  const language = useAppStore((state) => state.language);
+  const activePrimarySection = useAppStore((state) => state.activePrimarySection);
   
   // Update page title when language changes
   React.useEffect(() => {
@@ -94,19 +97,43 @@ function AppContent() {
     return () => window.removeEventListener('resize', checkMobile);
   }, [setShowPromptPanel, setShowHistory]);
 
+  React.useEffect(() => {
+    const { showPromptPanel, showHistory } = useAppStore.getState();
+
+    if (activePrimarySection === 'canvas') {
+      if (showPromptPanel) {
+        setShowPromptPanel(false);
+      }
+      if (showHistory) {
+        setShowHistory(false);
+      }
+      return;
+    }
+
+    if (!showPromptPanel) {
+      setShowPromptPanel(true);
+    }
+    if (!showHistory) {
+      setShowHistory(true);
+    }
+  }, [activePrimarySection, setShowHistory, setShowPromptPanel]);
+
   return (
     <div className="h-screen flex flex-col font-sans relative" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       <Header />
       
       <div className="flex-1 flex overflow-hidden relative">
-  <div className={cn("flex-shrink-0 transition-all duration-300 relative z-40", !showPromptPanel && "w-8")}>
-          <PromptComposer />
-        </div>
-        <div className="flex-1 min-w-0 relative z-10">
-          <ImageCanvas />
-        </div>
-        <div className="flex-shrink-0 relative z-10">
-          <HistoryPanel />
+        <SideNavigation />
+        <div className="flex-1 flex overflow-hidden relative">
+          <div className="flex-shrink-0 transition-all duration-300 relative z-40">
+            <PromptComposer />
+          </div>
+          <div className="flex-1 min-w-0 relative z-10">
+            <ImageCanvas />
+          </div>
+          <div className="flex-shrink-0 relative z-10">
+            <HistoryPanel />
+          </div>
         </div>
       </div>
       

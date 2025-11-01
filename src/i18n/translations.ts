@@ -48,6 +48,9 @@ export interface Translations {
   createFromText: string;
   modifyExisting: string;
   clickToSelect: string;
+  canvasTab: string;
+  upscalingTab: string;
+  workflowsTab: string;
   
   // File upload
   addReferenceImages: string;
@@ -384,6 +387,9 @@ export const translations: Record<Language, Translations> = {
     generate: 'Generate',
     edit: 'Edit',
   select: 'Creative',
+    canvasTab: 'Canvas',
+    upscalingTab: 'Upscaling',
+    workflowsTab: 'Workflows',
     createFromText: 'Create from text',
     modifyExisting: 'Modify existing',
     clickToSelect: 'Click to select',
@@ -721,6 +727,9 @@ export const translations: Record<Language, Translations> = {
     generate: '生成',
     edit: '编辑',
     select: '创作',
+  canvasTab: '画布',
+  upscalingTab: '超分辨率',
+  workflowsTab: '工作流',
     createFromText: '从文本创建',
     modifyExisting: '修改现有',
     clickToSelect: '点击选择',
