@@ -46,6 +46,8 @@ export const PromptComposer: React.FC = () => {
     selectedTemplate,
     setSelectedTemplate,
     customTemplates,
+    setGenerationProgress,
+    setLastGenerationParameters,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -212,27 +214,45 @@ export const PromptComposer: React.FC = () => {
     addToPromptHistory(currentPrompt);
     
     if (selectedTool === 'generate') {
+      setLastGenerationParameters({ width: imageWidth, height: imageHeight, aspectRatio });
+
       const referenceImages = uploadedImages
         .filter(img => img.includes('base64,'))
         .map(img => img.split('base64,')[1]);
+
+      const totalIterations = Math.max(1, iterations);
       
       // Generate multiple images based on iterations
-      for (let i = 0; i < iterations; i++) {
-        generate({
-          prompt: currentPrompt,
-          negativePrompt: negativePrompt.trim() || undefined,
-          referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
-          temperature,
-          seed: seed || undefined,
-          aspectRatio,
-          width: imageWidth,
-          height: imageHeight
-        });
-        
-        // Add a small delay between iterations to avoid overwhelming the API
-        if (i < iterations - 1) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+      try {
+        for (let i = 0; i < totalIterations; i++) {
+          const currentIteration = i + 1;
+          setGenerationProgress({ current: currentIteration, total: totalIterations });
+          await generate({
+            prompt: currentPrompt,
+            negativePrompt: negativePrompt.trim() || undefined,
+            referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+            temperature,
+            seed: seed || undefined,
+            aspectRatio,
+            width: imageWidth,
+            height: imageHeight,
+            iterationIndex: currentIteration,
+            totalIterations,
+            referenceCount: referenceImages.length
+          });
+          
+          // Add a small delay between iterations to avoid overwhelming the API
+          if (i < totalIterations - 1) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
+      } catch (error: any) {
+        if (error?.name === 'AbortError') {
+          return;
+        }
+        console.error('Generation failed during iterations:', error);
+      } finally {
+        setGenerationProgress({ current: 0, total: 0 });
       }
     } else if (selectedTool === 'edit' || selectedTool === 'mask') {
       edit(currentPrompt);

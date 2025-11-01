@@ -21,6 +21,7 @@ export const ImageCanvas: React.FC = () => {
     language,
     addUploadedImage,
     addEditReferenceImage,
+    generationProgress,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -233,11 +234,19 @@ export const ImageCanvas: React.FC = () => {
                 <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
                   {t.creatingYourImage}
                 </p>
-                <p className="text-sm text-gray-400">
-                  {selectedTool === 'edit' || selectedTool === 'mask' 
-                    ? 'Applying your edits...' 
-                    : 'This may take a few moments'}
-                </p>
+                {selectedTool === 'edit' || selectedTool === 'mask' ? (
+                  <p className="text-sm text-gray-400">
+                    {selectedTool === 'edit' ? 'Applying your edits...' : 'Preparing mask edits...'}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400">
+                    {generationProgress.total > 1
+                      ? t.generatingProgress
+                          .replace('{current}', String(generationProgress.current))
+                          .replace('{total}', String(generationProgress.total))
+                      : 'This may take a few moments'}
+                  </p>
+                )}
                 <div className="flex items-center justify-center space-x-1 mt-4">
                   <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                   <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>

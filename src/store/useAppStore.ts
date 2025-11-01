@@ -123,6 +123,12 @@ interface AppState {
   // Save Path state (Desktop app only)
   savePath: string | null;
   setSavePath: (path: string | null) => void;
+
+  // Generation progress
+  generationProgress: { current: number; total: number };
+  setGenerationProgress: (progress: { current: number; total: number }) => void;
+  lastGenerationParameters: { width: number; height: number; aspectRatio?: string } | null;
+  setLastGenerationParameters: (params: { width: number; height: number; aspectRatio?: string } | null) => void;
   
   // Boards actions
   setBoards: (boards: Board[]) => void;
@@ -199,6 +205,9 @@ export const useAppStore = create<AppState>()(
       
       // Save Path state (Desktop app only)
       savePath: null,
+
+      generationProgress: { current: 0, total: 0 },
+      lastGenerationParameters: null,
       
       // Actions
       setCurrentProject: (project) => set({ currentProject: project }),
@@ -298,6 +307,9 @@ export const useAppStore = create<AppState>()(
       setApiKeyError: (error) => set({ apiKeyError: error }),
       
       setSavePath: (path) => set({ savePath: path }),
+
+  setGenerationProgress: (progress) => set({ generationProgress: progress }),
+  setLastGenerationParameters: (params) => set({ lastGenerationParameters: params }),
       
       // Boards actions
       setBoards: (boards) => set({ boards }),

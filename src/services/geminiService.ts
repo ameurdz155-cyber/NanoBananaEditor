@@ -95,6 +95,9 @@ export interface GenerationRequest {
   width?: number;
   height?: number;
   signal?: AbortSignal; // Add abort signal support
+  iterationIndex?: number;
+  totalIterations?: number;
+  referenceCount?: number;
 }
 
 export interface EditRequest {
@@ -150,9 +153,30 @@ export class GeminiService {
       });
 
       // Race between the API call and the abort signal
+      const generationConfig: Record<string, any> = {};
+      if (typeof request.temperature === 'number') {
+        generationConfig.temperature = request.temperature;
+      }
+      if (typeof request.seed === 'number') {
+        generationConfig.seed = request.seed;
+      }
+
+      const imageGenerationConfig: Record<string, any> = {};
+      if (request.aspectRatio) {
+        imageGenerationConfig.aspectRatio = request.aspectRatio;
+      }
+      if (request.width && request.height) {
+        imageGenerationConfig.outputImageDimensions = {
+          widthPixels: request.width,
+          heightPixels: request.height,
+        };
+      }
+
       const apiPromise = getGenAI().models.generateContent({
         model: "gemini-2.5-flash-image-preview",
         contents,
+        ...(Object.keys(generationConfig).length ? { generationConfig } : {}),
+        ...(Object.keys(imageGenerationConfig).length ? { imageGenerationConfig } : {}),
       });
 
       const response: any = request.signal 

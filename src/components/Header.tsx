@@ -11,6 +11,7 @@ import { saveImageToGallery } from '../utils/fileSaver';
 import { saveImageToGalleryDB } from '../utils/galleryStorage';
 import logoHeader from '../assets/AI-POD-lite-logo.png';
 import { createPortal } from 'react-dom';
+import { transformImageToDimensions } from '../utils/imageUtils';
 
 export const Header: React.FC = () => {
   const { 
@@ -30,6 +31,7 @@ export const Header: React.FC = () => {
     selectedBoardId,
     addImageToBoard,
     savePath,
+    lastGenerationParameters,
   } = useAppStore();
   const t = getTranslation(language);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -94,14 +96,27 @@ export const Header: React.FC = () => {
       return;
     }
 
-    const result = await saveImageToGallery(canvasImage, boardName, undefined, savePath);
+    let imageForSave = canvasImage;
+
+    if (selectedTool === 'generate' && lastGenerationParameters) {
+      const { width, height } = lastGenerationParameters;
+      if (width > 0 && height > 0) {
+        try {
+          imageForSave = await transformImageToDimensions(canvasImage, width, height, 'cover');
+        } catch (error) {
+          console.error('Failed to normalize image dimensions before saving:', error);
+        }
+      }
+    }
+
+    const result = await saveImageToGallery(imageForSave, boardName, undefined, savePath);
 
     if (result.success && selectedBoardId) {
       addImageToBoard(selectedBoardId, result.imageId);
 
       const saved = await saveImageToGalleryDB(
         result.imageId,
-        canvasImage,
+        imageForSave,
         selectedBoardId,
         boardName,
         result.path
@@ -111,7 +126,7 @@ export const Header: React.FC = () => {
         console.log(`✅ Image saved to "${boardName}" gallery!`);
         setSavedGalleryName(boardName);
         setSavedImagePath(result.path);
-        setSavedImageData(canvasImage);
+        setSavedImageData(imageForSave);
         setShowSaveSuccessModal(true);
         window.dispatchEvent(new CustomEvent('galleryUpdated'));
       } else {
@@ -119,7 +134,17 @@ export const Header: React.FC = () => {
         alert('⚠️ Image added to gallery but storage may have failed');
       }
     }
-  }, [addImageToBoard, boards, canvasImage, saveImageToGallery, saveImageToGalleryDB, savePath, selectedBoardId]);
+  }, [
+    addImageToBoard,
+    boards,
+    canvasImage,
+    lastGenerationParameters,
+    saveImageToGallery,
+    saveImageToGalleryDB,
+    savePath,
+    selectedBoardId,
+    selectedTool
+  ]);
 
   useEffect(() => {
     const handleExternalSave = () => {

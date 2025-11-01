@@ -18,6 +18,9 @@ export interface Generation {
     height?: number;
     seed?: number;
     temperature?: number;
+    iterationIndex?: number;
+    totalIterations?: number;
+    referenceCount?: number;
   };
   sourceAssets: Asset[];
   outputAssets: Asset[];

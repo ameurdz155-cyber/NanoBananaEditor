@@ -18,6 +18,11 @@ interface ImagePreviewModalProps {
     negativePrompt?: string;
     maskUsed?: boolean;
     aspectRatio?: string;
+    width?: number;
+    height?: number;
+    referenceCount?: number;
+    iterationIndex?: number;
+    totalIterations?: number;
   };
 }
 
@@ -69,6 +74,15 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
             {/* Metadata Details */}
             {metadata && (
               <div className="grid grid-cols-2 gap-3">
+                {metadata.width && metadata.height && (
+                  <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.dimensions}</h4>
+                    <p className="text-sm text-gray-200 font-mono">
+                      {metadata.width} × {metadata.height}px
+                    </p>
+                  </div>
+                )}
+                
                 {metadata.timestamp && (
                   <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.created}</h4>
@@ -85,6 +99,15 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                   </div>
                 )}
                 
+                {typeof metadata.referenceCount === 'number' && (
+                  <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.referencesUsed}</h4>
+                    <p className="text-sm text-gray-200">
+                      {metadata.referenceCount}
+                    </p>
+                  </div>
+                )}
+                
                 {metadata.seed !== undefined && metadata.seed !== null && (
                   <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.seed}</h4>
@@ -96,6 +119,15 @@ export const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({
                   <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
                     <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.creativity}</h4>
                     <p className="text-sm text-gray-200">{metadata.temperature}</p>
+                  </div>
+                )}
+                
+                {metadata.totalIterations && metadata.totalIterations > 1 && (
+                  <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                    <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{t.generationStep}</h4>
+                    <p className="text-sm text-gray-200">
+                      {metadata.iterationIndex ?? 1} / {metadata.totalIterations}
+                    </p>
                   </div>
                 )}
                 

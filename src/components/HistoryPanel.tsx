@@ -40,6 +40,11 @@ export const HistoryPanel: React.FC = () => {
       temperature?: number;
       negativePrompt?: string;
       maskUsed?: boolean;
+      width?: number;
+      height?: number;
+      referenceCount?: number;
+      iterationIndex?: number;
+      totalIterations?: number;
     };
   }>({
     open: false,
@@ -241,9 +246,14 @@ export const HistoryPanel: React.FC = () => {
                           metadata: {
                             timestamp: generation.timestamp,
                             aspectRatio: generation.parameters?.aspectRatio,
+                            width: generation.parameters?.width,
+                            height: generation.parameters?.height,
                             seed: generation.parameters?.seed,
                             temperature: generation.parameters?.temperature,
-                            negativePrompt: generation.negativePrompt
+                            negativePrompt: generation.negativePrompt,
+                            referenceCount: generation.parameters?.referenceCount,
+                            iterationIndex: generation.parameters?.iterationIndex,
+                            totalIterations: generation.parameters?.totalIterations
                           }
                         });
                       }}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
 import {
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { saveImageWithDialog } from '../utils/fileSaver';
+import { transformImageToDimensions } from '../utils/imageUtils';
 
 export const BoardsPanel: React.FC = () => {
   const {
@@ -74,6 +75,19 @@ export const BoardsPanel: React.FC = () => {
   const filteredBoards = boards.filter(board =>
     board.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const downloadWithDimensions = useCallback(async (imageUrl: string, width?: number, height?: number) => {
+    let preparedUrl = imageUrl;
+    if (width && height && width > 0 && height > 0) {
+      try {
+        preparedUrl = await transformImageToDimensions(imageUrl, width, height, 'cover');
+      } catch (error) {
+        console.error('Failed to normalize board image dimensions before download:', error);
+      }
+    }
+
+    saveImageWithDialog(preparedUrl);
+  }, [saveImageWithDialog]);
 
   if (!showBoardsPanel) {
     return (
@@ -388,9 +402,15 @@ export const BoardsPanel: React.FC = () => {
                                   size="sm" 
                                   variant="ghost" 
                                   className="bg-white/10 hover:bg-white/20"
-                                  onClick={(e) => {
+                                  onClick={async (e) => {
                                     e.stopPropagation();
-                                    saveImageWithDialog(imageUrl);
+                                    const targetWidth = type === 'generation'
+                                      ? item.parameters?.width
+                                      : item.outputAssets?.[0]?.width;
+                                    const targetHeight = type === 'generation'
+                                      ? item.parameters?.height
+                                      : item.outputAssets?.[0]?.height;
+                                    await downloadWithDimensions(imageUrl, targetWidth, targetHeight);
                                   }}
                                 >
                                   <Download className="h-4 w-4" />
@@ -536,9 +556,15 @@ export const BoardsPanel: React.FC = () => {
                                   size="sm" 
                                   variant="ghost" 
                                   className="h-7 w-7 bg-black/50 hover:bg-black/70 p-0"
-                                  onClick={(e) => {
+                                  onClick={async (e) => {
                                     e.stopPropagation();
-                                    saveImageWithDialog(imageUrl);
+                                    const targetWidth = type === 'generation'
+                                      ? item.parameters?.width
+                                      : item.outputAssets?.[0]?.width;
+                                    const targetHeight = type === 'generation'
+                                      ? item.parameters?.height
+                                      : item.outputAssets?.[0]?.height;
+                                    await downloadWithDimensions(imageUrl, targetWidth, targetHeight);
                                   }}
                                 >
                                   <Download className="h-3 w-3" />

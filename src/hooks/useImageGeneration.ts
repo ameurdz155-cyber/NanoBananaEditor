@@ -1,12 +1,20 @@
 import { useMutation } from '@tanstack/react-query';
 import { geminiService, GenerationRequest, EditRequest } from '../services/geminiService';
 import { useAppStore } from '../store/useAppStore';
-import { generateId } from '../utils/imageUtils';
+import { generateId, transformImageToDimensions } from '../utils/imageUtils';
 import { Generation, Edit, Asset } from '../types';
 import { useRef } from 'react';
 
 export const useImageGeneration = () => {
-  const { addGeneration, setIsGenerating, setCanvasImage, setCurrentProject, currentProject, setApiKeyError } = useAppStore();
+  const {
+    addGeneration,
+    setIsGenerating,
+    setCanvasImage,
+    setCurrentProject,
+    currentProject,
+    setApiKeyError,
+    setGenerationProgress
+  } = useAppStore();
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const generateMutation = useMutation({
@@ -24,16 +32,38 @@ export const useImageGeneration = () => {
       setIsGenerating(true);
       setApiKeyError(null);
     },
-    onSuccess: (images, request) => {
+    onSuccess: async (images, request) => {
       if (images.length > 0) {
-        const outputAssets: Asset[] = images.map((base64) => ({
+        const outputWidth = request.width ?? 1024;
+        const outputHeight = request.height ?? 1024;
+        const referenceCount = typeof request.referenceCount === 'number'
+          ? request.referenceCount
+          : request.referenceImages
+            ? request.referenceImages.length
+            : 0;
+
+        const normalizedImages = await Promise.all(
+          images.map(async (base64) => {
+            const dataUrl = `data:image/png;base64,${base64}`;
+            if (outputWidth > 0 && outputHeight > 0) {
+              try {
+                return await transformImageToDimensions(dataUrl, outputWidth, outputHeight, 'cover');
+              } catch (error) {
+                console.error('Failed to normalize generated image dimensions:', error);
+              }
+            }
+            return dataUrl;
+          })
+        );
+
+        const outputAssets: Asset[] = normalizedImages.map((dataUrl) => ({
           id: generateId(),
           type: 'output',
-          url: `data:image/png;base64,${base64}`,
+          url: dataUrl,
           mime: 'image/png',
-          width: 1024, // Default Gemini output size
-          height: 1024,
-          checksum: base64.slice(0, 32) // Simple checksum
+          width: outputWidth,
+          height: outputHeight,
+          checksum: dataUrl.split('base64,')[1]?.slice(0, 32) || ''
         }));
 
         const generation: Generation = {
@@ -42,10 +72,13 @@ export const useImageGeneration = () => {
           negativePrompt: request.negativePrompt,
           parameters: {
             aspectRatio: request.aspectRatio || '1:1',
-            width: request.width,
-            height: request.height,
+            width: outputWidth,
+            height: outputHeight,
             seed: request.seed,
-            temperature: request.temperature
+            temperature: request.temperature,
+            iterationIndex: request.iterationIndex,
+            totalIterations: request.totalIterations,
+            referenceCount
           },
           sourceAssets: request.referenceImages ? request.referenceImages.map((img) => ({
             id: generateId(),
@@ -66,7 +99,7 @@ export const useImageGeneration = () => {
         // Images are now only saved to history, not automatically added to gallery
         // Users can manually save to gallery using the Save button
         
-        setCanvasImage(outputAssets[0].url);
+  setCanvasImage(outputAssets[0].url);
         
         // Create project if none exists
         if (!currentProject) {
@@ -94,6 +127,7 @@ export const useImageGeneration = () => {
         }
       }
       setIsGenerating(false);
+      setGenerationProgress({ current: 0, total: 0 });
       abortControllerRef.current = null;
     }
   });
@@ -105,10 +139,11 @@ export const useImageGeneration = () => {
     }
     // Always reset generating state immediately
     setIsGenerating(false);
+    setGenerationProgress({ current: 0, total: 0 });
   };
 
   return {
-    generate: generateMutation.mutate,
+    generate: (request: GenerationRequest) => generateMutation.mutateAsync(request),
     isGenerating: generateMutation.isPending,
     error: generateMutation.error,
     cancelGeneration

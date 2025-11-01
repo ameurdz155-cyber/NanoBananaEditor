@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { saveImageWithDialog } from '../utils/fileSaver';
+import { transformImageToDimensions } from '../utils/imageUtils';
 
 export const useKeyboardShortcuts = () => {
   const {
@@ -11,16 +12,30 @@ export const useKeyboardShortcuts = () => {
     showPromptPanel,
     currentPrompt,
     isGenerating,
-    canvasImage
+    canvasImage,
+    lastGenerationParameters,
+    selectedTool
   } = useAppStore();
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = async (event: KeyboardEvent) => {
       // Handle Ctrl+S for save
       if (event.ctrlKey && event.key === 's') {
         event.preventDefault();
         if (canvasImage) {
-          saveImageWithDialog(canvasImage);
+          let imageForSave = canvasImage;
+
+          const targetWidth = selectedTool === 'generate' ? lastGenerationParameters?.width : undefined;
+          const targetHeight = selectedTool === 'generate' ? lastGenerationParameters?.height : undefined;
+          if (targetWidth && targetHeight && targetWidth > 0 && targetHeight > 0) {
+            try {
+              imageForSave = await transformImageToDimensions(canvasImage, targetWidth, targetHeight, 'cover');
+            } catch (error) {
+              console.error('Failed to normalize image dimensions for download:', error);
+            }
+          }
+
+          saveImageWithDialog(imageForSave);
         }
         return;
       }
@@ -70,5 +85,16 @@ export const useKeyboardShortcuts = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setSelectedTool, setShowHistory, showHistory, setShowPromptPanel, showPromptPanel, currentPrompt, isGenerating, canvasImage]);
+  }, [
+    canvasImage,
+    currentPrompt,
+    isGenerating,
+    lastGenerationParameters,
+  selectedTool,
+  setSelectedTool,
+    setShowHistory,
+    setShowPromptPanel,
+    showHistory,
+    showPromptPanel
+  ]);
 };

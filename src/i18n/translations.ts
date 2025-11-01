@@ -141,6 +141,9 @@ export interface Translations {
   applied: string;
   originalImage: string;
   maskedReference: string;
+  referencesUsed: string;
+  generationStep: string;
+  generatingProgress: string;
   
   // Canvas
   createWithAI: string;
@@ -433,6 +436,9 @@ export const translations: Record<Language, Translations> = {
     
     // Info modal
     about: 'About',
+  referencesUsed: 'References used',
+  generationStep: 'Iteration',
+  generatingProgress: 'Generating {current}/{total}',
     tipsHelp: 'Tips & Help',
     version: 'Version 2.0.0',
     
@@ -695,6 +701,9 @@ export const translations: Record<Language, Translations> = {
     applied: '已应用',
     originalImage: '原始图片',
     maskedReference: '蒙版参考图片',
+  referencesUsed: '参考图数量',
+  generationStep: '迭代',
+  generatingProgress: '正在生成 {current}/{total}',
     
     // Canvas
     createWithAI: '使用AI创作',
