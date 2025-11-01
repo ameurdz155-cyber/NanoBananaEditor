@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from './ui/Button';
 import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu } from 'lucide-react';
 import { InfoModal } from './InfoModal';
@@ -83,26 +83,22 @@ export const Header: React.FC = () => {
     setCanvasPan({ x: 0, y: 0 });
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!canvasImage) return;
-    
-    // Get the selected board name
+
     const selectedBoard = boards.find(b => b.id === selectedBoardId);
     const boardName = selectedBoard?.name || 'default';
-    
+
     if (!selectedBoardId) {
       alert('Please select a gallery folder first!');
       return;
     }
-    
-    // Save image to the gallery folder (disk or IndexedDB)
+
     const result = await saveImageToGallery(canvasImage, boardName, undefined, savePath);
-    
+
     if (result.success && selectedBoardId) {
-      // Add the image to the board tracking
       addImageToBoard(selectedBoardId, result.imageId);
-      
-      // Store the image in IndexedDB (for browser) or track the file path (for Tauri)
+
       const saved = await saveImageToGalleryDB(
         result.imageId,
         canvasImage,
@@ -110,23 +106,28 @@ export const Header: React.FC = () => {
         boardName,
         result.path
       );
-      
+
       if (saved) {
         console.log(`✅ Image saved to "${boardName}" gallery!`);
-        // Show success modal with path and image data
         setSavedGalleryName(boardName);
         setSavedImagePath(result.path);
         setSavedImageData(canvasImage);
         setShowSaveSuccessModal(true);
-        
-        // Trigger a small update to refresh the gallery view
         window.dispatchEvent(new CustomEvent('galleryUpdated'));
       } else {
         console.warn('Image added to board but storage failed');
         alert('⚠️ Image added to gallery but storage may have failed');
       }
     }
-  };
+  }, [addImageToBoard, boards, canvasImage, saveImageToGallery, saveImageToGalleryDB, savePath, selectedBoardId]);
+
+  useEffect(() => {
+    const handleExternalSave = () => {
+      handleSave();
+    };
+    window.addEventListener('triggerSaveImage', handleExternalSave);
+    return () => window.removeEventListener('triggerSaveImage', handleExternalSave);
+  }, [handleSave]);
 
   return (
     <>

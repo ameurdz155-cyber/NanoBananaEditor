@@ -206,25 +206,35 @@ export const useAppStore = create<AppState>()(
       setCanvasZoom: (zoom) => set({ canvasZoom: zoom }),
       setCanvasPan: (pan) => set({ canvasPan: pan }),
       
-      addUploadedImage: (url) => set((state) => ({ 
-        uploadedImages: [...state.uploadedImages, url],
-        // Add to history if not already there (keep unique, recent first)
-        uploadHistory: state.uploadHistory.includes(url) 
-          ? state.uploadHistory 
-          : [url, ...state.uploadHistory].slice(0, 50) // Keep last 50
-      })),
+      addUploadedImage: (url) => set((state) => {
+        const exists = state.uploadedImages.includes(url);
+        const appended = exists ? state.uploadedImages : [...state.uploadedImages, url];
+        const limited = appended.length > 2 ? appended.slice(appended.length - 2) : appended;
+
+        return {
+          uploadedImages: limited,
+          uploadHistory: state.uploadHistory.includes(url)
+            ? state.uploadHistory
+            : [url, ...state.uploadHistory].slice(0, 50),
+        };
+      }),
       removeUploadedImage: (index) => set((state) => ({ 
         uploadedImages: state.uploadedImages.filter((_, i) => i !== index) 
       })),
       clearUploadedImages: () => set({ uploadedImages: [] }),
       
-      addEditReferenceImage: (url) => set((state) => ({ 
-        editReferenceImages: [...state.editReferenceImages, url],
-        // Add to history if not already there (keep unique, recent first)
-        uploadHistory: state.uploadHistory.includes(url) 
-          ? state.uploadHistory 
-          : [url, ...state.uploadHistory].slice(0, 20) // Keep last 20
-      })),
+      addEditReferenceImage: (url) => set((state) => {
+        const exists = state.editReferenceImages.includes(url);
+        const appended = exists ? state.editReferenceImages : [...state.editReferenceImages, url];
+        const limited = appended.length > 2 ? appended.slice(appended.length - 2) : appended;
+
+        return {
+          editReferenceImages: limited,
+          uploadHistory: state.uploadHistory.includes(url)
+            ? state.uploadHistory
+            : [url, ...state.uploadHistory].slice(0, 20),
+        };
+      }),
       removeEditReferenceImage: (index) => set((state) => ({ 
         editReferenceImages: state.editReferenceImages.filter((_, i) => i !== index) 
       })),

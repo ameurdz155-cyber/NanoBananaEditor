@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Stage, Layer, Image as KonvaImage, Line } from 'react-konva';
 import { useAppStore } from '../store/useAppStore';
 import { Sparkles } from 'lucide-react';
@@ -18,6 +19,8 @@ export const ImageCanvas: React.FC = () => {
     isGenerating,
     brushSize,
     language,
+    addUploadedImage,
+    addEditReferenceImage,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -27,6 +30,7 @@ export const ImageCanvas: React.FC = () => {
   const [stageSize, setStageSize] = useState({ width: 800, height: 600 });
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState<number[]>([]);
+  const [contextMenu, setContextMenu] = useState<{ open: boolean; x: number; y: number }>({ open: false, x: 0, y: 0 });
 
   // Track if we've already auto-fitted the current image
   const [lastAutoFitImage, setLastAutoFitImage] = useState<string | null>(null);
@@ -81,6 +85,22 @@ export const ImageCanvas: React.FC = () => {
     updateSize();
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
+  useEffect(() => {
+    const closeMenu = () => setContextMenu(prev => ({ ...prev, open: false }));
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeMenu();
+      }
+    };
+
+    window.addEventListener('click', closeMenu);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('click', closeMenu);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleMouseDown = (e: any) => {
@@ -154,6 +174,11 @@ export const ImageCanvas: React.FC = () => {
       <div 
         id="canvas-container" 
         className="flex-1 relative overflow-hidden bg-gray-800"
+        onContextMenu={(event) => {
+          event.preventDefault();
+          if (isGenerating) return;
+          setContextMenu({ open: true, x: event.clientX, y: event.clientY });
+        }}
       >
         {!image && !isGenerating && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -308,6 +333,77 @@ export const ImageCanvas: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <input
+        id="canvas-context-reference-upload"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const dataUrl = e.target?.result as string;
+            if (!dataUrl) return;
+            if (selectedTool === 'generate') {
+              addUploadedImage(dataUrl);
+            } else {
+              addEditReferenceImage(dataUrl);
+            }
+          };
+          reader.readAsDataURL(file);
+          event.target.value = '';
+        }}
+      />
+
+      {contextMenu.open && createPortal(
+        <div className="fixed inset-0 z-[1100]" onClick={() => setContextMenu(prev => ({ ...prev, open: false }))}>
+          <div
+            className="absolute w-56 rounded-lg border border-gray-700 bg-gray-900/95 shadow-2xl backdrop-blur-md"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className="w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-gray-800 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={() => {
+                if (!canvasImage) return;
+                if (selectedTool === 'generate') {
+                  addUploadedImage(canvasImage);
+                } else {
+                  addEditReferenceImage(canvasImage);
+                }
+                setContextMenu(prev => ({ ...prev, open: false }));
+              }}
+              disabled={!canvasImage}
+            >
+              <span className="text-purple-300">＋</span>
+              <span>Add canvas image to references</span>
+            </button>
+            <button
+              className="w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-gray-800 flex items-center gap-2"
+              onClick={() => {
+                document.getElementById('canvas-context-reference-upload')?.click();
+                setContextMenu(prev => ({ ...prev, open: false }));
+              }}
+            >
+              <span className="text-cyan-300">📁</span>
+              <span>Add reference from file…</span>
+            </button>
+            <button
+              className="w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-gray-800 flex items-center gap-2 border-t border-gray-800"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('triggerSaveImage'));
+                setContextMenu(prev => ({ ...prev, open: false }));
+              }}
+            >
+              <span className="text-green-300">💾</span>
+              <span>Save image</span>
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
