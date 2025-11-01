@@ -578,50 +578,11 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         {selectedTemplate === template.id ? (
           <div className="flex-shrink-0 flex items-center gap-1">
             {/* View/Preview Icon */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-gray-400 hover:text-purple-400 hover:bg-gray-800"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Toggle preview or show template details
-                alert(`Template: ${template.name}\n\nPositive: ${template.positivePrompt}\n\nNegative: ${template.negativePrompt}`);
-              }}
-              title="View template details"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
+          
 
-            {/* Flatten/Apply Icon */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-gray-400 hover:text-purple-400 hover:bg-gray-800"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleApplyTemplate(template);
-              }}
-              title="Flatten selected template into current prompt"
-            >
-              <Layers className="h-4 w-4" />
-            </Button>
+    
 
-            {/* Clear/Remove Icon */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-gray-400 hover:text-red-400 hover:bg-gray-800"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedTemplate(null);
-                if (onTemplateSelect) {
-                  onTemplateSelect(null);
-                }
-              }}
-              title="Clear template selection"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+         
           </div>
         ) : (
           /* Custom Template Actions - Show on hover when not active */
