@@ -419,27 +419,31 @@ export const PromptComposer: React.FC = () => {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (currentTemplate) {
-                      if (isTemplatePromptActive) {
-                        // Restore original prompt and hide negative prompt
-                        setCurrentPrompt(savedPromptBeforeTemplate);
-                        setIsTemplatePromptActive(false);
-                        setShowNegativePrompt(false);
-                        setNegativePrompt('');
-                      } else {
-                        // Save current prompt and show template prompt
-                        setSavedPromptBeforeTemplate(currentPrompt);
-                        const promptText = currentTemplate.positivePrompt.replace('{prompt}', currentPrompt || '');
-                        setCurrentPrompt(promptText);
-                        setIsTemplatePromptActive(true);
-                        
-                        // Show negative prompt if template has one
-                        if (currentTemplate.negativePrompt && currentTemplate.negativePrompt.trim()) {
-                          setShowNegativePrompt(true);
-                          const negText = currentTemplate.negativePrompt.replace('{prompt}', '');
-                          setNegativePrompt(negText);
-                        }
-                      }
+                    if (!currentTemplate) {
+                      return;
+                    }
+
+                    if (isTemplatePromptActive) {
+                      // Restore original prompt and hide negative prompt
+                      setCurrentPrompt(savedPromptBeforeTemplate);
+                      setIsTemplatePromptActive(false);
+                      setShowNegativePrompt(false);
+                      setNegativePrompt('');
+                      return;
+                    }
+
+                    // Save current prompt and show template prompt exactly as defined
+                    setSavedPromptBeforeTemplate(currentPrompt);
+                    setCurrentPrompt((currentTemplate.positivePrompt || '').trim());
+                    setIsTemplatePromptActive(true);
+
+                    // Show negative prompt if template has one
+                    if (currentTemplate.negativePrompt && currentTemplate.negativePrompt.trim()) {
+                      setShowNegativePrompt(true);
+                      setNegativePrompt(currentTemplate.negativePrompt.trim());
+                    } else {
+                      setShowNegativePrompt(false);
+                      setNegativePrompt('');
                     }
                   }}
                   className={cn(

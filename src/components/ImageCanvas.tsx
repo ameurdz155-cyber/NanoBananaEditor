@@ -358,8 +358,10 @@ export const ImageCanvas: React.FC = () => {
               <span>Add canvas image to references</span>
             </button>
             <button
-              className="w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-gray-800 flex items-center gap-2 border-t border-gray-800"
+              className="w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-gray-800 flex items-center gap-2 border-t border-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={!canvasImage}
               onClick={() => {
+                if (!canvasImage) return;
                 window.dispatchEvent(new CustomEvent('triggerSaveImage'));
                 setContextMenu(prev => ({ ...prev, open: false }));
               }}
