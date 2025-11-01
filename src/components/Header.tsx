@@ -276,7 +276,7 @@ export const Header: React.FC = () => {
                   className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
                   onClick={() => setShowMenu(false)}
                 >
-                  使用教程
+                  {t.menuTutorials}
                 </a>
                 <a
                   href="/community/?utm_source=AI_POD_Lite"
@@ -285,7 +285,7 @@ export const Header: React.FC = () => {
                   className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
                   onClick={() => setShowMenu(false)}
                 >
-                  用户社群
+                  {t.menuCommunity}
                 </a>
                 <a
                   href="/assets/?utm_source=AI_POD_Lite"
@@ -294,7 +294,7 @@ export const Header: React.FC = () => {
                   className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
                   onClick={() => setShowMenu(false)}
                 >
-                  我的资产
+                  {t.menuAssets}
                 </a>
                 <a
                   href="/wallet/?utm_source=AI_POD_Lite"
@@ -303,7 +303,7 @@ export const Header: React.FC = () => {
                   className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors"
                   onClick={() => setShowMenu(false)}
                 >
-                  提现与充值
+                  {t.menuWallet}
                 </a>
               </div>
             </>,

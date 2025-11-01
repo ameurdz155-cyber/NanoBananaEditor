@@ -364,7 +364,7 @@ export const ImageCanvas: React.FC = () => {
               disabled={!canvasImage}
             >
               <span className="text-purple-300">＋</span>
-              <span>Add canvas image to references</span>
+              <span>{t.addCanvasImageToReferences}</span>
             </button>
             <button
               className="w-full px-4 py-3 text-sm text-left text-gray-200 hover:bg-gray-800 flex items-center gap-2 border-t border-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
@@ -376,7 +376,7 @@ export const ImageCanvas: React.FC = () => {
               }}
             >
               <span className="text-green-300">💾</span>
-              <span>Save image</span>
+              <span>{t.saveCanvasImage}</span>
             </button>
           </div>
         </div>,

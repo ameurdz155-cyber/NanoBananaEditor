@@ -6,6 +6,11 @@ export interface Translations {
   appSubtitle: string;
   versionBadge: string;
   pageTitle: string;
+  // Header links
+  menuTutorials: string;
+  menuCommunity: string;
+  menuAssets: string;
+  menuWallet: string;
   
   // Settings
   settings: string;
@@ -151,6 +156,8 @@ export interface Translations {
   uploadImageToStartEditing: string;
   readyToCreate: string;
   creatingYourImage: string;
+  addCanvasImageToReferences: string;
+  saveCanvasImage: string;
   
   // Toolbar
   brush: string;
@@ -287,6 +294,10 @@ export const translations: Record<Language, Translations> = {
     appSubtitle: 'Free Edition',
     versionBadge: 'V2.0 Free Version',
     pageTitle: 'AI POD Lite - AI Image Generator & Editor',
+  menuTutorials: 'Tutorials',
+  menuCommunity: 'Community',
+  menuAssets: 'My Assets',
+  menuWallet: 'Withdraw & Deposit',
     
     // Settings
     settings: 'Settings',
@@ -429,6 +440,8 @@ export const translations: Record<Language, Translations> = {
     uploadImageToStartEditing: 'Upload an image to start editing with AI assistance',
     readyToCreate: 'Ready to create',
     creatingYourImage: 'Creating your image...',
+  addCanvasImageToReferences: 'Add canvas image to references',
+  saveCanvasImage: 'Save image',
     
     // Toolbar
     brush: 'Brush',
@@ -565,7 +578,11 @@ export const translations: Record<Language, Translations> = {
     appName: 'AI POD Lite',
     appSubtitle: '专业版',
     versionBadge: 'V2.0 免费版',
-    pageTitle: 'AI POD Lite - AI图像生成器和编辑器',
+  pageTitle: 'AI POD Lite - AI图像生成器和编辑器',
+  menuTutorials: '使用教程',
+  menuCommunity: '用户社群',
+  menuAssets: '我的资产',
+  menuWallet: '提现与充值',
     
     // Settings
     settings: '设置',
@@ -711,6 +728,8 @@ export const translations: Record<Language, Translations> = {
     uploadImageToStartEditing: '上传图片以开始AI辅助编辑',
     readyToCreate: '准备创作',
     creatingYourImage: '正在创建您的图片...',
+  addCanvasImageToReferences: '将画布图像添加到参考',
+  saveCanvasImage: '保存图像',
     
     // Toolbar
     brush: '画笔',
