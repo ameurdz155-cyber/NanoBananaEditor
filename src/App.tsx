@@ -99,7 +99,7 @@ function AppContent() {
       <Header />
       
       <div className="flex-1 flex overflow-hidden relative">
-        <div className={cn("flex-shrink-0 transition-all duration-300 relative z-10", !showPromptPanel && "w-8")}>
+  <div className={cn("flex-shrink-0 transition-all duration-300 relative z-40", !showPromptPanel && "w-8")}>
           <PromptComposer />
         </div>
         <div className="flex-1 min-w-0 relative z-10">

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus, Eye, Layers, Minus } from 'lucide-react';
+import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus, Eye, Layers, Minus } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
@@ -34,6 +34,8 @@ export const PromptComposer: React.FC = () => {
     canvasImage,
     setCanvasImage,
     showPromptPanel,
+  promptPanelWidth,
+  setPromptPanelWidth,
     setShowPromptPanel,
     clearBrushStrokes,
     apiKeyError,
@@ -84,6 +86,75 @@ export const PromptComposer: React.FC = () => {
   const [showNegativePrompt, setShowNegativePrompt] = useState(false);
   const [negativePrompt, setNegativePrompt] = useState<string>('');
   const [iterations, setIterations] = useState<number>(1);
+
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const MIN_PANEL_WIDTH = 260;
+  const MAX_PANEL_WIDTH = 520;
+
+  const handleResizeStart = useCallback((startClientX: number) => {
+    if (!showPromptPanel) {
+      return;
+    }
+
+    const startWidth = panelRef.current?.getBoundingClientRect().width ?? promptPanelWidth;
+    const clampWidth = (rawWidth: number) => {
+      const clamped = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, rawWidth));
+      return Math.round(clamped);
+    };
+
+    const updateWidth = (clientX: number) => {
+      const delta = clientX - startClientX;
+      const nextWidth = clampWidth(startWidth + delta);
+      setPromptPanelWidth(nextWidth);
+    };
+
+    const handleMouseMove = (event: MouseEvent) => {
+      event.preventDefault();
+      updateWidth(event.clientX);
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length > 0) {
+        event.preventDefault();
+        updateWidth(event.touches[0].clientX);
+      }
+    };
+
+    const stopResize = () => {
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', stopResize);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', stopResize);
+      window.removeEventListener('touchcancel', stopResize);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', stopResize);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', stopResize);
+    window.addEventListener('touchcancel', stopResize);
+    document.body.style.cursor = 'col-resize';
+  }, [MAX_PANEL_WIDTH, MIN_PANEL_WIDTH, promptPanelWidth, setPromptPanelWidth, showPromptPanel]);
+
+  const handleResizeMouseDown = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    handleResizeStart(event.clientX);
+  }, [handleResizeStart]);
+
+  const handleResizeTouchStart = useCallback((event: React.TouchEvent) => {
+    if (event.touches.length === 0) {
+      return;
+    }
+    event.preventDefault();
+    handleResizeStart(event.touches[0].clientX);
+  }, [handleResizeStart]);
+
+  React.useEffect(() => {
+    return () => {
+      document.body.style.cursor = '';
+    };
+  }, []);
 
   // Keep sidebar display in sync with currently active template
   React.useEffect(() => {
@@ -313,26 +384,61 @@ export const PromptComposer: React.FC = () => {
 
   if (!showPromptPanel) {
     return (
-      <div className="w-8 bg-gray-950 border-r border-gray-800 flex flex-col items-center justify-center">
-        <button
+      <div
+        className="relative h-full flex-shrink-0 bg-gray-950 border-r border-gray-800 flex items-center justify-center"
+        style={{ width: '48px' }}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setShowPromptPanel(true)}
-          className="w-6 h-16 bg-gray-800 hover:bg-gray-700 rounded-r-lg border border-l-0 border-gray-700 flex items-center justify-center transition-colors group"
           title={t.showPromptPanel}
+          className="h-9 w-9 rounded-full border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+          aria-label={t.showPromptPanel}
         >
-          <div className="flex flex-col space-y-1">
-            <div className="w-1 h-1 bg-gray-500 group-hover:bg-gray-400 rounded-full"></div>
-            <div className="w-1 h-1 bg-gray-500 group-hover:bg-gray-400 rounded-full"></div>
-            <div className="w-1 h-1 bg-gray-500 group-hover:bg-gray-400 rounded-full"></div>
-          </div>
-        </button>
+          <ChevronRight className="h-5 w-5" />
+        </Button>
       </div>
     );
   }
 
   return (
     <>
-    <div className="w-80 lg:w-72 xl:w-80 h-full bg-gray-950 border-r border-gray-800 p-6 flex flex-col space-y-6 overflow-y-auto sidebar-scrollbar">
-      <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 flex-shrink-0">
+      <div
+      ref={panelRef}
+  className="relative h-full flex-shrink-0 bg-gray-950 border-r border-gray-800 overflow-visible"
+      style={{ width: `${Math.round(promptPanelWidth)}px` }}
+    >
+      <div
+        className="absolute inset-y-0 -right-1 w-3 cursor-col-resize group z-20"
+        onMouseDown={handleResizeMouseDown}
+        onTouchStart={handleResizeTouchStart}
+        aria-label="Resize prompt panel"
+        role="separator"
+        aria-orientation="vertical"
+        title="Drag to resize"
+      >
+        <div className="absolute inset-y-0 right-0 w-1 bg-gray-700/40 group-hover:bg-purple-500/70 transition-all" />
+        <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <div className="w-0.5 h-16 bg-purple-400 rounded-full shadow-lg shadow-purple-500/50" />
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowPromptPanel(false);
+          }}
+          title={t.hidePromptPanel}
+          className="absolute top-6 -right-3 h-8 w-8 rounded-full border border-gray-700 bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors z-[9999] opacity-60 hover:opacity-100 pointer-events-auto shadow-lg"
+          aria-label={t.hidePromptPanel}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="h-full overflow-hidden">
+        <div className="h-full p-6 flex flex-col space-y-6 overflow-y-auto sidebar-scrollbar">
+          <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-200">{t.selectMode}</h3>
@@ -347,15 +453,6 @@ export const PromptComposer: React.FC = () => {
               title={t.promptTips}
             >
               <HelpCircle className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowPromptPanel(false)}
-              className="h-7 w-7 hover:bg-gray-800"
-              title={t.hidePromptPanel}
-            >
-              ×
             </Button>
           </div>
         </div>
@@ -389,7 +486,7 @@ export const PromptComposer: React.FC = () => {
 
       {/* Prompt Template Selector */}
       <div
-        className="rounded-xl border border-gray-800/50 bg-gray-950/80 cursor-pointer hover:border-gray-700 transition-colors"
+        className="rounded-2xl border border-gray-800/60 bg-gray-950/90 cursor-pointer hover:border-gray-700/80 hover:bg-gray-900/80 transition-colors"
         role="button"
         tabIndex={0}
         onClick={() => setShowTemplatesModal(true)}
@@ -400,9 +497,9 @@ export const PromptComposer: React.FC = () => {
           }
         }}
       >
-        <div className="w-full rounded-xl px-3 py-2.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between hover:bg-gray-900/40">
-          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 text-left rounded-lg px-1 py-1">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800/50 bg-gray-900 text-gray-400 overflow-hidden flex-shrink-0">
+        <div className="w-full rounded-[1.1rem] px-3 py-2.5 flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800/60 bg-gray-900 text-gray-400 overflow-hidden flex-shrink-0">
               {lastSelectedTemplate?.image ? (
                 <img 
                   src={lastSelectedTemplate.image} 
@@ -438,7 +535,7 @@ export const PromptComposer: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 self-end sm:self-auto pointer-events-auto">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             {selectedTemplate && (
               <>
                 {/* View Icon */}
@@ -474,10 +571,10 @@ export const PromptComposer: React.FC = () => {
                     }
                   }}
                   className={cn(
-                    "h-7 w-7 flex items-center justify-center rounded-md transition-colors",
+                    "h-7 w-7 flex items-center justify-center rounded-full transition-colors",
                     isTemplatePromptActive 
-                      ? "text-purple-400 bg-purple-500/20 hover:text-purple-300 hover:bg-purple-500/30" 
-                      : "text-gray-400 hover:text-purple-400 hover:bg-gray-800"
+                      ? "text-purple-400 bg-purple-500/10 hover:text-purple-300" 
+                      : "text-gray-400 hover:text-purple-300"
                   )}
                   title={isTemplatePromptActive ? t.hideTemplatePromptButton : t.viewTemplatePrompt}
                 >
@@ -527,7 +624,7 @@ export const PromptComposer: React.FC = () => {
                     setLastSelectedTemplate(null);
                     setShowTemplatesModal(false);
                   }}
-                  className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-purple-400 hover:bg-gray-800 transition-colors"
+                  className="h-7 w-7 flex items-center justify-center rounded-full text-gray-400 hover:text-purple-300 transition-colors"
                   title={t.flattenTemplateButton}
                 >
                   <Layers className="h-4 w-4" />
@@ -549,7 +646,7 @@ export const PromptComposer: React.FC = () => {
                     setLastSelectedTemplate(null);
                     setShowTemplatesModal(false);
                   }}
-                  className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors"
+                  className="h-7 w-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-400 transition-colors"
                   title={t.clearTemplateButton}
                 >
                   <X className="h-4 w-4" />
@@ -559,8 +656,8 @@ export const PromptComposer: React.FC = () => {
             
             {/* Dropdown Toggle */}
             <div className={cn(
-              "flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-500 transition-all",
-              showTemplatesModal && "rotate-180 border-gray-700 bg-gray-900 text-gray-200"
+              "flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition-transform",
+              showTemplatesModal && "rotate-180 text-gray-200"
             )}>
               <ChevronDown className="h-4 w-4" />
             </div>
@@ -1288,6 +1385,8 @@ export const PromptComposer: React.FC = () => {
             <span>P</span>
           </div>
         </div>
+        </div>
+      </div>
       </div>
     </div>
 

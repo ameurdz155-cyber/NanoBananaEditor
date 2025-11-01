@@ -65,6 +65,7 @@ interface AppState {
   
   // Panel visibility
   showPromptPanel: boolean;
+  promptPanelWidth: number;
   
   // UI state
   selectedTool: 'generate' | 'edit' | 'mask';
@@ -111,6 +112,7 @@ interface AppState {
   setShowHistory: (show: boolean) => void;
   
   setShowPromptPanel: (show: boolean) => void;
+  setPromptPanelWidth: (width: number) => void;
   
   setSelectedTool: (tool: 'generate' | 'edit' | 'mask') => void;
   
@@ -193,6 +195,7 @@ export const useAppStore = create<AppState>()(
       showHistory: true,
       
       showPromptPanel: true,
+  promptPanelWidth: 320,
       
       selectedTool: 'generate',
       
@@ -285,6 +288,7 @@ export const useAppStore = create<AppState>()(
       setShowHistory: (show) => set({ showHistory: show }),
       
       setShowPromptPanel: (show) => set({ showPromptPanel: show }),
+  setPromptPanelWidth: (width) => set({ promptPanelWidth: width }),
       
       setSelectedTool: (tool) => set({ selectedTool: tool }),
       
@@ -448,6 +452,7 @@ export const useAppStore = create<AppState>()(
           uploadHistory: state.uploadHistory,
           uploadedImages: state.uploadedImages,
           editReferenceImages: state.editReferenceImages,
+          promptPanelWidth: state.promptPanelWidth,
         }),
         storage: {
           getItem: (name) => {
