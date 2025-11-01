@@ -388,13 +388,20 @@ export const PromptComposer: React.FC = () => {
       </div>
 
       {/* Prompt Template Selector */}
-      <div className="rounded-xl border border-gray-800/50 bg-gray-950/80">
-        <div className="w-full rounded-xl px-3 py-2.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            onClick={() => setShowTemplatesModal(true)}
-            className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 text-left transition-all hover:bg-gray-900/40 rounded-lg px-1 py-1 w-full"
-          >
+      <div
+        className="rounded-xl border border-gray-800/50 bg-gray-950/80 cursor-pointer hover:border-gray-700 transition-colors"
+        role="button"
+        tabIndex={0}
+        onClick={() => setShowTemplatesModal(true)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setShowTemplatesModal(true);
+          }
+        }}
+      >
+        <div className="w-full rounded-xl px-3 py-2.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between hover:bg-gray-900/40">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 text-left rounded-lg px-1 py-1">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800/50 bg-gray-900 text-gray-400 overflow-hidden flex-shrink-0">
               {lastSelectedTemplate?.image ? (
                 <img 
@@ -429,9 +436,9 @@ export const PromptComposer: React.FC = () => {
                 {lastSelectedTemplate ? t.templates : t.clickToManageTemplates}
               </span>
             </div>
-          </button>
+          </div>
           
-          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 self-end sm:self-auto">
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 self-end sm:self-auto pointer-events-auto">
             {selectedTemplate && (
               <>
                 {/* View Icon */}
