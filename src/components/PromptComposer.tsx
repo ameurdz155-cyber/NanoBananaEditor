@@ -1292,7 +1292,7 @@ export const PromptComposer: React.FC = () => {
             <div className="flex items-center justify-center">
               <Wand2 className="h-5 w-5 mr-2" />
               <span className="text-white">
-                {selectedTool === 'generate' ? t.invoke : t.applyEdit}
+                {selectedTool === 'generate' ? t.generate : t.applyEdit}
               </span>
             </div>
           )}
