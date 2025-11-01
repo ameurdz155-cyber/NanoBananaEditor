@@ -326,6 +326,16 @@ export interface Translations {
   classicPortrait: string;
   vertical: string;
   tall: string;
+  referenceImagesTitle: string;
+  referenceModel: string;
+  currentReferences: string;
+  uploadNewImage: string;
+  clickToUploadImage: string;
+  recentWork: string;
+  allImagesAdded: string;
+  noUploadHistoryYet: string;
+  genLabel: string;
+  unlimitedUploads: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -654,6 +664,16 @@ export const translations: Record<Language, Translations> = {
     classicPortrait: 'Classic Portrait',
     vertical: 'Vertical',
     tall: 'Tall',
+    referenceImagesTitle: 'Reference Images',
+    referenceModel: 'Model: {model}',
+    currentReferences: 'Current References',
+    uploadNewImage: 'Upload New Image',
+    clickToUploadImage: 'Click to upload image',
+    recentWork: 'Recent Work',
+    allImagesAdded: 'All images from history are already added to references',
+    noUploadHistoryYet: 'No upload history yet',
+    genLabel: 'Gen',
+    unlimitedUploads: 'Click on any image to add to references • Unlimited uploads',
   },
   zh: {
     // Header
@@ -980,6 +1000,16 @@ export const translations: Record<Language, Translations> = {
     classicPortrait: '经典肖像',
     vertical: '竖直',
     tall: '高',
+    referenceImagesTitle: '参考图像',
+    referenceModel: '模型：{model}',
+    currentReferences: '当前参考图',
+    uploadNewImage: '上传新图片',
+    clickToUploadImage: '点击上传图片',
+    recentWork: '最近作品',
+    allImagesAdded: '历史记录中的图片已全部添加到参考',
+    noUploadHistoryYet: '暂无上传历史',
+    genLabel: '生成',
+  unlimitedUploads: '点击任意图片添加到参考 • 上传数量不限',
   },
 };
 

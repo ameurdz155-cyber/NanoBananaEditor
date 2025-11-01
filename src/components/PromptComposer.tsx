@@ -1488,10 +1488,10 @@ export const PromptComposer: React.FC = () => {
               </div>
               <div>
                 <Dialog.Title className="text-lg font-bold text-gray-100">
-                  Reference Images
+                  {t.referenceImagesTitle}
                 </Dialog.Title>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Model: Gemini 2.5 Flash
+                  {t.referenceModel.replace('{model}', 'Gemini 2.5 Flash')}
                 </p>
               </div>
             </div>
@@ -1510,7 +1510,7 @@ export const PromptComposer: React.FC = () => {
               <div className="mb-6">
                 <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
                   <Check className="h-4 w-4 mr-2 text-green-400" />
-                  Current References ({(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length})
+                  {`${t.currentReferences} (${(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length})`}
                 </h3>
                 <div 
                   className={`flex gap-3 ${
@@ -1548,7 +1548,7 @@ export const PromptComposer: React.FC = () => {
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
                 <Upload className="h-4 w-4 mr-2 text-purple-400" />
-                Upload New Image
+                {t.uploadNewImage}
               </h3>
               <input
                 type="file"
@@ -1562,7 +1562,7 @@ export const PromptComposer: React.FC = () => {
                 className="w-full py-4 flex flex-col items-center justify-center bg-gray-800/50 hover:bg-gray-800 rounded-lg border-2 border-dashed border-gray-700 hover:border-cyan-500 transition-all"
               >
                 <Plus className="h-6 w-6 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-400">Click to upload image</span>
+                <span className="text-sm text-gray-400">{t.clickToUploadImage}</span>
               </button>
             </div>
 
@@ -1571,7 +1571,7 @@ export const PromptComposer: React.FC = () => {
               <div className="mb-6">
                 <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
                   <Sparkles className="h-4 w-4 mr-2 text-blue-400" />
-                  Recent Work
+                  {t.recentWork}
                 </h3>
                 <div className="grid grid-cols-4 gap-3 max-h-80 overflow-y-auto custom-scrollbar">
                   {currentProject.generations
@@ -1597,7 +1597,7 @@ export const PromptComposer: React.FC = () => {
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           <div className="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded font-medium">
-                            Gen
+                            {t.genLabel}
                           </div>
                           <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Plus className="h-4 w-4 text-white drop-shadow-lg" />
@@ -1613,7 +1613,7 @@ export const PromptComposer: React.FC = () => {
             {uploadHistory.length > 0 && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-300 mb-3">
-                  Previous Uploads ({uploadHistory.length})
+                  {`${t.previousUploads} (${uploadHistory.length})`}
                 </h3>
                 <div className="grid grid-cols-4 gap-3">
                   {uploadHistory
@@ -1649,7 +1649,7 @@ export const PromptComposer: React.FC = () => {
                   return !currentImages.includes(img);
                 }).length === 0 && (
                   <p className="text-sm text-gray-500 text-center py-6">
-                    All images from history are already added to references
+                    {t.allImagesAdded}
                   </p>
                 )}
               </div>
@@ -1661,10 +1661,10 @@ export const PromptComposer: React.FC = () => {
                   📁
                 </div>
                 <p className="text-sm text-gray-400">
-                  No upload history yet
+                  {t.noUploadHistoryYet}
                 </p>
                 <p className="text-xs text-gray-600 mt-1">
-                  Upload images to see them here
+                  {t.uploadImageToSeeHistory}
                 </p>
               </div>
             )}
@@ -1673,7 +1673,7 @@ export const PromptComposer: React.FC = () => {
           {/* Footer */}
           <div className="px-6 py-3 bg-gray-800/30 border-t border-gray-700/50">
             <p className="text-xs text-gray-500 text-center">
-              Click on any image to add to references • Unlimited uploads
+              {t.unlimitedUploads}
             </p>
           </div>
         </Dialog.Content>
