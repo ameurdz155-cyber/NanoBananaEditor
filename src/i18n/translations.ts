@@ -209,6 +209,13 @@ export interface Translations {
   createTemplate: string;
   importTemplates: string;
   exportTemplates: string;
+  hideTemplatePrompt: string;
+  showTemplatePrompt: string;
+  flattenTemplate: string;
+  clearTemplateSelection: string;
+  duplicateTemplate: string;
+  editTemplate: string;
+  deleteTemplate: string;
   
   // History Panel tabs
   boards: string;
@@ -285,6 +292,40 @@ export interface Translations {
   deletePrompt: string;
   clickPromptToReuse: string;
   escToClose: string;
+  
+  // Additional UI strings
+  viewTemplatePrompt: string;
+  hideTemplatePromptButton: string;
+  flattenTemplateButton: string;
+  clearTemplateButton: string;
+  addNegativePrompt: string;
+  hideNegativePrompt: string;
+  negativePromptLabel: string;
+  enterNegativePrompt: string;
+  uploadReferenceImages: string;
+  referenceLibrary: string;
+  uploadImageToGuideStyle: string;
+  uploadImageOptionalEdit: string;
+  uploadImageToSeeHistory: string;
+  previousUploads: string;
+  clickToAdd: string;
+  clickToAddToReferences: string;
+  shuffle: string;
+  iterations: string;
+  numberOfImages: string;
+  generateMultipleImages: string;
+  width: string;
+  height: string;
+  aspectRatioLabel: string;
+  square: string;
+  ultrawide: string;
+  widescreen: string;
+  classicPhoto: string;
+  standard: string;
+  portrait: string;
+  classicPortrait: string;
+  vertical: string;
+  tall: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -327,11 +368,11 @@ export const translations: Record<Language, Translations> = {
     enterApiKeyToTest: 'Please enter an API key to test',
     
     // Mode selector
-    selectMode: 'Select Mode',
+  selectMode: 'Creative Mode',
     chooseHowToCreate: 'Choose how you want to create',
     generate: 'Generate',
     edit: 'Edit',
-    select: 'Select',
+  select: 'Creative',
     createFromText: 'Create from text',
     modifyExisting: 'Modify existing',
     clickToSelect: 'Click to select',
@@ -372,7 +413,7 @@ export const translations: Record<Language, Translations> = {
     generateModeTip: '💡 Tip: Use the Seed in Advanced Controls to preserve series work and create consistent variations.',
     editModeTitle: 'Edit Mode',
     editModeDescription: 'Modifies the entire image on the artboard. Describe the changes you want to make to the whole image.',
-    selectModeTitle: 'Select Mode',
+  selectModeTitle: 'Creative Mode',
     selectModeDescription: 'Edits only the areas you brush on the artboard. Paint with your brush to select regions, then describe the changes.',
     selectModeWarning: '⚠️ Only brushed areas will be affected. Unmasked areas remain unchanged.',
     
@@ -496,6 +537,13 @@ export const translations: Record<Language, Translations> = {
     createTemplate: 'Create Template',
     importTemplates: 'Import Templates',
     exportTemplates: 'Export Templates',
+    hideTemplatePrompt: 'Hide template prompt',
+    showTemplatePrompt: 'Show template prompt',
+    flattenTemplate: 'Flatten selected template into current prompt',
+    clearTemplateSelection: 'Clear template selection',
+    duplicateTemplate: 'Duplicate template',
+    editTemplate: 'Edit template',
+    deleteTemplate: 'Delete template',
     
     // History Panel tabs
     boards: 'Gallery',
@@ -572,6 +620,40 @@ export const translations: Record<Language, Translations> = {
     deletePrompt: 'Delete prompt',
     clickPromptToReuse: 'Click a prompt to reuse it',
     escToClose: 'to close',
+    
+    // Additional UI strings
+    viewTemplatePrompt: 'View template prompt',
+    hideTemplatePromptButton: 'Hide template prompt',
+    flattenTemplateButton: 'Flatten selected template into current prompt',
+    clearTemplateButton: 'Clear template selection',
+    addNegativePrompt: 'Add Negative Prompt',
+    hideNegativePrompt: 'Hide Negative Prompt',
+    negativePromptLabel: 'Negative Prompt',
+    enterNegativePrompt: 'Enter negative prompt (things to avoid)...',
+    uploadReferenceImages: 'Upload reference images to guide generation style',
+    referenceLibrary: 'Reference Library',
+    uploadImageToGuideStyle: 'Upload reference images to guide generation style',
+    uploadImageOptionalEdit: 'Optional: Add style reference images to guide the edit',
+    uploadImageToSeeHistory: 'Upload images to see them here',
+    previousUploads: 'Previous Uploads',
+    clickToAdd: 'Click to add',
+    clickToAddToReferences: 'Click to add to references',
+    shuffle: 'Shuffle',
+    iterations: 'Iterations',
+    numberOfImages: '(Number of images)',
+    generateMultipleImages: 'Generate multiple images at once (1-10)',
+    width: 'Width',
+    height: 'Height',
+    aspectRatioLabel: 'Aspect Ratio',
+    square: 'Square',
+    ultrawide: 'Ultrawide',
+    widescreen: 'Widescreen',
+    classicPhoto: 'Classic Photo',
+    standard: 'Standard',
+    portrait: 'Portrait',
+    classicPortrait: 'Classic Portrait',
+    vertical: 'Vertical',
+    tall: 'Tall',
   },
   zh: {
     // Header
@@ -612,11 +694,11 @@ export const translations: Record<Language, Translations> = {
     enterApiKeyToTest: '请输入API密钥进行测试',
     
     // Mode selector
-    selectMode: '选择模式',
+  selectMode: '创作模式',
     chooseHowToCreate: '选择您想要的创作方式',
     generate: '生成',
     edit: '编辑',
-    select: '选择',
+    select: '创作',
     createFromText: '从文本创建',
     modifyExisting: '修改现有',
     clickToSelect: '点击选择',
@@ -657,7 +739,7 @@ export const translations: Record<Language, Translations> = {
     generateModeTip: '💡 提示：使用高级控制中的种子来保留系列作品并创建一致的变体。',
     editModeTitle: '编辑模式',
     editModeDescription: '修改画板上的整个图像。描述您想对整个图像做的更改。',
-    selectModeTitle: '选择模式',
+    selectModeTitle: '创作模式',
     selectModeDescription: '仅编辑您在画板上刷涂的区域。用画笔绘制选择区域，然后描述更改。',
     selectModeWarning: '⚠️ 只有刷涂的区域会受到影响。未遮罩区域保持不变。',
     
@@ -781,6 +863,13 @@ export const translations: Record<Language, Translations> = {
     createTemplate: '创建模板',
     importTemplates: '导入模板',
     exportTemplates: '导出模板',
+    hideTemplatePrompt: '隐藏模板提示词',
+    showTemplatePrompt: '显示模板提示词',
+    flattenTemplate: '将选定的模板合并到当前提示词',
+    clearTemplateSelection: '清除模板选择',
+    duplicateTemplate: '复制模板',
+    editTemplate: '编辑模板',
+    deleteTemplate: '删除模板',
     
     // History Panel tabs
     boards: '图库',
@@ -857,6 +946,40 @@ export const translations: Record<Language, Translations> = {
     deletePrompt: '删除提示词',
     clickPromptToReuse: '点击提示词以重复使用',
     escToClose: '关闭',
+    
+    // Additional UI strings
+    viewTemplatePrompt: '查看模板提示词',
+    hideTemplatePromptButton: '隐藏模板提示词',
+    flattenTemplateButton: '将选定的模板合并到当前提示词',
+    clearTemplateButton: '清除模板选择',
+    addNegativePrompt: '添加负面提示词',
+    hideNegativePrompt: '隐藏负面提示词',
+    negativePromptLabel: '负面提示词',
+    enterNegativePrompt: '输入负面提示词（要避免的事物）...',
+    uploadReferenceImages: '上传参考图片来引导生成风格',
+    referenceLibrary: '参考库',
+    uploadImageToGuideStyle: '上传参考图片来引导生成风格',
+    uploadImageOptionalEdit: '可选：添加风格参考图片来引导编辑',
+    uploadImageToSeeHistory: '上传图片以在此处查看',
+    previousUploads: '之前的上传',
+    clickToAdd: '点击添加',
+    clickToAddToReferences: '点击添加到参考',
+    shuffle: '随机',
+    iterations: '迭代次数',
+    numberOfImages: '（图片数量）',
+    generateMultipleImages: '一次生成多张图片（1-10）',
+    width: '宽度',
+    height: '高度',
+    aspectRatioLabel: '宽高比',
+    square: '正方形',
+    ultrawide: '超宽',
+    widescreen: '宽屏',
+    classicPhoto: '经典照片',
+    standard: '标准',
+    portrait: '肖像',
+    classicPortrait: '经典肖像',
+    vertical: '竖直',
+    tall: '高',
   },
 };
 

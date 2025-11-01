@@ -472,7 +472,7 @@ export const PromptComposer: React.FC = () => {
                       ? "text-purple-400 bg-purple-500/20 hover:text-purple-300 hover:bg-purple-500/30" 
                       : "text-gray-400 hover:text-purple-400 hover:bg-gray-800"
                   )}
-                  title={isTemplatePromptActive ? "Hide template prompt" : "View template prompt"}
+                  title={isTemplatePromptActive ? t.hideTemplatePromptButton : t.viewTemplatePrompt}
                 >
                   <Eye className="h-4 w-4" />
                 </button>
@@ -521,7 +521,7 @@ export const PromptComposer: React.FC = () => {
                     setShowTemplatesModal(false);
                   }}
                   className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-purple-400 hover:bg-gray-800 transition-colors"
-                  title="Flatten selected template into current prompt"
+                  title={t.flattenTemplateButton}
                 >
                   <Layers className="h-4 w-4" />
                 </button>
@@ -543,7 +543,7 @@ export const PromptComposer: React.FC = () => {
                     setShowTemplatesModal(false);
                   }}
                   className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors"
-                  title="Clear template selection"
+                  title={t.clearTemplateButton}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -652,7 +652,7 @@ export const PromptComposer: React.FC = () => {
                 ? "bg-red-500/20 border-red-500 text-red-400" 
                 : "bg-gray-900/50 border-gray-700 text-gray-400 hover:border-gray-600"
             )}
-            title="Prompt History"
+            title={t.promptHistory}
             disabled={promptHistory.length === 0}
           >
             <History className="h-4 w-4" />
@@ -679,13 +679,13 @@ export const PromptComposer: React.FC = () => {
                 ? "bg-orange-500/20 border-orange-500 text-orange-400"
                 : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600 hover:bg-gray-700/50"
             )}
-            title={showNegativePrompt ? "Hide Negative Prompt" : "Add Negative Prompt"}
-            aria-label={showNegativePrompt ? "Hide Negative Prompt" : "Add Negative Prompt"}
+            title={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
+            aria-label={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
           >
             {showNegativePrompt ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
           </button>
           {showNegativePrompt && (
-            <span className="text-xs text-gray-400">Negative Prompt</span>
+            <span className="text-xs text-gray-400">{t.negativePromptLabel}</span>
           )}
         </div>
 
@@ -695,7 +695,7 @@ export const PromptComposer: React.FC = () => {
             <Textarea
               value={negativePrompt}
               onChange={(e) => setNegativePrompt(e.target.value)}
-              placeholder="Enter negative prompt (things to avoid)..."
+              placeholder={t.enterNegativePrompt}
               className="min-h-[80px] resize-none bg-gray-800 border-gray-700 focus:border-orange-500 transition-colors"
             />
           </div>
@@ -869,7 +869,7 @@ export const PromptComposer: React.FC = () => {
             className="text-xs text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 transition-colors"
           >
             <History className="h-3 w-3" />
-            Reference Library
+            {t.referenceLibrary}
           </button>
         </div>
         
@@ -880,12 +880,12 @@ export const PromptComposer: React.FC = () => {
         )}
         {selectedTool === 'edit' && (
           <p className="text-xs text-gray-500 mb-3">
-            {canvasImage ? 'Optional: Add style reference images to guide the edit' : 'Upload an image to edit or add style references'}
+            {canvasImage ? t.uploadImageOptionalEdit : t.uploadImageToEdit}
           </p>
         )}
         {selectedTool === 'generate' && (
           <p className="text-xs text-gray-500 mb-3">
-            Upload reference images to guide generation style
+            {t.uploadImageToGuideStyle}
           </p>
         )}
 
@@ -899,7 +899,7 @@ export const PromptComposer: React.FC = () => {
             <div className="w-12 h-12 mb-3 rounded-xl bg-gray-800 flex items-center justify-center text-2xl">
               📁
             </div>
-            <div className="text-xs text-gray-500">Upload Images</div>
+            <div className="text-xs text-gray-500">{t.uploadImages}</div>
           </button>
         )}
 
@@ -908,10 +908,10 @@ export const PromptComposer: React.FC = () => {
           <div className="mt-4 pt-4 border-t border-gray-700/40">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-semibold text-gray-400 tracking-wide">
-                Previous Uploads
+                {t.previousUploads}
               </label>
               <span className="text-xs text-gray-600">
-                Click to add
+                {t.clickToAdd}
               </span>
             </div>
             <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
@@ -933,7 +933,7 @@ export const PromptComposer: React.FC = () => {
                       }
                     }}
                     className="relative w-14 h-14 rounded-lg border-2 border-gray-700 hover:border-cyan-500 overflow-hidden bg-gray-800 flex-shrink-0 transition-all"
-                    title="Click to add to references"
+                    title={t.clickToAddToReferences}
                   >
                     <img
                       src={image}
@@ -995,9 +995,9 @@ export const PromptComposer: React.FC = () => {
       {selectedTool === 'generate' && (
         <div className="flex-shrink-0">
           <label className="text-xs font-semibold text-gray-300 mb-2 block flex items-center">
-            <span>Iterations</span>
+            <span>{t.iterations}</span>
             <span className="ml-2 text-gray-500 font-normal" title="The number of images to generate. If Dynamic Prompts is enabled, each prompt will be generated this many times.">
-              (Number of images)
+              {t.numberOfImages}
             </span>
           </label>
           <input
@@ -1010,7 +1010,7 @@ export const PromptComposer: React.FC = () => {
             placeholder="1"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Generate multiple images at once (1-10)
+            {t.generateMultipleImages}
           </p>
         </div>
       )}
@@ -1052,28 +1052,28 @@ export const PromptComposer: React.FC = () => {
         <div className="mt-3 p-4 bg-gradient-to-br from-gray-900/40 to-gray-800/40 rounded-xl border border-gray-700/40 space-y-4 backdrop-blur-sm">
           {/* Aspect Ratio */}
           <div>
-            <label className="text-xs font-semibold text-gray-200 mb-2 block tracking-wide">Aspect Ratio</label>
+            <label className="text-xs font-semibold text-gray-200 mb-2 block tracking-wide">{t.aspectRatioLabel}</label>
             <select
               value={aspectRatio}
               onChange={(e) => handleAspectRatioChange(e.target.value)}
               className="w-full h-10 px-3 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-100 font-medium cursor-pointer hover:border-gray-600/80 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
             >
-              <option value="1:1">1:1 (Square)</option>
-              <option value="21:9">21:9 (Ultrawide)</option>
-              <option value="16:9">16:9 (Widescreen)</option>
-              <option value="3:2">3:2 (Classic Photo)</option>
-              <option value="4:3">4:3 (Standard)</option>
-              <option value="3:4">3:4 (Portrait)</option>
-              <option value="2:3">2:3 (Classic Portrait)</option>
-              <option value="9:16">9:16 (Vertical)</option>
-              <option value="9:21">9:21 (Tall)</option>
+              <option value="1:1">1:1 ({t.square})</option>
+              <option value="21:9">21:9 ({t.ultrawide})</option>
+              <option value="16:9">16:9 ({t.widescreen})</option>
+              <option value="3:2">3:2 ({t.classicPhoto})</option>
+              <option value="4:3">4:3 ({t.standard})</option>
+              <option value="3:4">3:4 ({t.portrait})</option>
+              <option value="2:3">2:3 ({t.classicPortrait})</option>
+              <option value="9:16">9:16 ({t.vertical})</option>
+              <option value="9:21">9:21 ({t.tall})</option>
             </select>
           </div>
 
           {/* Width Control */}
           <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/20">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-gray-200 tracking-wide">Width</label>
+              <label className="text-xs font-semibold text-gray-200 tracking-wide">{t.width}</label>
               <input
                 type="number"
                 value={imageWidth}
@@ -1100,7 +1100,7 @@ export const PromptComposer: React.FC = () => {
           {/* Height Control */}
           <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/20">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-gray-200 tracking-wide">Height</label>
+              <label className="text-xs font-semibold text-gray-200 tracking-wide">{t.height}</label>
               <input
                 type="number"
                 value={imageHeight}
@@ -1153,7 +1153,7 @@ export const PromptComposer: React.FC = () => {
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 256 256">
                     <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm40-68a28,28,0,1,1-28-28A28,28,0,0,1,168,148Z"/>
                   </svg>
-                  <span>{t.random || 'Random'}</span>
+                  <span>{t.random}</span>
                 </button>
                 <button
                   type="button"
@@ -1167,7 +1167,7 @@ export const PromptComposer: React.FC = () => {
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 256 256">
                     <path d="M240.49,175.51a12,12,0,0,1,0,17l-24,24a12,12,0,0,1-17-17L203,196h-2.09a76.17,76.17,0,0,1-61.85-31.83L97.38,105.78A52.1,52.1,0,0,0,55.06,84H32a12,12,0,0,1,0-24H55.06a76.17,76.17,0,0,1,61.85,31.83l41.71,58.39A52.1,52.1,0,0,0,200.94,172H203l-3.52-3.51a12,12,0,0,1,17-17Zm-95.62-72.62a12,12,0,0,0,16.93-1.13A52,52,0,0,1,200.94,84H203l-3.52,3.51a12,12,0,0,0,17,17l24-24a12,12,0,0,0,0-17l-24-24a12,12,0,0,0-17,17L203,60h-2.09a76,76,0,0,0-57.2,26A12,12,0,0,0,144.87,102.89Zm-33.74,50.22a12,12,0,0,0-16.93,1.13A52,52,0,0,1,55.06,172H32a12,12,0,0,0,0,24H55.06a76,76,0,0,0,57.2-26A12,12,0,0,0,111.13,153.11Z"/>
                   </svg>
-                  <span>Shuffle</span>
+                  <span>{t.shuffle}</span>
                 </button>
               </div>
             </div>

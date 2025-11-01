@@ -576,13 +576,53 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
         {/* Template Action Icons - Show when active */}
         {selectedTemplate === template.id ? (
-          <div className="flex-shrink-0 flex items-center gap-1">
-            {/* View/Preview Icon */}
-          
-
-    
-
-         
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 self-end sm:self-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 flex items-center justify-center rounded-md transition-colors text-purple-400 bg-purple-500/20 hover:text-purple-300 hover:bg-purple-500/30"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Toggle template visibility or preview
+                setSelectedTemplate(null);
+                if (onTemplateSelect) {
+                  onTemplateSelect(null);
+                }
+              }}
+              title={t.hideTemplatePrompt}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-purple-400 hover:bg-gray-800 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleApplyTemplate(template);
+              }}
+              title={t.flattenTemplate}
+            >
+              <Layers className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedTemplate(null);
+                if (onTemplateSelect) {
+                  onTemplateSelect(null);
+                }
+              }}
+              title={t.clearTemplateSelection}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <div className="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-500 transition-all">
+              <ChevronDown className="h-4 w-4" />
+            </div>
           </div>
         ) : (
           /* Custom Template Actions - Show on hover when not active */
@@ -595,7 +635,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 e.stopPropagation();
                 openDuplicateModal(template);
               }}
-              title="Duplicate template"
+              title={t.duplicateTemplate}
             >
               <Copy className="h-3 w-3" />
             </Button>
@@ -609,7 +649,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     e.stopPropagation();
                     openEditModal(template);
                   }}
-                  title="Edit template"
+                  title={t.editTemplate}
                 >
                   <Edit2 className="h-3 w-3" />
                 </Button>
@@ -621,7 +661,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     e.stopPropagation();
                     handleDeleteTemplate(template.id);
                   }}
-                  title="Delete template"
+                  title={t.deleteTemplate}
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
