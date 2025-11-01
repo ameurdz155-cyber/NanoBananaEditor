@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/Button';
-import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser } from 'lucide-react';
+import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu } from 'lucide-react';
 import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
 import { SaveSuccessModal } from './SaveSuccessModal';
@@ -10,6 +10,7 @@ import { cn } from '../utils/cn';
 import { saveImageToGallery } from '../utils/fileSaver';
 import { saveImageToGalleryDB } from '../utils/galleryStorage';
 import logoHeader from '../assets/AI-POD-lite-logo.png';
+import { createPortal } from 'react-dom';
 
 export const Header: React.FC = () => {
   const { 
@@ -37,6 +38,30 @@ export const Header: React.FC = () => {
   const [savedGalleryName, setSavedGalleryName] = useState('');
   const [savedImagePath, setSavedImagePath] = useState<string | undefined>();
   const [savedImageData, setSavedImageData] = useState<string | undefined>();
+  const [showMenu, setShowMenu] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const updateMenuPosition = () => {
+    if (!menuButtonRef.current) return;
+    const rect = menuButtonRef.current.getBoundingClientRect();
+    const width = 192; // 48 * 4 tailwind width in px
+    setMenuPosition({
+      top: rect.bottom + 8,
+      left: Math.max(16, rect.right - width),
+    });
+  };
+
+  useEffect(() => {
+    if (!showMenu) return;
+    updateMenuPosition();
+    const handleResize = () => updateMenuPosition();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleResize, true);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleResize, true);
+    };
+  }, [showMenu]);
   
   // Listen for custom event to open settings
   useEffect(() => {
@@ -182,8 +207,83 @@ export const Header: React.FC = () => {
           )}
         </div>
 
-        {/* Right - Settings and Help */}
+        {/* Right - Menu, Settings and Help */}
         <div className="flex items-center space-x-2">
+          {/* Menu Dropdown */}
+          <div>
+            <Button 
+              ref={menuButtonRef}
+              className="glass glass-hover" 
+              variant="ghost" 
+              size="icon"
+              onClick={() => {
+                if (!showMenu) {
+                  updateMenuPosition();
+                }
+                setShowMenu(prev => !prev);
+              }}
+              title="Menu"
+            >
+              <Menu className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+            </Button>
+          </div>
+
+          {showMenu && createPortal(
+            <>
+              <div 
+                className="fixed inset-0" 
+                style={{ zIndex: 99998 }}
+                onClick={() => setShowMenu(false)}
+              />
+              <div 
+                className="fixed w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+                style={{
+                  zIndex: 99999,
+                  top: menuPosition.top,
+                  left: menuPosition.left,
+                }}
+              >
+                <a
+                  href="/tutorials/?utm_source=AI_POD_Lite"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
+                  onClick={() => setShowMenu(false)}
+                >
+                  使用教程
+                </a>
+                <a
+                  href="/community/?utm_source=AI_POD_Lite"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
+                  onClick={() => setShowMenu(false)}
+                >
+                  用户社群
+                </a>
+                <a
+                  href="/assets/?utm_source=AI_POD_Lite"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
+                  onClick={() => setShowMenu(false)}
+                >
+                  我的资产
+                </a>
+                <a
+                  href="/wallet/?utm_source=AI_POD_Lite"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors"
+                  onClick={() => setShowMenu(false)}
+                >
+                  提现与充值
+                </a>
+              </div>
+            </>,
+            document.body
+          )}
+          
           <Button 
             className="glass glass-hover" 
             variant="ghost" 

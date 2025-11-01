@@ -11,11 +11,9 @@ import {
   Copy, 
   Trash2, 
   Edit2, 
-  Upload,
-  Download,
-  EyeOff,
   Eye,
-  X
+  X,
+  Layers
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { getTranslation } from '../i18n/translations';
@@ -333,11 +331,12 @@ export const getDefaultTemplates = (language: string): PromptTemplate[] => {
 export const DEFAULT_TEMPLATES: PromptTemplate[] = getDefaultTemplates('en');
 
 interface TemplatesViewProps {
-  onTemplateSelect?: (templateInfo: { name: string; image?: string; emoji?: string }) => void;
+  onTemplateSelect?: (templateInfo: { name: string; image?: string; emoji?: string } | null) => void;
 }
 
 export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }) => {
   const { 
+    currentPrompt,
     setCurrentPrompt, 
     selectedTemplate, 
     setSelectedTemplate, 
@@ -357,7 +356,6 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     my: true,
     default: true,
   });
-  const [showPreviews, setShowPreviews] = React.useState(true);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [editingTemplate, setEditingTemplate] = React.useState<PromptTemplate | null>(null);
   
@@ -432,27 +430,39 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const handleApplyTemplate = (template: PromptTemplate) => {
-    // Insert template text directly into the prompt input
-    // Include both positive and negative prompts in a formatted way
-    let promptText = template.positivePrompt;
-    
-    // If there's a negative prompt, append it in a clear format
+    const basePrompt = currentPrompt?.trim() || '';
+
+    // Replace placeholders when present; otherwise append template text after existing prompt
+    const positiveWithPrompt = template.positivePrompt.includes('{prompt}')
+      ? template.positivePrompt.replace('{prompt}', basePrompt)
+      : [basePrompt, template.positivePrompt].filter(Boolean).join(basePrompt ? '\n\n' : '');
+
+    const cleanedPositive = positiveWithPrompt
+      .replace('{photo}', '')
+      .trim();
+
+    let finalPrompt = cleanedPositive;
+
     if (template.negativePrompt && template.negativePrompt.trim()) {
-      promptText = `${template.positivePrompt}\n\nNegative prompt: ${template.negativePrompt}`;
+      const negativeBase = template.negativePrompt.includes('{prompt}')
+        ? template.negativePrompt.replace('{prompt}', basePrompt)
+        : template.negativePrompt;
+
+      const cleanedNegative = negativeBase.replace('{photo}', '').trim();
+      if (cleanedNegative) {
+        finalPrompt = [cleanedPositive, `Negative prompt: ${cleanedNegative}`]
+          .filter(Boolean)
+          .join('\n\n');
+      }
     }
-    
-    setCurrentPrompt(promptText);
-    
-    // Don't save the template as "selected" - just insert the text
+
+    setCurrentPrompt(finalPrompt);
+
+    // Clear active template state after flattening
     setSelectedTemplate(null);
-    
-    // Close the templates panel and pass the template info
+
     if (onTemplateSelect) {
-      onTemplateSelect({
-        name: template.name,
-        image: template.image,
-        emoji: template.emoji
-      });
+      onTemplateSelect(null);
     }
   };
 
@@ -494,47 +504,6 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     }
   };
 
-  const handleImportTemplates = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,.csv';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const content = event.target?.result as string;
-          const imported = JSON.parse(content);
-          if (Array.isArray(imported)) {
-            imported.forEach((template: PromptTemplate) => addCustomTemplate(template));
-          }
-        } catch (error) {
-          alert('Failed to import templates. Please check the file format.');
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  };
-
-  const handleExportTemplates = () => {
-    if (customTemplates.length === 0) {
-      alert('No templates to export');
-      return;
-    }
-
-    const dataStr = JSON.stringify(customTemplates, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `prompt-templates-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   const filteredMyTemplates = customTemplates.filter(t =>
     t.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -546,7 +515,6 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const renderTemplateCard = (template: PromptTemplate, isCustom: boolean) => (
     <div
       key={template.id}
-      onClick={() => handleApplyTemplate(template)}
       className={cn(
         "group relative bg-gray-900 rounded-lg border transition-all overflow-visible text-left w-full cursor-pointer",
         selectedTemplate === template.id 
@@ -554,7 +522,21 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           : "border-gray-800 hover:border-gray-700"
       )}
     >
-      <div className="flex items-center gap-3 p-3">
+      {/* Main card content */}
+      <div 
+        className="flex items-center gap-3 p-3"
+        onClick={() => {
+          setSelectedTemplate(template.id);
+          // Update parent component with template info
+          if (onTemplateSelect) {
+            onTemplateSelect({
+              name: template.name,
+              image: template.image,
+              emoji: template.emoji
+            });
+          }
+        }}
+      >
         {/* Template Thumbnail */}
         <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border border-gray-800 overflow-hidden">
           {template.image ? (
@@ -592,50 +574,103 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-gray-500 hover:text-gray-200 hover:bg-gray-800"
-            onClick={(e) => {
-              e.stopPropagation();
-              openDuplicateModal(template);
-            }}
-            title="Duplicate template"
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
-          {isCustom && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-gray-500 hover:text-gray-200 hover:bg-gray-800"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openEditModal(template);
-                }}
-                title="Edit template"
-              >
-                <Edit2 className="h-3 w-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteTemplate(template.id);
-                }}
-                title="Delete template"
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </>
-          )}
-        </div>
+        {/* Template Action Icons - Show when active */}
+        {selectedTemplate === template.id ? (
+          <div className="flex-shrink-0 flex items-center gap-1">
+            {/* View/Preview Icon */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-gray-400 hover:text-purple-400 hover:bg-gray-800"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Toggle preview or show template details
+                alert(`Template: ${template.name}\n\nPositive: ${template.positivePrompt}\n\nNegative: ${template.negativePrompt}`);
+              }}
+              title="View template details"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+
+            {/* Flatten/Apply Icon */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-gray-400 hover:text-purple-400 hover:bg-gray-800"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleApplyTemplate(template);
+              }}
+              title="Flatten selected template into current prompt"
+            >
+              <Layers className="h-4 w-4" />
+            </Button>
+
+            {/* Clear/Remove Icon */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-gray-400 hover:text-red-400 hover:bg-gray-800"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedTemplate(null);
+                if (onTemplateSelect) {
+                  onTemplateSelect(null);
+                }
+              }}
+              title="Clear template selection"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          /* Custom Template Actions - Show on hover when not active */
+          <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-gray-500 hover:text-gray-200 hover:bg-gray-800"
+              onClick={(e) => {
+                e.stopPropagation();
+                openDuplicateModal(template);
+              }}
+              title="Duplicate template"
+            >
+              <Copy className="h-3 w-3" />
+            </Button>
+            {isCustom && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-gray-500 hover:text-gray-200 hover:bg-gray-800"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEditModal(template);
+                  }}
+                  title="Edit template"
+                >
+                  <Edit2 className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteTemplate(template.id);
+                  }}
+                  title="Delete template"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </>
+            )}
+          </div>
+        )}
       </div>
+
+
       
       {/* Image Preview on Hover */}
       {template.image && (

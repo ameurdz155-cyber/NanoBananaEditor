@@ -44,6 +44,7 @@ interface AppState {
   // Upload state
   uploadedImages: string[];
   editReferenceImages: string[];
+  uploadHistory: string[]; // Track all uploaded images for reuse
   
   // Brush strokes for painting masks
   brushStrokes: BrushStroke[];
@@ -167,6 +168,7 @@ export const useAppStore = create<AppState>()(
       
       uploadedImages: [],
       editReferenceImages: [],
+      uploadHistory: [], // Initialize upload history
       
       brushStrokes: [],
       brushSize: 20,
@@ -205,7 +207,11 @@ export const useAppStore = create<AppState>()(
       setCanvasPan: (pan) => set({ canvasPan: pan }),
       
       addUploadedImage: (url) => set((state) => ({ 
-        uploadedImages: [...state.uploadedImages, url] 
+        uploadedImages: [...state.uploadedImages, url],
+        // Add to history if not already there (keep unique, recent first)
+        uploadHistory: state.uploadHistory.includes(url) 
+          ? state.uploadHistory 
+          : [url, ...state.uploadHistory].slice(0, 50) // Keep last 50
       })),
       removeUploadedImage: (index) => set((state) => ({ 
         uploadedImages: state.uploadedImages.filter((_, i) => i !== index) 
@@ -213,7 +219,11 @@ export const useAppStore = create<AppState>()(
       clearUploadedImages: () => set({ uploadedImages: [] }),
       
       addEditReferenceImage: (url) => set((state) => ({ 
-        editReferenceImages: [...state.editReferenceImages, url] 
+        editReferenceImages: [...state.editReferenceImages, url],
+        // Add to history if not already there (keep unique, recent first)
+        uploadHistory: state.uploadHistory.includes(url) 
+          ? state.uploadHistory 
+          : [url, ...state.uploadHistory].slice(0, 20) // Keep last 20
       })),
       removeEditReferenceImage: (index) => set((state) => ({ 
         editReferenceImages: state.editReferenceImages.filter((_, i) => i !== index) 

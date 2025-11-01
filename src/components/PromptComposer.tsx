@@ -3,11 +3,11 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus } from 'lucide-react';
+import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus, Eye, Layers, Minus } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
-import { TemplatesView } from './TemplatesView';
+import { TemplatesView, getDefaultTemplates } from './TemplatesView';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
 
@@ -30,6 +30,7 @@ export const PromptComposer: React.FC = () => {
     addEditReferenceImage,
     removeEditReferenceImage,
     clearEditReferenceImages,
+    uploadHistory,
     canvasImage,
     setCanvasImage,
     showPromptPanel,
@@ -41,12 +42,26 @@ export const PromptComposer: React.FC = () => {
     promptHistory,
     addToPromptHistory,
     deletePromptFromHistory,
+    currentProject,
+    selectedTemplate,
+    setSelectedTemplate,
+    customTemplates,
   } = useAppStore();
 
   const t = getTranslation(language);
 
   const { generate, cancelGeneration } = useImageGeneration();
   const { edit, cancelEdit } = useImageEditing();
+
+  // Get all templates (default + custom)
+  const allTemplates = React.useMemo(() => {
+    return [...getDefaultTemplates(language), ...customTemplates];
+  }, [language, customTemplates]);
+
+  // Find the currently selected template
+  const currentTemplate = React.useMemo(() => {
+    return selectedTemplate ? allTemplates.find(t => t.id === selectedTemplate) : null;
+  }, [selectedTemplate, allTemplates]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showHintsModal, setShowHintsModal] = useState(false);
@@ -61,6 +76,32 @@ export const PromptComposer: React.FC = () => {
   const [imageWidth, setImageWidth] = useState<number>(1024);
   const [imageHeight, setImageHeight] = useState<number>(1024);
   const [randomSeed, setRandomSeed] = useState<boolean>(true);
+  const [showReferenceModal, setShowReferenceModal] = useState(false);
+  const [isTemplatePromptActive, setIsTemplatePromptActive] = useState(false);
+  const [savedPromptBeforeTemplate, setSavedPromptBeforeTemplate] = useState<string>('');
+  const [showNegativePrompt, setShowNegativePrompt] = useState(false);
+  const [negativePrompt, setNegativePrompt] = useState<string>('');
+  const [iterations, setIterations] = useState<number>(1);
+
+  // Keep sidebar display in sync with currently active template
+  React.useEffect(() => {
+    if (currentTemplate) {
+      setLastSelectedTemplate((prev) => {
+        if (
+          prev?.name === currentTemplate.name &&
+          prev?.image === currentTemplate.image &&
+          prev?.emoji === currentTemplate.emoji
+        ) {
+          return prev;
+        }
+        return {
+          name: currentTemplate.name,
+          image: currentTemplate.image,
+          emoji: currentTemplate.emoji,
+        };
+      });
+    }
+  }, [currentTemplate]);
 
   // Update width/height when aspect ratio changes
   const handleAspectRatioChange = (newRatio: string) => {
@@ -175,16 +216,24 @@ export const PromptComposer: React.FC = () => {
         .filter(img => img.includes('base64,'))
         .map(img => img.split('base64,')[1]);
       
-      generate({
-        prompt: currentPrompt,
-        negativePrompt: undefined,
-        referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
-        temperature,
-        seed: seed || undefined,
-        aspectRatio,
-        width: imageWidth,
-        height: imageHeight
-      });
+      // Generate multiple images based on iterations
+      for (let i = 0; i < iterations; i++) {
+        generate({
+          prompt: currentPrompt,
+          negativePrompt: negativePrompt.trim() || undefined,
+          referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+          temperature,
+          seed: seed || undefined,
+          aspectRatio,
+          width: imageWidth,
+          height: imageHeight
+        });
+        
+        // Add a small delay between iterations to avoid overwhelming the API
+        if (i < iterations - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
     } else if (selectedTool === 'edit' || selectedTool === 'mask') {
       edit(currentPrompt);
     }
@@ -200,15 +249,11 @@ export const PromptComposer: React.FC = () => {
           const dataUrl = e.target?.result as string;
           
           if (selectedTool === 'generate') {
-            // Add to reference images (max 2)
-            if (uploadedImages.length < 2) {
-              addUploadedImage(dataUrl);
-            }
+            // Add to reference images (unlimited)
+            addUploadedImage(dataUrl);
           } else if (selectedTool === 'edit') {
-            // For edit mode, add to separate edit reference images (max 2)
-            if (editReferenceImages.length < 2) {
-              addEditReferenceImage(dataUrl);
-            }
+            // For edit mode, add to separate edit reference images (unlimited)
+            addEditReferenceImage(dataUrl);
             // Set as canvas image if none exists
             if (!canvasImage) {
               setCanvasImage(dataUrl);
@@ -324,13 +369,13 @@ export const PromptComposer: React.FC = () => {
 
       {/* Prompt Template Selector */}
       <div className="rounded-xl border border-gray-800/50 bg-gray-950/80">
-        <button
-          type="button"
-          onClick={() => setShowTemplatesModal(true)}
-          className="w-full rounded-xl px-3 py-2.5 flex items-center justify-between text-left transition-all hover:bg-gray-900/40"
-        >
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800/50 bg-gray-900 text-gray-400 overflow-hidden">
+        <div className="w-full rounded-xl px-3 py-2.5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={() => setShowTemplatesModal(true)}
+            className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 text-left transition-all hover:bg-gray-900/40 rounded-lg px-1 py-1 w-full"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800/50 bg-gray-900 text-gray-400 overflow-hidden flex-shrink-0">
               {lastSelectedTemplate?.image ? (
                 <img 
                   src={lastSelectedTemplate.image} 
@@ -356,22 +401,140 @@ export const PromptComposer: React.FC = () => {
                 <FileText className="h-4 w-4" />
               )}
             </div>
-            <div className="flex flex-col">
-              <span className="text-[13px] font-medium text-gray-100">
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-[13px] font-medium text-gray-100 truncate">
                 {lastSelectedTemplate?.name || t.templates}
               </span>
-              <span className="text-[11px] text-gray-500">
+              <span className="text-[11px] text-gray-500 truncate">
                 {lastSelectedTemplate ? t.templates : t.clickToManageTemplates}
               </span>
             </div>
+          </button>
+          
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 self-end sm:self-auto">
+            {selectedTemplate && (
+              <>
+                {/* View Icon */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (currentTemplate) {
+                      if (isTemplatePromptActive) {
+                        // Restore original prompt and hide negative prompt
+                        setCurrentPrompt(savedPromptBeforeTemplate);
+                        setIsTemplatePromptActive(false);
+                        setShowNegativePrompt(false);
+                        setNegativePrompt('');
+                      } else {
+                        // Save current prompt and show template prompt
+                        setSavedPromptBeforeTemplate(currentPrompt);
+                        const promptText = currentTemplate.positivePrompt.replace('{prompt}', currentPrompt || '');
+                        setCurrentPrompt(promptText);
+                        setIsTemplatePromptActive(true);
+                        
+                        // Show negative prompt if template has one
+                        if (currentTemplate.negativePrompt && currentTemplate.negativePrompt.trim()) {
+                          setShowNegativePrompt(true);
+                          const negText = currentTemplate.negativePrompt.replace('{prompt}', '');
+                          setNegativePrompt(negText);
+                        }
+                      }
+                    }
+                  }}
+                  className={cn(
+                    "h-7 w-7 flex items-center justify-center rounded-md transition-colors",
+                    isTemplatePromptActive 
+                      ? "text-purple-400 bg-purple-500/20 hover:text-purple-300 hover:bg-purple-500/30" 
+                      : "text-gray-400 hover:text-purple-400 hover:bg-gray-800"
+                  )}
+                  title={isTemplatePromptActive ? "Hide template prompt" : "View template prompt"}
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
+                
+                {/* Flatten Icon */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!currentTemplate) return;
+
+                    const basePrompt = isTemplatePromptActive
+                      ? savedPromptBeforeTemplate
+                      : currentPrompt;
+
+                    const positiveWithPrompt = currentTemplate.positivePrompt.includes('{prompt}')
+                      ? currentTemplate.positivePrompt.replace('{prompt}', basePrompt || '')
+                      : [basePrompt, currentTemplate.positivePrompt].filter(Boolean).join(basePrompt ? '\n\n' : '');
+
+                    const cleanedPositive = positiveWithPrompt.replace('{photo}', '').trim();
+
+                    if (currentTemplate.negativePrompt?.trim()) {
+                      const negativeSource = currentTemplate.negativePrompt.includes('{prompt}')
+                        ? currentTemplate.negativePrompt.replace('{prompt}', basePrompt || '')
+                        : currentTemplate.negativePrompt;
+
+                      const cleanedNegative = negativeSource.replace('{photo}', '').trim();
+                      if (cleanedNegative) {
+                        setShowNegativePrompt(true);
+                        setNegativePrompt(cleanedNegative);
+                      } else {
+                        setShowNegativePrompt(false);
+                        setNegativePrompt('');
+                      }
+                    } else {
+                      setShowNegativePrompt(false);
+                      setNegativePrompt('');
+                    }
+
+                    setCurrentPrompt(cleanedPositive);
+
+                    setIsTemplatePromptActive(false);
+                    setSavedPromptBeforeTemplate('');
+                    setSelectedTemplate(null);
+                    setLastSelectedTemplate(null);
+                    setShowTemplatesModal(false);
+                  }}
+                  className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-purple-400 hover:bg-gray-800 transition-colors"
+                  title="Flatten selected template into current prompt"
+                >
+                  <Layers className="h-4 w-4" />
+                </button>
+                
+                {/* Clear Icon */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (isTemplatePromptActive) {
+                      setCurrentPrompt(savedPromptBeforeTemplate);
+                    }
+                    setIsTemplatePromptActive(false);
+                    setSavedPromptBeforeTemplate('');
+                    setShowNegativePrompt(false);
+                    setNegativePrompt('');
+                    setSelectedTemplate(null);
+                    setLastSelectedTemplate(null);
+                    setShowTemplatesModal(false);
+                  }}
+                  className="h-7 w-7 flex items-center justify-center rounded-md text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors"
+                  title="Clear template selection"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </>
+            )}
+            
+            {/* Dropdown Toggle */}
+            <div className={cn(
+              "flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-500 transition-all",
+              showTemplatesModal && "rotate-180 border-gray-700 bg-gray-900 text-gray-200"
+            )}>
+              <ChevronDown className="h-4 w-4" />
+            </div>
           </div>
-          <div className={cn(
-            "flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-500 transition-all",
-            showTemplatesModal && "rotate-180 border-gray-700 bg-gray-900 text-gray-200"
-          )}>
-            <ChevronDown className="h-4 w-4" />
-          </div>
-        </button>
+        </div>
       </div>
 
       {/* Prompt Input - Enhanced Card Design */}
@@ -473,6 +636,46 @@ export const PromptComposer: React.FC = () => {
           
 
         </div>
+
+        {/* Add Negative Prompt Button */}
+        <div className="mt-2 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setShowNegativePrompt(!showNegativePrompt);
+              if (!showNegativePrompt && currentTemplate) {
+                // Show template's negative prompt
+                const negText = currentTemplate.negativePrompt.replace('{prompt}', '');
+                setNegativePrompt(negText);
+              }
+            }}
+            className={cn(
+              "p-1.5 rounded-lg transition-all duration-200 border",
+              showNegativePrompt
+                ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600 hover:bg-gray-700/50"
+            )}
+            title={showNegativePrompt ? "Hide Negative Prompt" : "Add Negative Prompt"}
+            aria-label={showNegativePrompt ? "Hide Negative Prompt" : "Add Negative Prompt"}
+          >
+            {showNegativePrompt ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+          </button>
+          {showNegativePrompt && (
+            <span className="text-xs text-gray-400">Negative Prompt</span>
+          )}
+        </div>
+
+        {/* Negative Prompt Input */}
+        {showNegativePrompt && (
+          <div className="mt-2">
+            <Textarea
+              value={negativePrompt}
+              onChange={(e) => setNegativePrompt(e.target.value)}
+              placeholder="Enter negative prompt (things to avoid)..."
+              className="min-h-[80px] resize-none bg-gray-800 border-gray-700 focus:border-orange-500 transition-colors"
+            />
+          </div>
+        )}
         
 
         {/* Improve Prompt Button */}
@@ -621,16 +824,13 @@ export const PromptComposer: React.FC = () => {
               </div>
             ))}
             {/* Add more button */}
-            {((selectedTool === 'generate' && uploadedImages.length < 2) ||
-              (selectedTool === 'edit' && editReferenceImages.length < 2)) && (
-              <button
-                onClick={() => document.getElementById('reference-image-upload')?.click()}
-                className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-700 hover:border-gray-600 bg-gray-800/50 hover:bg-gray-800 flex items-center justify-center transition-all text-gray-500 hover:text-gray-300"
-                title="Add more images"
-              >
-                <Plus className="h-5 w-5" />
-              </button>
-            )}
+            <button
+              onClick={() => document.getElementById('reference-image-upload')?.click()}
+              className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-700 hover:border-gray-600 bg-gray-800/50 hover:bg-gray-800 flex items-center justify-center transition-all text-gray-500 hover:text-gray-300"
+              title="Add more images"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
           </div>
         )}
 
@@ -640,16 +840,13 @@ export const PromptComposer: React.FC = () => {
             <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 mr-2"></span>
             {selectedTool === 'generate' ? t.addReferenceImages : selectedTool === 'edit' ? t.styleReferences : t.uploadImage}
           </label>
-          {((selectedTool === 'generate' && uploadedImages.length > 0) ||
-            (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
-            <button
-              onClick={() => document.getElementById('reference-image-upload')?.click()}
-              className="text-xs text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 transition-colors"
-            >
-              <Upload className="h-3 w-3" />
-              {t.upload}
-            </button>
-          )}
+          <button
+            onClick={() => setShowReferenceModal(true)}
+            className="text-xs text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 transition-colors"
+          >
+            <History className="h-3 w-3" />
+            Reference Library
+          </button>
         </div>
         
         {selectedTool === 'mask' && (
@@ -659,12 +856,12 @@ export const PromptComposer: React.FC = () => {
         )}
         {selectedTool === 'edit' && (
           <p className="text-xs text-gray-500 mb-3">
-            {canvasImage ? t.optionalStyleReferencesUpTo2 : t.uploadImageForEditUpTo2}
+            {canvasImage ? 'Optional: Add style reference images to guide the edit' : 'Upload an image to edit or add style references'}
           </p>
         )}
         {selectedTool === 'generate' && (
           <p className="text-xs text-gray-500 mb-3">
-            {t.uploadReferenceImagesUpTo2}
+            Upload reference images to guide generation style
           </p>
         )}
 
@@ -680,6 +877,50 @@ export const PromptComposer: React.FC = () => {
             </div>
             <div className="text-xs text-gray-500">Upload Images</div>
           </button>
+        )}
+
+        {/* Upload History - Show previously uploaded images */}
+        {uploadHistory.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-700/40">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-gray-400 tracking-wide">
+                Previous Uploads
+              </label>
+              <span className="text-xs text-gray-600">
+                Click to add
+              </span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+              {uploadHistory
+                .filter(img => {
+                  // Filter out images already in current references
+                  const currentImages = selectedTool === 'generate' ? uploadedImages : editReferenceImages;
+                  return !currentImages.includes(img);
+                })
+                .slice(0, 10) // Show max 10 history items
+                .map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      if (selectedTool === 'generate') {
+                        addUploadedImage(image);
+                      } else {
+                        addEditReferenceImage(image);
+                      }
+                    }}
+                    className="relative w-14 h-14 rounded-lg border-2 border-gray-700 hover:border-cyan-500 overflow-hidden bg-gray-800 flex-shrink-0 transition-all"
+                    title="Click to add to references"
+                  >
+                    <img
+                      src={image}
+                      alt={`History ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-cyan-500/0 hover:bg-cyan-500/20 transition-all" />
+                  </button>
+                ))}
+            </div>
+          </div>
         )}
       </div>
 
@@ -723,6 +964,30 @@ export const PromptComposer: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Iterations Input - Only for Generate mode */}
+      {selectedTool === 'generate' && (
+        <div className="flex-shrink-0">
+          <label className="text-xs font-semibold text-gray-300 mb-2 block flex items-center">
+            <span>Iterations</span>
+            <span className="ml-2 text-gray-500 font-normal" title="The number of images to generate. If Dynamic Prompts is enabled, each prompt will be generated this many times.">
+              (Number of images)
+            </span>
+          </label>
+          <input
+            type="number"
+            min="1"
+            max="10"
+            value={iterations}
+            onChange={(e) => setIterations(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+            className="w-full h-10 px-3 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-100 font-medium hover:border-gray-600/80 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
+            placeholder="1"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Generate multiple images at once (1-10)
+          </p>
         </div>
       )}
 
@@ -1022,7 +1287,7 @@ export const PromptComposer: React.FC = () => {
           </p>
           <div className="mt-4 h-[60vh] flex min-h-0">
             <TemplatesView onTemplateSelect={(templateInfo) => {
-              setLastSelectedTemplate(templateInfo);
+              setLastSelectedTemplate(templateInfo ?? null);
               setShowTemplatesModal(false);
             }} />
           </div>
@@ -1184,6 +1449,211 @@ export const PromptComposer: React.FC = () => {
               </p>
             </div>
           )}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+
+    {/* Reference Images Modal */}
+    <Dialog.Root open={showReferenceModal} onOpenChange={setShowReferenceModal}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
+        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-gray-700/50 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden z-50 shadow-2xl">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50 bg-gray-800/30">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-cyan-600/20 rounded-lg">
+                <History className="h-5 w-5 text-cyan-400" />
+              </div>
+              <div>
+                <Dialog.Title className="text-lg font-bold text-gray-100">
+                  Reference Images
+                </Dialog.Title>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Model: Gemini 2.5 Flash
+                </p>
+              </div>
+            </div>
+            <Dialog.Close asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-700">
+                <X className="h-5 w-5" />
+              </Button>
+            </Dialog.Close>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(85vh - 140px)' }}>
+            {/* Current References */}
+            {((selectedTool === 'generate' && uploadedImages.length > 0) ||
+              (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
+                  <Check className="h-4 w-4 mr-2 text-green-400" />
+                  Current References ({(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length})
+                </h3>
+                <div 
+                  className={`flex gap-3 ${
+                    (selectedTool === 'generate' ? uploadedImages : editReferenceImages).length > 3 
+                      ? 'overflow-x-auto custom-scrollbar pb-2' 
+                      : 'flex-wrap'
+                  }`}
+                  style={(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length > 3 ? { maxHeight: '140px' } : {}}
+                >
+                  {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
+                    <div key={index} className="relative group flex-shrink-0">
+                      <div className="w-24 h-24 rounded-lg border-2 border-green-500/50 bg-gray-800 overflow-hidden">
+                        <img
+                          src={image}
+                          alt={`Reference ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                      <div className="absolute bottom-1 left-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                        #{index + 1}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Upload New */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
+                <Upload className="h-4 w-4 mr-2 text-purple-400" />
+                Upload New Image
+              </h3>
+              <input
+                type="file"
+                id="reference-modal-upload"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => document.getElementById('reference-modal-upload')?.click()}
+                className="w-full py-4 flex flex-col items-center justify-center bg-gray-800/50 hover:bg-gray-800 rounded-lg border-2 border-dashed border-gray-700 hover:border-cyan-500 transition-all"
+              >
+                <Plus className="h-6 w-6 text-gray-400 mb-2" />
+                <span className="text-sm text-gray-400">Click to upload image</span>
+              </button>
+            </div>
+
+            {/* Recent Work */}
+            {currentProject && currentProject.generations.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
+                  <Sparkles className="h-4 w-4 mr-2 text-blue-400" />
+                  Recent Work
+                </h3>
+                <div className="grid grid-cols-4 gap-3 max-h-80 overflow-y-auto custom-scrollbar">
+                  {currentProject.generations
+                    .filter(gen => gen.outputAssets && gen.outputAssets.length > 0)
+                    .slice(0, 20)
+                    .flatMap((generation) => 
+                      generation.outputAssets.map((asset, assetIdx) => (
+                        <button
+                          key={`${generation.id}-${assetIdx}`}
+                          onClick={() => {
+                            if (selectedTool === 'generate') {
+                              addUploadedImage(asset.url);
+                            } else {
+                              addEditReferenceImage(asset.url);
+                            }
+                          }}
+                          className="relative group aspect-square rounded-lg overflow-hidden border-2 border-gray-700 hover:border-blue-500 transition-all duration-300 hover:scale-105"
+                        >
+                          <img
+                            src={asset.url}
+                            alt="Generated"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          <div className="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                            Gen
+                          </div>
+                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="h-4 w-4 text-white drop-shadow-lg" />
+                          </div>
+                        </button>
+                      ))
+                    )}
+                </div>
+              </div>
+            )}
+
+            {/* Upload History */}
+            {uploadHistory.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                  Previous Uploads ({uploadHistory.length})
+                </h3>
+                <div className="grid grid-cols-4 gap-3">
+                  {uploadHistory
+                    .filter(img => {
+                      const currentImages = selectedTool === 'generate' ? uploadedImages : editReferenceImages;
+                      return !currentImages.includes(img);
+                    })
+                    .map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          if (selectedTool === 'generate') {
+                            addUploadedImage(image);
+                          } else {
+                            addEditReferenceImage(image);
+                          }
+                        }}
+                        className="relative aspect-square rounded-lg border-2 border-gray-700 hover:border-cyan-500 bg-gray-800 overflow-hidden transition-all group"
+                      >
+                        <img
+                          src={image}
+                          alt={`History ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-cyan-500/0 group-hover:bg-cyan-500/20 transition-all flex items-center justify-center">
+                          <Plus className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                        </div>
+                      </button>
+                    ))}
+                </div>
+                {uploadHistory.filter(img => {
+                  const currentImages = selectedTool === 'generate' ? uploadedImages : editReferenceImages;
+                  return !currentImages.includes(img);
+                }).length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-6">
+                    All images from history are already added to references
+                  </p>
+                )}
+              </div>
+            )}
+
+            {uploadHistory.length === 0 && (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center text-3xl">
+                  📁
+                </div>
+                <p className="text-sm text-gray-400">
+                  No upload history yet
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Upload images to see them here
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-3 bg-gray-800/30 border-t border-gray-700/50">
+            <p className="text-xs text-gray-500 text-center">
+              Click on any image to add to references • Unlimited uploads
+            </p>
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
