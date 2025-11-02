@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from './ui/Button';
-import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu } from 'lucide-react';
+import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut } from 'lucide-react';
 import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
 import { SaveSuccessModal } from './SaveSuccessModal';
@@ -12,6 +12,7 @@ import { saveImageToGalleryDB } from '../utils/galleryStorage';
 import logoHeader from '../assets/AI-POD-lite-logo.png';
 import { createPortal } from 'react-dom';
 import { transformImageToDimensions } from '../utils/imageUtils';
+import { useAuthStore } from '../store/useAuthStore';
 
 export const Header: React.FC = () => {
   const { 
@@ -43,6 +44,8 @@ export const Header: React.FC = () => {
   const [showMenu, setShowMenu] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const updateMenuPosition = () => {
     if (!menuButtonRef.current) return;
     const rect = menuButtonRef.current.getBoundingClientRect();
@@ -235,6 +238,12 @@ export const Header: React.FC = () => {
 
         {/* Right - Menu, Settings and Help */}
         <div className="flex items-center space-x-2">
+          {user && (
+            <div className="hidden sm:flex flex-col text-right mr-2">
+              <span className="text-xs text-gray-400">Signed in as</span>
+              <span className="text-sm font-medium text-gray-200">{user.username}</span>
+            </div>
+          )}
           {/* Menu Dropdown */}
           <div>
             <Button 
@@ -327,6 +336,15 @@ export const Header: React.FC = () => {
             title={t.about}
           >
             <HelpCircle className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+          </Button>
+          <Button
+            className="glass glass-hover"
+            variant="ghost"
+            size="icon"
+            onClick={logout}
+            title="Log out"
+          >
+            <LogOut className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
           </Button>
         </div>
       </header>

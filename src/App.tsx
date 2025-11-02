@@ -8,6 +8,8 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAppStore } from './store/useAppStore';
 import { getTranslation } from './i18n/translations';
 import { SideNavigation } from './components/SideNavigation';
+import { useAuthStore } from './store/useAuthStore';
+import { LoginPage } from './components/LoginPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -142,9 +144,10 @@ function AppContent() {
 }
 
 function App() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      {isAuthenticated ? <AppContent /> : <LoginPage />}
     </QueryClientProvider>
   );
 }
