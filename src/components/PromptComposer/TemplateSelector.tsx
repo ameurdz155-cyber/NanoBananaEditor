@@ -1,19 +1,11 @@
 import React from 'react';
 import { Eye, Layers, X, ChevronDown } from 'lucide-react';
 import { cn } from '../../utils/cn';
-
-interface Template {
-  id: string;
-  name: string;
-  image?: string;
-  emoji?: string;
-  positivePrompt: string;
-  negativePrompt?: string;
-}
+import type { PromptTemplate } from '../TemplatesView';
 
 interface TemplateSelectorProps {
   selectedTemplate: string | null;
-  currentTemplate: Template | null;
+  currentTemplate: PromptTemplate | null;
   lastSelectedTemplate: { name: string; image?: string; emoji?: string } | null;
   isTemplatePromptActive: boolean;
   savedPromptBeforeTemplate: string;
@@ -38,6 +30,19 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   onClearTemplate,
   t,
 }) => {
+  // Get template display info - prefer lastSelectedTemplate, fall back to currentTemplate
+  const templateInfo = React.useMemo(() => {
+    if (lastSelectedTemplate) return lastSelectedTemplate;
+    if (currentTemplate) {
+      return {
+        name: currentTemplate.name,
+        image: currentTemplate.image,
+        emoji: currentTemplate.emoji,
+      };
+    }
+    return null;
+  }, [lastSelectedTemplate, currentTemplate]);
+
   const handleFlatten = () => {
     if (!currentTemplate) return;
 
@@ -78,9 +83,42 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       }}
     >
       <div className="flex w-full items-center justify-between px-3 py-2.5">
-        <span className="text-sm font-medium text-gray-100 truncate">
-          {lastSelectedTemplate?.name || t.choosePromptTemplate}
-        </span>
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          {/* Show icon/emoji/image when template is selected */}
+          {templateInfo && (
+            <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-md overflow-hidden bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-gray-700/50">
+              {templateInfo.image ? (
+                <img
+                  src={templateInfo.image}
+                  alt={templateInfo.name}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback if image fails to load
+                    console.log('Image failed to load:', templateInfo.image);
+                    const target = e.currentTarget;
+                    target.style.display = 'none';
+                    if (target.parentElement) {
+                      const emoji = templateInfo.emoji;
+                      const name = templateInfo.name || '';
+                      target.parentElement.innerHTML = emoji 
+                        ? `<span class="text-lg">${emoji}</span>`
+                        : `<span class="text-xs font-semibold text-purple-400">${name.charAt(0).toUpperCase()}</span>`;
+                    }
+                  }}
+                />
+              ) : templateInfo.emoji ? (
+                <span className="text-lg leading-none">{templateInfo.emoji}</span>
+              ) : (
+                <span className="text-xs font-semibold text-purple-400">
+                  {(templateInfo.name || 'T').charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+          )}
+          <span className="text-sm font-medium text-gray-100 truncate">
+            {templateInfo?.name || t.choosePromptTemplate}
+          </span>
+        </div>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {selectedTemplate && (

@@ -3,7 +3,7 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus, Eye, Layers, Minus, Trash2 } from 'lucide-react';
+import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus, Minus, Trash2 } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText, listImagenModels } from '../services/geminiService';
@@ -12,6 +12,8 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
 import { usePromptPanelResize } from './PromptComposer/usePromptPanelResize';
 import { ModelSelector } from './PromptComposer/ModelSelector';
+import { TemplateSelector } from './PromptComposer/TemplateSelector';
+import type { PromptTemplate } from './TemplatesView';
 
 export const PromptComposer: React.FC = () => {
   const {
@@ -66,13 +68,17 @@ export const PromptComposer: React.FC = () => {
   const { edit, cancelEdit } = useImageEditing();
 
   // Get all templates (default + custom)
-  const allTemplates = React.useMemo(() => {
+  const allTemplates = React.useMemo<PromptTemplate[]>(() => {
     return [...getDefaultTemplates(language), ...customTemplates];
   }, [language, customTemplates]);
 
   // Find the currently selected template
-  const currentTemplate = React.useMemo(() => {
-    return selectedTemplate ? allTemplates.find(t => t.id === selectedTemplate) : null;
+  const currentTemplate = React.useMemo<PromptTemplate | null>(() => {
+    if (!selectedTemplate) {
+      return null;
+    }
+    const foundTemplate = allTemplates.find((template) => template.id === selectedTemplate);
+    return foundTemplate ?? null;
   }, [selectedTemplate, allTemplates]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -96,6 +102,7 @@ export const PromptComposer: React.FC = () => {
   const [iterations, setIterations] = useState<number>(1);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelLoadError, setModelLoadError] = useState<string | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const filteredPromptHistory = React.useMemo(() => {
     const query = historySearchQuery.trim().toLowerCase();
@@ -115,6 +122,22 @@ export const PromptComposer: React.FC = () => {
     setPromptPanelWidth,
     showPromptPanel,
   });
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 640px)');
+    const handleChange = () => setIsMobileViewport(mediaQuery.matches);
+
+    handleChange();
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
 
   React.useEffect(() => {
     if (availableImagenModels.length > 1) {
@@ -181,6 +204,67 @@ export const PromptComposer: React.FC = () => {
     const ratio = w / h;
     const newWidth = Math.round(newHeight * ratio / 64) * 64;
     setImageWidth(Math.max(64, Math.min(1536, newWidth)));
+  };
+
+  const handleViewTemplate = () => {
+    if (!currentTemplate) {
+      return;
+    }
+
+    if (isTemplatePromptActive) {
+      setCurrentPrompt(savedPromptBeforeTemplate);
+      setIsTemplatePromptActive(false);
+      setShowNegativePrompt(false);
+      setNegativePrompt('');
+      return;
+    }
+
+    setSavedPromptBeforeTemplate(currentPrompt);
+    setCurrentPrompt((currentTemplate.positivePrompt || '').trim());
+    setIsTemplatePromptActive(true);
+
+    if (currentTemplate.negativePrompt && currentTemplate.negativePrompt.trim()) {
+      setShowNegativePrompt(true);
+      setNegativePrompt(currentTemplate.negativePrompt.trim());
+    } else {
+      setShowNegativePrompt(false);
+      setNegativePrompt('');
+    }
+  };
+
+  const handleFlattenTemplate = (
+    positivePrompt: string,
+    negativePromptValue: string,
+    shouldShowNegative: boolean
+  ) => {
+    setCurrentPrompt(positivePrompt);
+
+    if (shouldShowNegative && negativePromptValue) {
+      setShowNegativePrompt(true);
+      setNegativePrompt(negativePromptValue);
+    } else {
+      setShowNegativePrompt(false);
+      setNegativePrompt('');
+    }
+
+    setIsTemplatePromptActive(false);
+    setSavedPromptBeforeTemplate('');
+    setSelectedTemplate(null);
+    setLastSelectedTemplate(null);
+    setShowTemplatesModal(false);
+  };
+
+  const handleClearTemplateSelection = () => {
+    if (isTemplatePromptActive) {
+      setCurrentPrompt(savedPromptBeforeTemplate);
+    }
+    setIsTemplatePromptActive(false);
+    setSavedPromptBeforeTemplate('');
+    setShowNegativePrompt(false);
+    setNegativePrompt('');
+    setSelectedTemplate(null);
+    setLastSelectedTemplate(null);
+    setShowTemplatesModal(false);
   };
 
   // Clean up images when switching tools
@@ -423,7 +507,7 @@ export const PromptComposer: React.FC = () => {
           <ChevronLeft className="h-4 w-4" />
         </Button>
       </div>
-      <div className="h-full overflow-hidden">
+  <div className="h-full overflow-visible">
         <div className="h-full p-6 flex flex-col space-y-6 overflow-y-auto sidebar-scrollbar">
           <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 flex-shrink-0">
         <div className="flex items-center justify-between mb-4">
@@ -472,154 +556,19 @@ export const PromptComposer: React.FC = () => {
       </div>
 
       {/* Prompt Template Selector */}
-      <div
-        className="rounded-lg border border-gray-800/60 bg-gray-950/90 cursor-pointer transition-colors hover:border-gray-700/80 hover:bg-gray-900/80"
-        role="button"
-        tabIndex={0}
-        onClick={() => setShowTemplatesModal(true)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            setShowTemplatesModal(true);
-          }
-        }}
-      >
-        <div className="flex w-full items-center justify-between px-3 py-2.5">
-          <span className="text-sm font-medium text-gray-100 truncate">
-            {lastSelectedTemplate?.name || t.choosePromptTemplate}
-          </span>
-
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            {selectedTemplate && (
-              <>
-                {/* View Icon */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!currentTemplate) {
-                      return;
-                    }
-
-                    if (isTemplatePromptActive) {
-                      // Restore original prompt and hide negative prompt
-                      setCurrentPrompt(savedPromptBeforeTemplate);
-                      setIsTemplatePromptActive(false);
-                      setShowNegativePrompt(false);
-                      setNegativePrompt('');
-                      return;
-                    }
-
-                    // Save current prompt and show template prompt exactly as defined
-                    setSavedPromptBeforeTemplate(currentPrompt);
-                    setCurrentPrompt((currentTemplate.positivePrompt || '').trim());
-                    setIsTemplatePromptActive(true);
-
-                    // Show negative prompt if template has one
-                    if (currentTemplate.negativePrompt && currentTemplate.negativePrompt.trim()) {
-                      setShowNegativePrompt(true);
-                      setNegativePrompt(currentTemplate.negativePrompt.trim());
-                    } else {
-                      setShowNegativePrompt(false);
-                      setNegativePrompt('');
-                    }
-                  }}
-                  className={cn(
-                    "h-7 w-7 flex items-center justify-center rounded-full transition-colors",
-                    isTemplatePromptActive
-                      ? "text-purple-400 bg-purple-500/10 hover:text-purple-300"
-                      : "text-gray-400 hover:text-purple-300"
-                  )}
-                  title={isTemplatePromptActive ? t.hideTemplatePromptButton : t.viewTemplatePrompt}
-                >
-                  <Eye className="h-4 w-4" />
-                </button>
-
-                {/* Flatten Icon */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!currentTemplate) return;
-
-                    const basePrompt = isTemplatePromptActive
-                      ? savedPromptBeforeTemplate
-                      : currentPrompt;
-
-                    const positiveWithPrompt = currentTemplate.positivePrompt.includes('{prompt}')
-                      ? currentTemplate.positivePrompt.replace('{prompt}', basePrompt || '')
-                      : [basePrompt, currentTemplate.positivePrompt].filter(Boolean).join(basePrompt ? '\n\n' : '');
-
-                    const cleanedPositive = positiveWithPrompt.replace('{photo}', '').trim();
-
-                    if (currentTemplate.negativePrompt?.trim()) {
-                      const negativeSource = currentTemplate.negativePrompt.includes('{prompt}')
-                        ? currentTemplate.negativePrompt.replace('{prompt}', basePrompt || '')
-                        : currentTemplate.negativePrompt;
-
-                      const cleanedNegative = negativeSource.replace('{photo}', '').trim();
-                      if (cleanedNegative) {
-                        setShowNegativePrompt(true);
-                        setNegativePrompt(cleanedNegative);
-                      } else {
-                        setShowNegativePrompt(false);
-                        setNegativePrompt('');
-                      }
-                    } else {
-                      setShowNegativePrompt(false);
-                      setNegativePrompt('');
-                    }
-
-                    setCurrentPrompt(cleanedPositive);
-
-                    setIsTemplatePromptActive(false);
-                    setSavedPromptBeforeTemplate('');
-                    setSelectedTemplate(null);
-                    setLastSelectedTemplate(null);
-                    setShowTemplatesModal(false);
-                  }}
-                  className="h-7 w-7 flex items-center justify-center rounded-full text-gray-400 hover:text-purple-300 transition-colors"
-                  title={t.flattenTemplateButton}
-                >
-                  <Layers className="h-4 w-4" />
-                </button>
-
-                {/* Clear Icon */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (isTemplatePromptActive) {
-                      setCurrentPrompt(savedPromptBeforeTemplate);
-                    }
-                    setIsTemplatePromptActive(false);
-                    setSavedPromptBeforeTemplate('');
-                    setShowNegativePrompt(false);
-                    setNegativePrompt('');
-                    setSelectedTemplate(null);
-                    setLastSelectedTemplate(null);
-                    setShowTemplatesModal(false);
-                  }}
-                  className="h-7 w-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-400 transition-colors"
-                  title={t.clearTemplateButton}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </>
-            )}
-
-            {/* Dropdown Toggle */}
-            <div
-              className={cn(
-                "flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition-transform",
-                showTemplatesModal && "rotate-180 text-gray-200"
-              )}
-            >
-              <ChevronDown className="h-4 w-4" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <TemplateSelector
+        selectedTemplate={selectedTemplate}
+        currentTemplate={currentTemplate}
+        lastSelectedTemplate={lastSelectedTemplate}
+        isTemplatePromptActive={isTemplatePromptActive}
+        savedPromptBeforeTemplate={savedPromptBeforeTemplate}
+        currentPrompt={currentPrompt}
+        onShowTemplatesModal={() => setShowTemplatesModal(true)}
+        onViewTemplate={handleViewTemplate}
+        onFlattenTemplate={handleFlattenTemplate}
+        onClearTemplate={handleClearTemplateSelection}
+        t={t}
+      />
 
       {/* Prompt Input - Enhanced Card Design */}
   <div className="bg-[#1a1c24] rounded-xl p-4 border border-gray-800/80 hover:border-gray-700 transition-all flex-shrink-0 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.8)]">
@@ -689,7 +638,7 @@ export const PromptComposer: React.FC = () => {
         </p>
         
         {/* Textarea with History Button */}
-        <div className="relative">
+  <div className="relative overflow-visible">
           <Textarea
             value={currentPrompt}
             onChange={(e) => setCurrentPrompt(e.target.value)}
@@ -745,7 +694,13 @@ export const PromptComposer: React.FC = () => {
           {showPromptHistory && (
             <div
               ref={historyPopoverRef}
-              className="absolute top-14 right-0 w-72 rounded-xl border border-gray-800 bg-[#1b1d26] shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-50"
+              className={cn(
+                'rounded-xl border border-gray-800 bg-[#1b1d26] shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-50 overflow-hidden',
+                isMobileViewport
+                  ? 'fixed inset-x-5 bottom-24 max-h-[60vh] overflow-y-auto'
+                  : 'absolute top-14 right-0'
+              )}
+              style={isMobileViewport ? undefined : { width: 'min(18rem, calc(100vw - 4.5rem))' }}
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-gray-200">{t.promptHistory}</p>
