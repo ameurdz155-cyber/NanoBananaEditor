@@ -10,6 +10,8 @@ import { validateApiKey, improvePromptText, listImagenModels } from '../services
 import { TemplatesView, getDefaultTemplates } from './TemplatesView';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
+import { usePromptPanelResize } from './PromptComposer/usePromptPanelResize';
+import { ModelSelector } from './PromptComposer/ModelSelector';
 
 export const PromptComposer: React.FC = () => {
   const {
@@ -107,131 +109,12 @@ export const PromptComposer: React.FC = () => {
   const historyPopoverRef = useRef<HTMLDivElement | null>(null);
   const historyButtonRef = useRef<HTMLButtonElement | null>(null);
   const historySearchInputRef = useRef<HTMLInputElement | null>(null);
-  const MIN_PANEL_WIDTH = 260;
-  const MAX_PANEL_WIDTH = 520;
 
-  const handleResizeStart = useCallback((startClientX: number) => {
-    if (!showPromptPanel) {
-      return;
-    }
-
-    const startWidth = panelRef.current?.getBoundingClientRect().width ?? promptPanelWidth;
-    const clampWidth = (rawWidth: number) => {
-      const clamped = Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, rawWidth));
-      return Math.round(clamped);
-    };
-
-    const updateWidth = (clientX: number) => {
-      const delta = clientX - startClientX;
-      const nextWidth = clampWidth(startWidth + delta);
-      setPromptPanelWidth(nextWidth);
-    };
-
-    const handleMouseMove = (event: MouseEvent) => {
-      event.preventDefault();
-      updateWidth(event.clientX);
-    };
-
-    const handleTouchMove = (event: TouchEvent) => {
-      if (event.touches.length > 0) {
-        event.preventDefault();
-        updateWidth(event.touches[0].clientX);
-      }
-    };
-
-    const stopResize = () => {
-      document.body.style.cursor = '';
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', stopResize);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', stopResize);
-      window.removeEventListener('touchcancel', stopResize);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', stopResize);
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', stopResize);
-    window.addEventListener('touchcancel', stopResize);
-    document.body.style.cursor = 'col-resize';
-  }, [MAX_PANEL_WIDTH, MIN_PANEL_WIDTH, promptPanelWidth, setPromptPanelWidth, showPromptPanel]);
-
-  const handleResizeMouseDown = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    handleResizeStart(event.clientX);
-  }, [handleResizeStart]);
-
-  const handleResizeTouchStart = useCallback((event: React.TouchEvent) => {
-    if (event.touches.length === 0) {
-      return;
-    }
-    event.preventDefault();
-    handleResizeStart(event.touches[0].clientX);
-  }, [handleResizeStart]);
-
-  React.useEffect(() => {
-    return () => {
-      document.body.style.cursor = '';
-    };
-  }, []);
-
-  React.useEffect(() => {
-    if (!showPromptHistory) {
-      return;
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        historyPopoverRef.current?.contains(target) ||
-        historyButtonRef.current?.contains(target)
-      ) {
-        return;
-      }
-      setShowPromptHistory(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setShowPromptHistory(false);
-      }
-    };
-
-    window.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('keydown', handleKeyDown);
-    historySearchInputRef.current?.focus();
-
-    return () => {
-      window.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [showPromptHistory, setShowPromptHistory]);
-
-  React.useEffect(() => {
-    if (!showPromptHistory) {
-      setHistorySearchQuery('');
-    }
-  }, [showPromptHistory]);
-
-  // Keep sidebar display in sync with currently active template
-  React.useEffect(() => {
-    if (currentTemplate) {
-      setLastSelectedTemplate((prev) => {
-        if (
-          prev?.name === currentTemplate.name &&
-          prev?.image === currentTemplate.image &&
-          prev?.emoji === currentTemplate.emoji
-        ) {
-          return prev;
-        }
-        return {
-          name: currentTemplate.name,
-          image: currentTemplate.image,
-          emoji: currentTemplate.emoji,
-        };
-      });
-    }
-  }, [currentTemplate]);
+  // Use the panel resize hook
+  const { handleResizeMouseDown, handleResizeTouchStart } = usePromptPanelResize({
+    setPromptPanelWidth,
+    showPromptPanel,
+  });
 
   React.useEffect(() => {
     if (availableImagenModels.length > 1) {
@@ -486,24 +369,6 @@ export const PromptComposer: React.FC = () => {
     { id: 'mask', icon: MousePointer, label: t.select, description: t.clickToSelect },
   ] as const;
 
-  const modelOptions = React.useMemo(
-    () => [
-      {
-        id: 'gemini' as const,
-        label: t.modelOptionGemini,
-        description: t.modelOptionGeminiHint,
-        accent: 'from-purple-500/20 to-indigo-500/20',
-      },
-      {
-        id: 'imagen' as const,
-        label: t.modelOptionImagen,
-        description: t.modelOptionImagenHint,
-        accent: 'from-blue-500/20 to-cyan-500/20',
-      },
-    ],
-    [t.modelOptionGemini, t.modelOptionGeminiHint, t.modelOptionImagen, t.modelOptionImagenHint]
-  );
-
   if (!showPromptPanel) {
     return (
       <div
@@ -606,106 +471,9 @@ export const PromptComposer: React.FC = () => {
         </div>
       </div>
 
-        <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition-all flex-shrink-0">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-200">{t.modelSelection}</h3>
-              <p className="text-xs text-gray-500 mt-0.5">{t.modelSelectionDescription}</p>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              {isLoadingModels ? (
-                <div className="flex items-center text-gray-400">
-                  <div className="h-3 w-3 mr-2 animate-spin rounded-full border border-purple-500/20 border-t-transparent" />
-                  {t.modelImagenLoadingShort}
-                </div>
-              ) : (
-                <span className="px-2 py-0.5 rounded-full border border-purple-500/30 text-purple-300 bg-purple-500/10">
-                  {modelFamily === 'imagen' ? t.modelOptionImagen : t.modelOptionGemini}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {modelOptions.map((option) => {
-              const isActive = modelFamily === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setModelFamily(option.id)}
-                  className={cn(
-                    'relative flex flex-col items-start gap-1.5 rounded-xl border-2 p-3 text-left transition-all',
-                    isActive
-                      ? `bg-gradient-to-br ${option.accent} border-purple-500/70 shadow-lg shadow-purple-500/20`
-                      : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
-                  )}
-                >
-                  {isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10" />
-                  )}
-                  <span className="relative z-10 text-sm font-semibold text-gray-100">{option.label}</span>
-                  <span className="relative z-10 text-xs text-gray-400">{option.description}</span>
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-4 space-y-2">
-            {modelFamily === 'gemini' ? (
-              <>
-                <label className="text-xs font-semibold text-gray-300" htmlFor="gemini-model-input">
-                  {t.modelCustomLabel}
-                </label>
-                <input
-                  id="gemini-model-input"
-                  type="text"
-                  value={modelName}
-                  onChange={(event) => setModelName(event.target.value)}
-                  className="w-full h-10 px-3 bg-gray-900/80 border border-gray-700/60 rounded-lg text-sm text-gray-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all"
-                  placeholder="gemini-2.5-flash-image-preview"
-                />
-                <p className="text-xs text-gray-500">
-                  {t.modelGeminiHelp}
-                </p>
-              </>
-            ) : (
-              <>
-                <label className="text-xs font-semibold text-gray-300" htmlFor="imagen-model-select">
-                  {t.modelImagenSelectLabel}
-                </label>
-                {isLoadingModels ? (
-                  <div className="flex items-center rounded-lg border border-gray-700/60 bg-gray-900/60 px-3 py-2 text-xs text-gray-400">
-                    <div className="h-3 w-3 mr-2 animate-spin rounded-full border border-cyan-500/40 border-t-transparent" />
-                    {t.modelImagenLoading}
-                  </div>
-                ) : availableImagenModels.length > 0 ? (
-                  <select
-                    id="imagen-model-select"
-                    className="w-full h-10 px-3 bg-gray-900/80 border border-gray-700/60 rounded-lg text-sm text-gray-100 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none transition-all"
-                    value={modelName}
-                    onChange={(event) => setModelName(event.target.value)}
-                  >
-                    {availableImagenModels.map((model) => (
-                      <option key={model} value={model}>
-                        {model}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-200">
-                    {t.modelImagenEmpty}
-                  </div>
-                )}
-                {modelLoadError && (
-                  <p className="text-xs text-red-400">{modelLoadError}</p>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
       {/* Prompt Template Selector */}
       <div
-        className="rounded-2xl border border-gray-800/60 bg-gray-950/90 cursor-pointer hover:border-gray-700/80 hover:bg-gray-900/80 transition-colors"
+        className="rounded-lg border border-gray-800/60 bg-gray-950/90 cursor-pointer transition-colors hover:border-gray-700/80 hover:bg-gray-900/80"
         role="button"
         tabIndex={0}
         onClick={() => setShowTemplatesModal(true)}
@@ -716,44 +484,11 @@ export const PromptComposer: React.FC = () => {
           }
         }}
       >
-        <div className="w-full rounded-[1.1rem] px-3 py-2.5 flex items-center gap-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-800/60 bg-gray-900 text-gray-400 overflow-hidden flex-shrink-0">
-              {lastSelectedTemplate?.image ? (
-                <img 
-                  src={lastSelectedTemplate.image} 
-                  alt={lastSelectedTemplate.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const parent = e.currentTarget.parentElement;
-                    if (parent) {
-                      parent.innerHTML = lastSelectedTemplate.emoji 
-                        ? `<span class="text-lg">${lastSelectedTemplate.emoji}</span>`
-                        : `<span class="text-lg font-bold text-purple-400">${lastSelectedTemplate.name.charAt(0).toUpperCase()}</span>`;
-                    }
-                  }}
-                />
-              ) : lastSelectedTemplate?.emoji ? (
-                <span className="text-lg">{lastSelectedTemplate.emoji}</span>
-              ) : lastSelectedTemplate ? (
-                <span className="text-lg font-bold text-purple-400">
-                  {lastSelectedTemplate.name.charAt(0).toUpperCase()}
-                </span>
-              ) : (
-                <FileText className="h-4 w-4" />
-              )}
-            </div>
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-[13px] font-medium text-gray-100 truncate">
-                {lastSelectedTemplate?.name || t.templates}
-              </span>
-              <span className="text-[11px] text-gray-500 truncate">
-                {lastSelectedTemplate ? t.templates : t.clickToManageTemplates}
-              </span>
-            </div>
-          </div>
-          
+        <div className="flex w-full items-center justify-between px-3 py-2.5">
+          <span className="text-sm font-medium text-gray-100 truncate">
+            {lastSelectedTemplate?.name || t.choosePromptTemplate}
+          </span>
+
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {selectedTemplate && (
               <>
@@ -791,15 +526,15 @@ export const PromptComposer: React.FC = () => {
                   }}
                   className={cn(
                     "h-7 w-7 flex items-center justify-center rounded-full transition-colors",
-                    isTemplatePromptActive 
-                      ? "text-purple-400 bg-purple-500/10 hover:text-purple-300" 
+                    isTemplatePromptActive
+                      ? "text-purple-400 bg-purple-500/10 hover:text-purple-300"
                       : "text-gray-400 hover:text-purple-300"
                   )}
                   title={isTemplatePromptActive ? t.hideTemplatePromptButton : t.viewTemplatePrompt}
                 >
                   <Eye className="h-4 w-4" />
                 </button>
-                
+
                 {/* Flatten Icon */}
                 <button
                   type="button"
@@ -848,7 +583,7 @@ export const PromptComposer: React.FC = () => {
                 >
                   <Layers className="h-4 w-4" />
                 </button>
-                
+
                 {/* Clear Icon */}
                 <button
                   type="button"
@@ -872,12 +607,14 @@ export const PromptComposer: React.FC = () => {
                 </button>
               </>
             )}
-            
+
             {/* Dropdown Toggle */}
-            <div className={cn(
-              "flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition-transform",
-              showTemplatesModal && "rotate-180 text-gray-200"
-            )}>
+            <div
+              className={cn(
+                "flex h-7 w-7 items-center justify-center rounded-full text-gray-500 transition-transform",
+                showTemplatesModal && "rotate-180 text-gray-200"
+              )}
+            >
               <ChevronDown className="h-4 w-4" />
             </div>
           </div>
@@ -1432,6 +1169,18 @@ export const PromptComposer: React.FC = () => {
           </p>
         </div>
       )}
+
+      {/* Model Selection - Right before Generate Button */}
+      <ModelSelector
+        modelFamily={modelFamily}
+        modelName={modelName}
+        availableImagenModels={availableImagenModels}
+        isLoadingModels={isLoadingModels}
+        modelLoadError={modelLoadError}
+        onModelFamilyChange={setModelFamily}
+        onModelNameChange={setModelName}
+        t={t}
+      />
 
       {/* Generate Button - Inspired by Reference UI */}
       <div className="space-y-2 flex-shrink-0">

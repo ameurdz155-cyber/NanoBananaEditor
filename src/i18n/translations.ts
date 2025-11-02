@@ -209,6 +209,7 @@ export interface Translations {
   hidePromptPanel: string;
   showPromptPanel: string;
   templates: string;
+  choosePromptTemplate: string;
   clickToManageTemplates: string;
   clickToCollapse: string;
   improvePrompt: string;
@@ -588,6 +589,7 @@ export const translations: Record<Language, Translations> = {
     hidePromptPanel: 'Hide Prompt Panel',
     showPromptPanel: 'Show Prompt Panel',
     templates: 'Templates',
+  choosePromptTemplate: 'Choose Prompt Template',
     clickToManageTemplates: 'Click to manage templates',
     clickToCollapse: 'Click to collapse',
     improvePrompt: 'Improve Prompt',
@@ -965,6 +967,7 @@ export const translations: Record<Language, Translations> = {
     hidePromptPanel: '隐藏提示面板',
     showPromptPanel: '显示提示面板',
     templates: '模板',
+  choosePromptTemplate: '选择提示模板',
     clickToManageTemplates: '点击管理模板',
     clickToCollapse: '点击折叠',
     improvePrompt: '改进提示词',
