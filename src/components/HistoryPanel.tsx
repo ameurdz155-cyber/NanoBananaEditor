@@ -1,7 +1,25 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useAppStore } from '../store/useAppStore';
-import { History, Layers, Folder, Download, Trash2, PlusCircle } from 'lucide-react';
+import {
+  History,
+  Layers,
+  Folder,
+  Download,
+  Trash2,
+  PlusCircle,
+  Star,
+  Copy,
+  Info,
+  ExternalLink,
+  Sparkles,
+  Workflow,
+  Image as ImageIcon,
+  ImagePlus,
+  LocateFixed,
+  Eye,
+  ChevronRight
+} from 'lucide-react';
 import { cn } from '../utils/cn';
 import { ImagePreviewModal } from './ImagePreviewModal';
 import { Generation, Edit } from '../types';
@@ -26,8 +44,17 @@ export const HistoryPanel: React.FC = () => {
     selectedTool,
     addUploadedImage,
     addEditReferenceImage,
+    addImageToBoard,
+    removeImageFromBoard,
     deleteGeneration,
     deleteEdit,
+    toggleFavoriteImage,
+    isFavoriteImage,
+    setActivePrimarySection,
+    setSelectedTool,
+    setSeed,
+    setTemperature,
+    setLastGenerationParameters,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -73,6 +100,291 @@ export const HistoryPanel: React.FC = () => {
     imageUrl: string;
   }>({ open: false, x: 0, y: 0, type: null, itemId: null, imageUrl: '' });
   const imageMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const [showBoardPicker, setShowBoardPicker] = React.useState(false);
+
+  const closeContextMenu = React.useCallback(() => {
+    setImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+    setShowBoardPicker(false);
+  }, []);
+
+  const currentGeneration = React.useMemo(() => {
+    if (imageContextMenu.type !== 'generation' || !imageContextMenu.itemId) {
+      return null;
+    }
+    return generations.find(g => g.id === imageContextMenu.itemId) || null;
+  }, [generations, imageContextMenu.itemId, imageContextMenu.type]);
+
+  const currentEdit = React.useMemo(() => {
+    if (imageContextMenu.type !== 'edit' || !imageContextMenu.itemId) {
+      return null;
+    }
+    return edits.find(e => e.id === imageContextMenu.itemId) || null;
+  }, [edits, imageContextMenu.itemId, imageContextMenu.type]);
+
+  const parentGeneration = React.useMemo(() => {
+    if (!currentEdit?.parentGenerationId) return null;
+    return generations.find(g => g.id === currentEdit.parentGenerationId) || null;
+  }, [currentEdit, generations]);
+
+  const promptText = React.useMemo(() => {
+    if (currentGeneration?.prompt) return currentGeneration.prompt;
+    if (currentEdit?.instruction) return currentEdit.instruction;
+    return '';
+  }, [currentEdit, currentGeneration]);
+
+  const isFavorite = React.useMemo(() => {
+    if (!imageContextMenu.itemId) return false;
+    return isFavoriteImage(imageContextMenu.itemId);
+  }, [imageContextMenu.itemId, isFavoriteImage]);
+
+  const MenuSection = ({ title }: { title: string }) => (
+    <div className="px-3 pt-2 pb-1">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+        {title}
+      </span>
+    </div>
+  );
+
+  interface MenuItemProps {
+    icon: React.ReactNode;
+    label: string;
+    onClick?: () => void;
+    disabled?: boolean;
+    trailing?: React.ReactNode;
+    destructive?: boolean;
+  }
+
+  const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onClick, disabled, trailing, destructive }) => (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return;
+        onClick?.();
+      }}
+      className={cn(
+        'w-full text-left px-3 py-2 text-sm flex items-center gap-2 rounded-md transition-colors',
+        disabled
+          ? 'text-gray-500 cursor-not-allowed'
+          : destructive
+            ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
+            : 'text-gray-200 hover:bg-gray-900'
+      )}
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      <span className="flex-1">{label}</span>
+      {trailing}
+    </button>
+  );
+
+  const openMetadata = React.useCallback(
+    (type: 'generation' | 'edit', itemId: string, fallbackUrl?: string) => {
+      if (type === 'generation') {
+        const generation = generations.find(g => g.id === itemId);
+        if (!generation) return;
+        const index = generations.findIndex(g => g.id === generation.id);
+        setPreviewModal({
+          open: true,
+          imageUrl: fallbackUrl || generation.outputAssets[0]?.url || '',
+          title: index >= 0 ? `Generation #${index + 1}` : t.viewDetails,
+          description: generation.prompt,
+          metadata: {
+            timestamp: generation.timestamp,
+            aspectRatio: generation.parameters?.aspectRatio,
+            width: generation.parameters?.width,
+            height: generation.parameters?.height,
+            seed: generation.parameters?.seed,
+            temperature: generation.parameters?.temperature,
+            negativePrompt: generation.negativePrompt,
+            referenceCount: generation.parameters?.referenceCount,
+            iterationIndex: generation.parameters?.iterationIndex,
+            totalIterations: generation.parameters?.totalIterations
+          }
+        });
+        return;
+      }
+
+      const edit = edits.find(e => e.id === itemId);
+      if (!edit) return;
+      const index = edits.findIndex(e => e.id === edit.id);
+      setPreviewModal({
+        open: true,
+        imageUrl: fallbackUrl || edit.outputAssets[0]?.url || '',
+        title: index >= 0 ? `Edit #${index + 1}` : t.viewDetails,
+        description: edit.instruction,
+        metadata: {
+          timestamp: edit.timestamp,
+          maskUsed: !!edit.maskAssetId
+        }
+      });
+    },
+    [edits, generations, setPreviewModal, t.viewDetails]
+  );
+
+  const locateImage = React.useCallback(
+    (type: 'generation' | 'edit', itemId: string) => {
+      setActiveTab('history');
+      setShowHistory(true);
+      if (type === 'generation') {
+        selectGeneration(itemId);
+        selectEdit(null);
+      } else {
+        selectEdit(itemId);
+        selectGeneration(null);
+      }
+    },
+    [selectEdit, selectGeneration, setActiveTab, setShowHistory]
+  );
+
+  const handleSetCanvasImage = () => {
+    if (!imageContextMenu.imageUrl) return;
+    setCanvasImage(imageContextMenu.imageUrl);
+    closeContextMenu();
+  };
+
+  const handleOpenCanvasWorkspace = () => {
+    if (!imageContextMenu.imageUrl) return;
+    setCanvasImage(imageContextMenu.imageUrl);
+    setActivePrimarySection('canvas');
+    closeContextMenu();
+  };
+
+  const handleAddAsReference = () => {
+    if (!imageContextMenu.imageUrl) return;
+    if (selectedTool === 'edit') {
+      addEditReferenceImage(imageContextMenu.imageUrl);
+    } else {
+      addUploadedImage(imageContextMenu.imageUrl);
+    }
+    closeContextMenu();
+  };
+
+  const handleAsMaskLayer = () => {
+    if (!imageContextMenu.imageUrl) return;
+    addEditReferenceImage(imageContextMenu.imageUrl);
+    setSelectedTool('mask');
+    setActivePrimarySection('canvas');
+    closeContextMenu();
+  };
+
+  const handleLoadWorkflow = () => {
+    console.info('Load workflow requested for image', imageContextMenu.itemId);
+    closeContextMenu();
+  };
+
+  const handleRecallMetadata = () => {
+    const source = currentGeneration || parentGeneration;
+    if (!source) {
+      closeContextMenu();
+      return;
+    }
+
+    const params = source.parameters;
+    if (params?.width && params?.height) {
+      setLastGenerationParameters({
+        width: params.width,
+        height: params.height,
+        aspectRatio: params.aspectRatio
+      });
+    }
+    if (typeof params?.seed === 'number') {
+      setSeed(params.seed);
+    }
+    if (typeof params?.temperature === 'number') {
+      setTemperature(params.temperature);
+    }
+    if (source.prompt) {
+      setCurrentPrompt(source.prompt);
+    }
+    closeContextMenu();
+  };
+
+  const handleMetadataOverview = () => {
+    if (!imageContextMenu.type || !imageContextMenu.itemId) {
+      closeContextMenu();
+      return;
+    }
+    openMetadata(imageContextMenu.type, imageContextMenu.itemId, imageContextMenu.imageUrl);
+    closeContextMenu();
+  };
+
+  const handleSendToUpscale = () => {
+    if (!imageContextMenu.imageUrl) return;
+    setCanvasImage(imageContextMenu.imageUrl);
+    setActivePrimarySection('upscaling');
+    closeContextMenu();
+  };
+
+  const handleUseForPromptTemplate = () => {
+    if (!promptText) {
+      closeContextMenu();
+      return;
+    }
+    setCurrentPrompt(promptText);
+    setActivePrimarySection('generate');
+    closeContextMenu();
+  };
+
+  const handleNewCanvasFromImage = () => {
+    if (!imageContextMenu.imageUrl) return;
+    setCanvasImage(imageContextMenu.imageUrl);
+    setSelectedTool('edit');
+    setActivePrimarySection('canvas');
+    closeContextMenu();
+  };
+
+  const handleBoardSelection = (boardId: string, alreadyInBoard: boolean) => {
+    if (!imageContextMenu.itemId) return;
+    if (alreadyInBoard) {
+      removeImageFromBoard(boardId, imageContextMenu.itemId);
+    } else {
+      addImageToBoard(boardId, imageContextMenu.itemId);
+    }
+    setShowBoardPicker(false);
+    closeContextMenu();
+  };
+
+  const handleToggleFavorite = () => {
+    if (!imageContextMenu.itemId) return;
+    toggleFavoriteImage(imageContextMenu.itemId);
+    closeContextMenu();
+  };
+
+  const handleLocateInGallery = () => {
+    if (!imageContextMenu.itemId || !imageContextMenu.type) return;
+    locateImage(imageContextMenu.type, imageContextMenu.itemId);
+    closeContextMenu();
+  };
+
+  const handleCopyPrompt = async () => {
+    if (!promptText) {
+      closeContextMenu();
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(promptText);
+    } catch (error) {
+      console.warn('Failed to copy prompt to clipboard:', error);
+    }
+    closeContextMenu();
+  };
+
+  const handleDownloadImage = () => {
+    if (!imageContextMenu.imageUrl) return;
+    void saveImageWithDialog(imageContextMenu.imageUrl, `${imageContextMenu.type || 'image'}-image`);
+    closeContextMenu();
+  };
+
+  const handleRemoveImage = () => {
+    if (imageContextMenu.type === 'generation' && imageContextMenu.itemId) {
+      deleteGeneration(imageContextMenu.itemId);
+    }
+    if (imageContextMenu.type === 'edit' && imageContextMenu.itemId) {
+      deleteEdit(imageContextMenu.itemId);
+    }
+    setPreviewModal(prev => prev.imageUrl === imageContextMenu.imageUrl ? { ...prev, open: false } : prev);
+    closeContextMenu();
+  };
 
   // Load gallery images from IndexedDB on mount and when boards change
   useEffect(() => {
@@ -106,28 +418,28 @@ export const HistoryPanel: React.FC = () => {
   }, [boards]);
 
   useEffect(() => {
-    const closeMenu = (event: MouseEvent) => {
+    const handlePointer = (event: MouseEvent) => {
       if (event.button !== 0) return;
-      setImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+      closeContextMenu();
     };
-    const handleScroll = () => setImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+    const handleScroll = () => closeContextMenu();
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+        closeContextMenu();
       }
     };
 
-    window.addEventListener('pointerdown', closeMenu);
+    window.addEventListener('pointerdown', handlePointer);
     window.addEventListener('scroll', handleScroll, true);
     window.addEventListener('resize', handleScroll);
     window.addEventListener('keydown', handleKey);
     return () => {
-      window.removeEventListener('pointerdown', closeMenu);
+      window.removeEventListener('pointerdown', handlePointer);
       window.removeEventListener('scroll', handleScroll, true);
       window.removeEventListener('resize', handleScroll);
       window.removeEventListener('keydown', handleKey);
     };
-  }, []);
+  }, [closeContextMenu]);
 
   React.useLayoutEffect(() => {
     if (!imageContextMenu.open || !imageMenuRef.current) return;
@@ -315,6 +627,7 @@ export const HistoryPanel: React.FC = () => {
                       onContextMenu={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
+                        setShowBoardPicker(false);
                         setImageContextMenu({
                           open: true,
                           x: event.clientX,
@@ -396,6 +709,7 @@ export const HistoryPanel: React.FC = () => {
                       onContextMenu={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
+                        setShowBoardPicker(false);
                         setImageContextMenu({
                           open: true,
                           x: event.clientX,
@@ -474,6 +788,8 @@ export const HistoryPanel: React.FC = () => {
               selectEdit(null);
             }
           }}
+          onInspectImage={(type, itemId, imageUrl) => openMetadata(type, itemId, imageUrl)}
+          onLocateImage={locateImage}
         />
       )}
 
@@ -489,53 +805,157 @@ export const HistoryPanel: React.FC = () => {
 
       {imageContextMenu.open && imageContextMenu.type && imageContextMenu.itemId && ReactDOM.createPortal(
         <div
-          className="fixed z-[9999] min-w-[180px] rounded-lg border border-gray-800 bg-gray-950/95 shadow-xl backdrop-blur p-1"
+          className="fixed z-[9999] min-w-[220px] rounded-xl border border-gray-800 bg-gray-950/95 shadow-2xl backdrop-blur p-2"
           ref={imageMenuRef}
           style={{ left: imageContextMenu.x, top: imageContextMenu.y }}
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <button
-            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 rounded-md flex items-center gap-2"
-            onClick={() => {
-              if (!imageContextMenu.imageUrl) return;
-              if (selectedTool === 'edit') {
-                addEditReferenceImage(imageContextMenu.imageUrl);
-              } else {
-                addUploadedImage(imageContextMenu.imageUrl);
-              }
-              setImageContextMenu(prev => ({ ...prev, open: false }));
-            }}
-          >
-            <PlusCircle className="h-4 w-4 text-cyan-300" />
-            <span>{t.addAsReference}</span>
-          </button>
-          <button
-            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 rounded-md flex items-center gap-2"
-            onClick={() => {
-              if (!imageContextMenu.imageUrl) return;
-              void saveImageWithDialog(imageContextMenu.imageUrl, `${imageContextMenu.type}-image`);
-              setImageContextMenu(prev => ({ ...prev, open: false }));
-            }}
-          >
-            <Download className="h-4 w-4 text-gray-300" />
-            <span>{t.downloadImage}</span>
-          </button>
-          <button
-            className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-900 rounded-md flex items-center gap-2"
-            onClick={() => {
-              if (imageContextMenu.type === 'generation' && imageContextMenu.itemId) {
-                deleteGeneration(imageContextMenu.itemId);
-              }
-              if (imageContextMenu.type === 'edit' && imageContextMenu.itemId) {
-                deleteEdit(imageContextMenu.itemId);
-              }
-              setPreviewModal(prev => prev.imageUrl === imageContextMenu.imageUrl ? { ...prev, open: false } : prev);
-              setImageContextMenu(prev => ({ ...prev, open: false }));
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-red-400" />
-            <span>{t.removeImage}</span>
-          </button>
+          <MenuSection title={t.quickActions} />
+          <MenuItem
+            icon={<ImageIcon className="h-4 w-4 text-cyan-300" />}
+            label={t.setAsCanvasImage}
+            onClick={handleSetCanvasImage}
+            disabled={!imageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<ExternalLink className="h-4 w-4 text-cyan-200" />}
+            label={t.openInNewCanvas}
+            onClick={handleOpenCanvasWorkspace}
+            disabled={!imageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<Layers className="h-4 w-4 text-purple-300" />}
+            label={t.asMaskLayer}
+            onClick={handleAsMaskLayer}
+            disabled={!imageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<PlusCircle className="h-4 w-4 text-cyan-400" />}
+            label={t.addAsReference}
+            onClick={handleAddAsReference}
+            disabled={!imageContextMenu.imageUrl}
+          />
+
+          <div className="my-1 h-px bg-gray-800" />
+
+          <MenuItem
+            icon={<Workflow className="h-4 w-4 text-gray-400" />}
+            label={t.loadWorkflow}
+            onClick={handleLoadWorkflow}
+          />
+          <MenuItem
+            icon={<History className="h-4 w-4 text-blue-300" />}
+            label={t.recallMetadata}
+            onClick={handleRecallMetadata}
+            disabled={!currentGeneration && !parentGeneration}
+          />
+          <MenuItem
+            icon={<Info className="h-4 w-4 text-emerald-300" />}
+            label={t.metadataOverview}
+            onClick={handleMetadataOverview}
+            disabled={!currentGeneration && !currentEdit}
+          />
+          <MenuItem
+            icon={<Sparkles className="h-4 w-4 text-amber-300" />}
+            label={t.sendToUpscale}
+            onClick={handleSendToUpscale}
+            disabled={!imageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<ImagePlus className="h-4 w-4 text-sky-300" />}
+            label={t.newCanvasFromImage}
+            onClick={handleNewCanvasFromImage}
+            disabled={!imageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<Copy className="h-4 w-4 text-gray-300" />}
+            label={t.useForPromptTemplate}
+            onClick={handleUseForPromptTemplate}
+            disabled={!promptText}
+          />
+          <MenuItem
+            icon={<Eye className="h-4 w-4 text-gray-200" />}
+            label={t.viewDetails}
+            onClick={handleMetadataOverview}
+            disabled={!currentGeneration && !currentEdit}
+          />
+
+          <div className="my-1 h-px bg-gray-800" />
+
+          <MenuSection title={t.changeBoardAction} />
+          <MenuItem
+            icon={<Folder className="h-4 w-4 text-gray-300" />}
+            label={t.moveToBoard}
+            onClick={() => setShowBoardPicker(prev => !prev)}
+            trailing={<ChevronRight className={cn('h-3 w-3 text-gray-500 transition-transform', showBoardPicker ? 'rotate-90' : 'rotate-0')} />}
+            disabled={boards.length === 0}
+          />
+          {showBoardPicker && (
+            <div className="px-2 pb-2">
+              <div className="max-h-44 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/80">
+                {boards.map(board => {
+                  const alreadyInBoard = !!imageContextMenu.itemId && board.imageIds.includes(imageContextMenu.itemId);
+                  return (
+                    <button
+                      key={board.id}
+                      type="button"
+                      className={cn(
+                        'w-full text-left px-2 py-1.5 text-xs flex items-center justify-between gap-2 transition-colors',
+                        alreadyInBoard
+                          ? 'bg-purple-500/20 text-purple-200'
+                          : 'text-gray-300 hover:bg-gray-800'
+                      )}
+                      onClick={() => handleBoardSelection(board.id, alreadyInBoard)}
+                    >
+                      <span className="flex items-center gap-2">
+                        {board.emoji ? (
+                          <span>{board.emoji}</span>
+                        ) : (
+                          <Folder className="h-3 w-3 text-gray-500" />
+                        )}
+                        <span className="truncate">{board.id === 'default' ? t.myCreations : board.name}</span>
+                      </span>
+                      {alreadyInBoard && <span className="text-purple-300">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="my-1 h-px bg-gray-800" />
+
+          <MenuItem
+            icon={<Star className={cn('h-4 w-4', isFavorite ? 'text-yellow-300' : 'text-gray-400')} />}
+            label={t.starImage}
+            onClick={handleToggleFavorite}
+          />
+          <MenuItem
+            icon={<LocateFixed className="h-4 w-4 text-cyan-300" />}
+            label={t.locateInGallery}
+            onClick={handleLocateInGallery}
+          />
+          <MenuItem
+            icon={<Copy className="h-4 w-4 text-gray-300" />}
+            label={t.copyPrompt}
+            onClick={handleCopyPrompt}
+            disabled={!promptText}
+          />
+
+          <div className="my-1 h-px bg-gray-800" />
+
+          <MenuItem
+            icon={<Download className="h-4 w-4 text-gray-300" />}
+            label={t.downloadImage}
+            onClick={handleDownloadImage}
+            disabled={!imageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<Trash2 className="h-4 w-4" />}
+            label={t.removeImage}
+            onClick={handleRemoveImage}
+            destructive
+          />
         </div>,
         document.body
       )}

@@ -99,6 +99,8 @@ export interface Translations {
   stopGeneration: string;
   generating: string;
   pressCtrlEnter: string;
+  waitingGeneration: string;
+  thisMayTakeMoments: string;
   
   // Advanced controls
   showAdvancedControls: string;
@@ -238,9 +240,28 @@ export interface Translations {
   uploadImages: string;
   removeFromBoard: string;
   moveToBoard: string;
+  moveToBoardTitle: string;
   boardName: string;
   enterBoardName: string;
   create: string;
+  loadWorkflow: string;
+  recallMetadata: string;
+  sendToUpscale: string;
+  useForPromptTemplate: string;
+  newCanvasFromImage: string;
+  changeBoardAction: string;
+  starImage: string;
+  locateInGallery: string;
+  metadataOverview: string;
+  copyPrompt: string;
+  setAsCanvasImage: string;
+  viewDetails: string;
+  quickActions: string;
+  openInNewCanvas: string;
+  asMaskLayer: string;
+  currentBoard: string;
+  favoriteAdded: string;
+  favoriteRemoved: string;
   
   // Prompt Hints
   promptQualityTips: string;
@@ -441,6 +462,8 @@ export const translations: Record<Language, Translations> = {
     stopGeneration: 'Stop Generation',
     generating: 'Generating...',
     pressCtrlEnter: 'to generate',
+    waitingGeneration: 'Generating your image',
+    thisMayTakeMoments: 'This may take a few moments',
     
     // Advanced controls
     showAdvancedControls: 'Show Advanced Controls',
@@ -580,9 +603,28 @@ export const translations: Record<Language, Translations> = {
     uploadImages: 'Upload Images',
     removeFromBoard: 'Remove from board',
     moveToBoard: 'Move to board',
+    moveToBoardTitle: 'Move to Board',
     boardName: 'Board Name',
     enterBoardName: 'Enter board name...',
     create: 'Create',
+  loadWorkflow: 'Load Workflow',
+  recallMetadata: 'Recall Metadata',
+  sendToUpscale: 'Send To Upscale',
+  useForPromptTemplate: 'Use For Prompt Template',
+  newCanvasFromImage: 'New Canvas from Image',
+  changeBoardAction: 'Change Board',
+  starImage: 'Star',
+  locateInGallery: 'Locate in Gallery',
+  metadataOverview: 'Metadata Overview',
+  copyPrompt: 'Copy Prompt',
+  setAsCanvasImage: 'Set as Canvas Image',
+  viewDetails: 'View Details',
+  quickActions: 'Quick Actions',
+  openInNewCanvas: 'Open in New Canvas',
+  asMaskLayer: 'As Mask Layer',
+  currentBoard: 'Current Board',
+  favoriteAdded: 'Added to favorites',
+  favoriteRemoved: 'Removed from favorites',
     
     // Prompt Hints
     promptQualityTips: 'Prompt Quality Tips',
@@ -781,6 +823,8 @@ export const translations: Record<Language, Translations> = {
     stopGeneration: '停止生成',
     generating: '生成中...',
     pressCtrlEnter: '生成',
+    waitingGeneration: '正在生成您的图像',
+    thisMayTakeMoments: '这可能需要一些时间',
     
     // Advanced controls
     showAdvancedControls: '显示高级控制',
@@ -920,9 +964,28 @@ export const translations: Record<Language, Translations> = {
     uploadImages: '上传图片',
     removeFromBoard: '从画板中移除',
     moveToBoard: '移动到画板',
+    moveToBoardTitle: '移动到画板',
     boardName: '画板名称',
     enterBoardName: '输入画板名称...',
     create: '创建',
+  loadWorkflow: '加载工作流',
+  recallMetadata: '查看元数据',
+  sendToUpscale: '发送到超分辨率',
+  useForPromptTemplate: '用于提示模板',
+  newCanvasFromImage: '基于此图新建画布',
+  changeBoardAction: '切换画板',
+  starImage: '收藏',
+  locateInGallery: '在图库中定位',
+  metadataOverview: '元数据概览',
+  copyPrompt: '复制提示词',
+  setAsCanvasImage: '设置为画布图像',
+  viewDetails: '查看详情',
+  quickActions: '快速操作',
+  openInNewCanvas: '在新画布中打开',
+  asMaskLayer: '作为蒙版图层',
+  currentBoard: '当前画板',
+  favoriteAdded: '已加入收藏',
+  favoriteRemoved: '已取消收藏',
     
     // Prompt Hints
     promptQualityTips: '提示词质量技巧',

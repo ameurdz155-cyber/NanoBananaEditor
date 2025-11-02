@@ -145,6 +145,9 @@ interface AppState {
   addImageToBoard: (boardId: string, imageId: string) => void;
   removeImageFromBoard: (boardId: string, imageId: string) => void;
   moveImageToBoard: (targetBoardId: string, imageId: string) => void;
+  favoriteImageIds: string[];
+  toggleFavoriteImage: (imageId: string) => void;
+  isFavoriteImage: (imageId: string) => boolean;
   
   // Custom Templates actions
   setCustomTemplates: (templates: PromptTemplate[]) => void;
@@ -156,7 +159,7 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   devtools(
     persist(
-      (set) => ({
+      (set, get) => ({
       // Initial state
       currentProject: null,
       
@@ -171,6 +174,7 @@ export const useAppStore = create<AppState>()(
         }
       ],
       selectedBoardId: 'default',
+      favoriteImageIds: [],
       
       customTemplates: [],
       
@@ -414,6 +418,17 @@ export const useAppStore = create<AppState>()(
           }
         })
       })),
+
+      toggleFavoriteImage: (imageId) => set((state) => {
+        const exists = state.favoriteImageIds.includes(imageId);
+        return {
+          favoriteImageIds: exists
+            ? state.favoriteImageIds.filter(id => id !== imageId)
+            : [...state.favoriteImageIds, imageId]
+        };
+      }),
+
+      isFavoriteImage: (imageId) => get().favoriteImageIds.includes(imageId),
       
       // Custom Templates actions
       setCustomTemplates: (templates) => set({ customTemplates: templates }),
@@ -458,6 +473,7 @@ export const useAppStore = create<AppState>()(
           uploadedImages: state.uploadedImages,
           editReferenceImages: state.editReferenceImages,
           promptPanelWidth: state.promptPanelWidth,
+          favoriteImageIds: state.favoriteImageIds,
         }),
         storage: {
           getItem: (name) => {

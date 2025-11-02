@@ -2,7 +2,32 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
-import { Folder, FolderOpen, Plus, ChevronDown, ChevronRight, Trash2, Edit2, Upload, X, AlertCircle, PlusCircle, Download } from 'lucide-react';
+import {
+  Folder,
+  FolderOpen,
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  Trash2,
+  Edit2,
+  Upload,
+  X,
+  AlertCircle,
+  PlusCircle,
+  Download,
+  Layers,
+  ExternalLink,
+  Sparkles,
+  Workflow,
+  Info,
+  Image as ImageIcon,
+  ImagePlus,
+  Star,
+  LocateFixed,
+  Copy,
+  Eye,
+  History
+} from 'lucide-react';
 import { blobToBase64 } from '../utils/imageUtils';
 import { cn } from '../utils/cn';
 import { getTranslation } from '../i18n/translations';
@@ -15,13 +40,17 @@ interface BoardsViewProps {
   edits: any[];
   resolveImageUrl: (imageId: string) => string | null;
   onImageSelect: (imageUrl: string, imageId: string, type: 'generation' | 'edit' | 'asset') => void;
+  onInspectImage?: (type: 'generation' | 'edit', itemId: string, imageUrl?: string) => void;
+  onLocateImage?: (type: 'generation' | 'edit', itemId: string) => void;
 }
 
 export const BoardsView: React.FC<BoardsViewProps> = ({
   generations,
   edits,
   resolveImageUrl,
-  onImageSelect
+  onImageSelect,
+  onInspectImage,
+  onLocateImage
 }) => {
   const {
     boards,
@@ -37,6 +66,15 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     selectedTool,
     addUploadedImage,
     addEditReferenceImage,
+    setCanvasImage,
+    setActivePrimarySection,
+    setSelectedTool,
+    setCurrentPrompt,
+    setLastGenerationParameters,
+    setSeed,
+    setTemperature,
+    toggleFavoriteImage,
+    isFavoriteImage,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -72,6 +110,230 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     type: 'generation' | 'edit' | 'asset';
   }>({ open: false, x: 0, y: 0, imageId: null, imageUrl: '', type: 'asset' });
   const boardImageMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const [showBoardPicker, setShowBoardPicker] = React.useState(false);
+
+  const closeBoardImageMenu = React.useCallback(() => {
+    setBoardImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+    setShowBoardPicker(false);
+  }, []);
+
+  const currentGeneration = React.useMemo(() => {
+    if (boardImageContextMenu.type !== 'generation' || !boardImageContextMenu.imageId) {
+      return null;
+    }
+    return generations.find(g => g.id === boardImageContextMenu.imageId) || null;
+  }, [boardImageContextMenu.imageId, boardImageContextMenu.type, generations]);
+
+  const currentEdit = React.useMemo(() => {
+    if (boardImageContextMenu.type !== 'edit' || !boardImageContextMenu.imageId) {
+      return null;
+    }
+    return edits.find(e => e.id === boardImageContextMenu.imageId) || null;
+  }, [boardImageContextMenu.imageId, boardImageContextMenu.type, edits]);
+
+  const parentGeneration = React.useMemo(() => {
+    if (!currentEdit?.parentGenerationId) return null;
+    return generations.find(g => g.id === currentEdit.parentGenerationId) || null;
+  }, [currentEdit, generations]);
+
+  const promptText = React.useMemo(() => {
+    if (currentGeneration?.prompt) return currentGeneration.prompt;
+    if (currentEdit?.instruction) return currentEdit.instruction;
+    return '';
+  }, [currentEdit, currentGeneration]);
+
+  const isAssetItem = boardImageContextMenu.type === 'asset';
+
+  const isFavorite = React.useMemo(() => {
+    if (!boardImageContextMenu.imageId) return false;
+    return isFavoriteImage(boardImageContextMenu.imageId);
+  }, [boardImageContextMenu.imageId, isFavoriteImage]);
+
+  const MenuSection = ({ title }: { title: string }) => (
+    <div className="px-3 pt-2 pb-1">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+        {title}
+      </span>
+    </div>
+  );
+
+  interface MenuItemProps {
+    icon: React.ReactNode;
+    label: string;
+    onClick?: () => void;
+    disabled?: boolean;
+    trailing?: React.ReactNode;
+    destructive?: boolean;
+  }
+
+  const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onClick, disabled, trailing, destructive }) => (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return;
+        onClick?.();
+      }}
+      className={cn(
+        'w-full text-left px-3 py-2 text-sm flex items-center gap-2 rounded-md transition-colors',
+        disabled
+          ? 'text-gray-500 cursor-not-allowed'
+          : destructive
+            ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
+            : 'text-gray-200 hover:bg-gray-900'
+      )}
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      <span className="flex-1">{label}</span>
+      {trailing}
+    </button>
+  );
+
+  const handleSetCanvasImage = () => {
+    if (!boardImageContextMenu.imageUrl) return;
+    setCanvasImage(boardImageContextMenu.imageUrl);
+    closeBoardImageMenu();
+  };
+
+  const handleOpenCanvasWorkspace = () => {
+    if (!boardImageContextMenu.imageUrl) return;
+    setCanvasImage(boardImageContextMenu.imageUrl);
+    setActivePrimarySection('canvas');
+    closeBoardImageMenu();
+  };
+
+  const handleAddAsReference = () => {
+    if (!boardImageContextMenu.imageUrl) return;
+    if (selectedTool === 'edit') {
+      addEditReferenceImage(boardImageContextMenu.imageUrl);
+    } else {
+      addUploadedImage(boardImageContextMenu.imageUrl);
+    }
+    closeBoardImageMenu();
+  };
+
+  const handleAsMaskLayer = () => {
+    if (!boardImageContextMenu.imageUrl) return;
+    addEditReferenceImage(boardImageContextMenu.imageUrl);
+    setSelectedTool('mask');
+    setActivePrimarySection('canvas');
+    closeBoardImageMenu();
+  };
+
+  const handleLoadWorkflow = () => {
+    console.info('Load workflow requested from board context', boardImageContextMenu.imageId);
+    closeBoardImageMenu();
+  };
+
+  const handleRecallMetadata = () => {
+    const source = currentGeneration || parentGeneration;
+    if (!source) {
+      closeBoardImageMenu();
+      return;
+    }
+    const params = source.parameters;
+    if (params?.width && params?.height) {
+      setLastGenerationParameters({
+        width: params.width,
+        height: params.height,
+        aspectRatio: params.aspectRatio
+      });
+    }
+    if (typeof params?.seed === 'number') {
+      setSeed(params.seed);
+    }
+    if (typeof params?.temperature === 'number') {
+      setTemperature(params.temperature);
+    }
+    if (source.prompt) {
+      setCurrentPrompt(source.prompt);
+    }
+    closeBoardImageMenu();
+  };
+
+  const handleMetadataOverview = () => {
+    if (!boardImageContextMenu.imageId || boardImageContextMenu.type === 'asset') {
+      closeBoardImageMenu();
+      return;
+    }
+    onInspectImage?.(boardImageContextMenu.type, boardImageContextMenu.imageId, boardImageContextMenu.imageUrl);
+    closeBoardImageMenu();
+  };
+
+  const handleSendToUpscale = () => {
+    if (!boardImageContextMenu.imageUrl) return;
+    setCanvasImage(boardImageContextMenu.imageUrl);
+    setActivePrimarySection('upscaling');
+    closeBoardImageMenu();
+  };
+
+  const handleUseForPromptTemplate = () => {
+    if (!promptText) {
+      closeBoardImageMenu();
+      return;
+    }
+    setCurrentPrompt(promptText);
+    setActivePrimarySection('generate');
+    closeBoardImageMenu();
+  };
+
+  const handleNewCanvasFromImage = () => {
+    if (!boardImageContextMenu.imageUrl) return;
+    setCanvasImage(boardImageContextMenu.imageUrl);
+    setSelectedTool('edit');
+    setActivePrimarySection('canvas');
+    closeBoardImageMenu();
+  };
+
+  const handleBoardSelection = (targetBoardId: string) => {
+    if (!boardImageContextMenu.imageId) return;
+    moveImageToBoard(targetBoardId, boardImageContextMenu.imageId);
+    setShowBoardPicker(false);
+    closeBoardImageMenu();
+  };
+
+  const handleToggleFavorite = () => {
+    if (!boardImageContextMenu.imageId) return;
+    toggleFavoriteImage(boardImageContextMenu.imageId);
+    closeBoardImageMenu();
+  };
+
+  const handleLocateImage = () => {
+    if (!boardImageContextMenu.imageId || boardImageContextMenu.type === 'asset') {
+      closeBoardImageMenu();
+      return;
+    }
+    onLocateImage?.(boardImageContextMenu.type, boardImageContextMenu.imageId);
+    closeBoardImageMenu();
+  };
+
+  const handleCopyPrompt = async () => {
+    if (!promptText) {
+      closeBoardImageMenu();
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(promptText);
+    } catch (error) {
+      console.warn('Failed to copy prompt from board menu:', error);
+    }
+    closeBoardImageMenu();
+  };
+
+  const handleDownloadImage = () => {
+    if (!boardImageContextMenu.imageUrl) return;
+    void saveImageWithDialog(boardImageContextMenu.imageUrl, `${boardImageContextMenu.type}-image`);
+    closeBoardImageMenu();
+  };
+
+  const handleRemoveFromBoard = () => {
+    if (!selectedBoardId || !boardImageContextMenu.imageId) {
+      closeBoardImageMenu();
+      return;
+    }
+    removeImageFromBoard(selectedBoardId, boardImageContextMenu.imageId);
+    closeBoardImageMenu();
+  };
 
   // Handle asset file upload
   const handleAssetUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,12 +395,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   React.useEffect(() => {
     const closeMenu = (event: MouseEvent) => {
       if (event.button !== 0) return;
-      setBoardImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+      closeBoardImageMenu();
     };
-    const handleScroll = () => setBoardImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+    const handleScroll = () => closeBoardImageMenu();
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setBoardImageContextMenu(prev => prev.open ? { ...prev, open: false } : prev);
+        closeBoardImageMenu();
       }
     };
     window.addEventListener('pointerdown', closeMenu);
@@ -151,7 +413,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       window.removeEventListener('resize', handleScroll);
       window.removeEventListener('keydown', handleKey);
     };
-  }, []);
+  }, [closeBoardImageMenu]);
 
   React.useLayoutEffect(() => {
     if (!boardImageContextMenu.open || !boardImageMenuRef.current) return;
@@ -718,6 +980,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                         event.preventDefault();
                         event.stopPropagation();
                         setActiveBoardImageMenu(null);
+                        setShowBoardPicker(false);
                         setBoardImageContextMenu({
                           open: true,
                           x: event.clientX,
@@ -745,7 +1008,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                           if (boards.length <= 1) return;
                           setActiveBoardImageMenu(prev => prev === item.imageId ? null : item.imageId);
                         }}
-                        title="Move to another board"
+                        title={t.moveToBoard}
                       >
                         <Folder className="h-3 w-3" />
                       </Button>
@@ -760,7 +1023,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                             removeImageFromBoard(selectedBoardId, item.imageId);
                           }
                         }}
-                        title="Remove from board"
+                        title={t.removeFromBoard}
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -770,7 +1033,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 z-10">
                         <div className="bg-gray-900 rounded-lg p-3 w-full max-h-40 overflow-y-auto">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-semibold text-gray-300">Move to Board</span>
+                            <span className="text-xs font-semibold text-gray-300">{t.moveToBoardTitle}</span>
                             <button
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -806,7 +1069,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                                     ) : (
                                       <Folder className="h-3 w-3 text-gray-500" />
                                     )}
-                                    <span className="truncate">{target.name}</span>
+                                    <span className="truncate">{target.id === 'default' ? t.myCreations : target.name}</span>
                                   </span>
                                   {alreadyInTarget && <span className="text-purple-400">✓</span>}
                                 </button>
@@ -1076,49 +1339,155 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
         </Dialog.Portal>
       </Dialog.Root>
 
-      {boardImageContextMenu.open && boardImageContextMenu.imageId && selectedBoardId && ReactDOM.createPortal(
+      {boardImageContextMenu.open && boardImageContextMenu.imageId && ReactDOM.createPortal(
         <div
-          className="fixed z-[9999] min-w-[180px] rounded-lg border border-gray-800 bg-gray-950/95 shadow-xl backdrop-blur p-1"
+          className="fixed z-[9999] min-w-[220px] rounded-xl border border-gray-800 bg-gray-950/95 shadow-2xl backdrop-blur p-2"
           ref={boardImageMenuRef}
           style={{ left: boardImageContextMenu.x, top: boardImageContextMenu.y }}
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <button
-            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 rounded-md flex items-center gap-2"
-            onClick={() => {
-              if (!boardImageContextMenu.imageUrl) return;
-              if (selectedTool === 'edit') {
-                addEditReferenceImage(boardImageContextMenu.imageUrl);
-              } else {
-                addUploadedImage(boardImageContextMenu.imageUrl);
-              }
-              setBoardImageContextMenu(prev => ({ ...prev, open: false }));
-            }}
-          >
-            <PlusCircle className="h-4 w-4 text-cyan-300" />
-            <span>{t.addAsReference}</span>
-          </button>
-          <button
-            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 rounded-md flex items-center gap-2"
-            onClick={() => {
-              if (!boardImageContextMenu.imageUrl) return;
-              void saveImageWithDialog(boardImageContextMenu.imageUrl, `${boardImageContextMenu.type}-image`);
-              setBoardImageContextMenu(prev => ({ ...prev, open: false }));
-            }}
-          >
-            <Download className="h-4 w-4 text-gray-300" />
-            <span>{t.downloadImage}</span>
-          </button>
-          <button
-            className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-900 rounded-md flex items-center gap-2"
-            onClick={() => {
-              removeImageFromBoard(selectedBoardId, boardImageContextMenu.imageId as string);
-              setBoardImageContextMenu(prev => ({ ...prev, open: false }));
-            }}
-          >
-            <Trash2 className="h-4 w-4 text-red-400" />
-            <span>{t.removeFromBoard}</span>
-          </button>
+          <MenuSection title={t.quickActions} />
+          <MenuItem
+            icon={<ImageIcon className="h-4 w-4 text-cyan-300" />}
+            label={t.setAsCanvasImage}
+            onClick={handleSetCanvasImage}
+            disabled={!boardImageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<ExternalLink className="h-4 w-4 text-cyan-200" />}
+            label={t.openInNewCanvas}
+            onClick={handleOpenCanvasWorkspace}
+            disabled={!boardImageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<Layers className="h-4 w-4 text-purple-300" />}
+            label={t.asMaskLayer}
+            onClick={handleAsMaskLayer}
+            disabled={!boardImageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<PlusCircle className="h-4 w-4 text-cyan-400" />}
+            label={t.addAsReference}
+            onClick={handleAddAsReference}
+            disabled={!boardImageContextMenu.imageUrl}
+          />
+
+          <div className="my-1 h-px bg-gray-800" />
+
+          <MenuItem
+            icon={<Workflow className="h-4 w-4 text-gray-400" />}
+            label={t.loadWorkflow}
+            onClick={handleLoadWorkflow}
+          />
+          <MenuItem
+            icon={<History className="h-4 w-4 text-blue-300" />}
+            label={t.recallMetadata}
+            onClick={handleRecallMetadata}
+            disabled={!currentGeneration && !parentGeneration}
+          />
+          <MenuItem
+            icon={<Info className="h-4 w-4 text-emerald-300" />}
+            label={t.metadataOverview}
+            onClick={handleMetadataOverview}
+            disabled={isAssetItem}
+          />
+          <MenuItem
+            icon={<Sparkles className="h-4 w-4 text-amber-300" />}
+            label={t.sendToUpscale}
+            onClick={handleSendToUpscale}
+            disabled={!boardImageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<ImagePlus className="h-4 w-4 text-sky-300" />}
+            label={t.newCanvasFromImage}
+            onClick={handleNewCanvasFromImage}
+            disabled={!boardImageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<Copy className="h-4 w-4 text-gray-300" />}
+            label={t.useForPromptTemplate}
+            onClick={handleUseForPromptTemplate}
+            disabled={!promptText}
+          />
+          <MenuItem
+            icon={<Eye className="h-4 w-4 text-gray-200" />}
+            label={t.viewDetails}
+            onClick={handleMetadataOverview}
+            disabled={isAssetItem}
+          />
+
+          <div className="my-1 h-px bg-gray-800" />
+
+          <MenuSection title={t.changeBoardAction} />
+          <MenuItem
+            icon={<Folder className="h-4 w-4 text-gray-300" />}
+            label={t.moveToBoard}
+            onClick={() => setShowBoardPicker(prev => !prev)}
+            trailing={<ChevronRight className={cn('h-3 w-3 text-gray-500 transition-transform', showBoardPicker ? 'rotate-90' : 'rotate-0')} />}
+            disabled={boards.length <= 1}
+          />
+          {showBoardPicker && (
+            <div className="px-2 pb-2">
+              <div className="max-h-44 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/80">
+                {boards
+                  .filter(board => board.id !== selectedBoardId)
+                  .map(board => (
+                    <button
+                      key={board.id}
+                      type="button"
+                      className="w-full text-left px-2 py-1.5 text-xs flex items-center justify-between gap-2 text-gray-300 hover:bg-gray-800 transition-colors"
+                      onClick={() => handleBoardSelection(board.id)}
+                    >
+                      <span className="flex items-center gap-2">
+                        {board.emoji ? (
+                          <span>{board.emoji}</span>
+                        ) : (
+                          <Folder className="h-3 w-3 text-gray-500" />
+                        )}
+                        <span className="truncate">{board.id === 'default' ? t.myCreations : board.name}</span>
+                      </span>
+                      <ChevronRight className="h-3 w-3 text-gray-600" />
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          <div className="my-1 h-px bg-gray-800" />
+
+          <MenuItem
+            icon={<Star className={cn('h-4 w-4', isFavorite ? 'text-yellow-300' : 'text-gray-400')} />}
+            label={t.starImage}
+            onClick={handleToggleFavorite}
+          />
+          <MenuItem
+            icon={<LocateFixed className="h-4 w-4 text-cyan-300" />}
+            label={t.locateInGallery}
+            onClick={handleLocateImage}
+            disabled={isAssetItem}
+          />
+          <MenuItem
+            icon={<Copy className="h-4 w-4 text-gray-300" />}
+            label={t.copyPrompt}
+            onClick={handleCopyPrompt}
+            disabled={!promptText}
+          />
+
+          <div className="my-1 h-px bg-gray-800" />
+
+          <MenuItem
+            icon={<Download className="h-4 w-4 text-gray-300" />}
+            label={t.downloadImage}
+            onClick={handleDownloadImage}
+            disabled={!boardImageContextMenu.imageUrl}
+          />
+          <MenuItem
+            icon={<Trash2 className="h-4 w-4" />}
+            label={t.removeFromBoard}
+            onClick={handleRemoveFromBoard}
+            destructive
+            disabled={!selectedBoardId}
+          />
         </div>,
         document.body
       )}
