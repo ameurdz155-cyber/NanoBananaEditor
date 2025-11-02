@@ -6,7 +6,7 @@ import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration
 import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus, Eye, Layers, Minus, Trash2 } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
-import { validateApiKey, improvePromptText } from '../services/geminiService';
+import { validateApiKey, improvePromptText, listImagenModels } from '../services/geminiService';
 import { TemplatesView, getDefaultTemplates } from './TemplatesView';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
@@ -50,6 +50,12 @@ export const PromptComposer: React.FC = () => {
     customTemplates,
     setGenerationProgress,
     setLastGenerationParameters,
+    modelFamily,
+    modelName,
+    setModelFamily,
+    setModelName,
+    availableImagenModels,
+    setAvailableImagenModels,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -86,6 +92,8 @@ export const PromptComposer: React.FC = () => {
   const [showNegativePrompt, setShowNegativePrompt] = useState(false);
   const [negativePrompt, setNegativePrompt] = useState<string>('');
   const [iterations, setIterations] = useState<number>(1);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [modelLoadError, setModelLoadError] = useState<string | null>(null);
 
   const filteredPromptHistory = React.useMemo(() => {
     const query = historySearchQuery.trim().toLowerCase();
@@ -225,6 +233,44 @@ export const PromptComposer: React.FC = () => {
     }
   }, [currentTemplate]);
 
+  React.useEffect(() => {
+    if (availableImagenModels.length > 1) {
+      return;
+    }
+
+    let isSubscribed = true;
+
+    const loadModels = async () => {
+      try {
+        setIsLoadingModels(true);
+        setModelLoadError(null);
+        const models = await listImagenModels();
+        if (!isSubscribed) return;
+        if (models.length > 0) {
+          setAvailableImagenModels(models);
+        }
+      } catch (error) {
+        if (!isSubscribed) return;
+        console.error('Failed to load Imagen models:', error);
+        setModelLoadError(t.modelLoadError);
+      } finally {
+        if (isSubscribed) {
+          setIsLoadingModels(false);
+        }
+      }
+    };
+
+    loadModels();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [availableImagenModels.length, setAvailableImagenModels, t.modelLoadError]);
+
+  React.useEffect(() => {
+    setModelLoadError((prev) => (prev ? t.modelLoadError : null));
+  }, [t.modelLoadError]);
+
   // Update width/height when aspect ratio changes
   const handleAspectRatioChange = (newRatio: string) => {
     setAspectRatio(newRatio);
@@ -358,7 +404,9 @@ export const PromptComposer: React.FC = () => {
             height: imageHeight,
             iterationIndex: currentIteration,
             totalIterations,
-            referenceCount: referenceImages.length
+            referenceCount: referenceImages.length,
+            modelType: modelFamily,
+            modelName,
           });
           
           // Add a small delay between iterations to avoid overwhelming the API
@@ -437,6 +485,24 @@ export const PromptComposer: React.FC = () => {
     { id: 'edit', icon: Edit3, label: t.edit, description: t.modifyExisting },
     { id: 'mask', icon: MousePointer, label: t.select, description: t.clickToSelect },
   ] as const;
+
+  const modelOptions = React.useMemo(
+    () => [
+      {
+        id: 'gemini' as const,
+        label: t.modelOptionGemini,
+        description: t.modelOptionGeminiHint,
+        accent: 'from-purple-500/20 to-indigo-500/20',
+      },
+      {
+        id: 'imagen' as const,
+        label: t.modelOptionImagen,
+        description: t.modelOptionImagenHint,
+        accent: 'from-blue-500/20 to-cyan-500/20',
+      },
+    ],
+    [t.modelOptionGemini, t.modelOptionGeminiHint, t.modelOptionImagen, t.modelOptionImagenHint]
+  );
 
   if (!showPromptPanel) {
     return (
@@ -539,6 +605,103 @@ export const PromptComposer: React.FC = () => {
           ))}
         </div>
       </div>
+
+        <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition-all flex-shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-200">{t.modelSelection}</h3>
+              <p className="text-xs text-gray-500 mt-0.5">{t.modelSelectionDescription}</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              {isLoadingModels ? (
+                <div className="flex items-center text-gray-400">
+                  <div className="h-3 w-3 mr-2 animate-spin rounded-full border border-purple-500/20 border-t-transparent" />
+                  {t.modelImagenLoadingShort}
+                </div>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full border border-purple-500/30 text-purple-300 bg-purple-500/10">
+                  {modelFamily === 'imagen' ? t.modelOptionImagen : t.modelOptionGemini}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {modelOptions.map((option) => {
+              const isActive = modelFamily === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setModelFamily(option.id)}
+                  className={cn(
+                    'relative flex flex-col items-start gap-1.5 rounded-xl border-2 p-3 text-left transition-all',
+                    isActive
+                      ? `bg-gradient-to-br ${option.accent} border-purple-500/70 shadow-lg shadow-purple-500/20`
+                      : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
+                  )}
+                >
+                  {isActive && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10" />
+                  )}
+                  <span className="relative z-10 text-sm font-semibold text-gray-100">{option.label}</span>
+                  <span className="relative z-10 text-xs text-gray-400">{option.description}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4 space-y-2">
+            {modelFamily === 'gemini' ? (
+              <>
+                <label className="text-xs font-semibold text-gray-300" htmlFor="gemini-model-input">
+                  {t.modelCustomLabel}
+                </label>
+                <input
+                  id="gemini-model-input"
+                  type="text"
+                  value={modelName}
+                  onChange={(event) => setModelName(event.target.value)}
+                  className="w-full h-10 px-3 bg-gray-900/80 border border-gray-700/60 rounded-lg text-sm text-gray-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all"
+                  placeholder="gemini-2.5-flash-image-preview"
+                />
+                <p className="text-xs text-gray-500">
+                  {t.modelGeminiHelp}
+                </p>
+              </>
+            ) : (
+              <>
+                <label className="text-xs font-semibold text-gray-300" htmlFor="imagen-model-select">
+                  {t.modelImagenSelectLabel}
+                </label>
+                {isLoadingModels ? (
+                  <div className="flex items-center rounded-lg border border-gray-700/60 bg-gray-900/60 px-3 py-2 text-xs text-gray-400">
+                    <div className="h-3 w-3 mr-2 animate-spin rounded-full border border-cyan-500/40 border-t-transparent" />
+                    {t.modelImagenLoading}
+                  </div>
+                ) : availableImagenModels.length > 0 ? (
+                  <select
+                    id="imagen-model-select"
+                    className="w-full h-10 px-3 bg-gray-900/80 border border-gray-700/60 rounded-lg text-sm text-gray-100 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none transition-all"
+                    value={modelName}
+                    onChange={(event) => setModelName(event.target.value)}
+                  >
+                    {availableImagenModels.map((model) => (
+                      <option key={model} value={model}>
+                        {model}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-200">
+                    {t.modelImagenEmpty}
+                  </div>
+                )}
+                {modelLoadError && (
+                  <p className="text-xs text-red-400">{modelLoadError}</p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
 
       {/* Prompt Template Selector */}
       <div

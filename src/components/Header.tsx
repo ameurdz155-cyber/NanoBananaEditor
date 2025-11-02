@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from './ui/Button';
-import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut } from 'lucide-react';
+import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut, BookOpen, Users, Package, Wallet } from 'lucide-react';
 import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
 import { SaveSuccessModal } from './SaveSuccessModal';
@@ -236,7 +236,7 @@ export const Header: React.FC = () => {
           )}
         </div>
 
-        {/* Right - Menu, Settings and Help */}
+        {/* Right - Menu and Logout */}
         <div className="flex items-center space-x-2">
           {user && (
             <div className="hidden sm:flex flex-col text-right mr-2">
@@ -282,61 +282,67 @@ export const Header: React.FC = () => {
                   href="/tutorials/?utm_source=AI_POD_Lite"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
+                  className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
                   onClick={() => setShowMenu(false)}
                 >
-                  {t.menuTutorials}
+                  <BookOpen className="h-4 w-4" />
+                  <span>{t.menuTutorials}</span>
                 </a>
                 <a
                   href="/community/?utm_source=AI_POD_Lite"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
+                  className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
                   onClick={() => setShowMenu(false)}
                 >
-                  {t.menuCommunity}
+                  <Users className="h-4 w-4" />
+                  <span>{t.menuCommunity}</span>
                 </a>
                 <a
                   href="/assets/?utm_source=AI_POD_Lite"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
+                  className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
                   onClick={() => setShowMenu(false)}
                 >
-                  {t.menuAssets}
+                  <Package className="h-4 w-4" />
+                  <span>{t.menuAssets}</span>
                 </a>
                 <a
                   href="/wallet/?utm_source=AI_POD_Lite"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors"
+                  className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
                   onClick={() => setShowMenu(false)}
                 >
-                  {t.menuWallet}
+                  <Wallet className="h-4 w-4" />
+                  <span>{t.menuWallet}</span>
                 </a>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800 flex items-center space-x-2"
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowSettingsModal(true);
+                  }}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>{t.settings}</span>
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors flex items-center space-x-2"
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowInfoModal(true);
+                  }}
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  <span>{t.about}</span>
+                </button>
               </div>
             </>,
             document.body
           )}
           
-          <Button 
-            className="glass glass-hover" 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setShowSettingsModal(true)}
-            title={t.settings}
-          >
-            <Settings className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
-          </Button>
-          <Button 
-            className="glass glass-hover" 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setShowInfoModal(true)}
-            title={t.about}
-          >
-            <HelpCircle className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
-          </Button>
           <Button
             className="glass glass-hover"
             variant="ghost"

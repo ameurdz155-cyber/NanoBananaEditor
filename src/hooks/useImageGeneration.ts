@@ -13,7 +13,9 @@ export const useImageGeneration = () => {
     setCurrentProject,
     currentProject,
     setApiKeyError,
-    setGenerationProgress
+    setGenerationProgress,
+    modelFamily,
+    modelName,
   } = useAppStore();
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -24,7 +26,9 @@ export const useImageGeneration = () => {
       
       const images = await geminiService.generateImage({
         ...request,
-        signal: abortControllerRef.current.signal
+        signal: abortControllerRef.current.signal,
+        modelType: modelFamily,
+        modelName,
       });
       return images;
     },
@@ -90,7 +94,7 @@ export const useImageGeneration = () => {
             checksum: img.slice(0, 32)
           })) : [],
           outputAssets,
-          modelVersion: 'gemini-2.5-flash-image-preview',
+          modelVersion: modelName,
           timestamp: Date.now()
         };
 

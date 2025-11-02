@@ -1,4 +1,4 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://127.0.0.1:9000';
+import { buildJsonHeaders, joinBackendPath } from './apiConfig';
 
 interface LoginPayload {
   username: string;
@@ -12,11 +12,9 @@ interface LoginResult {
 }
 
 export async function loginRequest(payload: LoginPayload): Promise<LoginResult> {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  const response = await fetch(joinBackendPath('/auth/login'), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: buildJsonHeaders(),
     body: JSON.stringify(payload),
   });
 

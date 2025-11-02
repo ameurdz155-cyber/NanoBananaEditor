@@ -31,6 +31,9 @@ export interface Translations {
   openFolder: string;
   defaultSavePath: string;
   desktopAppOnly: string;
+  imageServiceUrl: string;
+  enterBackendUrl: string;
+  backendUrlHelp: string;
   
   // Validation messages
   apiKeyValid: string;
@@ -91,6 +94,19 @@ export interface Translations {
   selectModeTitle: string;
   selectModeDescription: string;
   selectModeWarning: string;
+  modelSelection: string;
+  modelSelectionDescription: string;
+  modelOptionGemini: string;
+  modelOptionGeminiHint: string;
+  modelOptionImagen: string;
+  modelOptionImagenHint: string;
+  modelCustomLabel: string;
+  modelGeminiHelp: string;
+  modelImagenSelectLabel: string;
+  modelImagenLoading: string;
+  modelImagenLoadingShort: string;
+  modelImagenEmpty: string;
+  modelLoadError: string;
   
   // Generate button
   invoke: string;
@@ -378,8 +394,8 @@ export const translations: Record<Language, Translations> = {
     // Settings
     settings: 'Settings',
     apiKey: 'API Key',
-    geminiApiKey: 'Gemini API Key',
-    enterApiKey: 'Enter your Gemini API key',
+  geminiApiKey: 'Service API Key (optional)',
+  enterApiKey: 'Forward a Google Gemini API key (stored securely in your browser)',
     getApiKey: 'Google AI Studio',
     testApiKey: 'Test API Key',
     testing: 'Testing...',
@@ -394,13 +410,16 @@ export const translations: Record<Language, Translations> = {
     openFolder: 'Open Folder',
     defaultSavePath: 'Default: ~/Documents/AI POD Lite',
     desktopAppOnly: 'Desktop App Only',
+  imageServiceUrl: 'Image service URL',
+  enterBackendUrl: 'http://127.0.0.1:9000',
+  backendUrlHelp: 'Defaults to the locally hosted FastAPI backend. Update if you are running it on another host.',
     
     // Validation messages
-    apiKeyValid: 'API key is working correctly!',
-    apiKeyInvalid: 'Invalid API key',
-    apiKeySaved: 'API key saved and validated!',
-    validatingApiKey: 'Validating API key...',
-    enterApiKeyToTest: 'Please enter an API key to test',
+  apiKeyValid: 'Connection successful!',
+  apiKeyInvalid: 'Unable to reach the image service.',
+  apiKeySaved: 'Settings saved successfully!',
+  validatingApiKey: 'Checking connection...',
+  enterApiKeyToTest: 'Please review your connection details before testing.',
     
     // Mode selector
   selectMode: 'Creative Mode',
@@ -454,6 +473,19 @@ export const translations: Record<Language, Translations> = {
   selectModeTitle: 'Creative Mode',
     selectModeDescription: 'Edits only the areas you brush on the artboard. Paint with your brush to select regions, then describe the changes.',
     selectModeWarning: '⚠️ Only brushed areas will be affected. Unmasked areas remain unchanged.',
+  modelSelection: 'Model Selection',
+  modelSelectionDescription: 'Choose which model powers your images',
+  modelOptionGemini: 'Gemini Flash',
+  modelOptionGeminiHint: 'Balanced quality and speed',
+  modelOptionImagen: 'Imagen 3',
+  modelOptionImagenHint: 'High fidelity, photorealistic output',
+  modelCustomLabel: 'Gemini model name',
+  modelGeminiHelp: 'Enter any Gemini image-capable model that your API key can access.',
+  modelImagenSelectLabel: 'Imagen variant',
+  modelImagenLoading: 'Fetching Imagen models from the backend…',
+  modelImagenLoadingShort: 'Loading…',
+  modelImagenEmpty: 'No Imagen models available. Using the default configuration.',
+  modelLoadError: 'Unable to load Imagen models. Falling back to defaults.',
     
     // Generate button
     invoke: 'Invoke',
@@ -739,8 +771,8 @@ export const translations: Record<Language, Translations> = {
     // Settings
     settings: '设置',
     apiKey: 'API密钥',
-    geminiApiKey: 'Gemini API密钥',
-    enterApiKey: '输入您的Gemini API密钥',
+  geminiApiKey: '服务 API 密钥（可选）',
+  enterApiKey: '可选：转发 Google Gemini API 密钥（保存在浏览器本地）',
     getApiKey: 'Google AI Studio',
     testApiKey: '测试API密钥',
     testing: '测试中...',
@@ -755,13 +787,16 @@ export const translations: Record<Language, Translations> = {
     openFolder: '打开文件夹',
     defaultSavePath: '默认：~/Documents/AI POD Lite',
     desktopAppOnly: '仅限桌面应用',
+  imageServiceUrl: '后端服务地址',
+  enterBackendUrl: 'http://127.0.0.1:9000',
+  backendUrlHelp: '默认连接本地 FastAPI 服务，如在其他主机运行请在此修改。',
     
     // Validation messages
-    apiKeyValid: 'API密钥工作正常！',
-    apiKeyInvalid: 'API密钥无效',
-    apiKeySaved: 'API密钥已保存并验证！',
-    validatingApiKey: '正在验证API密钥...',
-    enterApiKeyToTest: '请输入API密钥进行测试',
+  apiKeyValid: '连接成功！',
+  apiKeyInvalid: '无法连接到图像服务。',
+  apiKeySaved: '设置已保存！',
+  validatingApiKey: '正在检查连接...',
+  enterApiKeyToTest: '请确认连接信息后再测试。',
     
     // Mode selector
   selectMode: '创作模式',
@@ -815,6 +850,19 @@ export const translations: Record<Language, Translations> = {
     selectModeTitle: '创作模式',
     selectModeDescription: '仅编辑您在画板上刷涂的区域。用画笔绘制选择区域，然后描述更改。',
     selectModeWarning: '⚠️ 只有刷涂的区域会受到影响。未遮罩区域保持不变。',
+  modelSelection: '模型选择',
+  modelSelectionDescription: '选择用于生成的后端模型',
+  modelOptionGemini: 'Gemini Flash',
+  modelOptionGeminiHint: '速度与质量的平衡',
+  modelOptionImagen: 'Imagen 3',
+  modelOptionImagenHint: '高保真、照片级输出',
+  modelCustomLabel: 'Gemini 模型名称',
+  modelGeminiHelp: '输入您的 API 可用的任意 Gemini 图像模型名称。',
+  modelImagenSelectLabel: 'Imagen 版本',
+  modelImagenLoading: '正在从后端获取 Imagen 模型…',
+  modelImagenLoadingShort: '加载中…',
+  modelImagenEmpty: '暂无可用的 Imagen 模型，将使用默认配置。',
+  modelLoadError: '无法加载 Imagen 模型，已回退到默认模型。',
     
     // Generate button
     invoke: '调用',

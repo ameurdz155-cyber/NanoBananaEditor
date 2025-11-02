@@ -1,422 +1,214 @@
-import { GoogleGenAI } from '@google/genai';
+import {
+  buildJsonHeaders,
+  joinBackendPath,
+  getStoredBackendUrl,
+} from './apiConfig';
 
-// Get API key from localStorage or environment variable
-const getApiKey = () => {
-  const storedKey = localStorage.getItem('gemini_api_key');
-  return storedKey || import.meta.env.VITE_GEMINI_API_KEY || '';
+interface BackendImagePayload {
+  mime_type: string;
+  b64_data: string;
+}
+
+interface BackendGenerateResponse {
+  model: string;
+  images: BackendImagePayload[];
+}
+
+interface BackendPromptResponse {
+  prompt: string;
+}
+
+interface BackendErrorBody {
+  detail?: string;
+  message?: string;
+}
+
+const DEFAULT_ERROR_MESSAGE = 'Image service request failed. Please try again.';
+
+const toDataArray = (images: BackendImagePayload[]): string[] => {
+  if (!Array.isArray(images)) return [];
+  return images
+    .filter((image) => typeof image?.b64_data === 'string' && image.b64_data.length > 0)
+    .map((image) => image.b64_data);
 };
 
-let genAI: GoogleGenAI | null = null;
+const handleResponse = async (response: Response) => {
+  if (response.ok) {
+    return response.json();
+  }
 
-const getGenAI = () => {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error('Please configure your Gemini API key in Settings');
+  let errorMessage = DEFAULT_ERROR_MESSAGE;
+  try {
+    const body = (await response.json()) as BackendErrorBody;
+    if (body?.detail) {
+      errorMessage = body.detail;
+    } else if (body?.message) {
+      errorMessage = body.message;
+    }
+  } catch {
+    // ignore JSON parse failure and use fallback message
   }
-  // Create new instance with the API key
-  if (!genAI) {
-    genAI = new GoogleGenAI({ apiKey });
-  }
-  return genAI;
+
+  throw new Error(errorMessage);
 };
 
-// Validate API key by making a simple test request
 export const validateApiKey = async (): Promise<{ valid: boolean; error?: string }> => {
   try {
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      return { valid: false, error: 'No API key configured. Please add your Gemini API key.' };
+    const response = await fetch(joinBackendPath('/health'), {
+      method: 'GET',
+      headers: buildJsonHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Service unavailable');
     }
-
-    if (!apiKey.startsWith('AIza')) {
-      return { valid: false, error: 'Invalid API key format. Gemini API keys should start with "AIza".' };
-    }
-
-    // Try to create a client and make a simple test request
-    try {
-      const testAI = new GoogleGenAI({ apiKey });
-
-      // Make a simple test request to validate the key
-      const response = await testAI.models.generateContent({
-        model: "gemini-2.5-flash-image-preview",
-        contents: "Generate a simple test: say 'API key is working'",
-      });
-
-      // Check if we got a valid response
-      if (response && response.candidates && response.candidates.length > 0) {
-        // Reset the genAI instance with the new key if valid
-        genAI = new GoogleGenAI({ apiKey });
-        return { valid: true };
-      }
-
-      return { valid: false, error: 'Received empty response from API. Please check your API key.' };
-    } catch (apiError: any) {
-      console.error('API validation error:', apiError);
-
-      // Parse error messages for better user feedback
-      const errorMessage = apiError?.message || apiError?.error?.message || '';
-
-      if (errorMessage.includes('API_KEY_INVALID') ||
-          errorMessage.includes('API key not valid') ||
-          errorMessage.includes('401') ||
-          apiError?.status === 401) {
-        return { valid: false, error: 'Invalid API key. Please check your Gemini API key.' };
-      }
-
-      if (errorMessage.includes('PERMISSION_DENIED') ||
-          errorMessage.includes('403') ||
-          apiError?.status === 403) {
-        return { valid: false, error: 'API key lacks permissions. Enable the Generative Language API in Google Cloud Console.' };
-      }
-
-      if (errorMessage.includes('quota') || errorMessage.includes('429') || apiError?.status === 429) {
-        return { valid: false, error: 'API quota exceeded. Please check your usage limits or try again later.' };
-      }
-
-      if (errorMessage.includes('model')) {
-        return { valid: false, error: 'Model not available. Please ensure your API key has access to Gemini 2.5 Flash Image model.' };
-      }
-
-      return { valid: false, error: `API Error: ${errorMessage.substring(0, 100)}` };
-    }
-  } catch (error: any) {
-    console.error('API key validation error:', error);
-    return { valid: false, error: 'Network error. Please check your internet connection.' };
+    return { valid: true };
+  } catch (error) {
+    console.error('Image backend validation failed:', error);
+    return {
+      valid: false,
+      error: 'Unable to reach the image service. Please ensure the FastAPI backend is running.',
+    };
   }
 };
 
 export interface GenerationRequest {
   prompt: string;
   negativePrompt?: string;
-  referenceImages?: string[]; // base64 array
+  referenceImages?: string[];
   temperature?: number;
   seed?: number;
   aspectRatio?: string;
   width?: number;
   height?: number;
-  signal?: AbortSignal; // Add abort signal support
+  signal?: AbortSignal;
   iterationIndex?: number;
   totalIterations?: number;
   referenceCount?: number;
+  modelType: 'gemini' | 'imagen';
+  modelName: string;
+  numImages?: number;
 }
 
 export interface EditRequest {
   instruction: string;
-  originalImage: string; // base64
-  referenceImages?: string[]; // base64 array
-  maskImage?: string; // base64
+  originalImage: string;
+  referenceImages?: string[];
+  maskImage?: string;
   temperature?: number;
   seed?: number;
-  signal?: AbortSignal; // Add abort signal support
+  signal?: AbortSignal;
 }
 
 export interface SegmentationRequest {
-  image: string; // base64
-  query: string; // "the object at pixel (x,y)" or "the red car"
+  image: string;
+  query: string;
 }
 
-export class GeminiService {
+class GeminiService {
   async generateImage(request: GenerationRequest): Promise<string[]> {
-    try {
-      // Check if request was aborted before starting
-      if (request.signal?.aborted) {
-        throw new DOMException('Request was cancelled', 'AbortError');
-      }
+    const endpoint = request.modelType === 'imagen' ? '/generate/imagen' : '/generate/gemini';
 
-      // Combine prompt with negative prompt if provided
-      let fullPrompt = request.prompt;
-      if (request.negativePrompt && request.negativePrompt.trim()) {
-        fullPrompt = `${request.prompt}\n\nNegative prompt: ${request.negativePrompt}`;
-      }
-      
-      const contents: any[] = [{ text: fullPrompt }];
-      
-      // Add reference images if provided
-      if (request.referenceImages && request.referenceImages.length > 0) {
-        request.referenceImages.forEach(image => {
-          contents.push({
-            inlineData: {
-              mimeType: "image/png",
-              data: image,
-            },
-          });
-        });
-      }
+    const payload: Record<string, unknown> = {
+      prompt: request.prompt,
+      negative_prompt: request.negativePrompt || undefined,
+      reference_images: request.referenceImages && request.referenceImages.length > 0 ? request.referenceImages : undefined,
+      temperature: typeof request.temperature === 'number' ? request.temperature : undefined,
+      seed: typeof request.seed === 'number' ? request.seed : undefined,
+      aspect_ratio: request.aspectRatio || undefined,
+      width: request.width || undefined,
+      height: request.height || undefined,
+      num_images: request.numImages ?? 1,
+    };
 
-      // Create a promise that rejects when abort signal is triggered
-      const abortPromise = new Promise((_, reject) => {
-        if (request.signal) {
-          request.signal.addEventListener('abort', () => {
-            reject(new DOMException('Request was cancelled', 'AbortError'));
-          });
-        }
-      });
-
-      // Race between the API call and the abort signal
-      const generationConfig: Record<string, any> = {};
-      if (typeof request.temperature === 'number') {
-        generationConfig.temperature = request.temperature;
-      }
-      if (typeof request.seed === 'number') {
-        generationConfig.seed = request.seed;
-      }
-
-      const imageGenerationConfig: Record<string, any> = {};
-      if (request.aspectRatio) {
-        imageGenerationConfig.aspectRatio = request.aspectRatio;
-      }
-      if (request.width && request.height) {
-        imageGenerationConfig.outputImageDimensions = {
-          widthPixels: request.width,
-          heightPixels: request.height,
-        };
-      }
-
-      const apiPromise = getGenAI().models.generateContent({
-        model: "gemini-2.5-flash-image-preview",
-        contents,
-        ...(Object.keys(generationConfig).length ? { generationConfig } : {}),
-        ...(Object.keys(imageGenerationConfig).length ? { imageGenerationConfig } : {}),
-      });
-
-      const response: any = request.signal 
-        ? await Promise.race([apiPromise, abortPromise])
-        : await apiPromise;
-
-      // Check for prohibited content block
-      if (response.promptFeedback?.blockReason === 'PROHIBITED_CONTENT') {
-        const error = new Error('PROHIBITED_CONTENT');
-        (error as any).isProhibited = true;
-        throw error;
-      }
-
-      if (!response.candidates || response.candidates.length === 0) {
-        throw new Error('No response from API. Please try again.');
-      }
-
-      const images: string[] = [];
-
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData && part.inlineData.data) {
-          images.push(part.inlineData.data);
-        }
-      }
-
-      if (images.length === 0) {
-        throw new Error('No images were generated. The model may have returned only text.');
-      }
-
-      return images;
-    } catch (error: any) {
-      // Re-throw AbortError without modification
-      if (error.name === 'AbortError') {
-        throw error;
-      }
-      
-      // Re-throw PROHIBITED_CONTENT error without modification
-      if (error.message === 'PROHIBITED_CONTENT' || error.isProhibited) {
-        throw error;
-      }
-      
-      console.error('❌ Error generating image:', error);
-      if (error.message.includes('429')) {
-        throw new Error('API quota exceeded. Please check your usage limits or try again later.');
-      }
-      throw new Error('Failed to generate image. Please try again.');
+    if (request.modelName?.trim()) {
+      payload.model = request.modelName.trim();
     }
+
+    const response = await fetch(joinBackendPath(endpoint), {
+      method: 'POST',
+      headers: buildJsonHeaders(),
+      body: JSON.stringify(payload),
+      signal: request.signal,
+    });
+
+    const data = (await handleResponse(response)) as BackendGenerateResponse;
+    return toDataArray(data.images);
   }
 
   async editImage(request: EditRequest): Promise<string[]> {
-    try {
-      // Check if request was aborted before starting
-      if (request.signal?.aborted) {
-        throw new DOMException('Request was cancelled', 'AbortError');
-      }
+    const payload = {
+      instruction: request.instruction,
+      original_image: request.originalImage,
+      reference_images: request.referenceImages && request.referenceImages.length > 0 ? request.referenceImages : undefined,
+      mask_image: request.maskImage || undefined,
+      temperature: typeof request.temperature === 'number' ? request.temperature : undefined,
+      seed: typeof request.seed === 'number' ? request.seed : undefined,
+    };
 
-      const contents: any[] = [
-        { text: this.buildEditPrompt(request) },
-      ];
+  const response = await fetch(joinBackendPath('/edit/gemini'), {
+      method: 'POST',
+      headers: buildJsonHeaders(),
+      body: JSON.stringify(payload),
+      signal: request.signal,
+    });
 
-      // Image order matters for mask editing:
-      // 1. Original image (required)
-      contents.push({
-        inlineData: {
-          mimeType: "image/png",
-          data: request.originalImage,
-        },
-      });
-
-      // 2. Mask image (if provided) - MUST come before reference images
-      if (request.maskImage) {
-        contents.push({
-          inlineData: {
-            mimeType: "image/png",
-            data: request.maskImage,
-          },
-        });
-      }
-
-      // 3. Reference images (optional style guides)
-      if (request.referenceImages && request.referenceImages.length > 0) {
-        request.referenceImages.forEach(image => {
-          contents.push({
-            inlineData: {
-              mimeType: "image/png",
-              data: image,
-            },
-          });
-        });
-      }
-
-      // Create a promise that rejects when abort signal is triggered
-      const abortPromise = new Promise((_, reject) => {
-        if (request.signal) {
-          request.signal.addEventListener('abort', () => {
-            reject(new DOMException('Request was cancelled', 'AbortError'));
-          });
-        }
-      });
-
-      // Race between the API call and the abort signal
-      const apiPromise = getGenAI().models.generateContent({
-        model: "gemini-2.5-flash-image-preview",
-        contents,
-      });
-
-      const response: any = request.signal 
-        ? await Promise.race([apiPromise, abortPromise])
-        : await apiPromise;
-
-      // Check for prohibited content block
-      if (response.promptFeedback?.blockReason === 'PROHIBITED_CONTENT') {
-        const error = new Error('PROHIBITED_CONTENT');
-        (error as any).isProhibited = true;
-        throw error;
-      }
-
-      const images: string[] = [];
-
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          images.push(part.inlineData.data);
-        }
-      }
-
-      return images;
-    } catch (error: any) {
-      // Re-throw AbortError without modification
-      if (error.name === 'AbortError') {
-        throw error;
-      }
-      
-      // Re-throw PROHIBITED_CONTENT error without modification
-      if (error.message === 'PROHIBITED_CONTENT' || error.isProhibited) {
-        throw error;
-      }
-      
-      console.error('Error editing image:', error);
-      throw new Error('Failed to edit image. Please try again.');
-    }
+    const data = (await handleResponse(response)) as BackendGenerateResponse;
+    return toDataArray(data.images);
   }
 
   async segmentImage(request: SegmentationRequest): Promise<any> {
-    try {
-      const prompt = [
-        { text: `Analyze this image and create a segmentation mask for: ${request.query}
+    const payload = {
+      image: request.image,
+      query: request.query,
+    };
 
-Return a JSON object with this exact structure:
-{
-  "masks": [
-    {
-      "label": "description of the segmented object",
-      "box_2d": [x, y, width, height],
-      "mask": "base64-encoded binary mask image"
-    }
-  ]
-}
+  const response = await fetch(joinBackendPath('/segment/gemini'), {
+      method: 'POST',
+      headers: buildJsonHeaders(),
+      body: JSON.stringify(payload),
+      signal: undefined,
+    });
 
-Only segment the specific object or region requested. The mask should be a binary PNG where white pixels (255) indicate the selected region and black pixels (0) indicate the background.` },
-        {
-          inlineData: {
-            mimeType: "image/png",
-            data: request.image,
-          },
-        },
-      ];
-
-      const response = await getGenAI().models.generateContent({
-        model: "gemini-2.5-flash-image-preview",
-        contents: prompt,
-      });
-
-      const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!responseText) {
-        throw new Error('No valid response received from segmentation API');
-      }
-      return JSON.parse(responseText);
-    } catch (error) {
-      console.error('Error segmenting image:', error);
-      throw new Error('Failed to segment image. Please try again.');
-    }
-  }
-
-  private buildEditPrompt(request: EditRequest): string {
-    if (request.maskImage) {
-      return `MASKED REGION EDITING - Follow these instructions precisely:
-
-IMAGE 1 (provided below): Original image to edit
-IMAGE 2 (provided below): Binary mask - WHITE pixels show WHERE to apply changes, BLACK pixels show what to preserve
-
-YOUR TASK: ${request.instruction}
-
-🎯 CRITICAL MASK RULES - MUST FOLLOW:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. Look at IMAGE 2 (the mask) to see exactly WHERE to edit
-2. Apply "${request.instruction}" ONLY in the WHITE (255,255,255) areas of the mask
-3. Keep BLACK (0,0,0) mask areas COMPLETELY UNCHANGED from IMAGE 1
-4. Blend changes seamlessly at mask boundaries
-5. Match original lighting, colors, and textures in the edited areas
-6. The mask is your map - respect it with pixel-perfect accuracy
-
-REMEMBER: White mask = edit here | Black mask = don't touch
-
-Generate the edited version of IMAGE 1 with changes applied only in the white mask regions.`;
-    }
-
-    return `Edit this image according to the following instruction: ${request.instruction}
-
-Maintain the original image's lighting, perspective, and overall composition. Make the changes look natural and seamlessly integrated.
-
-Preserve image quality and ensure the edit looks professional and realistic.`;
+    return handleResponse(response);
   }
 }
 
 export const geminiService = new GeminiService();
 
-// Text helper: improve a user prompt for image generation
 export async function improvePromptText(prompt: string, language: 'en' | 'zh' = 'en'): Promise<string> {
+  const payload = { prompt, language };
+
+  const response = await fetch(joinBackendPath('/prompt/improve'), {
+    method: 'POST',
+    headers: buildJsonHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  const data = (await handleResponse(response)) as BackendPromptResponse;
+  return data.prompt?.trim() || prompt;
+}
+
+export async function listImagenModels(): Promise<string[]> {
   try {
-    const instructionText = language === 'zh' 
-      ? `改进以下图像生成提示词，使其更具描述性、更有电影感和更具体，同时保留任何占位符（如 [主题]）。只返回改进后的提示词文本，不要添加额外的评论。\n\n原始提示词:\n${prompt}`
-      : `Improve the following image generation prompt by making it more descriptive, cinematic, and specific while preserving any placeholders like [subject]. Return only the improved prompt text without extra commentary.\n\nOriginal Prompt:\n${prompt}`;
-
-    const contents = [
-      { text: instructionText }
-    ];
-
-    const response = await getGenAI().models.generateContent({
-      model: "gemini-2.5-flash-image-preview",
-      contents,
+    const response = await fetch(joinBackendPath('/models/imagen'), {
+      method: 'GET',
+      headers: buildJsonHeaders(),
     });
-
-    const candidate = response.candidates?.[0];
-    if (!candidate?.content?.parts) return prompt;
-
-    // Find first text part
-    const part = candidate.content.parts.find((p: any) => p.text)?.text;
-    return (part || '').trim() || prompt;
+    const data = (await handleResponse(response)) as { models?: string[] };
+    const models = Array.isArray(data.models)
+      ? data.models
+          .filter((entry) => typeof entry === 'string')
+          .map((entry) => entry.trim())
+          .filter((entry) => entry.length > 0)
+      : [];
+    if (!models.includes('imagen-3.0-002')) {
+      models.push('imagen-3.0-002');
+    }
+    return models;
   } catch (error) {
-    console.error('Error improving prompt text:', error);
-    throw new Error('Failed to improve prompt.');
+    console.error('Failed to fetch Imagen models:', error);
+    return [];
   }
 }
+
+export const getBackendBaseUrl = () => getStoredBackendUrl();

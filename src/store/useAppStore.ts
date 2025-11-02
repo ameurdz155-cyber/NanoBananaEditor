@@ -57,6 +57,9 @@ interface AppState {
   temperature: number;
   seed: number | null;
   selectedTemplate: string | null;
+  modelFamily: 'gemini' | 'imagen';
+  modelName: string;
+  availableImagenModels: string[];
   
   // History and variants
   selectedGenerationId: string | null;
@@ -105,6 +108,9 @@ interface AppState {
   setTemperature: (temp: number) => void;
   setSeed: (seed: number | null) => void;
   setSelectedTemplate: (template: string | null) => void;
+  setModelFamily: (family: 'gemini' | 'imagen') => void;
+  setModelName: (name: string) => void;
+  setAvailableImagenModels: (models: string[]) => void;
   
   addGeneration: (generation: Generation) => void;
   addEdit: (edit: Edit) => void;
@@ -195,6 +201,9 @@ export const useAppStore = create<AppState>()(
       temperature: 0.7,
       seed: null,
       selectedTemplate: null,
+  modelFamily: 'gemini',
+  modelName: 'gemini-2.5-flash-image-preview',
+  availableImagenModels: ['imagen-3.0-002'],
       
       selectedGenerationId: null,
       selectedEditId: null,
@@ -273,6 +282,38 @@ export const useAppStore = create<AppState>()(
       setTemperature: (temp) => set({ temperature: temp }),
       setSeed: (seed) => set({ seed: seed }),
       setSelectedTemplate: (template) => set({ selectedTemplate: template }),
+      setModelFamily: (family) => set((state) => {
+        if (state.modelFamily === family) {
+          return {};
+        }
+        const nextName = family === 'imagen'
+          ? state.availableImagenModels[0] || 'imagen-3.0-002'
+          : 'gemini-2.5-flash-image-preview';
+        return { modelFamily: family, modelName: nextName };
+      }),
+      setModelName: (name) => set({ modelName: name }),
+      setAvailableImagenModels: (models) => set((state) => {
+        const nextModels = Array.isArray(models)
+          ? Array.from(
+              new Set(
+                models
+                  .filter((entry) => typeof entry === 'string')
+                  .map((entry) => entry.trim())
+                  .filter((entry) => entry.length > 0)
+              )
+            )
+          : [];
+        let nextModelName = state.modelName;
+        if (state.modelFamily === 'imagen' && nextModels.length > 0) {
+          nextModelName = nextModels.includes(state.modelName) ? state.modelName : nextModels[0];
+        } else if (state.modelFamily === 'imagen' && nextModels.length === 0) {
+          nextModelName = 'imagen-3.0-002';
+        }
+        return {
+          availableImagenModels: nextModels,
+          modelName: nextModelName,
+        };
+      }),
       
       addGeneration: (generation) => set((state) => ({
         currentProject: state.currentProject ? {
@@ -474,6 +515,9 @@ export const useAppStore = create<AppState>()(
           editReferenceImages: state.editReferenceImages,
           promptPanelWidth: state.promptPanelWidth,
           favoriteImageIds: state.favoriteImageIds,
+          modelFamily: state.modelFamily,
+          modelName: state.modelName,
+          availableImagenModels: state.availableImagenModels,
         }),
         storage: {
           getItem: (name) => {

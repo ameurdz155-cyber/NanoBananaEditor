@@ -4,6 +4,12 @@ import { X, Save, Eye, EyeOff, Key, Sparkles, Shield, CheckCircle, AlertCircle, 
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { validateApiKey } from '../services/geminiService';
+import {
+  getStoredBackendUrl,
+  setStoredBackendUrl,
+  getStoredApiKey,
+  setStoredApiKey,
+} from '../services/apiConfig';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation, Language } from '../i18n/translations';
 import { isTauriEnvironment } from '../utils/fileSaver';
@@ -18,6 +24,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
   const t = getTranslation(language);
   const isTauri = isTauriEnvironment();
   
+  const [backendUrl, setBackendUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -25,80 +32,79 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
   const [validationStatus, setValidationStatus] = useState<{ valid: boolean; message: string } | null>(null);
 
   useEffect(() => {
-    const savedKey = localStorage.getItem('gemini_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
-    } else {
-      setApiKey(''); // Ensure API key is empty by default
-    }
+    setBackendUrl(getStoredBackendUrl());
+    const savedKey = getStoredApiKey();
+    setApiKey(savedKey || '');
   }, [open]);
 
   const handleTestKey = async () => {
-    if (apiKey.trim()) {
-      // Temporarily save the key for testing
-      const previousKey = localStorage.getItem('gemini_api_key');
-      localStorage.setItem('gemini_api_key', apiKey.trim());
+    const previousUrl = getStoredBackendUrl();
+    const previousKey = getStoredApiKey();
 
-      setIsValidating(true);
-      setValidationStatus(null);
+    setStoredBackendUrl(backendUrl);
+    setStoredApiKey(apiKey.trim() || null);
 
-      try {
-        const validation = await validateApiKey();
-        setIsValidating(false);
+    setIsValidating(true);
+    setValidationStatus(null);
 
-        if (validation.valid) {
-          setValidationStatus({ valid: true, message: t.apiKeyValid });
-        } else {
-          setValidationStatus({ valid: false, message: validation.error || t.apiKeyInvalid });
-          // Restore previous key if test failed
-          if (previousKey) {
-            localStorage.setItem('gemini_api_key', previousKey);
-          } else {
-            localStorage.removeItem('gemini_api_key');
-          }
-        }
-      } catch (error) {
-        setIsValidating(false);
-        setValidationStatus({ valid: false, message: t.apiKeyInvalid });
-        // Restore previous key on error
-        if (previousKey) {
-          localStorage.setItem('gemini_api_key', previousKey);
-        } else {
-          localStorage.removeItem('gemini_api_key');
-        }
-      }
-    } else {
-      setValidationStatus({ valid: false, message: t.enterApiKeyToTest });
-    }
-  };
-
-  const handleSave = async () => {
-    if (apiKey.trim()) {
-      // Save the key first
-      localStorage.setItem('gemini_api_key', apiKey.trim());
-
-      // Validate the API key
-      setIsValidating(true);
-      setValidationStatus(null);
-
+    try {
       const validation = await validateApiKey();
       setIsValidating(false);
 
       if (validation.valid) {
-        setValidationStatus({ valid: true, message: t.apiKeySaved });
-        setIsSaved(true);
-        setTimeout(() => {
-          setIsSaved(false);
-          onOpenChange(false);
-        }, 1500);
+        setValidationStatus({ valid: true, message: t.apiKeyValid });
+        setBackendUrl(getStoredBackendUrl());
+        setApiKey(getStoredApiKey() || '');
       } else {
         setValidationStatus({ valid: false, message: validation.error || t.apiKeyInvalid });
+        setStoredBackendUrl(previousUrl);
+        setStoredApiKey(previousKey || null);
+        setBackendUrl(previousUrl);
+        setApiKey(previousKey || '');
       }
+    } catch (error) {
+      setIsValidating(false);
+      setValidationStatus({ valid: false, message: t.apiKeyInvalid });
+      setStoredBackendUrl(previousUrl);
+      setStoredApiKey(previousKey || null);
+      setBackendUrl(previousUrl);
+      setApiKey(previousKey || '');
+    }
+  };
+
+  const handleSave = async () => {
+    const previousUrl = getStoredBackendUrl();
+    const previousKey = getStoredApiKey();
+
+    setStoredBackendUrl(backendUrl);
+    setStoredApiKey(apiKey.trim() || null);
+
+    setIsValidating(true);
+    setValidationStatus(null);
+
+    const validation = await validateApiKey();
+    setIsValidating(false);
+
+    if (validation.valid) {
+      setValidationStatus({ valid: true, message: t.apiKeySaved });
+      setBackendUrl(getStoredBackendUrl());
+      setApiKey(getStoredApiKey() || '');
+      setIsSaved(true);
+      setTimeout(() => {
+        setIsSaved(false);
+        onOpenChange(false);
+      }, 1500);
+    } else {
+      setValidationStatus({ valid: false, message: validation.error || t.apiKeyInvalid });
+      setStoredBackendUrl(previousUrl);
+      setStoredApiKey(previousKey || null);
+      setBackendUrl(previousUrl);
+      setApiKey(previousKey || '');
     }
   };
 
   const handleClear = () => {
-    localStorage.removeItem('gemini_api_key');
+    setStoredApiKey(null);
     setApiKey('');
   };
 
@@ -238,6 +244,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                     {t.geminiApiKey}
                   </label>
                 </div>
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <label htmlFor="backend-url" className="block text-xs font-semibold text-purple-200 mb-1">
+                      {t.imageServiceUrl}
+                    </label>
+                    <Input
+                      id="backend-url"
+                      type="text"
+                      value={backendUrl}
+                      onChange={(event) => setBackendUrl(event.target.value)}
+                      placeholder={t.enterBackendUrl}
+                      className="bg-gray-900/80 border-gray-700/60 focus:border-purple-500"
+                    />
+                    <p className="mt-1 text-xs text-gray-400">
+                      {t.backendUrlHelp}
+                    </p>
+                  </div>
+                </div>
               <div className="relative">
                 <Input
                   id="api-key"
@@ -290,7 +314,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                 <Button
                   variant="secondary"
                   onClick={handleTestKey}
-                  disabled={!apiKey.trim() || isValidating}
+                  disabled={isValidating}
                   className="w-full"
                 >
                   <FlaskConical className="h-4 w-4 mr-2" />
@@ -309,7 +333,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={!apiKey.trim() || isValidating}
+                disabled={isValidating}
                 className="min-w-[120px] btn-premium"
               >
                 {isSaved ? (
