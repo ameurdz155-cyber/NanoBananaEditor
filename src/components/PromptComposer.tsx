@@ -116,6 +116,7 @@ export const PromptComposer: React.FC = () => {
   const historyPopoverRef = useRef<HTMLDivElement | null>(null);
   const historyButtonRef = useRef<HTMLButtonElement | null>(null);
   const historySearchInputRef = useRef<HTMLInputElement | null>(null);
+  const validationAbortRef = useRef(false);
 
   // Use the panel resize hook
   const { handleResizeMouseDown, handleResizeTouchStart } = usePromptPanelResize({
@@ -276,6 +277,39 @@ export const PromptComposer: React.FC = () => {
     };
   }, [selectedTool]);
 
+  const handleGenerateRef = useRef<() => Promise<void>>(async () => {});
+  const isGeneratingRef = useRef(isGenerating);
+  const isValidatingRef = useRef(isValidating);
+
+  React.useEffect(() => {
+    isGeneratingRef.current = isGenerating;
+  }, [isGenerating]);
+
+  React.useEffect(() => {
+    isValidatingRef.current = isValidating;
+  }, [isValidating]);
+
+  // Listen for triggerGenerate and cancelGeneration events from Header button
+  React.useEffect(() => {
+    const handleTriggerGenerate = () => {
+      handleGenerateRef.current();
+    };
+
+    const handleCancelGeneration = () => {
+      if (isGeneratingRef.current || isValidatingRef.current) {
+        handleGenerateRef.current();
+      }
+    };
+    
+    window.addEventListener('triggerGenerate', handleTriggerGenerate);
+    window.addEventListener('cancelGeneration', handleCancelGeneration);
+    
+    return () => {
+      window.removeEventListener('triggerGenerate', handleTriggerGenerate);
+      window.removeEventListener('cancelGeneration', handleCancelGeneration);
+    };
+  }, []);
+
 
   const handleImprovePrompt = async () => {
     // If already improving, stop the improvement
@@ -312,6 +346,14 @@ export const PromptComposer: React.FC = () => {
   };
 
   const handleGenerate = async () => {
+    // If validation is in progress, cancel it and exit early
+    if (isValidating) {
+      validationAbortRef.current = true;
+      setIsValidating(false);
+      setApiKeyError(null);
+      return;
+    }
+
     // If already generating, stop the generation
     if (isGenerating) {
       if (selectedTool === 'generate') {
@@ -334,8 +376,15 @@ export const PromptComposer: React.FC = () => {
     setApiKeyError(null);
     
     // Validate API key before generating
+    validationAbortRef.current = false;
     setIsValidating(true);
     const validation = await validateApiKey();
+
+    if (validationAbortRef.current) {
+      validationAbortRef.current = false;
+      return;
+    }
+
     setIsValidating(false);
     
     if (!validation.valid) {
@@ -393,6 +442,8 @@ export const PromptComposer: React.FC = () => {
       edit(currentPrompt);
     }
   };
+
+  handleGenerateRef.current = handleGenerate;
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1141,14 +1192,14 @@ export const PromptComposer: React.FC = () => {
       <div className="space-y-2 flex-shrink-0">
         <Button
           onClick={handleGenerate}
-          disabled={isValidating || (!isGenerating && !currentPrompt.trim())}
+          disabled={!isGenerating && !isValidating && !currentPrompt.trim()}
           className="relative w-full h-14 text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           size="lg"
         >
           {isValidating ? (
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-              <span className="text-white">{t.validating}</span>
+              <X className="h-5 w-5 mr-2" />
+              <span className="text-white">{t.cancel}</span>
             </div>
           ) : isGenerating ? (
             <div className="flex items-center justify-center">
@@ -1165,7 +1216,7 @@ export const PromptComposer: React.FC = () => {
           )}
         </Button>
         <p className="text-xs text-center text-gray-500">
-          {t.pressCtrlEnter}
+          {isValidating ? t.validating : t.pressCtrlEnter}
         </p>
       </div>
 

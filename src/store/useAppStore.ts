@@ -60,6 +60,7 @@ interface AppState {
   modelFamily: 'gemini' | 'imagen';
   modelName: string;
   availableImagenModels: string[];
+  iterations: number;
   
   // History and variants
   selectedGenerationId: string | null;
@@ -111,6 +112,7 @@ interface AppState {
   setModelFamily: (family: 'gemini' | 'imagen') => void;
   setModelName: (name: string) => void;
   setAvailableImagenModels: (models: string[]) => void;
+  setIterations: (iterations: number) => void;
   
   addGeneration: (generation: Generation) => void;
   addEdit: (edit: Edit) => void;
@@ -202,8 +204,9 @@ export const useAppStore = create<AppState>()(
       seed: null,
       selectedTemplate: null,
   modelFamily: 'gemini',
-  modelName: 'gemini-2.5-flash-image-preview',
+  modelName: 'models/gemini-2.5-flash-image',
   availableImagenModels: ['imagen-3.0-002'],
+      iterations: 1,
       
       selectedGenerationId: null,
       selectedEditId: null,
@@ -288,7 +291,7 @@ export const useAppStore = create<AppState>()(
         }
         const nextName = family === 'imagen'
           ? state.availableImagenModels[0] || 'imagen-3.0-002'
-          : 'gemini-2.5-flash-image-preview';
+          : 'models/gemini-2.5-flash-image';
         return { modelFamily: family, modelName: nextName };
       }),
       setModelName: (name) => set({ modelName: name }),
@@ -314,6 +317,7 @@ export const useAppStore = create<AppState>()(
           modelName: nextModelName,
         };
       }),
+      setIterations: (iterations) => set({ iterations }),
       
       addGeneration: (generation) => set((state) => ({
         currentProject: state.currentProject ? {
@@ -518,6 +522,7 @@ export const useAppStore = create<AppState>()(
           modelFamily: state.modelFamily,
           modelName: state.modelName,
           availableImagenModels: state.availableImagenModels,
+          iterations: state.iterations,
         }),
         storage: {
           getItem: (name) => {

@@ -16,7 +16,7 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
     raise RuntimeError("GEMINI_API_KEY environment variable is missing")
 
-GEMINI_FLASH_MODEL = os.getenv("GEMINI_FLASH_MODEL", "gemini-2.5-flash-image-preview")
+GEMINI_FLASH_MODEL = os.getenv("GEMINI_FLASH_MODEL", "models/gemini-2.5-flash-image")
 IMAGEN_MODEL = os.getenv("IMAGEN_MODEL", "imagen-3.0-002")
 AUTH_USERNAME = os.getenv("AUTH_USERNAME", "admin")
 AUTH_PASSWORD = os.getenv("AUTH_PASSWORD", "admin")
@@ -81,9 +81,6 @@ def _build_generation_args(
     *,
     temperature: Optional[float],
     seed: Optional[int],
-    aspect_ratio: Optional[str],
-    width: Optional[int],
-    height: Optional[int],
 ) -> Dict[str, Any]:
     generation_config: Dict[str, Any] = {}
     if temperature is not None:
@@ -91,20 +88,9 @@ def _build_generation_args(
     if seed is not None:
         generation_config["seed"] = seed
 
-    image_generation_config: Dict[str, Any] = {}
-    if aspect_ratio:
-        image_generation_config["aspect_ratio"] = aspect_ratio
-    if width and height:
-        image_generation_config["output_image_dimensions"] = {
-            "width_pixels": width,
-            "height_pixels": height,
-        }
-
     args: Dict[str, Any] = {}
     if generation_config:
         args["generation_config"] = generation_config
-    if image_generation_config:
-        args["image_generation_config"] = image_generation_config
 
     return args
 
@@ -186,6 +172,15 @@ async def generate_with_gemini(payload: ImageRequest) -> GenerateResponse:
     model = genai.GenerativeModel(model_name=model_name)
 
     prompt_text = payload.prompt
+
+    dimension_hints: list[str] = []
+    if payload.aspect_ratio:
+        dimension_hints.append(f"Desired aspect ratio: {payload.aspect_ratio}")
+    if payload.width and payload.height:
+        dimension_hints.append(f"Preferred output resolution: {payload.width}x{payload.height} pixels")
+    if dimension_hints:
+        prompt_text = "\n".join([prompt_text, *dimension_hints])
+
     if payload.negative_prompt:
         prompt_text = f"{prompt_text}\nDo not include: {payload.negative_prompt}"
 
@@ -193,9 +188,6 @@ async def generate_with_gemini(payload: ImageRequest) -> GenerateResponse:
     args = _build_generation_args(
         temperature=payload.temperature,
         seed=payload.seed,
-        aspect_ratio=payload.aspect_ratio,
-        width=payload.width,
-        height=payload.height,
     )
 
     images: List[ImagePayload] = []
@@ -348,9 +340,6 @@ async def edit_with_gemini(payload: EditRequest) -> EditResponse:
     args = _build_generation_args(
         temperature=payload.temperature,
         seed=payload.seed,
-        aspect_ratio=None,
-        width=None,
-        height=None,
     )
 
     try:

@@ -17,7 +17,7 @@ export interface TextToImageResponse {
 
 export class TextToImageService {
   private genAI: GoogleGenAI | null = null;
-  private modelName = 'gemini-2.5-flash-image-preview';
+  private modelName = 'models/gemini-2.5-flash-image';
 
   private getApiKey(providedKey?: string): string {
     const key = providedKey ||
@@ -82,9 +82,13 @@ export class TextToImageService {
       }
 
       const images: string[] = [];
-      for (const part of response.candidates[0].content.parts) {
-        if (part.inlineData) {
-          images.push(part.inlineData.data);
+      const primaryCandidate = response.candidates[0];
+      const parts = primaryCandidate?.content?.parts ?? [];
+
+      for (const part of parts) {
+        const inlineData = (part as { inlineData?: { data?: string } }).inlineData;
+        if (inlineData?.data) {
+          images.push(inlineData.data);
         }
       }
 
@@ -128,7 +132,7 @@ export class TextToImageService {
       const key = this.getApiKey(apiKey);
       const testClient = new GoogleGenAI({ apiKey: key });
 
-      const response = await testClient.models.generateContent({
+      await testClient.models.generateContent({
         model: this.modelName,
         contents: 'test',
       });

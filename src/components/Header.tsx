@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from './ui/Button';
-import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut, BookOpen, Users, Package, Wallet } from 'lucide-react';
+import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut, BookOpen, Users, Package, Wallet, Sparkles } from 'lucide-react';
 import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
 import { SaveSuccessModal } from './SaveSuccessModal';
@@ -33,6 +33,10 @@ export const Header: React.FC = () => {
     addImageToBoard,
     savePath,
     lastGenerationParameters,
+    isGenerating,
+    generationProgress,
+    iterations,
+    setIterations,
   } = useAppStore();
   const t = getTranslation(language);
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -171,6 +175,67 @@ export const Header: React.FC = () => {
           </div>
           <div className="px-3 py-1 text-xs font-semibold" style={{ color: 'var(--accent-cyan)', border: 'none', background: 'transparent' }}>
             {t.versionBadge}
+          </div>
+          
+          {/* Iterations Input + Generate Button (compact group) */}
+          <div className="flex items-center space-x-0 bg-gray-900/90 border border-gray-700/60 rounded-lg overflow-hidden hover:border-purple-500/50 transition-colors group">
+            <div className="relative">
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={iterations}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 1;
+                  setIterations(Math.max(1, Math.min(10, value)));
+                }}
+                disabled={isGenerating}
+                aria-label={t.iterations || 'Iterations'}
+                className="w-12 h-9 px-2 bg-gray-800 border-0 border-r border-gray-700 text-center text-sm text-gray-100 font-medium focus:outline-none focus:ring-0 hover:bg-gray-750 transition-colors peer"
+              />
+              {/* Modern tooltip on hover */}
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 bg-gray-800 border border-purple-500/50 rounded text-xs text-gray-200 whitespace-nowrap opacity-0 pointer-events-none peer-hover:opacity-100 transition-opacity duration-200 shadow-lg backdrop-blur-sm">
+                <span className="font-semibold text-purple-400">{t.iterations || 'Iterations'}</span>
+                <span className="text-gray-400 mx-1">·</span>
+                <span>{iterations} {iterations === 1 ? 'image' : 'images'}</span>
+                <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-purple-500/50"></div>
+              </div>
+            </div>
+            <Button 
+              variant={isGenerating ? "default" : "ghost"}
+              size="sm" 
+              onClick={() => {
+                if (isGenerating) {
+                  // Cancel generation
+                  window.dispatchEvent(new CustomEvent('cancelGeneration'));
+                } else {
+                  // Start generation
+                  window.dispatchEvent(new CustomEvent('triggerGenerate'));
+                }
+              }}
+              className={cn(
+                "h-9 px-4 rounded-none border-0",
+                isGenerating ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 cursor-pointer" : "hover:bg-gray-800/80"
+              )}
+            >
+              {isGenerating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                  {generationProgress.total > 0 ? (
+                    <span className="whitespace-nowrap">
+                      {t.stopGeneration} ({generationProgress.current}/{generationProgress.total})
+                    </span>
+                  ) : (
+                    <span>{t.stopGeneration}</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  <span>{t.generate}</span>
+                </>
+              )}
+            </Button>
           </div>
         </div>
 

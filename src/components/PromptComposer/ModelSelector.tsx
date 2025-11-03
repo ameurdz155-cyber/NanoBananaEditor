@@ -25,17 +25,38 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   onModelNameChange,
   t,
 }) => {
+  React.useEffect(() => {
+    if (modelName === 'gemini-2.5-flash-image-preview') {
+      onModelFamilyChange('gemini');
+      onModelNameChange('models/gemini-2.5-flash-image');
+    }
+  }, [modelName, onModelFamilyChange, onModelNameChange]);
+
   // Create combined list of all available models
   const allModels = React.useMemo(() => {
     const models: Array<{ value: string; label: string; family: ModelFamily }> = [];
-    
-    // Add Gemini model
-    models.push({
-      value: modelName || 'gemini-2.5-flash-image-preview',
-      label: `${t.modelOptionGemini} - ${modelName || 'gemini-2.5-flash-image-preview'}`,
-      family: 'gemini',
+
+    const defaultGeminiModels = [
+      'models/gemini-2.5-flash-image',
+    ];
+
+    const geminiModels = Array.from(
+      new Set(
+        [...defaultGeminiModels, modelName]
+          .filter(Boolean)
+          .map((entry) => entry!.trim())
+          .filter((entry) => entry.length > 0)
+      )
+    );
+
+    geminiModels.forEach((model) => {
+      models.push({
+        value: model,
+        label: `${t.modelOptionGemini} - ${model}`,
+        family: 'gemini',
+      });
     });
-    
+
     // Add Imagen models
     if (availableImagenModels.length > 0) {
       availableImagenModels.forEach((model) => {
