@@ -53,6 +53,7 @@ interface AppState {
   
   // Generation state
   isGenerating: boolean;
+  isValidating: boolean;
   currentPrompt: string;
   temperature: number;
   seed: number | null;
@@ -105,6 +106,7 @@ interface AppState {
   setShowMasks: (show: boolean) => void;
   
   setIsGenerating: (generating: boolean) => void;
+  setIsValidating: (validating: boolean) => void;
   setCurrentPrompt: (prompt: string) => void;
   setTemperature: (temp: number) => void;
   setSeed: (seed: number | null) => void;
@@ -199,6 +201,7 @@ export const useAppStore = create<AppState>()(
       showMasks: true,
       
       isGenerating: false,
+      isValidating: false,
       currentPrompt: '',
       temperature: 0.7,
       seed: null,
@@ -281,6 +284,7 @@ export const useAppStore = create<AppState>()(
       setShowMasks: (show) => set({ showMasks: show }),
       
       setIsGenerating: (generating) => set({ isGenerating: generating }),
+      setIsValidating: (validating) => set({ isValidating: validating }),
       setCurrentPrompt: (prompt) => set({ currentPrompt: prompt }),
       setTemperature: (temp) => set({ temperature: temp }),
       setSeed: (seed) => set({ seed: seed }),

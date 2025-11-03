@@ -26,6 +26,7 @@ export const PromptComposer: React.FC = () => {
     seed,
     setSeed,
     isGenerating,
+  isValidating,
     uploadedImages,
     addUploadedImage,
     removeUploadedImage,
@@ -60,6 +61,9 @@ export const PromptComposer: React.FC = () => {
     setModelName,
     availableImagenModels,
     setAvailableImagenModels,
+    iterations,
+    setIterations,
+    setIsValidating,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -83,7 +87,6 @@ export const PromptComposer: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showHintsModal, setShowHintsModal] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [isImproving, setIsImproving] = useState(false);
   const [improvedPrompt, setImprovedPrompt] = useState<string | null>(null);
@@ -99,7 +102,6 @@ export const PromptComposer: React.FC = () => {
   const [savedPromptBeforeTemplate, setSavedPromptBeforeTemplate] = useState<string>('');
   const [showNegativePrompt, setShowNegativePrompt] = useState(false);
   const [negativePrompt, setNegativePrompt] = useState<string>('');
-  const [iterations, setIterations] = useState<number>(1);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [modelLoadError, setModelLoadError] = useState<string | null>(null);
   const [isMobileViewport, setIsMobileViewport] = useState(false);

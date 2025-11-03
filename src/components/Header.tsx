@@ -34,6 +34,7 @@ export const Header: React.FC = () => {
     savePath,
     lastGenerationParameters,
     isGenerating,
+    isValidating,
     generationProgress,
     iterations,
     setIterations,
@@ -189,7 +190,7 @@ export const Header: React.FC = () => {
                   const value = parseInt(e.target.value) || 1;
                   setIterations(Math.max(1, Math.min(10, value)));
                 }}
-                disabled={isGenerating}
+                disabled={isGenerating || isValidating}
                 aria-label={t.iterations || 'Iterations'}
                 className="w-12 h-9 px-2 bg-gray-800 border-0 border-r border-gray-700 text-center text-sm text-gray-100 font-medium focus:outline-none focus:ring-0 hover:bg-gray-750 transition-colors peer"
               />
@@ -202,10 +203,10 @@ export const Header: React.FC = () => {
               </div>
             </div>
             <Button 
-              variant={isGenerating ? "default" : "ghost"}
+              variant={isGenerating || isValidating ? 'default' : 'ghost'}
               size="sm" 
               onClick={() => {
-                if (isGenerating) {
+                if (isGenerating || isValidating) {
                   // Cancel generation
                   window.dispatchEvent(new CustomEvent('cancelGeneration'));
                 } else {
@@ -215,7 +216,11 @@ export const Header: React.FC = () => {
               }}
               className={cn(
                 "h-9 px-4 rounded-none border-0",
-                isGenerating ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 cursor-pointer" : "hover:bg-gray-800/80"
+                isGenerating
+                  ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 cursor-pointer'
+                  : isValidating
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-600 hover:to-blue-600 cursor-pointer'
+                    : 'hover:bg-gray-800/80'
               )}
             >
               {isGenerating ? (
@@ -228,6 +233,11 @@ export const Header: React.FC = () => {
                   ) : (
                     <span>{t.stopGeneration}</span>
                   )}
+                </>
+              ) : isValidating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+                  <span>{t.validating}</span>
                 </>
               ) : (
                 <>
