@@ -1,8 +1,21 @@
 import React from 'react';
-import { Sparkles, LayoutDashboard, ArrowUpCircle, Workflow } from 'lucide-react';
+import { Sparkles, Workflow } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 import { getTranslation, type Translations } from '../i18n/translations';
+
+const UpscalingIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 256 256"
+    aria-hidden="true"
+    focusable="false"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="currentColor"
+  >
+    <path d="M140 88a12 12 0 0 1 12-12h32a12 12 0 0 1 12 12v32a12 12 0 0 1-24 0V100H152A12 12 0 0 1 140 88ZM72 180h32a12 12 0 0 0 0-24H84V136a12 12 0 0 0-24 0v32A12 12 0 0 0 72 180ZM236 56V200a20 20 0 0 1-20 20H40a20 20 0 0 1-20-20V56A20 20 0 0 1 40 36H216A20 20 0 0 1 236 56Zm-24 4H44V196H212Z" />
+  </svg>
+);
 
 const navItems: Array<{
   key: 'generate' | 'canvas' | 'upscaling' | 'workflows';
@@ -11,9 +24,8 @@ const navItems: Array<{
   fallback: string;
 }> = [
   { key: 'generate', icon: Sparkles, translationKey: 'generate', fallback: 'Generate' },
-  { key: 'canvas', icon: LayoutDashboard, translationKey: 'canvasTab', fallback: 'Canvas' },
-  { key: 'upscaling', icon: ArrowUpCircle, translationKey: 'upscalingTab', fallback: 'Upscaling' },
-  { key: 'workflows', icon: Workflow, translationKey: 'workflowsTab', fallback: 'Workflows' },
+  { key: 'upscaling', icon: UpscalingIcon, translationKey: 'upscalingTab', fallback: 'Upscaling' },
+  // { key: 'workflows', icon: Workflow, translationKey: 'workflowsTab', fallback: 'Workflows' },
 ];
 
 export const SideNavigation: React.FC = () => {
