@@ -27,3 +27,5 @@ dist-ssr
 .env
 gemini_tunnel/.env
 gemini_tunnel/credentials.json
+gemini_tunnel/test.json
+

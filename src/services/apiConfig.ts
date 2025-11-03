@@ -1,13 +1,9 @@
-const DEFAULT_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://127.0.0.1:9000';
+const FALLBACK_BASE_URL = 'http://127.0.0.1:9000';
 
-export const BACKEND_URL_STORAGE_KEY = 'ai_pod_backend_url';
-export const API_KEY_STORAGE_KEY = 'gemini_api_key';
-
-const sanitizeBaseUrl = (value: string) => {
-  const trimmed = value.trim();
+const sanitizeBaseUrl = (value: string | undefined | null): string => {
+  const trimmed = (value ?? '').trim();
   if (!trimmed) {
-    return DEFAULT_BASE_URL;
+    return FALLBACK_BASE_URL;
   }
 
   try {
@@ -15,50 +11,21 @@ const sanitizeBaseUrl = (value: string) => {
     const url = new URL(withScheme);
     return url.toString().replace(/\/$/, '');
   } catch {
-    return DEFAULT_BASE_URL;
+    return FALLBACK_BASE_URL;
   }
 };
 
-export const getStoredBackendUrl = (): string => {
-  if (typeof window === 'undefined') {
-    return DEFAULT_BASE_URL;
-  }
-  const stored = window.localStorage.getItem(BACKEND_URL_STORAGE_KEY);
-  if (!stored) {
-    return DEFAULT_BASE_URL;
-  }
-  return sanitizeBaseUrl(stored);
-};
+const BASE_URL = sanitizeBaseUrl(import.meta.env.VITE_API_BASE_URL as string | undefined);
 
-export const setStoredBackendUrl = (value: string) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-  if (!value.trim()) {
-    window.localStorage.removeItem(BACKEND_URL_STORAGE_KEY);
-    return;
-  }
-  window.localStorage.setItem(BACKEND_URL_STORAGE_KEY, sanitizeBaseUrl(value));
-};
+const API_KEY = (() => {
+  const raw = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+  const trimmed = raw?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : null;
+})();
 
-export const getStoredApiKey = (): string | null => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const key = window.localStorage.getItem(API_KEY_STORAGE_KEY);
-  return key && key.trim() ? key.trim() : null;
-};
+export const getStoredBackendUrl = (): string => BASE_URL;
 
-export const setStoredApiKey = (value: string | null) => {
-  if (typeof window === 'undefined') {
-    return;
-  }
-  if (!value || !value.trim()) {
-    window.localStorage.removeItem(API_KEY_STORAGE_KEY);
-    return;
-  }
-  window.localStorage.setItem(API_KEY_STORAGE_KEY, value.trim());
-};
+export const getStoredApiKey = (): string | null => API_KEY;
 
 export const joinBackendPath = (path: string): string => {
   const base = getStoredBackendUrl().replace(/\/$/, '');

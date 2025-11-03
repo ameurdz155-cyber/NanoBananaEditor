@@ -15,6 +15,9 @@ import { ModelSelector } from './PromptComposer/ModelSelector';
 import { TemplateSelector } from './PromptComposer/TemplateSelector';
 import type { PromptTemplate } from './TemplatesView';
 
+const DEFAULT_MODEL_FAMILY = 'gemini';
+const DEFAULT_MODEL_NAME = 'models/gemini-2.5-flash-image';
+
 export const PromptComposer: React.FC = () => {
   const {
     currentPrompt,
@@ -212,6 +215,15 @@ export const PromptComposer: React.FC = () => {
     setImageHeight(Math.max(64, Math.min(1536, newHeight)));
   };
 
+  React.useEffect(() => {
+    if (modelFamily !== DEFAULT_MODEL_FAMILY) {
+      setModelFamily(DEFAULT_MODEL_FAMILY);
+    }
+    if (modelName !== DEFAULT_MODEL_NAME) {
+      setModelName(DEFAULT_MODEL_NAME);
+    }
+  }, [modelFamily, modelName, setModelFamily, setModelName]);
+
   // Update width when height changes (maintain aspect ratio)
   const handleHeightChange = (newHeight: number) => {
     setImageHeight(newHeight);
@@ -385,6 +397,25 @@ export const PromptComposer: React.FC = () => {
     }
 
     if (!currentPrompt.trim()) return;
+
+    const activeModelFamily = DEFAULT_MODEL_FAMILY;
+    const activeModelName = DEFAULT_MODEL_NAME;
+
+    if (modelFamily !== activeModelFamily) {
+      setModelFamily(activeModelFamily);
+    }
+    if (modelName !== activeModelName) {
+      setModelName(activeModelName);
+    }
+    
+    // Log the selected model when generate is clicked
+    console.log('🎨 Generation Started with Model:', {
+      modelFamily: activeModelFamily,
+      modelName: activeModelName,
+      fullModelPath: activeModelName,
+      tool: selectedTool,
+      prompt: currentPrompt.substring(0, 50) + '...'
+    });
     
     // Check if prompt contains {prompt} or {photo} placeholders
     if (currentPrompt.includes('{prompt}') || currentPrompt.includes('{photo}')) {
@@ -441,8 +472,8 @@ export const PromptComposer: React.FC = () => {
             iterationIndex: currentIteration,
             totalIterations,
             referenceCount: referenceImages.length,
-            modelType: modelFamily,
-            modelName,
+            modelType: activeModelFamily,
+            modelName: activeModelName,
           });
           
           // Add a small delay between iterations to avoid overwhelming the API

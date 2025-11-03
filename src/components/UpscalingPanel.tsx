@@ -1,21 +1,21 @@
 import React from 'react';
-import { Upload, ChevronDown, SlidersHorizontal, ChevronLeft, Loader2 } from 'lucide-react';
+import { Upload, SlidersHorizontal, ChevronLeft, Loader2, ChevronDown } from 'lucide-react';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { usePromptPanelResize } from './PromptComposer/usePromptPanelResize';
-import { buildJsonHeaders, joinBackendPath } from '../services/apiConfig';
 import { upscaleImage } from '../services/upscaleService';
 import { getTranslation } from '../i18n/translations';
 import { Generation, Asset } from '../types';
 import { createImageFromBase64, generateId } from '../utils/imageUtils';
 
+const DEFAULT_UPSCALE_MODEL = 'models/imagen-3.0-generate-002';
+const DEFAULT_UPSCALE_MODEL_LABEL = 'Imagen 3 · Generate 002';
+
 export const UpscalingPanel: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = React.useState(true);
   const [creativity, setCreativity] = React.useState(0);
   const [structure, setStructure] = React.useState(0);
-  const [models, setModels] = React.useState<string[]>(['imagen-3.0-002']);
-  const [selectedModel, setSelectedModel] = React.useState('imagen-3.0-002');
-  const [loadingModels, setLoadingModels] = React.useState(false);
+  const [selectedModel, setSelectedModel] = React.useState(DEFAULT_UPSCALE_MODEL);
   const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [sourceImage, setSourceImage] = React.useState<string | null>(null);
@@ -27,7 +27,6 @@ export const UpscalingPanel: React.FC = () => {
   const canvasImage = useAppStore((state) => state.canvasImage);
   const uploadedImages = useAppStore((state) => state.uploadedImages);
   const setCanvasImage = useAppStore((state) => state.setCanvasImage);
-  const addUploadedImage = useAppStore((state) => state.addUploadedImage);
   const addGeneration = useAppStore((state) => state.addGeneration);
   const currentProject = useAppStore((state) => state.currentProject);
   const setCurrentProject = useAppStore((state) => state.setCurrentProject);
@@ -49,48 +48,7 @@ export const UpscalingPanel: React.FC = () => {
   });
 
   React.useEffect(() => {
-    let isMounted = true;
-    const controller = new AbortController();
-  setLoadingModels(true);
-
-    fetch(joinBackendPath('/models/imagen'), {
-      method: 'GET',
-      headers: buildJsonHeaders(),
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error('Failed to load Imagen models');
-        }
-        const body = await response.json();
-        const fetched = Array.isArray(body?.models) ? body.models.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0) : [];
-        if (isMounted && fetched.length > 0) {
-          setModels(fetched);
-          setSelectedModel((current) => (fetched.includes(current) ? current : fetched[0]));
-        }
-      })
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return;
-        }
-        if ((error as { name?: string })?.name === 'AbortError') {
-          return;
-        }
-        if (isMounted) {
-          setStatusMessage(null);
-          setErrorMessage('Unable to load Imagen model list. Using defaults.');
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setLoadingModels(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
+    setSelectedModel(DEFAULT_UPSCALE_MODEL);
   }, []);
 
   React.useEffect(() => {
@@ -125,9 +83,7 @@ export const UpscalingPanel: React.FC = () => {
         setErrorMessage('Unable to read selected file.');
         return;
       }
-      setSourceImage(result);
-      setCanvasImage(result);
-      addUploadedImage(result);
+  setSourceImage(result);
       setErrorMessage(null);
       setStatusMessage('Image loaded for upscaling.');
     };
@@ -307,7 +263,6 @@ export const UpscalingPanel: React.FC = () => {
       }
 
       setCanvasImage(dataUrl);
-      addUploadedImage(dataUrl);
       setSourceImage(dataUrl);
       setUpscaleScale(response.scale);
       setStatusMessage(`Upscaling complete (${response.scale}x) with ${response.model}. Saved to history as UPSCALL.`);
@@ -329,10 +284,9 @@ export const UpscalingPanel: React.FC = () => {
     sourceImage,
     toBase64Payload,
     upscaleScale,
-    selectedModel,
-    setCanvasImage,
-    addUploadedImage,
-    addGeneration,
+  selectedModel,
+  setCanvasImage,
+  addGeneration,
     currentProject,
     setCurrentProject,
     setUpscaleScale,
@@ -450,32 +404,12 @@ export const UpscalingPanel: React.FC = () => {
 
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-400">Upscale Model</label>
-                {models.length > 0 ? (
-                  <div className="relative">
-                    <select
-                      className="w-full appearance-none rounded-lg border border-gray-800 bg-gray-950/80 px-3 py-2 text-sm text-gray-100 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400"
-                      value={selectedModel}
-                      onChange={(event) => setSelectedModel(event.target.value)}
-                      disabled={isUpscaling || loadingModels}
-                    >
-                      {models.map((model) => (
-                        <option key={model} value={model} className="bg-gray-950 text-gray-900">
-                          {model}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-950/80 px-3 py-2 text-sm text-gray-500">
-                    <span>No Imagen models available</span>
-                  </div>
-                )}
-                {loadingModels && (
-                  <p className="text-[11px] text-gray-500">Loading model list…</p>
-                )}
+                <div className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-950/80 px-3 py-2 text-sm text-gray-100">
+                  <span className="truncate" title={DEFAULT_UPSCALE_MODEL}>{DEFAULT_UPSCALE_MODEL_LABEL}</span>
+                  <span className="text-[10px] uppercase tracking-wide text-gray-500">locked</span>
+                </div>
                 <p className="text-[11px] leading-snug text-amber-400/90">
-                  Models are fetched from Google Imagen. Upscaling uses mock processing and returns the same image.
+                  Locked to Google Imagen 3.0 Generate 002. Upscaling uses mock processing and returns the same image.
                 </p>
               </div>
 
@@ -492,7 +426,7 @@ export const UpscalingPanel: React.FC = () => {
                   value={upscaleScale}
                   onChange={(event) => setUpscaleScale(Number(event.target.value))}
                   className="w-full h-2 rounded-full bg-gray-800/70 accent-teal-400"
-                  disabled={isUpscaling || loadingModels}
+                  disabled={isUpscaling}
                 />
               </div>
 
@@ -564,7 +498,7 @@ export const UpscalingPanel: React.FC = () => {
                   className="w-full justify-center bg-teal-500 text-black font-semibold hover:bg-teal-400 disabled:opacity-60"
                   onClick={handleUpscaleAction}
                   aria-pressed={isUpscaling}
-                  disabled={!selectedModel || !sourceImage || loadingModels}
+                  disabled={!sourceImage}
                 >
                   {isUpscaling ? (
                     <span className="flex items-center gap-2">

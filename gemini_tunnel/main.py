@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from PIL import Image
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
 
 import google.generativeai as genai
 
@@ -22,7 +23,10 @@ if not API_KEY:
     raise RuntimeError("GEMINI_API_KEY environment variable is missing")
 
 GEMINI_FLASH_MODEL = os.getenv("GEMINI_FLASH_MODEL", "models/gemini-2.5-flash-image")
-IMAGEN_MODEL = os.getenv("IMAGEN_MODEL", "imagen-3.0-002")
+# Use a Generative API compatible Imagen model name by default. The SDK
+# typically expects model names in the "models/..." format when using
+# genai.GenerativeModel. Use the generate-capable Imagen model.
+IMAGEN_MODEL = os.getenv("IMAGEN_MODEL", "models/imagen-3.0-generate-002")
 AUTH_USERNAME = os.getenv("AUTH_USERNAME", "admin")
 AUTH_PASSWORD = os.getenv("AUTH_PASSWORD", "admin")
 
@@ -31,9 +35,23 @@ GOOGLE_CLOUD_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT_ID", "gen-lang-client-
 GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "credentials.json")
 
-raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
-allowed_origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
-if not allowed_origins:
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+]
+
+raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+
+if raw_origins.strip():
+    allowed_origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+else:
+    allowed_origins = DEFAULT_ALLOWED_ORIGINS
+
+allow_all_origins = "*" in allowed_origins
+
+if allow_all_origins:
     allowed_origins = ["*"]
 
 # Configure the Gemini client once so requests reuse the same credentials.
@@ -43,8 +61,8 @@ app = FastAPI(title="Gemini Image Tunnel", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if allowed_origins == ["*"] else allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"] if allow_all_origins else allowed_origins,
+    allow_credentials=not allow_all_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -445,6 +463,22 @@ class LoginResponse(BaseModel):
     username: str
 
 
+class OAuthUrlResponse(BaseModel):
+    auth_url: str
+    message: str
+
+
+class OAuthCallbackRequest(BaseModel):
+    code: str
+    state: str
+
+
+class OAuthTokenResponse(BaseModel):
+    success: bool
+    message: str
+    token_valid: bool = False
+
+
 @app.get("/health")
 async def health_check() -> dict[str, str]:
     return {"status": "ok"}
@@ -513,47 +547,87 @@ async def generate_with_gemini(payload: ImageRequest) -> GenerateResponse:
 
 @app.post("/generate/imagen", response_model=GenerateResponse)
 async def generate_with_imagen(payload: ImagenRequest) -> GenerateResponse:
-    model_name = (payload.model or IMAGEN_MODEL).strip() or IMAGEN_MODEL
-    model = genai.ImageGenerationModel(model_name=model_name)
-
-    kwargs: Dict[str, Any] = {
-        "prompt": payload.prompt,
-        "number_of_images": payload.num_images,
-    }
-    if payload.negative_prompt:
-        kwargs["negative_prompt"] = payload.negative_prompt
-    if payload.aspect_ratio:
-        kwargs["aspect_ratio"] = payload.aspect_ratio
-    if payload.width and payload.height:
-        kwargs["image_size"] = {"width": payload.width, "height": payload.height}
-    if payload.seed is not None:
-        kwargs["seed"] = payload.seed
-    if payload.temperature is not None:
-        kwargs["temperature"] = payload.temperature
-
+    """Generate images using Imagen - For now, uses Gemini Flash as Imagen API requires different setup"""
+    
+    # Note: Imagen models require Vertex AI and different API endpoints
+    # For now, fall back to Gemini Flash which can generate images
+    print("⚠️  Note: Imagen models require Vertex AI setup. Using Gemini Flash for image generation.")
+    
+    # Use Gemini Flash model which supports image generation
+    model_name = GEMINI_FLASH_MODEL
+    
     try:
-        result = model.generate_images(**kwargs)
-    except Exception as exc:  # pragma: no cover
-        raise HTTPException(status_code=502, detail=f"Imagen request failed: {exc}") from exc
+        model = genai.GenerativeModel(model_name=model_name)
+    except Exception as exc:
+        print(f"❌ Failed to initialize model: {exc}")
+        raise HTTPException(status_code=500, detail=f"Failed to initialize model: {exc}") from exc
 
-    images: List[ImagePayload] = []
-    for image in getattr(result, "images", []) or []:
-        image_b64 = getattr(image, "image_base64", None)
-        if not image_b64:
-            continue
-        if isinstance(image_b64, bytes):
-            image_b64 = base64.b64encode(image_b64).decode("ascii")
-        images.append(
-            ImagePayload(
-                mime_type=getattr(image, "mime_type", "image/png"),
-                b64_data=image_b64,
-            )
+    # Build the prompt with image generation parameters
+    prompt_parts = [payload.prompt]
+    
+    # Add generation parameters as text hints
+    config_hints = []
+    if payload.negative_prompt:
+        config_hints.append(f"Avoid: {payload.negative_prompt}")
+    if payload.aspect_ratio and payload.aspect_ratio != "auto":
+        config_hints.append(f"Aspect ratio: {payload.aspect_ratio}")
+    if payload.width and payload.height:
+        config_hints.append(f"Size: {payload.width}x{payload.height}")
+    
+    if config_hints:
+        prompt_parts.append("\n\nGeneration settings:\n" + "\n".join(config_hints))
+    
+    full_prompt = "\n".join(prompt_parts)
+    
+    print(f"🎨 Generating with model: {model_name}")
+    print(f"📝 Prompt: {full_prompt[:100]}...")
+    
+    # Generate configuration
+    generation_config = {}
+    if payload.seed is not None:
+        generation_config["seed"] = payload.seed
+    if payload.temperature is not None:
+        generation_config["temperature"] = payload.temperature
+    
+    try:
+        # Generate the images
+        response = model.generate_content(
+            full_prompt,
+            generation_config=generation_config if generation_config else None
         )
-
-    if not images:
-        raise HTTPException(status_code=502, detail="Imagen did not return image content")
-
-    return GenerateResponse(model=model_name, images=images)
+        
+        # Extract images from response
+        images: List[ImagePayload] = []
+        
+        # Check if response contains image data
+        if hasattr(response, 'parts'):
+            for part in response.parts:
+                if hasattr(part, 'inline_data'):
+                    mime_type = part.inline_data.mime_type
+                    image_data = part.inline_data.data
+                    
+                    if isinstance(image_data, bytes):
+                        image_b64 = base64.b64encode(image_data).decode("ascii")
+                    else:
+                        image_b64 = image_data
+                    
+                    images.append(
+                        ImagePayload(
+                            mime_type=mime_type,
+                            b64_data=image_b64,
+                        )
+                    )
+        
+        if not images:
+            print(f"⚠️ No images found in response. Response type: {type(response)}")
+            raise HTTPException(status_code=502, detail="Model did not return image content. Try using Gemini model instead.")
+        
+        print(f"✅ Generated {len(images)} image(s)")
+        return GenerateResponse(model=model_name, images=images)
+        
+    except Exception as exc:
+        print(f"❌ Image generation failed: {exc}")
+        raise HTTPException(status_code=502, detail=f"Image generation failed: {exc}. Try using Gemini model instead.") from exc
 
 
 @app.post("/edit/gemini", response_model=EditResponse)
@@ -655,15 +729,23 @@ async def edit_with_gemini(payload: EditRequest) -> EditResponse:
 
 @app.get("/models/imagen")
 async def list_imagen_models() -> dict[str, List[str]]:
-    """List available Imagen models from Google Generative AI."""
+    """List available image generation models.
+
+    Note: True Imagen models require Vertex AI setup. For now, we return
+    Gemini models that support image generation through the Gemini API.
+    """
     try:
-        # Return hardcoded Imagen models to avoid slow API calls
-        # genai.list_models() can be slow and unreliable
-        models = ["imagen-3.0-002", "imagen-3.0-generate-001"]
+        # Return Gemini models that support image generation
+        # Imagen models require Vertex AI and different API setup
+        models = [
+            "models/gemini-2.0-flash-exp",
+            "models/gemini-exp-1206", 
+            GEMINI_FLASH_MODEL,
+        ]
         return {"models": models}
     except Exception as exc:  # pragma: no cover
         # Fallback to default model if listing fails
-        return {"models": ["imagen-3.0-002"]}
+        return {"models": [GEMINI_FLASH_MODEL]}
 
 
 @app.post("/upscale", response_model=UpscaleResponse)
@@ -925,3 +1007,154 @@ async def login(credentials: LoginRequest) -> LoginResponse:
         return LoginResponse(access_token="static-admin-token", username=AUTH_USERNAME)
 
     raise HTTPException(status_code=401, detail="Invalid username or password")
+
+
+# OAuth2 scopes required for Vertex AI
+VERTEX_AI_SCOPES = [
+    'https://www.googleapis.com/auth/cloud-platform',
+    'https://www.googleapis.com/auth/generative-language.tuning',
+]
+
+
+@app.get("/auth/vertex/url", response_model=OAuthUrlResponse)
+async def get_vertex_auth_url() -> OAuthUrlResponse:
+    """
+    Generate OAuth2 authorization URL for Vertex AI authentication.
+    
+    This endpoint returns a URL that users can visit to authorize
+    access to Google Cloud Vertex AI APIs.
+    """
+    credentials_path = GOOGLE_APPLICATION_CREDENTIALS
+    
+    # Make path absolute if relative
+    if not os.path.isabs(credentials_path):
+        credentials_path = os.path.join(os.path.dirname(__file__), credentials_path)
+    
+    if not os.path.exists(credentials_path):
+        raise HTTPException(
+            status_code=500,
+            detail=f"OAuth2 credentials file not found: {credentials_path}. "
+                   "Please download OAuth2 credentials from Google Cloud Console and save as credentials.json"
+        )
+    
+    try:
+        # Create OAuth2 flow
+        flow = Flow.from_client_secrets_file(
+            credentials_path,
+            scopes=VERTEX_AI_SCOPES,
+            redirect_uri='http://localhost:8080'
+        )
+        
+        # Generate authorization URL
+        auth_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true',
+            prompt='consent'
+        )
+        
+        return OAuthUrlResponse(
+            auth_url=auth_url,
+            message="Visit this URL to authorize access to Vertex AI"
+        )
+        
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate authorization URL: {str(exc)}"
+        ) from exc
+
+
+@app.post("/auth/vertex/callback", response_model=OAuthTokenResponse)
+async def handle_vertex_callback(callback_data: OAuthCallbackRequest) -> OAuthTokenResponse:
+    """
+    Handle OAuth2 callback and save access token.
+    
+    After user authorizes, call this endpoint with the authorization code
+    to complete the OAuth flow and save the token.
+    """
+    credentials_path = GOOGLE_APPLICATION_CREDENTIALS
+    
+    if not os.path.isabs(credentials_path):
+        credentials_path = os.path.join(os.path.dirname(__file__), credentials_path)
+    
+    if not os.path.exists(credentials_path):
+        raise HTTPException(
+            status_code=500,
+            detail="OAuth2 credentials file not found"
+        )
+    
+    try:
+        # Create OAuth2 flow
+        flow = Flow.from_client_secrets_file(
+            credentials_path,
+            scopes=VERTEX_AI_SCOPES,
+            redirect_uri='http://localhost:8080'
+        )
+        
+        # Exchange authorization code for tokens
+        flow.fetch_token(code=callback_data.code)
+        
+        # Get credentials
+        creds = flow.credentials
+        
+        # Save token to file
+        token_path = "token.json"
+        with open(token_path, 'w') as token_file:
+            token_file.write(creds.to_json())
+        
+        return OAuthTokenResponse(
+            success=True,
+            message=f"Successfully authenticated! Token saved to {token_path}",
+            token_valid=creds.valid
+        )
+        
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to exchange authorization code: {str(exc)}"
+        ) from exc
+
+
+@app.get("/auth/vertex/status")
+async def check_vertex_auth_status() -> Dict[str, Any]:
+    """
+    Check if Vertex AI authentication is configured and valid.
+    """
+    token_path = "token.json"
+    
+    status = {
+        "authenticated": False,
+        "token_exists": os.path.exists(token_path),
+        "token_valid": False,
+        "credentials_exists": os.path.exists(GOOGLE_APPLICATION_CREDENTIALS),
+        "project_id": GOOGLE_CLOUD_PROJECT_ID,
+        "location": GOOGLE_CLOUD_LOCATION,
+    }
+    
+    if status["token_exists"]:
+        try:
+            creds = Credentials.from_authorized_user_file(token_path, VERTEX_AI_SCOPES)
+            
+            if creds and creds.valid:
+                status["authenticated"] = True
+                status["token_valid"] = True
+                if creds.expiry:
+                    status["token_expiry"] = creds.expiry.isoformat()
+            elif creds and creds.expired and creds.refresh_token:
+                # Try to refresh
+                creds.refresh(Request())
+                status["authenticated"] = True
+                status["token_valid"] = True
+                status["token_refreshed"] = True
+                
+                # Save refreshed token
+                with open(token_path, 'w') as token_file:
+                    token_file.write(creds.to_json())
+            else:
+                status["message"] = "Token expired or invalid"
+        except Exception as e:
+            status["error"] = str(e)
+    else:
+        status["message"] = "No authentication token found. Please authenticate using /auth/vertex/url"
+    
+    return status

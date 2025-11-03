@@ -206,7 +206,7 @@ export const useAppStore = create<AppState>()(
       selectedTemplate: null,
   modelFamily: 'gemini',
   modelName: 'models/gemini-2.5-flash-image',
-  availableImagenModels: ['imagen-3.0-002'],
+  availableImagenModels: ['models/imagen-3.0-generate-002'],
       iterations: 1,
       
       selectedGenerationId: null,
@@ -294,7 +294,7 @@ export const useAppStore = create<AppState>()(
           return {};
         }
         const nextName = family === 'imagen'
-          ? state.availableImagenModels[0] || 'imagen-3.0-002'
+          ? state.availableImagenModels[0] || 'models/imagen-3.0-generate-002'
           : 'models/gemini-2.5-flash-image';
         return { modelFamily: family, modelName: nextName };
       }),
@@ -314,7 +314,7 @@ export const useAppStore = create<AppState>()(
         if (state.modelFamily === 'imagen' && nextModels.length > 0) {
           nextModelName = nextModels.includes(state.modelName) ? state.modelName : nextModels[0];
         } else if (state.modelFamily === 'imagen' && nextModels.length === 0) {
-          nextModelName = 'imagen-3.0-002';
+          nextModelName = 'models/imagen-3.0-generate-002';
         }
         return {
           availableImagenModels: nextModels,

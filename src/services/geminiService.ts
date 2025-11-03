@@ -114,7 +114,7 @@ class GeminiService {
       reference_images: request.referenceImages && request.referenceImages.length > 0 ? request.referenceImages : undefined,
       temperature: typeof request.temperature === 'number' ? request.temperature : undefined,
       seed: typeof request.seed === 'number' ? request.seed : undefined,
-      aspect_ratio: request.aspectRatio || undefined,
+      aspect_ratio: request.aspectRatio && request.aspectRatio !== 'auto' ? request.aspectRatio : undefined,
       width: request.width || undefined,
       height: request.height || undefined,
       num_images: request.numImages ?? 1,
@@ -201,8 +201,9 @@ export async function listImagenModels(): Promise<string[]> {
           .map((entry) => entry.trim())
           .filter((entry) => entry.length > 0)
       : [];
-    if (!models.includes('imagen-3.0-002')) {
-      models.push('imagen-3.0-002');
+    // Ensure a sensible default model name is present for older persisted state
+    if (!models.includes('models/imagen-3.0-generate-002')) {
+      models.push('models/imagen-3.0-generate-002');
     }
     return models;
   } catch (error) {

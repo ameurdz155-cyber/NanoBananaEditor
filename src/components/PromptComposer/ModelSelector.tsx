@@ -44,11 +44,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     });
 
     // Only Imagen 3
-    models.push({
-      value: 'imagen-3.0-002',
-      label: `${t.modelOptionImagen} - imagen-3.0-002`,
-      family: 'imagen',
-    });
+    // models.push({
+    //   // Use the backend-friendly model name (includes the models/ prefix)
+    //   value: 'models/imagen-3.0-generate-002',
+    //   label: `${t.modelOptionImagen} - models/imagen-3.0-generate-002`,
+    //   family: 'imagen',
+    // });
     
     return models;
   }, [t.modelOptionGemini, t.modelOptionImagen]);

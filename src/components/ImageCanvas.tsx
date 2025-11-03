@@ -12,11 +12,7 @@ import {
   LocateFixed,
   ChevronRight,
   Check,
-  ExternalLink,
-  Layers,
-  Workflow,
   History,
-  ImagePlus,
   ImageIcon,
   PenSquare
 } from 'lucide-react';
@@ -115,8 +111,9 @@ export const ImageCanvas: React.FC = () => {
   const contextImageUrl = useMemo(() => canvasImage ?? derivedImageUrl, [canvasImage, derivedImageUrl]);
   const hasCanvasImage = Boolean(canvasImage);
   const hasContextImage = Boolean(contextImageUrl);
-  const canAddToBoard = Boolean(activeItemId && boards.length);
+  const canAddToBoard = Boolean((activeItemId || contextImageUrl) && boards.length);
   const isFavorite = useMemo(() => (activeItemId ? isFavoriteImage(activeItemId) : false), [activeItemId, isFavoriteImage]);
+  const canToggleFavorite = Boolean(activeItemId || contextImageUrl);
   const hasPrompt = useMemo(() => promptText.trim().length > 0, [promptText]);
   const canRecallMetadata = useMemo(() => {
     const metadataSource = currentEdit ? parentGeneration : currentGeneration;
@@ -300,10 +297,21 @@ export const ImageCanvas: React.FC = () => {
   }, [currentEdit, currentGeneration, parentGeneration, setLastGenerationParameters, setSeed, setTemperature, closeContextMenu]);
 
   const handleToggleFavorite = useCallback(() => {
-    if (!activeItemId) return;
-    toggleFavoriteImage(activeItemId);
+    // Use activeItemId if available, or use imageIdentifier as fallback
+    const itemId = activeItemId || imageIdentifier;
+    if (!itemId) {
+      // If still no ID, try to find the generation/edit that matches the current canvas image
+      const matchingGen = generations.find(g => g.outputAssets?.[0]?.url === contextImageUrl);
+      const matchingEdit = edits.find(e => e.outputAssets?.[0]?.url === contextImageUrl);
+      const fallbackId = matchingGen?.id || matchingEdit?.id;
+      if (fallbackId) {
+        toggleFavoriteImage(fallbackId);
+      }
+    } else {
+      toggleFavoriteImage(itemId);
+    }
     closeContextMenu();
-  }, [activeItemId, toggleFavoriteImage, closeContextMenu]);
+  }, [activeItemId, imageIdentifier, contextImageUrl, generations, edits, toggleFavoriteImage, closeContextMenu]);
 
   const handleLocateInGallery = useCallback(() => {
     if (!activeItemType || !activeItemId) {
@@ -353,13 +361,6 @@ export const ImageCanvas: React.FC = () => {
         disabled: !contextImageUrl,
       },
       {
-        key: 'open-canvas',
-        icon: <ExternalLink className="h-4 w-4" />,
-        label: t.openInNewCanvas,
-        onClick: handleOpenCanvasWorkspace,
-        disabled: !contextImageUrl,
-      },
-      {
         key: 'add-reference',
         icon: <PlusCircle className="h-4 w-4" />,
         label: t.addCanvasImageToReferences,
@@ -380,17 +381,9 @@ export const ImageCanvas: React.FC = () => {
         onClick: handleSaveCanvasImage,
         disabled: !canvasImage,
       },
-      {
-        key: 'mask-layer',
-        icon: <Layers className="h-4 w-4" />,
-        label: t.asMaskLayer,
-        onClick: handleUseAsMaskLayer,
-        disabled: !contextImageUrl || selectedTool === 'mask',
-      },
     ], [
       contextImageUrl,
       t.setAsCanvasImage,
-      t.openInNewCanvas,
       t.addCanvasImageToReferences,
       t.copyPrompt,
       t.saveCanvasImage,
@@ -742,7 +735,7 @@ export const ImageCanvas: React.FC = () => {
           >
             <div className="p-2">
               <div className="px-2 pb-3">
-                <div className="grid grid-cols-6 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {iconActions.map(action => (
                     <IconButton
                       key={action.key}
@@ -756,12 +749,6 @@ export const ImageCanvas: React.FC = () => {
               </div>
 
               <div className="px-2 space-y-1">
-                <MenuItem
-                  icon={<Workflow className="h-4 w-4 text-gray-500" />}
-                  label={t.loadWorkflow}
-                  onClick={handleLoadWorkflow}
-                  disabled
-                />
                 <MenuItem
                   icon={<History className="h-4 w-4 text-blue-300" />}
                   label={t.recallMetadata}
@@ -780,12 +767,6 @@ export const ImageCanvas: React.FC = () => {
                   label={t.useForPromptTemplate}
                   onClick={handleUseForPromptTemplate}
                   disabled={!hasPrompt}
-                />
-                <MenuItem
-                  icon={<ImagePlus className="h-4 w-4 text-cyan-300" />}
-                  label={t.newCanvasFromImage}
-                  onClick={handleNewCanvasFromImage}
-                  disabled={!contextImageUrl}
                 />
               </div>
 
@@ -840,7 +821,7 @@ export const ImageCanvas: React.FC = () => {
                   icon={<Star className={cn('h-4 w-4', isFavorite ? 'text-yellow-300' : 'text-gray-400')} />}
                   label={t.starImage}
                   onClick={handleToggleFavorite}
-                  disabled={!activeItemId}
+                  disabled={!canToggleFavorite}
                 />
                 <MenuItem
                   icon={<LocateFixed className="h-4 w-4 text-cyan-300" />}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Loader2, ArrowRight, Chrome } from 'lucide-react';
+import { Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import logoIcon from '../assets/AI-POD-Lite-icon.png';
 
@@ -104,21 +104,6 @@ export const LoginPage: React.FC = () => {
                 </span>
               </button>
             </form>
-
-            <div className="flex items-center mt-6">
-              <span className="flex-grow border-t border-gray-200" />
-              <span className="mx-2.5 text-[10px] uppercase tracking-widest text-gray-400">Or</span>
-              <span className="flex-grow border-t border-gray-200" />
-            </div>
-
-            <button
-              type="button"
-              className="mt-4 w-full border border-gray-200/90 rounded-lg py-2.5 flex items-center justify-center space-x-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
-              disabled
-            >
-              <Chrome className="h-4 w-4 text-gray-500" />
-              <span className="text-sm">Continue with Google</span>
-            </button>
 
             <p className="text-center text-[10px] text-gray-400 mt-4">
               Use the default credentials <span className="font-semibold text-gray-700">admin / admin</span> to explore locally.

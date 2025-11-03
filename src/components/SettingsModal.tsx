@@ -1,14 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Save, Eye, EyeOff, Key, Sparkles, Shield, CheckCircle, AlertCircle, FlaskConical, Globe, Folder, FolderOpen } from 'lucide-react';
+import { X, Globe, Folder, FolderOpen, Shield, Key } from 'lucide-react';
 import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { validateApiKey } from '../services/geminiService';
 import {
   getStoredBackendUrl,
-  setStoredBackendUrl,
   getStoredApiKey,
-  setStoredApiKey,
 } from '../services/apiConfig';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation, Language } from '../i18n/translations';
@@ -23,90 +19,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
   const { language, setLanguage, savePath, setSavePath } = useAppStore();
   const t = getTranslation(language);
   const isTauri = isTauriEnvironment();
-  
-  const [backendUrl, setBackendUrl] = useState('');
-  const [apiKey, setApiKey] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationStatus, setValidationStatus] = useState<{ valid: boolean; message: string } | null>(null);
-
-  useEffect(() => {
-    setBackendUrl(getStoredBackendUrl());
-    const savedKey = getStoredApiKey();
-    setApiKey(savedKey || '');
-  }, [open]);
-
-  const handleTestKey = async () => {
-    const previousUrl = getStoredBackendUrl();
-    const previousKey = getStoredApiKey();
-
-    setStoredBackendUrl(backendUrl);
-    setStoredApiKey(apiKey.trim() || null);
-
-    setIsValidating(true);
-    setValidationStatus(null);
-
-    try {
-      const validation = await validateApiKey();
-      setIsValidating(false);
-
-      if (validation.valid) {
-        setValidationStatus({ valid: true, message: t.apiKeyValid });
-        setBackendUrl(getStoredBackendUrl());
-        setApiKey(getStoredApiKey() || '');
-      } else {
-        setValidationStatus({ valid: false, message: validation.error || t.apiKeyInvalid });
-        setStoredBackendUrl(previousUrl);
-        setStoredApiKey(previousKey || null);
-        setBackendUrl(previousUrl);
-        setApiKey(previousKey || '');
-      }
-    } catch (error) {
-      setIsValidating(false);
-      setValidationStatus({ valid: false, message: t.apiKeyInvalid });
-      setStoredBackendUrl(previousUrl);
-      setStoredApiKey(previousKey || null);
-      setBackendUrl(previousUrl);
-      setApiKey(previousKey || '');
-    }
-  };
-
-  const handleSave = async () => {
-    const previousUrl = getStoredBackendUrl();
-    const previousKey = getStoredApiKey();
-
-    setStoredBackendUrl(backendUrl);
-    setStoredApiKey(apiKey.trim() || null);
-
-    setIsValidating(true);
-    setValidationStatus(null);
-
-    const validation = await validateApiKey();
-    setIsValidating(false);
-
-    if (validation.valid) {
-      setValidationStatus({ valid: true, message: t.apiKeySaved });
-      setBackendUrl(getStoredBackendUrl());
-      setApiKey(getStoredApiKey() || '');
-      setIsSaved(true);
-      setTimeout(() => {
-        setIsSaved(false);
-        onOpenChange(false);
-      }, 1500);
-    } else {
-      setValidationStatus({ valid: false, message: validation.error || t.apiKeyInvalid });
-      setStoredBackendUrl(previousUrl);
-      setStoredApiKey(previousKey || null);
-      setBackendUrl(previousUrl);
-      setApiKey(previousKey || '');
-    }
-  };
-
-  const handleClear = () => {
-    setStoredApiKey(null);
-    setApiKey('');
-  };
+  const backendUrl = React.useMemo(() => getStoredBackendUrl(), []);
+  const apiKey = React.useMemo(() => getStoredApiKey(), []);
 
   const handleChooseFolder = async () => {
     if (!isTauri) return;
@@ -236,118 +150,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                 </p>
               </div>
               
-              {/* API Key Section */}
-              <div className="p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl">
-                <div className="flex items-center mb-3">
-                  <Shield className="h-4 w-4 text-purple-400 mr-2" />
-                  <label htmlFor="api-key" className="text-sm font-medium text-purple-300">
-                    {t.geminiApiKey}
-                  </label>
+              <div className="p-4 bg-purple-900/10 border border-purple-500/20 rounded-xl">
+                <div className="flex items-center mb-2">
+                  <Shield className="h-4 w-4 text-purple-300 mr-2" />
+                  <span className="text-sm font-medium text-purple-200">{t.geminiApiKey}</span>
                 </div>
-                <div className="space-y-3 mb-4">
-                  <div>
-                    <label htmlFor="backend-url" className="block text-xs font-semibold text-purple-200 mb-1">
-                      {t.imageServiceUrl}
-                    </label>
-                    <Input
-                      id="backend-url"
-                      type="text"
-                      value={backendUrl}
-                      onChange={(event) => setBackendUrl(event.target.value)}
-                      placeholder={t.enterBackendUrl}
-                      className="bg-gray-900/80 border-gray-700/60 focus:border-purple-500"
-                    />
-                    <p className="mt-1 text-xs text-gray-400">
-                      {t.backendUrlHelp}
-                    </p>
-                  </div>
-                </div>
-              <div className="relative">
-                <Input
-                  id="api-key"
-                  type={showApiKey ? 'text' : 'password'}
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={t.enterApiKey}
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
-                >
-                  {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-                </div>
-                {validationStatus && (
-                  <div className={`mt-2 flex items-center text-xs ${
-                    validationStatus.valid ? 'text-green-400' : 'text-red-400'
-                  }`}>
-                    {validationStatus.valid ? (
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                    ) : (
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                    )}
-                    {validationStatus.message}
-                  </div>
-                )}
-                {isValidating && (
-                  <div className="mt-2 flex items-center text-xs text-purple-400">
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-400 mr-2" />
-                    {t.validatingApiKey}
-                  </div>
-                )}
-                <p className="text-xs text-gray-400 mt-2">
-                {language === 'en' ? 'Get your API key from' : '从此处获取API密钥'}{' '}
-                <a
-                  href="https://aistudio.google.com/app/apikey"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-purple-400 hover:text-purple-300 underline"
-                >
-                  {t.getApiKey}
-                </a>
+                <p className="text-xs text-gray-400">
+                  {t.imageServiceUrl}:&nbsp;
+                  <span className="text-gray-200">{backendUrl}</span>
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {t.geminiApiKey}:&nbsp;
+                  <span className="text-gray-200">
+                    {apiKey ? 'Provided via VITE_GEMINI_API_KEY' : 'Not provided'}
+                  </span>
+                </p>
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                  {language === 'zh'
+                    ? '在项目根目录的 .env 文件中更新 VITE_API_BASE_URL 和 VITE_GEMINI_API_KEY 以修改这些设置。'
+                    : 'Update the .env variables VITE_API_BASE_URL and VITE_GEMINI_API_KEY in the project root to change these values.'}
                 </p>
               </div>
-
-              <div className="mt-4">
-                <Button
-                  variant="secondary"
-                  onClick={handleTestKey}
-                  disabled={isValidating}
-                  className="w-full"
-                >
-                  <FlaskConical className="h-4 w-4 mr-2" />
-                  {isValidating ? t.testing : t.testApiKey}
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex justify-between pt-6 border-t border-purple-500/20">
-              <Button
-                variant="secondary"
-                onClick={handleClear}
-                disabled={!apiKey}
-              >
-                {t.clear}
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={isValidating}
-                className="min-w-[120px] btn-premium"
-              >
-                {isSaved ? (
-                  <div className="flex items-center">
-                    <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
-                    {t.saved}
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <Save className="h-4 w-4 mr-2" />
-                    {t.save}
-                  </div>
-                )}
-              </Button>
             </div>
           </div>
         </Dialog.Content>
