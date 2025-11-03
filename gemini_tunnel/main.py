@@ -35,15 +35,9 @@ GOOGLE_CLOUD_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT_ID", "gen-lang-client-
 GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
 GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "credentials.json")
 
-DEFAULT_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:4173",
-    "http://127.0.0.1:4173",
-    "https://aipod-lite.findapply.com",
-]
+DEFAULT_ALLOWED_ORIGINS = ["*"]
 
-raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
 
 if raw_origins.strip():
     allowed_origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
