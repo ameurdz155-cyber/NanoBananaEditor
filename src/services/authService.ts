@@ -1,4 +1,4 @@
-import { buildJsonHeaders, joinBackendPath } from './apiConfig';
+import { joinBackendPath } from './apiConfig';
 
 interface LoginPayload {
   username: string;
@@ -12,9 +12,12 @@ interface LoginResult {
 }
 
 export async function loginRequest(payload: LoginPayload): Promise<LoginResult> {
+  // Don't send x-api-key header for login - use username/password only
   const response = await fetch(joinBackendPath('/auth/login'), {
     method: 'POST',
-    headers: buildJsonHeaders(),
+    headers: {
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify(payload),
   });
 
