@@ -14,19 +14,7 @@ import {
   X,
   AlertCircle,
   PlusCircle,
-  Download,
-  Layers,
-  ExternalLink,
-  Sparkles,
-  Workflow,
-  Info,
-  Image as ImageIcon,
-  ImagePlus,
-  Star,
-  LocateFixed,
-  Copy,
-  Eye,
-  History
+  Download
 } from 'lucide-react';
 import { blobToBase64 } from '../utils/imageUtils';
 import { cn } from '../utils/cn';
@@ -1346,135 +1334,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
           style={{ left: boardImageContextMenu.x, top: boardImageContextMenu.y }}
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <MenuSection title={t.quickActions} />
-          <MenuItem
-            icon={<ImageIcon className="h-4 w-4 text-cyan-300" />}
-            label={t.setAsCanvasImage}
-            onClick={handleSetCanvasImage}
-            disabled={!boardImageContextMenu.imageUrl}
-          />
-          <MenuItem
-            icon={<ExternalLink className="h-4 w-4 text-cyan-200" />}
-            label={t.openInNewCanvas}
-            onClick={handleOpenCanvasWorkspace}
-            disabled={!boardImageContextMenu.imageUrl}
-          />
-          <MenuItem
-            icon={<Layers className="h-4 w-4 text-purple-300" />}
-            label={t.asMaskLayer}
-            onClick={handleAsMaskLayer}
-            disabled={!boardImageContextMenu.imageUrl}
-          />
           <MenuItem
             icon={<PlusCircle className="h-4 w-4 text-cyan-400" />}
             label={t.addAsReference}
             onClick={handleAddAsReference}
             disabled={!boardImageContextMenu.imageUrl}
           />
-
-          <div className="my-1 h-px bg-gray-800" />
-
-          <MenuItem
-            icon={<Workflow className="h-4 w-4 text-gray-400" />}
-            label={t.loadWorkflow}
-            onClick={handleLoadWorkflow}
-          />
-          <MenuItem
-            icon={<History className="h-4 w-4 text-blue-300" />}
-            label={t.recallMetadata}
-            onClick={handleRecallMetadata}
-            disabled={!currentGeneration && !parentGeneration}
-          />
-          <MenuItem
-            icon={<Info className="h-4 w-4 text-emerald-300" />}
-            label={t.metadataOverview}
-            onClick={handleMetadataOverview}
-            disabled={isAssetItem}
-          />
-          <MenuItem
-            icon={<Sparkles className="h-4 w-4 text-amber-300" />}
-            label={t.sendToUpscale}
-            onClick={handleSendToUpscale}
-            disabled={!boardImageContextMenu.imageUrl}
-          />
-          <MenuItem
-            icon={<ImagePlus className="h-4 w-4 text-sky-300" />}
-            label={t.newCanvasFromImage}
-            onClick={handleNewCanvasFromImage}
-            disabled={!boardImageContextMenu.imageUrl}
-          />
-          <MenuItem
-            icon={<Copy className="h-4 w-4 text-gray-300" />}
-            label={t.useForPromptTemplate}
-            onClick={handleUseForPromptTemplate}
-            disabled={!promptText}
-          />
-          <MenuItem
-            icon={<Eye className="h-4 w-4 text-gray-200" />}
-            label={t.viewDetails}
-            onClick={handleMetadataOverview}
-            disabled={isAssetItem}
-          />
-
-          <div className="my-1 h-px bg-gray-800" />
-
-          <MenuSection title={t.changeBoardAction} />
-          <MenuItem
-            icon={<Folder className="h-4 w-4 text-gray-300" />}
-            label={t.moveToBoard}
-            onClick={() => setShowBoardPicker(prev => !prev)}
-            trailing={<ChevronRight className={cn('h-3 w-3 text-gray-500 transition-transform', showBoardPicker ? 'rotate-90' : 'rotate-0')} />}
-            disabled={boards.length <= 1}
-          />
-          {showBoardPicker && (
-            <div className="px-2 pb-2">
-              <div className="max-h-44 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/80">
-                {boards
-                  .filter(board => board.id !== selectedBoardId)
-                  .map(board => (
-                    <button
-                      key={board.id}
-                      type="button"
-                      className="w-full text-left px-2 py-1.5 text-xs flex items-center justify-between gap-2 text-gray-300 hover:bg-gray-800 transition-colors"
-                      onClick={() => handleBoardSelection(board.id)}
-                    >
-                      <span className="flex items-center gap-2">
-                        {board.emoji ? (
-                          <span>{board.emoji}</span>
-                        ) : (
-                          <Folder className="h-3 w-3 text-gray-500" />
-                        )}
-                        <span className="truncate">{board.id === 'default' ? t.myCreations : board.name}</span>
-                      </span>
-                      <ChevronRight className="h-3 w-3 text-gray-600" />
-                    </button>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          <div className="my-1 h-px bg-gray-800" />
-
-          <MenuItem
-            icon={<Star className={cn('h-4 w-4', isFavorite ? 'text-yellow-300' : 'text-gray-400')} />}
-            label={t.starImage}
-            onClick={handleToggleFavorite}
-          />
-          <MenuItem
-            icon={<LocateFixed className="h-4 w-4 text-cyan-300" />}
-            label={t.locateInGallery}
-            onClick={handleLocateImage}
-            disabled={isAssetItem}
-          />
-          <MenuItem
-            icon={<Copy className="h-4 w-4 text-gray-300" />}
-            label={t.copyPrompt}
-            onClick={handleCopyPrompt}
-            disabled={!promptText}
-          />
-
-          <div className="my-1 h-px bg-gray-800" />
-
           <MenuItem
             icon={<Download className="h-4 w-4 text-gray-300" />}
             label={t.downloadImage}

@@ -7,18 +7,7 @@ import {
   Folder,
   Download,
   Trash2,
-  PlusCircle,
-  Star,
-  Copy,
-  Info,
-  ExternalLink,
-  Sparkles,
-  Workflow,
-  Image as ImageIcon,
-  ImagePlus,
-  LocateFixed,
-  Eye,
-  ChevronRight
+  PlusCircle
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { ImagePreviewModal } from './ImagePreviewModal';
@@ -816,140 +805,12 @@ export const HistoryPanel: React.FC = () => {
           style={{ left: imageContextMenu.x, top: imageContextMenu.y }}
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <MenuSection title={t.quickActions} />
-          <MenuItem
-            icon={<ImageIcon className="h-4 w-4 text-cyan-300" />}
-            label={t.setAsCanvasImage}
-            onClick={handleSetCanvasImage}
-            disabled={!imageContextMenu.imageUrl}
-          />
-          <MenuItem
-            icon={<ExternalLink className="h-4 w-4 text-cyan-200" />}
-            label={t.openInNewCanvas}
-            onClick={handleOpenCanvasWorkspace}
-            disabled={!imageContextMenu.imageUrl}
-          />
-          <MenuItem
-            icon={<Layers className="h-4 w-4 text-purple-300" />}
-            label={t.asMaskLayer}
-            onClick={handleAsMaskLayer}
-            disabled={!imageContextMenu.imageUrl}
-          />
           <MenuItem
             icon={<PlusCircle className="h-4 w-4 text-cyan-400" />}
             label={t.addAsReference}
             onClick={handleAddAsReference}
             disabled={!imageContextMenu.imageUrl}
           />
-
-          <div className="my-1 h-px bg-gray-800" />
-
-          <MenuItem
-            icon={<Workflow className="h-4 w-4 text-gray-400" />}
-            label={t.loadWorkflow}
-            onClick={handleLoadWorkflow}
-          />
-          <MenuItem
-            icon={<History className="h-4 w-4 text-blue-300" />}
-            label={t.recallMetadata}
-            onClick={handleRecallMetadata}
-            disabled={!currentGeneration && !parentGeneration}
-          />
-          <MenuItem
-            icon={<Info className="h-4 w-4 text-emerald-300" />}
-            label={t.metadataOverview}
-            onClick={handleMetadataOverview}
-            disabled={!currentGeneration && !currentEdit}
-          />
-          <MenuItem
-            icon={<Sparkles className="h-4 w-4 text-amber-300" />}
-            label={t.sendToUpscale}
-            onClick={handleSendToUpscale}
-            disabled={!imageContextMenu.imageUrl}
-          />
-          <MenuItem
-            icon={<ImagePlus className="h-4 w-4 text-sky-300" />}
-            label={t.newCanvasFromImage}
-            onClick={handleNewCanvasFromImage}
-            disabled={!imageContextMenu.imageUrl}
-          />
-          <MenuItem
-            icon={<Copy className="h-4 w-4 text-gray-300" />}
-            label={t.useForPromptTemplate}
-            onClick={handleUseForPromptTemplate}
-            disabled={!promptText}
-          />
-          <MenuItem
-            icon={<Eye className="h-4 w-4 text-gray-200" />}
-            label={t.viewDetails}
-            onClick={handleMetadataOverview}
-            disabled={!currentGeneration && !currentEdit}
-          />
-
-          <div className="my-1 h-px bg-gray-800" />
-
-          <MenuSection title={t.changeBoardAction} />
-          <MenuItem
-            icon={<Folder className="h-4 w-4 text-gray-300" />}
-            label={t.moveToBoard}
-            onClick={() => setShowBoardPicker(prev => !prev)}
-            trailing={<ChevronRight className={cn('h-3 w-3 text-gray-500 transition-transform', showBoardPicker ? 'rotate-90' : 'rotate-0')} />}
-            disabled={boards.length === 0}
-          />
-          {showBoardPicker && (
-            <div className="px-2 pb-2">
-              <div className="max-h-44 overflow-y-auto rounded-md border border-gray-800 bg-gray-900/80">
-                {boards.map(board => {
-                  const alreadyInBoard = !!imageContextMenu.itemId && board.imageIds.includes(imageContextMenu.itemId);
-                  return (
-                    <button
-                      key={board.id}
-                      type="button"
-                      className={cn(
-                        'w-full text-left px-2 py-1.5 text-xs flex items-center justify-between gap-2 transition-colors',
-                        alreadyInBoard
-                          ? 'bg-purple-500/20 text-purple-200'
-                          : 'text-gray-300 hover:bg-gray-800'
-                      )}
-                      onClick={() => handleBoardSelection(board.id, alreadyInBoard)}
-                    >
-                      <span className="flex items-center gap-2">
-                        {board.emoji ? (
-                          <span>{board.emoji}</span>
-                        ) : (
-                          <Folder className="h-3 w-3 text-gray-500" />
-                        )}
-                        <span className="truncate">{board.id === 'default' ? t.myCreations : board.name}</span>
-                      </span>
-                      {alreadyInBoard && <span className="text-purple-300">✓</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="my-1 h-px bg-gray-800" />
-
-          <MenuItem
-            icon={<Star className={cn('h-4 w-4', isFavorite ? 'text-yellow-300' : 'text-gray-400')} />}
-            label={t.starImage}
-            onClick={handleToggleFavorite}
-          />
-          <MenuItem
-            icon={<LocateFixed className="h-4 w-4 text-cyan-300" />}
-            label={t.locateInGallery}
-            onClick={handleLocateInGallery}
-          />
-          <MenuItem
-            icon={<Copy className="h-4 w-4 text-gray-300" />}
-            label={t.copyPrompt}
-            onClick={handleCopyPrompt}
-            disabled={!promptText}
-          />
-
-          <div className="my-1 h-px bg-gray-800" />
-
           <MenuItem
             icon={<Download className="h-4 w-4 text-gray-300" />}
             label={t.downloadImage}
