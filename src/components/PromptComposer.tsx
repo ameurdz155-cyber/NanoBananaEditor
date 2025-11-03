@@ -1466,8 +1466,10 @@ export const PromptComposer: React.FC = () => {
     {/* Templates Modal */}
     <Dialog.Root open={showTemplatesModal} onOpenChange={setShowTemplatesModal}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/55 backdrop-blur-sm z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 z-50 w-[min(90vw,26rem)] max-h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-gray-800 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-900 p-5 shadow-2xl focus:outline-none">
+        <Dialog.Overlay className="fixed inset-0 bg-black/65 backdrop-blur-md z-50" />
+        <Dialog.Content
+          className="fixed top-1/2 left-1/2 z-50 w-[min(95vw,80rem)] h-[90vh] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-gray-800 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-900 p-8 shadow-2xl focus:outline-none flex flex-col overflow-hidden"
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-600/20 text-purple-300">
@@ -1483,10 +1485,10 @@ export const PromptComposer: React.FC = () => {
               </Button>
             </Dialog.Close>
           </div>
-          <p className="mt-3 text-xs text-gray-500">
+          <p className="mt-4 text-sm text-gray-400">
             {t.clickToManageTemplates}
           </p>
-          <div className="mt-4 h-[60vh] flex min-h-0">
+          <div className="mt-6 flex-1 min-h-0 overflow-y-auto pr-1">
             <TemplatesView onTemplateSelect={(templateInfo) => {
               setLastSelectedTemplate(templateInfo ?? null);
               setShowTemplatesModal(false);

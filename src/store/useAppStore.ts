@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import { Project, Generation, Edit, BrushStroke } from '../types';
+import { Project, Generation, Edit, BrushStroke, PromptTemplate, PromptCategory } from '../types';
 import { Language } from '../i18n/translations';
 
 export interface Board {
@@ -13,18 +13,6 @@ export interface Board {
   imageIds: string[];
 }
 
-export interface PromptTemplate {
-  id: string;
-  name: string;
-  emoji?: string;
-  image?: string;
-  positivePrompt: string;
-  negativePrompt: string;
-  description?: string;
-  isDefault?: boolean;
-  createdAt: number;
-}
-
 interface AppState {
   // Current project
   currentProject: Project | null;
@@ -35,6 +23,7 @@ interface AppState {
   
   // Custom Templates
   customTemplates: PromptTemplate[];
+  promptCategories: PromptCategory[];
   
   // Canvas state
   canvasImage: string | null;
@@ -168,6 +157,10 @@ interface AppState {
   addCustomTemplate: (template: PromptTemplate) => void;
   updateCustomTemplate: (templateId: string, updates: Partial<PromptTemplate>) => void;
   deleteCustomTemplate: (templateId: string) => void;
+  setPromptCategories: (categories: PromptCategory[]) => void;
+  addPromptCategory: (category: PromptCategory) => void;
+  updatePromptCategory: (categoryId: string, updates: Partial<PromptCategory>) => void;
+  deletePromptCategory: (categoryId: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -190,7 +183,8 @@ export const useAppStore = create<AppState>()(
       selectedBoardId: 'default',
       favoriteImageIds: [],
       
-      customTemplates: [],
+  customTemplates: [],
+  promptCategories: [],
       
       canvasImage: null,
       canvasZoom: 1,
@@ -491,17 +485,59 @@ export const useAppStore = create<AppState>()(
       setCustomTemplates: (templates) => set({ customTemplates: templates }),
       
       addCustomTemplate: (template) => set((state) => ({
-        customTemplates: [template, ...state.customTemplates]
+        customTemplates: [
+          {
+            ...template,
+            createdAt: template.createdAt ?? Date.now(),
+            updatedAt: Date.now(),
+          },
+          ...state.customTemplates,
+        ]
       })),
       
       updateCustomTemplate: (templateId, updates) => set((state) => ({
         customTemplates: state.customTemplates.map(t =>
-          t.id === templateId ? { ...t, ...updates } : t
+          t.id === templateId
+            ? { ...t, ...updates, updatedAt: Date.now() }
+            : t
         )
       })),
       
       deleteCustomTemplate: (templateId) => set((state) => ({
         customTemplates: state.customTemplates.filter(t => t.id !== templateId)
+      })),
+      setPromptCategories: (categories) => set({ promptCategories: categories }),
+      addPromptCategory: (category) => set((state) => ({
+        promptCategories: [
+          {
+            ...category,
+            createdAt: category.createdAt ?? Date.now(),
+            updatedAt: Date.now(),
+          },
+          ...state.promptCategories,
+        ]
+      })),
+      updatePromptCategory: (categoryId, updates) => set((state) => ({
+        promptCategories: state.promptCategories.map((category) =>
+          category.id === categoryId
+            ? { ...category, ...updates, updatedAt: Date.now() }
+            : category
+        ),
+        customTemplates: updates?.id
+          ? state.customTemplates.map((template) =>
+              template.categoryId === categoryId
+                ? { ...template, categoryId: updates.id }
+                : template
+            )
+          : state.customTemplates,
+      })),
+      deletePromptCategory: (categoryId) => set((state) => ({
+        promptCategories: state.promptCategories.filter((category) => category.id !== categoryId),
+        customTemplates: state.customTemplates.map((template) =>
+          template.categoryId === categoryId
+            ? { ...template, categoryId: undefined }
+            : template
+        ),
       })),
       }),
       {
@@ -517,6 +553,7 @@ export const useAppStore = create<AppState>()(
           } : null,
           boards: state.boards,
           customTemplates: state.customTemplates,
+          promptCategories: state.promptCategories,
           promptHistory: state.promptHistory,
           language: state.language,
           apiKey: state.apiKey,

@@ -316,6 +316,20 @@ export interface Translations {
   templateExplanation: string;
   templateOmitPlaceholder: string;
   usePlaceholder: string;
+  templateCategories: string;
+  allCategories: string;
+  uncategorized: string;
+  manageCategories: string;
+  addCategory: string;
+  categoryNameLabel: string;
+  categoryEmojiLabel: string;
+  templateEmojiLabel: string;
+  templateCategoryLabel: string;
+  templateImageLabel: string;
+  templateImageUrlPlaceholder: string;
+  templateImageUpload: string;
+  templateImageClear: string;
+  deleteCategory: string;
   
   // Error messages
   prohibitedContent: string;
@@ -699,6 +713,20 @@ export const translations: Record<Language, Translations> = {
     templateExplanation: 'Prompt templates add text to the prompts you write in the prompt box.',
     templateOmitPlaceholder: 'If you omit the placeholder, the template will be appended to the end of your prompt.',
     usePlaceholder: 'Use the placeholder string {prompt} to specify where your prompt should be included in the template.',
+  templateCategories: 'Categories',
+  allCategories: 'All',
+  uncategorized: 'Uncategorized',
+  manageCategories: 'Manage categories',
+  addCategory: 'Add category',
+  categoryNameLabel: 'Category name',
+  categoryEmojiLabel: 'Emoji or icon',
+  templateEmojiLabel: 'Emoji or icon',
+  templateCategoryLabel: 'Category',
+  templateImageLabel: 'Representative image',
+  templateImageUrlPlaceholder: 'https://example.com/image.jpg',
+  templateImageUpload: 'Upload image',
+  templateImageClear: 'Remove image',
+  deleteCategory: 'Delete category',
     
     // Error messages
     prohibitedContent: 'Content Prohibited',
@@ -1080,6 +1108,20 @@ export const translations: Record<Language, Translations> = {
     templateExplanation: '提示词模板会将文本添加到您在提示框中编写的提示词中。',
     templateOmitPlaceholder: '如果省略占位符，模板将附加到提示词的末尾。',
     usePlaceholder: '使用占位符字符串 {prompt} 来指定您的提示词应包含在模板中的位置。',
+  templateCategories: '分类',
+  allCategories: '全部',
+  uncategorized: '未分类',
+  manageCategories: '管理分类',
+  addCategory: '新增分类',
+  categoryNameLabel: '分类名称',
+  categoryEmojiLabel: '表情或图标',
+  templateEmojiLabel: '表情或图标',
+  templateCategoryLabel: '所属分类',
+  templateImageLabel: '代表图片',
+  templateImageUrlPlaceholder: 'https://example.com/image.jpg',
+  templateImageUpload: '上传图片',
+  templateImageClear: '移除图片',
+  deleteCategory: '删除分类',
     
     // Error messages
     prohibitedContent: '内容被禁止',

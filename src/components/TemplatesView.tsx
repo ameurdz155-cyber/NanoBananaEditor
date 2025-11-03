@@ -4,19 +4,20 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import * as Dialog from '@radix-ui/react-dialog';
-import { 
-  Plus, 
-  ChevronDown, 
-  ChevronRight, 
-  Copy, 
-  Trash2, 
-  Edit2, 
-  Eye,
+import {
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Trash2,
+  Edit2,
   X,
-  Layers
+  UploadCloud,
+  Tag
 } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { getTranslation } from '../i18n/translations';
+import { getTranslation, Language } from '../i18n/translations';
+import { PromptTemplate } from '../types';
 
 const templateThumbnails: Record<string, string> = {
   anime: new URL('../assets/templates/Anime.png', import.meta.url).href,
@@ -39,22 +40,82 @@ const templateThumbnails: Record<string, string> = {
   vehicles: new URL('../assets/templates/Vehicles.png', import.meta.url).href,
 };
 
-export interface PromptTemplate {
+interface CategoryConfig {
+  id: string;
+  emoji: string;
+  names: Record<Language, string>;
+}
+
+interface DisplayCategory {
   id: string;
   name: string;
   emoji?: string;
   image?: string;
-  positivePrompt: string;
-  negativePrompt: string;
-  description?: string;
-  isDefault?: boolean;
-  createdAt: number;
+  source: 'default' | 'custom';
 }
 
-export const getDefaultTemplates = (language: string): PromptTemplate[] => {
+const DEFAULT_CATEGORY_CONFIG: CategoryConfig[] = [
+  {
+    id: 'portrait',
+    emoji: '🧑',
+    names: { en: 'Portrait', zh: '肖像' },
+  },
+  {
+    id: 'landscape',
+    emoji: '🏞️',
+    names: { en: 'Landscape', zh: '风景' },
+  },
+  {
+    id: 'product',
+    emoji: '📦',
+    names: { en: 'Product', zh: '产品' },
+  },
+  {
+    id: 'art-style',
+    emoji: '🎨',
+    names: { en: 'Art Style', zh: '艺术风格' },
+  },
+  {
+    id: 'concept',
+    emoji: '🌌',
+    names: { en: 'Concept Design', zh: '概念设计' },
+  },
+  {
+    id: 'photography',
+    emoji: '📷',
+    names: { en: 'Photography', zh: '摄影' },
+  },
+  {
+    id: 'architecture',
+    emoji: '🏛️',
+    names: { en: 'Architecture', zh: '建筑设计' },
+  },
+];
+
+export const getDefaultTemplates = (language: Language): PromptTemplate[] => {
   const isZh = language === 'zh';
-  
-  return [
+  const categoryAssignments: Record<string, string> = {
+    anime: 'art-style',
+    architectural: 'architecture',
+    'concept-art-character': 'concept',
+    'concept-art-fantasy': 'concept',
+    'concept-art-painterly': 'concept',
+    'concept-art-scifi': 'concept',
+    'environment-art': 'landscape',
+    illustration: 'art-style',
+    'interior-design': 'architecture',
+    'line-art': 'art-style',
+    'photography-black-white': 'photography',
+    'photography-general': 'photography',
+    'photography-landscape': 'landscape',
+    'photography-portrait': 'portrait',
+    'photography-studio': 'portrait',
+    'product-rendering': 'product',
+    sketch: 'art-style',
+    vehicles: 'concept',
+  };
+
+  const baseTemplates: PromptTemplate[] = [
   {
     id: 'anime',
     name: isZh ? '动漫' : 'Anime',
@@ -326,6 +387,11 @@ export const getDefaultTemplates = (language: string): PromptTemplate[] => {
     createdAt: Date.now(),
   },
 ];
+
+  return baseTemplates.map((template) => ({
+    ...template,
+    categoryId: template.categoryId ?? categoryAssignments[template.id],
+  }));
 };
 
 export const DEFAULT_TEMPLATES: PromptTemplate[] = getDefaultTemplates('en');
@@ -336,15 +402,16 @@ interface TemplatesViewProps {
 
 export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }) => {
   const { 
-    currentPrompt,
-    setCurrentPrompt, 
     selectedTemplate, 
     setSelectedTemplate, 
     language,
     customTemplates,
     addCustomTemplate,
     updateCustomTemplate,
-    deleteCustomTemplate
+    deleteCustomTemplate,
+    promptCategories,
+    addPromptCategory,
+    deletePromptCategory
   } = useAppStore();
   const t = getTranslation(language);
   
@@ -358,6 +425,60 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   });
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [editingTemplate, setEditingTemplate] = React.useState<PromptTemplate | null>(null);
+  const [activeCategory, setActiveCategory] = React.useState<string>('all');
+  const [showCategoryForm, setShowCategoryForm] = React.useState(false);
+  const [categoryForm, setCategoryForm] = React.useState({
+    name: '',
+    emoji: '⭐',
+  });
+  const defaultCategoryId = React.useMemo(() => DEFAULT_CATEGORY_CONFIG[0]?.id ?? '', []);
+
+  const resolvedCategories = React.useMemo<DisplayCategory[]>(() => {
+    const map = new Map<string, DisplayCategory>();
+
+    DEFAULT_CATEGORY_CONFIG.forEach((config) => {
+      map.set(config.id, {
+        id: config.id,
+        emoji: config.emoji,
+        name: config.names[language] ?? config.names.en,
+        source: 'default',
+      });
+    });
+
+    promptCategories.forEach((category) => {
+      map.set(category.id, {
+        id: category.id,
+        emoji: category.emoji,
+        image: category.image,
+        name: category.name,
+        source: 'custom',
+      });
+    });
+
+    return Array.from(map.values());
+  }, [language, promptCategories]);
+
+  const categoryLookup = React.useMemo(() => {
+    const map = new Map<string, DisplayCategory>();
+    resolvedCategories.forEach((category) => map.set(category.id, category));
+    return map;
+  }, [resolvedCategories]);
+
+  const categoryTabs = React.useMemo<DisplayCategory[]>(() => [
+    {
+      id: 'all',
+      name: t.allCategories,
+      emoji: '✨',
+      source: 'default',
+    },
+    {
+      id: 'uncategorized',
+      name: t.uncategorized,
+      emoji: '❔',
+      source: 'default',
+    },
+    ...resolvedCategories,
+  ], [resolvedCategories, t]);
   
   // Form state for create/edit modal
   const [formData, setFormData] = React.useState({
@@ -365,8 +486,74 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     positivePrompt: '',
     negativePrompt: '',
     description: '',
+    emoji: '',
+    categoryId: '',
     image: '',
   });
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        setFormData((prev) => ({ ...prev, image: result }));
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const handleAddCategory = () => {
+    const name = categoryForm.name.trim();
+    const emoji = categoryForm.emoji.trim();
+
+    if (!name) {
+      alert(language === 'zh' ? '请填写分类名称' : 'Please provide a category name');
+      return;
+    }
+
+    const sanitized = name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\u4e00-\u9fa5\s-]/g, '')
+      .replace(/\s+/g, '-');
+    let id = sanitized || `category-${Date.now()}`;
+    if (resolvedCategories.some((category) => category.id === id)) {
+      id = `category-${Date.now()}`;
+    }
+
+    addPromptCategory({
+      id,
+      name,
+      emoji: emoji || undefined,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    setCategoryForm({ name: '', emoji: '⭐' });
+    setActiveCategory(id);
+    setShowCategoryForm(false);
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    const confirmMessage = language === 'zh'
+      ? '确定要删除这个分类吗？分类中的模板将被设为未分类。'
+      : 'Delete this category? Templates within will become uncategorized.';
+
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    deletePromptCategory(categoryId);
+
+    setActiveCategory((prev) => (prev === categoryId ? 'all' : prev));
+  };
 
   // No longer needed - templates are now in Zustand store which persists automatically
   // React.useEffect(() => {
@@ -394,11 +581,22 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const openCreateModal = () => {
+    const initialCategory = activeCategory === 'all'
+      ? defaultCategoryId
+      : activeCategory === 'uncategorized'
+        ? ''
+        : activeCategory;
+    const initialEmoji = initialCategory
+      ? categoryLookup.get(initialCategory)?.emoji ?? ''
+      : '';
+
     setFormData({
       name: '',
       positivePrompt: '',
       negativePrompt: '',
       description: '',
+      emoji: initialEmoji,
+      categoryId: initialCategory,
       image: '',
     });
     setEditingTemplate(null);
@@ -409,8 +607,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     setFormData({
       name: template.name,
       positivePrompt: template.positivePrompt,
-      negativePrompt: template.negativePrompt,
+      negativePrompt: template.negativePrompt || '',
       description: template.description || '',
+      emoji: template.emoji || '',
+      categoryId: template.categoryId || '',
       image: template.image || '',
     });
     setEditingTemplate(template);
@@ -418,59 +618,30 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const openDuplicateModal = (template: PromptTemplate) => {
+    const inferredCategory = template.categoryId
+      || (activeCategory !== 'all' && activeCategory !== 'uncategorized' ? activeCategory : '');
     setFormData({
       name: `${template.name} (Copy)`,
       positivePrompt: template.positivePrompt,
-      negativePrompt: template.negativePrompt,
+      negativePrompt: template.negativePrompt || '',
       description: template.description || '',
+      emoji: template.emoji || categoryLookup.get(inferredCategory)?.emoji || '',
+      categoryId: inferredCategory,
       image: template.image || '',
     });
     setEditingTemplate(null);
     setShowCreateModal(true);
   };
 
-  const handleApplyTemplate = (template: PromptTemplate) => {
-    const basePrompt = currentPrompt?.trim() || '';
-
-    // Replace placeholders when present; otherwise append template text after existing prompt
-    const positiveWithPrompt = template.positivePrompt.includes('{prompt}')
-      ? template.positivePrompt.replace('{prompt}', basePrompt)
-      : [basePrompt, template.positivePrompt].filter(Boolean).join(basePrompt ? '\n\n' : '');
-
-    const cleanedPositive = positiveWithPrompt
-      .replace('{photo}', '')
-      .trim();
-
-    let finalPrompt = cleanedPositive;
-
-    if (template.negativePrompt && template.negativePrompt.trim()) {
-      const negativeBase = template.negativePrompt.includes('{prompt}')
-        ? template.negativePrompt.replace('{prompt}', basePrompt)
-        : template.negativePrompt;
-
-      const cleanedNegative = negativeBase.replace('{photo}', '').trim();
-      if (cleanedNegative) {
-        finalPrompt = [cleanedPositive, `Negative prompt: ${cleanedNegative}`]
-          .filter(Boolean)
-          .join('\n\n');
-      }
-    }
-
-    setCurrentPrompt(finalPrompt);
-
-    // Clear active template state after flattening
-    setSelectedTemplate(null);
-
-    if (onTemplateSelect) {
-      onTemplateSelect(null);
-    }
-  };
-
   const handleSaveTemplate = () => {
     if (!formData.name.trim() || !formData.positivePrompt.trim()) {
-      alert('Please enter a name and positive prompt');
+      alert(language === 'zh' ? '请输入名称和正面提示词' : 'Please enter a name and positive prompt');
       return;
     }
+
+    const emoji = formData.emoji.trim();
+    const categoryId = formData.categoryId.trim();
+    const image = formData.image.trim();
 
     if (editingTemplate) {
       // Update existing template
@@ -479,7 +650,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         positivePrompt: formData.positivePrompt.trim(),
         negativePrompt: formData.negativePrompt.trim(),
         description: formData.description.trim(),
-        image: formData.image.trim() || undefined,
+        image: image || undefined,
+        emoji: emoji || undefined,
+        categoryId: categoryId || undefined,
       });
     } else {
       // Create new template
@@ -489,7 +662,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         positivePrompt: formData.positivePrompt.trim(),
         negativePrompt: formData.negativePrompt.trim(),
         description: formData.description.trim(),
-        image: formData.image.trim() || undefined,
+        image: image || undefined,
+        emoji: emoji || undefined,
+        categoryId: categoryId || undefined,
         createdAt: Date.now(),
       };
       addCustomTemplate(newTemplate);
@@ -504,15 +679,45 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     }
   };
 
-  const filteredMyTemplates = customTemplates.filter(t =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const filterByCategory = React.useCallback(
+    (template: PromptTemplate) => {
+      if (activeCategory === 'all') {
+        return true;
+      }
+      if (activeCategory === 'uncategorized') {
+        return !template.categoryId;
+      }
+      return template.categoryId === activeCategory;
+    },
+    [activeCategory]
   );
 
-  const filteredDefaultTemplates = localizedDefaultTemplates.filter(t =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMyTemplates = React.useMemo(
+    () =>
+      customTemplates
+        .filter(filterByCategory)
+        .filter((template) =>
+          !normalizedQuery || template.name.toLowerCase().includes(normalizedQuery)
+        ),
+    [customTemplates, filterByCategory, normalizedQuery]
   );
 
-  const renderTemplateCard = (template: PromptTemplate, isCustom: boolean) => (
+  const filteredDefaultTemplates = React.useMemo(
+    () =>
+      localizedDefaultTemplates
+        .filter(filterByCategory)
+        .filter((template) =>
+          !normalizedQuery || template.name.toLowerCase().includes(normalizedQuery)
+        ),
+    [localizedDefaultTemplates, filterByCategory, normalizedQuery]
+  );
+
+  const renderTemplateCard = (template: PromptTemplate, isCustom: boolean) => {
+    const categoryInfo = template.categoryId ? categoryLookup.get(template.categoryId) : undefined;
+
+    return (
     <div
       key={template.id}
       className={cn(
@@ -571,6 +776,17 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           </div>
           {template.description && (
             <p className="text-xs text-gray-500 line-clamp-1">{template.description}</p>
+          )}
+          {categoryInfo && (
+            <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+              {categoryInfo.emoji && (
+                <span className="text-sm leading-none">{categoryInfo.emoji}</span>
+              )}
+              <span>{categoryInfo.name}</span>
+            </div>
+          )}
+          {!categoryInfo && !template.categoryId && (
+            <div className="mt-1 text-xs text-gray-600">{t.uncategorized}</div>
           )}
         </div>
 
@@ -649,29 +865,159 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       )}
     </div>
   );
+  };
 
   return (
     <div className="flex flex-col w-full h-full min-h-0">
-      {/* Search and Actions */}
-      <div className="flex-shrink-0 mb-3 space-y-2">
-        <Input
-          type="text"
-          placeholder="Search by name"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full"
-        />
-        
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={openCreateModal}
-            title={t.createTemplate}
-            className="h-8 w-8"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
+      {/* Search, Actions, and Categories */}
+      <div className="flex-shrink-0 mb-3 space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Input
+            type="text"
+            placeholder={language === 'zh' ? '按名称搜索' : 'Search by name'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:flex-1"
+          />
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openCreateModal}
+              title={t.createTemplate}
+              className="h-8 w-8"
+              type="button"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs uppercase tracking-wide text-gray-500">
+              {t.templateCategories}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-xs text-gray-400 hover:text-gray-200"
+              onClick={() => {
+                setShowCategoryForm((prev) => {
+                  const next = !prev;
+                  setCategoryForm({ name: '', emoji: '⭐' });
+                  return next;
+                });
+              }}
+              type="button"
+            >
+              <Tag className="h-3 w-3" />
+              <span className="ml-1 hidden sm:inline">{t.manageCategories}</span>
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {categoryTabs.map((category) => {
+              const isActive = activeCategory === category.id;
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveCategory(category.id)}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition-all',
+                    isActive
+                      ? 'border-purple-500 bg-purple-500/10 text-purple-200 shadow-sm'
+                      : 'border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-600'
+                  )}
+                  type="button"
+                >
+                  {category.emoji && (
+                    <span className="text-sm leading-none">{category.emoji}</span>
+                  )}
+                  <span>{category.name}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {showCategoryForm && (
+            <div className="rounded-lg border border-gray-800 bg-gray-950 p-4 space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">
+                    {t.categoryNameLabel}
+                  </label>
+                  <Input
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryForm((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder={t.categoryNameLabel}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">
+                    {t.categoryEmojiLabel}
+                  </label>
+                  <Input
+                    value={categoryForm.emoji}
+                    onChange={(e) => setCategoryForm((prev) => ({ ...prev, emoji: e.target.value }))}
+                    placeholder="⭐"
+                    maxLength={6}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {promptCategories.length > 0 && (
+                <div className="space-y-2 border-t border-gray-800 pt-3">
+                  <div className="flex flex-wrap gap-2">
+                    {promptCategories.map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center gap-2 rounded-full border border-gray-800 bg-gray-900 px-3 py-1.5 text-xs text-gray-300"
+                      >
+                        <span className="text-sm leading-none">{category.emoji || '⭐'}</span>
+                        <span>{category.name}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-gray-500 hover:text-red-400"
+                          onClick={() => handleDeleteCategory(category.id)}
+                          title={t.deleteCategory}
+                          type="button"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowCategoryForm(false);
+                    setCategoryForm({ name: '', emoji: '⭐' });
+                  }}
+                  type="button"
+                >
+                  {t.cancel}
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-500"
+                  onClick={handleAddCategory}
+                  disabled={!categoryForm.name.trim()}
+                  type="button"
+                >
+                  {t.addCategory}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -745,81 +1091,148 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       {/* Create/Edit Template Modal */}
       <Dialog.Root open={showCreateModal} onOpenChange={setShowCreateModal}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-900 border border-gray-700 rounded-lg p-6 w-full max-w-2xl z-50 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <Dialog.Title className="text-lg font-semibold text-gray-100">
+          <Dialog.Overlay className="fixed inset-0 bg-black/70 z-50" />
+          <Dialog.Content 
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 border border-gray-800 rounded-lg p-8 z-50 overflow-y-auto shadow-2xl"
+            style={{ 
+              width: '95vw', 
+              maxWidth: '1152px', 
+              height: '90vh',
+              minHeight: '600px'
+            }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <Dialog.Title className="text-2xl font-semibold text-gray-100">
                 {editingTemplate ? t.editPromptTemplate : t.createPromptTemplate}
               </Dialog.Title>
               <Dialog.Close asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <X className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <X className="h-5 w-5" />
                 </Button>
               </Dialog.Close>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Template Icon/Preview */}
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border border-gray-800">
-                  <span className="text-3xl font-bold text-purple-400">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border border-gray-800">
+                  <span className="text-4xl font-bold text-purple-400">
                     {formData.name.charAt(0).toUpperCase() || '?'}
                   </span>
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-300 mb-1">{t.name}</label>
+                  <label className="block text-base font-medium text-gray-300 mb-2">{t.name}</label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Anime (Copy)"
-                    className="w-full"
+                    className="w-full text-base py-3"
                   />
                 </div>
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-base font-medium text-gray-300 mb-2">
                   {t.descriptionOptional}
                 </label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder={t.briefDescription}
-                  className="w-full"
+                  className="w-full text-base py-3"
                 />
               </div>
 
-              {/* Image URL - Hidden to show only emoji icons */}
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Thumbnail Image URL (Optional)
+              {/* Category and Emoji */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div>
+                  <label className="block text-base font-medium text-gray-300 mb-2">
+                    {t.templateCategoryLabel}
+                  </label>
+                  <select
+                    value={formData.categoryId}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
+                    className="w-full rounded-md border border-gray-800 bg-gray-950 px-4 py-3 text-base text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="">{t.uncategorized}</option>
+                    {resolvedCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.emoji ? `${category.emoji} ` : ''}{category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-base font-medium text-gray-300 mb-2">
+                    {t.templateEmojiLabel}
+                  </label>
+                  <Input
+                    value={formData.emoji}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, emoji: e.target.value }))}
+                    placeholder="🎨"
+                    maxLength={8}
+                    className="w-full text-base py-3"
+                  />
+                </div>
+              </div>
+
+              {/* Representative Image */}
+              <div>
+                <label className="block text-base font-medium text-gray-300 mb-2">
+                  {t.templateImageLabel}
                 </label>
-                <Input
-                  value={formData.image || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full"
-                />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Input
+                    value={formData.image}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
+                    placeholder={t.templateImageUrlPlaceholder}
+                    className="w-full sm:flex-1 text-base py-3"
+                  />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex items-center gap-2 border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800 py-3 px-4"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <UploadCloud className="h-5 w-5" />
+                    <span>{t.templateImageUpload}</span>
+                  </Button>
+                </div>
                 {formData.image && (
-                  <div className="mt-2 flex items-center gap-2">
-                    <img 
-                      src={formData.image} 
-                      alt="Preview" 
-                      className="w-12 h-12 object-cover rounded border border-gray-700"
+                  <div className="mt-3 flex items-center gap-4">
+                    <img
+                      src={formData.image}
+                      alt="Preview"
+                      className="h-24 w-24 rounded-md border border-gray-800 object-cover"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
                     />
-                    <span className="text-xs text-gray-500">Preview</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-sm text-gray-400 hover:text-red-400"
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
+                    >
+                      {t.templateImageClear}
+                    </Button>
                   </div>
                 )}
-              </div> */}
+              </div>
 
               {/* Positive Prompt */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-medium text-gray-300">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-base font-medium text-gray-300">
                     {t.positivePrompt}
                   </label>
                   <button
@@ -829,7 +1242,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       const after = formData.positivePrompt.substring(cursorPos);
                       setFormData(prev => ({ ...prev, positivePrompt: before + '{prompt}' + after }));
                     }}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
                   >
                     {t.insertPlaceholder}
                   </button>
@@ -838,20 +1251,20 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   value={formData.positivePrompt}
                   onChange={(e) => setFormData(prev => ({ ...prev, positivePrompt: e.target.value }))}
                   placeholder="{prompt} anime++, bold outline, cel-shaded coloring, shounen, seinen"
-                  className="w-full min-h-[80px]"
+                  className="w-full min-h-[120px] text-base"
                   data-field="positivePrompt"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mt-2">
                   {t.usePlaceholder.replace('{prompt}', '')}
-                  <code className="px-1 py-0.5 bg-gray-800 rounded">{'{prompt}'}</code>
+                  <code className="px-2 py-1 bg-gray-800 rounded text-sm">{'{prompt}'}</code>
                   {t.usePlaceholder.split('{prompt}')[1]}
                 </p>
               </div>
 
               {/* Negative Prompt */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-medium text-gray-300">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-base font-medium text-gray-300">
                     {t.negativePrompt}
                   </label>
                   <button
@@ -861,7 +1274,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       const after = formData.negativePrompt.substring(cursorPos);
                       setFormData(prev => ({ ...prev, negativePrompt: before + '{prompt}' + after }));
                     }}
-                    className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
                   >
                     {t.insertPlaceholder}
                   </button>
@@ -870,13 +1283,13 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   value={formData.negativePrompt}
                   onChange={(e) => setFormData(prev => ({ ...prev, negativePrompt: e.target.value }))}
                   placeholder="{photo}+++, greyscale, solid black, painting"
-                  className="w-full min-h-[80px]"
+                  className="w-full min-h-[120px] text-base"
                   data-field="negativePrompt"
                 />
               </div>
 
               {/* Info Text */}
-              <div className="text-xs text-gray-500 space-y-1">
+              <div className="text-sm text-gray-500 space-y-2 bg-gray-950 border border-gray-800 rounded-lg p-4">
                 <p>{t.templateExplanation}</p>
                 <p>
                   {t.templateOmitPlaceholder}
@@ -884,16 +1297,17 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               </div>
 
               {/* Save Button */}
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">
                 <Button
                   variant="ghost"
                   onClick={() => setShowCreateModal(false)}
+                  className="px-6 py-3 text-base"
                 >
                   {t.cancel}
                 </Button>
                 <Button
                   onClick={handleSaveTemplate}
-                  className="bg-gray-700 hover:bg-gray-600"
+                  className="bg-purple-600 hover:bg-purple-500 px-6 py-3 text-base"
                 >
                   {t.save}
                 </Button>

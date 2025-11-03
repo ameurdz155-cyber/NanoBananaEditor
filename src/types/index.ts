@@ -73,3 +73,28 @@ export interface PromptHint {
   text: string;
   example: string;
 }
+
+export interface PromptCategory {
+  id: string;
+  name: string;
+  description?: string;
+  emoji?: string;
+  image?: string;
+  createdAt: number;
+  updatedAt: number;
+  isDefault?: boolean;
+}
+
+export interface PromptTemplate {
+  id: string;
+  name: string;
+  emoji?: string;
+  image?: string;
+  positivePrompt: string;
+  negativePrompt?: string;
+  description?: string;
+  isDefault?: boolean;
+  createdAt: number;
+  updatedAt?: number;
+  categoryId?: string;
+}
