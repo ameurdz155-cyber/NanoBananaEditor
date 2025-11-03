@@ -71,6 +71,10 @@ interface AppState {
   // Panel visibility
   showPromptPanel: boolean;
   promptPanelWidth: number;
+  upscaleScale: number;
+  setUpscaleScale: (scale: number) => void;
+  isUpscaling: boolean;
+  setIsUpscaling: (value: boolean) => void;
   
   // UI state
   selectedTool: 'generate' | 'edit' | 'mask';
@@ -217,9 +221,11 @@ export const useAppStore = create<AppState>()(
       
       showPromptPanel: true,
   promptPanelWidth: 320,
+  upscaleScale: 4,
+  isUpscaling: false,
       
-      selectedTool: 'generate',
-  activePrimarySection: 'generate',
+    selectedTool: 'generate',
+    activePrimarySection: 'upscaling',
       
       language: (typeof localStorage !== 'undefined' && localStorage.getItem('ai-pod-language') as Language) || 'zh',
       
@@ -345,6 +351,8 @@ export const useAppStore = create<AppState>()(
       
       setShowPromptPanel: (show) => set({ showPromptPanel: show }),
   setPromptPanelWidth: (width) => set({ promptPanelWidth: width }),
+    setUpscaleScale: (scale) => set({ upscaleScale: Math.max(2, Math.min(8, Math.round(scale))) }),
+    setIsUpscaling: (value) => set({ isUpscaling: value }),
       
       setSelectedTool: (tool) => set({ selectedTool: tool }),
   setActivePrimarySection: (section) => set({ activePrimarySection: section }),

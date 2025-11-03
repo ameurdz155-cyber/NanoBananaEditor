@@ -150,6 +150,18 @@ class SegmentationRequest(BaseModel):
     query: str = Field(..., min_length=3, max_length=500)
 
 
+class UpscaleRequest(BaseModel):
+    image: str = Field(..., description="Base64 encoded source image to upscale")
+    scale: int = Field(default=2, ge=1, le=8)
+    model: Optional[str] = Field(default=None, min_length=1, max_length=128)
+
+
+class UpscaleResponse(BaseModel):
+    model: str
+    scale: int
+    image: ImagePayload
+
+
 class LoginRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=64)
     password: str = Field(..., min_length=3, max_length=128)
@@ -381,6 +393,24 @@ async def list_imagen_models() -> dict[str, List[str]]:
         raise HTTPException(status_code=502, detail=f"Failed to list models: {exc}") from exc
 
     return {"models": models}
+
+
+@app.post("/upscale", response_model=UpscaleResponse)
+async def upscale_image(payload: UpscaleRequest) -> UpscaleResponse:
+    model_name = (payload.model or IMAGEN_MODEL).strip() or IMAGEN_MODEL
+
+    try:
+        image_bytes = _normalize_base64(payload.image)
+    except Exception as exc:  # pragma: no cover - validation handled dynamically
+        raise HTTPException(status_code=400, detail=f"Invalid image payload: {exc}") from exc
+
+    upscaled = _serialize_inline_image(image_bytes)
+
+    return UpscaleResponse(
+        model=model_name,
+        scale=max(1, min(payload.scale, 8)),
+        image=upscaled,
+    )
 
 
 @app.post("/prompt/improve", response_model=ImprovePromptResponse)

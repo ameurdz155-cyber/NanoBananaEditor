@@ -27,6 +27,7 @@ export interface Generation {
   modelVersion: string;
   timestamp: number;
   costEstimate?: number;
+  tags?: string[];
 }
 
 export interface Edit {

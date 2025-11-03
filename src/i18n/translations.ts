@@ -114,6 +114,9 @@ export interface Translations {
   validating: string;
   stopGeneration: string;
   generating: string;
+  startUpscaling: string;
+  stopUpscaling: string;
+  scaleLabel: string;
   pressCtrlEnter: string;
   waitingGeneration: string;
   thisMayTakeMoments: string;
@@ -494,6 +497,9 @@ export const translations: Record<Language, Translations> = {
     validating: 'Validating...',
     stopGeneration: 'Stop Generation',
     generating: 'Generating...',
+  startUpscaling: 'Upscale',
+  stopUpscaling: 'Stop Upscaling',
+  scaleLabel: 'Scale',
     pressCtrlEnter: 'to generate',
     waitingGeneration: 'Generating your image',
     thisMayTakeMoments: 'This may take a few moments',
@@ -872,6 +878,9 @@ export const translations: Record<Language, Translations> = {
     validating: '验证中...',
     stopGeneration: '停止生成',
     generating: '生成中...',
+  startUpscaling: '开始超分辨率',
+  stopUpscaling: '停止超分辨率',
+  scaleLabel: '放大倍率',
     pressCtrlEnter: '生成',
     waitingGeneration: '正在生成您的图像',
     thisMayTakeMoments: '这可能需要一些时间',

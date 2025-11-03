@@ -10,6 +10,7 @@ import { getTranslation } from './i18n/translations';
 import { SideNavigation } from './components/SideNavigation';
 import { useAuthStore } from './store/useAuthStore';
 import { LoginPage } from './components/LoginPage';
+import { UpscalingPanel } from './components/UpscalingPanel';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -128,7 +129,7 @@ function AppContent() {
         <SideNavigation />
         <div className="flex-1 flex overflow-hidden relative">
           <div className="flex-shrink-0 transition-all duration-300 relative z-40">
-            <PromptComposer />
+            {activePrimarySection === 'upscaling' ? <UpscalingPanel /> : <PromptComposer />}
           </div>
           <div className="flex-1 min-w-0 relative z-10">
             <ImageCanvas />

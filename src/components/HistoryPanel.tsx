@@ -657,6 +657,12 @@ export const HistoryPanel: React.FC = () => {
                       <div className="w-full h-full bg-gray-800 flex items-center justify-center" style={{ display: generation.outputAssets[0] && generation.outputAssets[0].url ? 'none' : 'flex' }}>
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
                       </div>
+
+                      {generation.tags?.includes('upscall') && (
+                        <div className="absolute top-2 left-2 bg-teal-400/90 text-[10px] font-semibold tracking-wider uppercase px-2 py-1 rounded-md text-black border border-teal-300/70 shadow-sm">
+                          Upscall
+                        </div>
+                      )}
                       
                       {/* Overlay on hover */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
