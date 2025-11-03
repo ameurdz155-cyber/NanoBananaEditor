@@ -51,83 +51,57 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 animate-in fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md animate-in fade-in zoom-in-95">
-          <div className="glass rounded-2xl border border-gray-700 p-6 shadow-2xl">
-            {/* Close button */}
-            <Dialog.Close className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
-              <X className="h-4 w-4" />
-            </Dialog.Close>
+        <Dialog.Content className="save-modal-content">
+          <Dialog.Close className="save-modal-close" aria-label={t.cancel}>
+            <X className="save-modal-close-icon" />
+          </Dialog.Close>
 
-            {/* Success Icon */}
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl animate-pulse"></div>
-                <div className="relative w-20 h-20 rounded-full bg-white/10 flex items-center justify-center shadow-lg">
-                  <img
-                    src={podIcon}
-                    alt="AI POD logo"
-                    className="w-14 h-14 object-contain"
-                  />
-                </div>
-              </div>
+          <div className="save-modal-logo-wrap">
+            <div className="save-modal-logo-glow" />
+            <div className="save-modal-logo">
+              <img src={podIcon} alt="AI POD logo" className="save-modal-logo-img" />
             </div>
+          </div>
 
-            {/* Title */}
-            <Dialog.Title className="text-xl font-bold text-center text-white mb-2">
-              {t.imageSavedSuccessfully}
-            </Dialog.Title>
+          <Dialog.Title className="save-modal-title">
+            {t.imageSavedSuccessfully}
+          </Dialog.Title>
 
-            {/* Description */}
-            <Dialog.Description className="text-center text-gray-300 mb-4">
-              {t.imageSavedToGallery}{' '}
-              <span className="font-semibold text-cyan-400">"{galleryName}"</span>{' '}
-              {t.gallery}.
-            </Dialog.Description>
+          <Dialog.Description className="save-modal-subtitle">
+            {t.imageSavedToGallery}{' '}
+            <span className="save-modal-highlight">"{galleryName}"</span>{' '}
+            {t.gallery}.
+          </Dialog.Description>
 
-            {/* Path or Browser Note */}
-            {isTauri && savedPath ? (
-              <div className="mb-6 p-3 bg-gray-900/50 rounded-lg border border-gray-700">
-                <p className="text-xs text-gray-400 mb-1">{t.savedToPath}:</p>
-                <p className="text-xs text-gray-300 break-all font-mono">{savedPath}</p>
-              </div>
-            ) : (
-              <div className="mb-6 p-3 bg-blue-900/20 rounded-lg border border-blue-500/30">
-                <p className="text-xs text-blue-300 text-center">
-                  {t.browserStorageNote}
-                </p>
-              </div>
+          {isTauri && savedPath ? (
+            <div className="save-modal-path">
+              <p className="save-modal-path-label">{t.savedToPath}:</p>
+              <p className="save-modal-path-value">{savedPath}</p>
+            </div>
+          ) : (
+            <div className="save-modal-tip-box">
+              <p className="save-modal-tip">{t.browserStorageNote}</p>
+            </div>
+          )}
+
+          <div className="save-modal-actions">
+            {!isTauri && imageData && (
+              <button onClick={handleDownload} className="save-modal-btn save-modal-btn-primary">
+                <Download className="save-modal-btn-icon" />
+                {t.downloadImage}
+              </button>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              {!isTauri && imageData && (
-                <button
-                  onClick={handleDownload}
-                  className="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-blue-500/25 flex items-center justify-center"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {t.downloadImage}
-                </button>
-              )}
-              
-              {isTauri && savedPath && (
-                <button
-                  onClick={handleOpenFolder}
-                  className="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-purple-500/25 flex items-center justify-center"
-                >
-                  <FolderOpen className="h-4 w-4 mr-2" />
-                  {t.openFolder}
-                </button>
-              )}
-              
-              <button
-                onClick={() => onOpenChange(false)}
-                className="flex-1 py-3 px-4 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold transition-all duration-200 shadow-lg hover:shadow-green-500/25"
-              >
-                {t.ok}
+            {isTauri && savedPath && (
+              <button onClick={handleOpenFolder} className="save-modal-btn save-modal-btn-purple">
+                <FolderOpen className="save-modal-btn-icon" />
+                {t.openFolder}
               </button>
-            </div>
+            )}
+
+            <button onClick={() => onOpenChange(false)} className="save-modal-btn save-modal-btn-success">
+              {t.ok}
+            </button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

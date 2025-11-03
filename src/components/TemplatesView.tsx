@@ -194,7 +194,7 @@ const renderIconValue = (value?: string, className?: string) => {
       <img
         src={src}
         alt=""
-        className={cn('h-full w-full object-cover', className)}
+        className={cn('h-full w-full object-contain', className)}
         onError={(e) => {
           e.currentTarget.style.display = 'none';
         }}
@@ -1377,7 +1377,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                                   : 'border-gray-800 text-gray-300 hover:text-gray-100 hover:border-gray-600'
                               )}
                             >
-                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gray-800/80">
+                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gray-800/80 overflow-hidden">
                                 {renderIconValue(category.emoji, 'h-5 w-5 text-base') || '✨'}
                               </span>
                               <span className="truncate">{category.name}</span>
@@ -1407,7 +1407,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
                       <div className="space-y-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-14 w-14 rounded-lg border border-gray-800 bg-gray-950 flex items-center justify-center text-2xl text-purple-300">
+                          <div className="h-14 w-14 rounded-lg border border-gray-800 bg-gray-950 flex items-center justify-center text-2xl text-purple-300 overflow-hidden">
                             {renderIconValue(categoryForm.emoji, 'h-10 w-10 text-3xl') || '⭐'}
                           </div>
                           <div>
