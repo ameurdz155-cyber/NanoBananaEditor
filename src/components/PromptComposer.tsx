@@ -183,6 +183,12 @@ export const PromptComposer: React.FC = () => {
   // Update width/height when aspect ratio changes
   const handleAspectRatioChange = (newRatio: string) => {
     setAspectRatio(newRatio);
+    
+    // Skip dimension adjustment for auto mode
+    if (newRatio === 'auto') {
+      return;
+    }
+    
     const [w, h] = newRatio.split(':').map(Number);
     const ratio = w / h;
     
@@ -194,6 +200,12 @@ export const PromptComposer: React.FC = () => {
   // Update height when width changes (maintain aspect ratio)
   const handleWidthChange = (newWidth: number) => {
     setImageWidth(newWidth);
+    
+    // Skip aspect ratio adjustment for auto mode
+    if (aspectRatio === 'auto') {
+      return;
+    }
+    
     const [w, h] = aspectRatio.split(':').map(Number);
     const ratio = w / h;
     const newHeight = Math.round(newWidth / ratio / 64) * 64;
@@ -203,6 +215,12 @@ export const PromptComposer: React.FC = () => {
   // Update width when height changes (maintain aspect ratio)
   const handleHeightChange = (newHeight: number) => {
     setImageHeight(newHeight);
+    
+    // Skip aspect ratio adjustment for auto mode
+    if (aspectRatio === 'auto') {
+      return;
+    }
+    
     const [w, h] = aspectRatio.split(':').map(Number);
     const ratio = w / h;
     const newWidth = Math.round(newHeight * ratio / 64) * 64;
@@ -1154,29 +1172,7 @@ export const PromptComposer: React.FC = () => {
         </div>
       )}
 
-      {/* Iterations Input - Only for Generate mode */}
-      {selectedTool === 'generate' && (
-        <div className="flex-shrink-0">
-          <label className="text-xs font-semibold text-gray-300 mb-2 block flex items-center">
-            <span>{t.iterations}</span>
-            <span className="ml-2 text-gray-500 font-normal" title="The number of images to generate. If Dynamic Prompts is enabled, each prompt will be generated this many times.">
-              {t.numberOfImages}
-            </span>
-          </label>
-          <input
-            type="number"
-            min="1"
-            max="10"
-            value={iterations}
-            onChange={(e) => setIterations(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
-            className="w-full h-10 px-3 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-100 font-medium hover:border-gray-600/80 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
-            placeholder="1"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            {t.generateMultipleImages}
-          </p>
-        </div>
-      )}
+      {/* Iterations Input - Hidden per user request */}
 
       {/* Model Selection - Right before Generate Button */}
       <ModelSelector
@@ -1190,37 +1186,7 @@ export const PromptComposer: React.FC = () => {
         t={t}
       />
 
-      {/* Generate Button - Inspired by Reference UI */}
-      <div className="space-y-2 flex-shrink-0">
-        <Button
-          onClick={handleGenerate}
-          disabled={!isGenerating && !isValidating && !currentPrompt.trim()}
-          className="relative w-full h-14 text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-lg hover:shadow-xl transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-          size="lg"
-        >
-          {isValidating ? (
-            <div className="flex items-center justify-center">
-              <X className="h-5 w-5 mr-2" />
-              <span className="text-white">{t.cancel}</span>
-            </div>
-          ) : isGenerating ? (
-            <div className="flex items-center justify-center">
-              <X className="h-5 w-5 mr-2" />
-              <span className="text-white">{t.stopGeneration}</span>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center">
-              <Wand2 className="h-5 w-5 mr-2" />
-              <span className="text-white">
-                {selectedTool === 'generate' ? t.generate : t.applyEdit}
-              </span>
-            </div>
-          )}
-        </Button>
-        <p className="text-xs text-center text-gray-500">
-          {isValidating ? t.validating : t.pressCtrlEnter}
-        </p>
-      </div>
+      {/* Generate Button - Hidden per user request */}
 
       {/* Image Settings Controls - Only show for Generate mode */}
       {selectedTool === 'generate' && (
@@ -1233,6 +1199,7 @@ export const PromptComposer: React.FC = () => {
               onChange={(e) => handleAspectRatioChange(e.target.value)}
               className="w-full h-10 px-3 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-100 font-medium cursor-pointer hover:border-gray-600/80 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
             >
+              <option value="auto">Auto</option>
               <option value="1:1">1:1 ({t.square})</option>
               <option value="21:9">21:9 ({t.ultrawide})</option>
               <option value="16:9">16:9 ({t.widescreen})</option>
@@ -1516,9 +1483,9 @@ export const PromptComposer: React.FC = () => {
                 <Dialog.Title className="text-lg font-bold text-gray-100">
                   {t.referenceImagesTitle}
                 </Dialog.Title>
-                <p className="text-xs text-gray-400 mt-0.5">
+                {/* <p className="text-xs text-gray-400 mt-0.5">
                   {t.referenceModel.replace('{model}', 'Gemini 2.5 Flash')}
-                </p>
+                </p> */}
               </div>
             </div>
             <Dialog.Close asChild>

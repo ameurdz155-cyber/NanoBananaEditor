@@ -633,7 +633,7 @@ export const ImageCanvas: React.FC = () => {
                       ? t.generatingProgress
                           .replace('{current}', String(generationProgress.current))
                           .replace('{total}', String(generationProgress.total))
-                      : 'This may take a few moments'}
+                      : t.thisMayTakeMoments}
                   </p>
                 )}
                 <div className="flex items-center justify-center space-x-1 mt-4">

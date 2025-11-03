@@ -101,7 +101,7 @@ class ImageRequest(BaseModel):
     reference_images: Optional[List[str]] = Field(default=None, description="List of base64-encoded PNG images")
     temperature: Optional[float] = Field(default=None, ge=0, le=2)
     seed: Optional[int] = Field(default=None, ge=0)
-    aspect_ratio: Optional[str] = Field(default=None, pattern=r"^\d+:\d+$")
+    aspect_ratio: Optional[str] = Field(default=None, pattern=r"^(auto|\d+:\d+)$")
     width: Optional[int] = Field(default=None, ge=64, le=2048)
     height: Optional[int] = Field(default=None, ge=64, le=2048)
     num_images: int = Field(default=1, ge=1, le=4)
@@ -186,7 +186,7 @@ async def generate_with_gemini(payload: ImageRequest) -> GenerateResponse:
     prompt_text = payload.prompt
 
     dimension_hints: list[str] = []
-    if payload.aspect_ratio:
+    if payload.aspect_ratio and payload.aspect_ratio != "auto":
         dimension_hints.append(f"Desired aspect ratio: {payload.aspect_ratio}")
     if payload.width and payload.height:
         dimension_hints.append(f"Preferred output resolution: {payload.width}x{payload.height} pixels")
@@ -250,7 +250,7 @@ async def generate_with_imagen(payload: ImagenRequest) -> GenerateResponse:
     }
     if payload.negative_prompt:
         kwargs["negative_prompt"] = payload.negative_prompt
-    if payload.aspect_ratio:
+    if payload.aspect_ratio and payload.aspect_ratio != "auto":
         kwargs["aspect_ratio"] = payload.aspect_ratio
     if payload.width and payload.height:
         kwargs["image_size"] = {"width": payload.width, "height": payload.height}
