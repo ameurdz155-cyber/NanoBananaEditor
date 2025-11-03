@@ -1,6 +1,6 @@
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Download, FolderOpen } from 'lucide-react';
+import { Download, FolderOpen } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import { isTauriEnvironment } from '../utils/fileSaver';
@@ -53,11 +53,10 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
       <Dialog.Portal>
         <Dialog.Content className="save-modal-content">
           <Dialog.Close className="save-modal-close" aria-label={t.cancel}>
-            <X className="save-modal-close-icon" />
+            ×
           </Dialog.Close>
 
           <div className="save-modal-logo-wrap">
-            <div className="save-modal-logo-glow" />
             <div className="save-modal-logo">
               <img src={podIcon} alt="AI POD logo" className="save-modal-logo-img" />
             </div>
@@ -79,9 +78,7 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
               <p className="save-modal-path-value">{savedPath}</p>
             </div>
           ) : (
-            <div className="save-modal-tip-box">
-              <p className="save-modal-tip">{t.browserStorageNote}</p>
-            </div>
+            <p className="save-modal-tip">{t.browserStorageNote}</p>
           )}
 
           <div className="save-modal-actions">
@@ -99,7 +96,7 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
               </button>
             )}
 
-            <button onClick={() => onOpenChange(false)} className="save-modal-btn save-modal-btn-success">
+            <button onClick={() => onOpenChange(false)} className="save-modal-btn save-modal-btn-ghost">
               {t.ok}
             </button>
           </div>
