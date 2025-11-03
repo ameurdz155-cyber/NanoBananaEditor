@@ -1,12 +1,17 @@
 import base64
 import json
 import os
+import requests
 from typing import Any, Dict, List, Optional
+from io import BytesIO
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from PIL import Image
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 
 import google.generativeai as genai
 
@@ -20,6 +25,11 @@ GEMINI_FLASH_MODEL = os.getenv("GEMINI_FLASH_MODEL", "models/gemini-2.5-flash-im
 IMAGEN_MODEL = os.getenv("IMAGEN_MODEL", "imagen-3.0-002")
 AUTH_USERNAME = os.getenv("AUTH_USERNAME", "admin")
 AUTH_PASSWORD = os.getenv("AUTH_PASSWORD", "admin")
+
+# Google Cloud Configuration
+GOOGLE_CLOUD_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT_ID", "gen-lang-client-0772017905")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+GOOGLE_APPLICATION_CREDENTIALS = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "credentials.json")
 
 raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
 allowed_origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
@@ -47,6 +57,246 @@ def _normalize_base64(data: str) -> bytes:
     if "," in data and data.strip().startswith("data:"):
         data = data.split(",", 1)[1]
     return base64.b64decode(data)
+
+
+def _serialize_inline_image(data: bytes, mime_type: str = "image/png") -> "ImagePayload":
+    return ImagePayload(mime_type=mime_type, b64_data=base64.b64encode(data).decode("ascii"))
+
+
+def _get_google_cloud_access_token() -> Optional[str]:
+    """Get access token for Google Cloud from saved credentials."""
+    credentials_path = GOOGLE_APPLICATION_CREDENTIALS
+    
+    # If it's a relative path, make it absolute
+    if not os.path.isabs(credentials_path):
+        credentials_path = os.path.join(os.path.dirname(__file__), credentials_path)
+    
+    if not os.path.exists(credentials_path):
+        print(f"❌ Credentials file not found at: {credentials_path}")
+        return None
+    
+    try:
+        creds = Credentials.from_authorized_user_file("token.json")
+        
+        # Refresh token if needed
+        if not creds.valid:
+            if creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                print("❌ Credentials expired and cannot be refreshed")
+                return None
+        
+        return creds.token
+    except Exception as e:
+        print(f"❌ Error loading credentials: {e}")
+        return None
+
+
+def _upscale_with_google_imagen(image_data: bytes, upscale_factor: int) -> Optional[bytes]:
+    """Upscale image using Google Imagen via REST API."""
+    
+    # Get access token
+    access_token = _get_google_cloud_access_token()
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Google Cloud authentication failed. Please check credentials.")
+    
+    # Validate upscale factor
+    if upscale_factor not in [2, 4]:
+        upscale_factor = 4  # Default to 4x if invalid
+    
+    # Encode image to base64
+    encoded_string = base64.b64encode(image_data).decode("utf-8")
+    
+    # Prepare the REST API request
+    url = f"https://{GOOGLE_CLOUD_LOCATION}-aiplatform.googleapis.com/v1/projects/{GOOGLE_CLOUD_PROJECT_ID}/locations/{GOOGLE_CLOUD_LOCATION}/publishers/google/models/imagegeneration@006:predict"
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    
+    # Create the request payload
+    payload = {
+        "instances": [
+            {
+                "image": {
+                    "bytesBase64Encoded": encoded_string
+                },
+                "prompt": ""  # Empty prompt for upscaling
+            }
+        ],
+        "parameters": {
+            "sampleCount": 1,
+            "mode": "upscale",
+            "upscaleConfig": {
+                "upscaleFactor": f"x{upscale_factor}"
+            }
+        }
+    }
+
+    # Make the API call
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=120)
+        
+        if response.status_code != 200:
+            error_msg = f"Google Cloud API request failed with status {response.status_code}"
+            if response.status_code == 403:
+                error_msg += ". Check if Vertex AI API is enabled and billing is configured."
+            elif response.status_code == 404:
+                error_msg += ". Model not available in this region."
+            raise HTTPException(status_code=502, detail=error_msg)
+        
+        result = response.json()
+        
+        # Extract the upscaled image
+        if "predictions" not in result or len(result["predictions"]) == 0:
+            raise HTTPException(status_code=502, detail="No predictions returned from Google Cloud API")
+        
+        prediction = result["predictions"][0]
+        
+        if "bytesBase64Encoded" not in prediction:
+            raise HTTPException(status_code=502, detail="No image data in Google Cloud API response")
+        
+        upscaled_base64 = prediction["bytesBase64Encoded"]
+        return base64.b64decode(upscaled_base64)
+        
+    except requests.exceptions.Timeout:
+        raise HTTPException(status_code=504, detail="Google Cloud API request timed out")
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=502, detail=f"Network error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Upscaling failed: {str(e)}")
+
+
+def _inpaint_with_google_imagen(
+    image_data: bytes, 
+    prompt: str,
+    mask_image_data: Optional[bytes] = None,
+    mask_mode: str = "MASK_MODE_USER_PROVIDED",
+    mask_classes: Optional[List[int]] = None,
+    mask_dilation: float = 0.01,
+    edit_steps: int = 35,
+    sample_count: int = 1
+) -> List[bytes]:
+    """Insert objects into image using Google Imagen inpainting."""
+    
+    # Get access token
+    access_token = _get_google_cloud_access_token()
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Google Cloud authentication failed. Please check credentials.")
+    
+    # Encode base image to base64
+    base_image_b64 = base64.b64encode(image_data).decode("utf-8")
+    
+    # Prepare the REST API request
+    url = f"https://{GOOGLE_CLOUD_LOCATION}-aiplatform.googleapis.com/v1/projects/{GOOGLE_CLOUD_PROJECT_ID}/locations/{GOOGLE_CLOUD_LOCATION}/publishers/google/models/imagen-3.0-capability-001:predict"
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    
+    # Build reference images array
+    reference_images = [
+        {
+            "referenceType": "REFERENCE_TYPE_RAW",
+            "referenceId": 1,
+            "referenceImage": {
+                "bytesBase64Encoded": base_image_b64
+            }
+        }
+    ]
+    
+    # Add mask configuration
+    if mask_mode == "MASK_MODE_USER_PROVIDED" and mask_image_data:
+        # User-provided mask
+        mask_image_b64 = base64.b64encode(mask_image_data).decode("utf-8")
+        reference_images.append({
+            "referenceType": "REFERENCE_TYPE_MASK",
+            "referenceImage": {
+                "bytesBase64Encoded": mask_image_b64
+            },
+            "maskImageConfig": {
+                "maskMode": mask_mode,
+                "dilation": mask_dilation
+            }
+        })
+    else:
+        # Automatic mask detection
+        mask_config = {
+            "maskMode": mask_mode,
+            "dilation": mask_dilation
+        }
+        
+        # Add semantic mask classes if specified
+        if mask_mode == "MASK_MODE_SEMANTIC" and mask_classes:
+            mask_config["maskClasses"] = mask_classes
+            
+        reference_images.append({
+            "referenceType": "REFERENCE_TYPE_MASK",
+            "referenceId": 2,
+            "maskImageConfig": mask_config
+        })
+    
+    # Create the request payload
+    payload = {
+        "instances": [
+            {
+                "prompt": prompt,
+                "referenceImages": reference_images
+            }
+        ],
+        "parameters": {
+            "editConfig": {
+                "baseSteps": edit_steps
+            },
+            "editMode": "EDIT_MODE_INPAINT_INSERTION",
+            "sampleCount": sample_count
+        }
+    }
+
+    # Make the API call
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=180)
+        
+        if response.status_code != 200:
+            error_msg = f"Google Cloud API request failed with status {response.status_code}"
+            if response.status_code == 403:
+                error_msg += ". Check if Vertex AI API is enabled and billing is configured."
+            elif response.status_code == 404:
+                error_msg += ". Model not available in this region."
+            elif response.status_code == 400:
+                try:
+                    error_detail = response.json()
+                    error_msg += f". Error details: {error_detail}"
+                except:
+                    error_msg += f". Response: {response.text}"
+            raise HTTPException(status_code=502, detail=error_msg)
+        
+        result = response.json()
+        
+        # Extract the edited images
+        if "predictions" not in result or len(result["predictions"]) == 0:
+            raise HTTPException(status_code=502, detail="No predictions returned from Google Cloud API")
+        
+        edited_images = []
+        for prediction in result["predictions"]:
+            if "bytesBase64Encoded" not in prediction:
+                continue
+            image_bytes = base64.b64decode(prediction["bytesBase64Encoded"])
+            edited_images.append(image_bytes)
+        
+        if not edited_images:
+            raise HTTPException(status_code=502, detail="No image data in Google Cloud API response")
+        
+        return edited_images
+        
+    except requests.exceptions.Timeout:
+        raise HTTPException(status_code=504, detail="Google Cloud API request timed out")
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=502, detail=f"Network error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Inpainting failed: {str(e)}")
 
 
 def _serialize_inline_image(data: bytes, mime_type: str = "image/png") -> "ImagePayload":
@@ -101,7 +351,7 @@ class ImageRequest(BaseModel):
     reference_images: Optional[List[str]] = Field(default=None, description="List of base64-encoded PNG images")
     temperature: Optional[float] = Field(default=None, ge=0, le=2)
     seed: Optional[int] = Field(default=None, ge=0)
-    aspect_ratio: Optional[str] = Field(default=None, pattern=r"^(auto|\d+:\d+)$")
+    aspect_ratio: Optional[str] = Field(default=None, pattern=r"^\d+:\d+$")
     width: Optional[int] = Field(default=None, ge=64, le=2048)
     height: Optional[int] = Field(default=None, ge=64, le=2048)
     num_images: int = Field(default=1, ge=1, le=4)
@@ -152,8 +402,30 @@ class SegmentationRequest(BaseModel):
 
 class UpscaleRequest(BaseModel):
     image: str = Field(..., description="Base64 encoded source image to upscale")
-    scale: int = Field(default=2, ge=1, le=8)
-    model: Optional[str] = Field(default=None, min_length=1, max_length=128)
+    scale: int = Field(default=4, ge=1, le=8, description="Upscale factor (2 or 4 supported, others will be normalized)")
+    model: Optional[str] = Field(default=None, min_length=1, max_length=128, description="Model name (uses Google Imagen)")
+
+
+class InpaintRequest(BaseModel):
+    image: str = Field(..., description="Base64 encoded source image to edit")
+    prompt: str = Field(..., min_length=4, max_length=2000, description="Text prompt describing what to insert")
+    mask_image: Optional[str] = Field(default=None, description="Base64 encoded mask image (white=edit area, black=preserve)")
+    mask_mode: Optional[str] = Field(
+        default="MASK_MODE_USER_PROVIDED",
+        description="Mask mode: MASK_MODE_USER_PROVIDED, MASK_MODE_BACKGROUND, MASK_MODE_FOREGROUND, MASK_MODE_SEMANTIC"
+    )
+    mask_classes: Optional[List[int]] = Field(default=None, description="Semantic mask class IDs (for MASK_MODE_SEMANTIC)")
+    mask_dilation: float = Field(default=0.01, ge=0.0, le=1.0, description="Mask dilation percentage (0.01 recommended)")
+    edit_steps: int = Field(default=35, ge=1, le=75, description="Number of sampling steps (35-75)")
+    sample_count: int = Field(default=1, ge=1, le=4, description="Number of images to generate")
+    model: Optional[str] = Field(default=None, min_length=1, max_length=128, description="Model name (uses Google Imagen)")
+
+
+class InpaintResponse(BaseModel):
+    model: str
+    images: List[ImagePayload]
+    edit_steps: int
+    sample_count: int
 
 
 class UpscaleResponse(BaseModel):
@@ -186,7 +458,7 @@ async def generate_with_gemini(payload: ImageRequest) -> GenerateResponse:
     prompt_text = payload.prompt
 
     dimension_hints: list[str] = []
-    if payload.aspect_ratio and payload.aspect_ratio != "auto":
+    if payload.aspect_ratio:
         dimension_hints.append(f"Desired aspect ratio: {payload.aspect_ratio}")
     if payload.width and payload.height:
         dimension_hints.append(f"Preferred output resolution: {payload.width}x{payload.height} pixels")
@@ -250,7 +522,7 @@ async def generate_with_imagen(payload: ImagenRequest) -> GenerateResponse:
     }
     if payload.negative_prompt:
         kwargs["negative_prompt"] = payload.negative_prompt
-    if payload.aspect_ratio and payload.aspect_ratio != "auto":
+    if payload.aspect_ratio:
         kwargs["aspect_ratio"] = payload.aspect_ratio
     if payload.width and payload.height:
         kwargs["image_size"] = {"width": payload.width, "height": payload.height}
@@ -383,34 +655,175 @@ async def edit_with_gemini(payload: EditRequest) -> EditResponse:
 
 @app.get("/models/imagen")
 async def list_imagen_models() -> dict[str, List[str]]:
+    """List available Imagen models from Google Generative AI."""
     try:
-        models = [
-            model.name
-            for model in genai.list_models()
-            if "generateImage" in getattr(model, "supported_generation_methods", [])
-        ]
+        # Return hardcoded Imagen models to avoid slow API calls
+        # genai.list_models() can be slow and unreliable
+        models = ["imagen-3.0-002", "imagen-3.0-generate-001"]
+        return {"models": models}
     except Exception as exc:  # pragma: no cover
-        raise HTTPException(status_code=502, detail=f"Failed to list models: {exc}") from exc
-
-    return {"models": models}
+        # Fallback to default model if listing fails
+        return {"models": ["imagen-3.0-002"]}
 
 
 @app.post("/upscale", response_model=UpscaleResponse)
 async def upscale_image(payload: UpscaleRequest) -> UpscaleResponse:
-    model_name = (payload.model or IMAGEN_MODEL).strip() or IMAGEN_MODEL
-
+    """Upscale an image using Google Imagen AI model."""
+    
+    # Normalize scale factor to supported values (2 or 4)
+    scale_factor = 4 if payload.scale >= 4 else 2
+    
     try:
+        # Decode the input image
         image_bytes = _normalize_base64(payload.image)
-    except Exception as exc:  # pragma: no cover - validation handled dynamically
-        raise HTTPException(status_code=400, detail=f"Invalid image payload: {exc}") from exc
+        
+        # Validate image format and size
+        try:
+            with Image.open(BytesIO(image_bytes)) as img:
+                # Check if image is too large (Imagen has limits)
+                if img.width > 2048 or img.height > 2048:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Image too large ({img.width}x{img.height}). Maximum size is 2048x2048 pixels."
+                    )
+                
+                original_size = f"{img.width}x{img.height}"
+                
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid image format: {exc}") from exc
+        
+        # Use Google Imagen for real upscaling
+        upscaled_bytes = _upscale_with_google_imagen(image_bytes, scale_factor)
+        
+        # Get new dimensions for logging
+        try:
+            with Image.open(BytesIO(upscaled_bytes)) as upscaled_img:
+                new_size = f"{upscaled_img.width}x{upscaled_img.height}"
+        except:
+            new_size = "unknown"
+        
+        # Log the successful upscaling
+        print(f"Successfully upscaled image from {original_size} to {new_size} (scale: {scale_factor}x)")
+        
+        upscaled_image = _serialize_inline_image(upscaled_bytes)
+        
+        return UpscaleResponse(
+            model="google-imagen-upscale",
+            scale=scale_factor,
+            image=upscaled_image,
+        )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as exc:
+        # Handle any other unexpected errors
+        raise HTTPException(status_code=500, detail=f"Upscaling failed: {str(exc)}") from exc
 
-    upscaled = _serialize_inline_image(image_bytes)
 
-    return UpscaleResponse(
-        model=model_name,
-        scale=max(1, min(payload.scale, 8)),
-        image=upscaled,
-    )
+@app.post("/inpaint", response_model=InpaintResponse)
+async def inpaint_image(payload: InpaintRequest) -> InpaintResponse:
+    """Insert objects into an image using Google Imagen inpainting."""
+    
+    try:
+        # Decode the input image
+        image_bytes = _normalize_base64(payload.image)
+        
+        # Validate image format and size
+        try:
+            with Image.open(BytesIO(image_bytes)) as img:
+                # Check if image is too large (Imagen has limits)
+                if img.width > 2048 or img.height > 2048:
+                    raise HTTPException(
+                        status_code=400, 
+                        detail=f"Image too large ({img.width}x{img.height}). Maximum size is 2048x2048 pixels."
+                    )
+                
+                original_size = f"{img.width}x{img.height}"
+                
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid image format: {exc}") from exc
+        
+        # Handle mask image if provided
+        mask_image_bytes = None
+        if payload.mask_image:
+            try:
+                mask_image_bytes = _normalize_base64(payload.mask_image)
+                # Validate mask image
+                with Image.open(BytesIO(mask_image_bytes)) as mask_img:
+                    if mask_img.size != (img.width, img.height):
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Mask image size ({mask_img.width}x{mask_img.height}) must match base image size ({img.width}x{img.height})"
+                        )
+            except HTTPException:
+                raise
+            except Exception as exc:
+                raise HTTPException(status_code=400, detail=f"Invalid mask image: {exc}") from exc
+        
+        # Validate mask mode and parameters
+        valid_mask_modes = [
+            "MASK_MODE_USER_PROVIDED", 
+            "MASK_MODE_BACKGROUND", 
+            "MASK_MODE_FOREGROUND", 
+            "MASK_MODE_SEMANTIC"
+        ]
+        
+        if payload.mask_mode not in valid_mask_modes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid mask_mode. Must be one of: {', '.join(valid_mask_modes)}"
+            )
+        
+        # For user-provided masks, require mask image
+        if payload.mask_mode == "MASK_MODE_USER_PROVIDED" and not mask_image_bytes:
+            raise HTTPException(
+                status_code=400,
+                detail="mask_image is required when mask_mode is MASK_MODE_USER_PROVIDED"
+            )
+        
+        # For semantic masks, require mask classes
+        if payload.mask_mode == "MASK_MODE_SEMANTIC" and not payload.mask_classes:
+            raise HTTPException(
+                status_code=400,
+                detail="mask_classes is required when mask_mode is MASK_MODE_SEMANTIC"
+            )
+        
+        # Use Google Imagen for inpainting
+        print(f"Starting inpainting: {original_size}, prompt: '{payload.prompt[:50]}...', mode: {payload.mask_mode}")
+        
+        edited_images_bytes = _inpaint_with_google_imagen(
+            image_data=image_bytes,
+            prompt=payload.prompt,
+            mask_image_data=mask_image_bytes,
+            mask_mode=payload.mask_mode,
+            mask_classes=payload.mask_classes,
+            mask_dilation=payload.mask_dilation,
+            edit_steps=payload.edit_steps,
+            sample_count=payload.sample_count
+        )
+        
+        # Convert to response format
+        images = []
+        for i, img_bytes in enumerate(edited_images_bytes):
+            images.append(_serialize_inline_image(img_bytes))
+            print(f"Generated image {i+1}/{len(edited_images_bytes)}: {len(img_bytes)} bytes")
+        
+        print(f"✓ Inpainting completed: {len(images)} image(s) generated")
+        
+        return InpaintResponse(
+            model="google-imagen-3.0-inpaint",
+            images=images,
+            edit_steps=payload.edit_steps,
+            sample_count=len(images)
+        )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as exc:
+        # Handle any other unexpected errors
+        raise HTTPException(status_code=500, detail=f"Inpainting failed: {str(exc)}") from exc
 
 
 @app.post("/prompt/improve", response_model=ImprovePromptResponse)

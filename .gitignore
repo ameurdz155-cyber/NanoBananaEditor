@@ -26,3 +26,4 @@ dist-ssr
 *.sw?
 .env
 gemini_tunnel/.env
+gemini_tunnel/credentials.json
