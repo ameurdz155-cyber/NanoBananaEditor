@@ -36,40 +36,22 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const allModels = React.useMemo(() => {
     const models: Array<{ value: string; label: string; family: ModelFamily }> = [];
 
-    const defaultGeminiModels = [
-      'models/gemini-2.5-flash-image',
-    ];
-
-    const geminiModels = Array.from(
-      new Set(
-        [...defaultGeminiModels, modelName]
-          .filter(Boolean)
-          .map((entry) => entry!.trim())
-          .filter((entry) => entry.length > 0)
-      )
-    );
-
-    geminiModels.forEach((model) => {
-      models.push({
-        value: model,
-        label: `${t.modelOptionGemini} - ${model}`,
-        family: 'gemini',
-      });
+    // Only Gemini 2.5 Flash
+    models.push({
+      value: 'models/gemini-2.5-flash-image',
+      label: `${t.modelOptionGemini} - models/gemini-2.5-flash-image`,
+      family: 'gemini',
     });
 
-    // Add Imagen models
-    if (availableImagenModels.length > 0) {
-      availableImagenModels.forEach((model) => {
-        models.push({
-          value: model,
-          label: `${t.modelOptionImagen} - ${model}`,
-          family: 'imagen',
-        });
-      });
-    }
+    // Only Imagen 3
+    models.push({
+      value: 'imagen-3.0-002',
+      label: `${t.modelOptionImagen} - imagen-3.0-002`,
+      family: 'imagen',
+    });
     
     return models;
-  }, [modelName, availableImagenModels, t.modelOptionGemini, t.modelOptionImagen]);
+  }, [t.modelOptionGemini, t.modelOptionImagen]);
 
   const currentSelection = React.useMemo(() => {
     return allModels.find(
