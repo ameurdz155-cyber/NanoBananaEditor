@@ -13,8 +13,37 @@ import {
   Edit2,
   X,
   UploadCloud,
-  Tag
+  Tag,
+  LayoutGrid,
+  List
 } from 'lucide-react';
+import { IconType } from 'react-icons';
+import {
+  FaPalette,
+  FaPaintBrush,
+  FaCamera,
+  FaTree,
+  FaBuilding,
+  FaMountain,
+  FaRobot,
+  FaCarSide,
+  FaGem,
+  FaGlobe,
+  FaLightbulb,
+  FaMagic,
+  FaPenNib,
+  FaLeaf,
+  FaIndustry,
+  FaFilm,
+  FaUser,
+  FaShapes,
+  FaMusic,
+  FaBookOpen,
+  FaCloud,
+  FaFeather,
+  FaStar,
+  FaLayerGroup
+} from 'react-icons/fa';
 import { cn } from '../utils/cn';
 import { getTranslation, Language } from '../i18n/translations';
 import { PromptTemplate } from '../types';
@@ -54,6 +83,8 @@ interface DisplayCategory {
   source: 'default' | 'custom';
 }
 
+type IconPickerTab = 'emoji' | 'fontawesome' | 'url' | 'upload';
+
 const DEFAULT_CATEGORY_CONFIG: CategoryConfig[] = [
   {
     id: 'portrait',
@@ -92,8 +123,119 @@ const DEFAULT_CATEGORY_CONFIG: CategoryConfig[] = [
   },
 ];
 
-export const getDefaultTemplates = (language: Language): PromptTemplate[] => {
+interface FontAwesomeIconOption {
+  id: string;
+  name: string;
+  icon: IconType;
+  tags: string[];
+}
+
+const FONT_AWESOME_ICONS: FontAwesomeIconOption[] = [
+  { id: 'palette', name: 'Palette', icon: FaPalette, tags: ['art', 'color', 'design'] },
+  { id: 'paint-brush', name: 'Paint Brush', icon: FaPaintBrush, tags: ['art', 'brush', 'paint'] },
+  { id: 'feather', name: 'Feather', icon: FaFeather, tags: ['sketch', 'pen', 'drawing'] },
+  { id: 'star', name: 'Star', icon: FaStar, tags: ['favorite', 'highlight', 'badge'] },
+  { id: 'camera', name: 'Camera', icon: FaCamera, tags: ['photo', 'photography', 'portrait'] },
+  { id: 'tree', name: 'Tree', icon: FaTree, tags: ['landscape', 'nature', 'environment'] },
+  { id: 'mountain', name: 'Mountain', icon: FaMountain, tags: ['landscape', 'outdoor', 'scene'] },
+  { id: 'building', name: 'Building', icon: FaBuilding, tags: ['architecture', 'structure', 'city'] },
+  { id: 'robot', name: 'Robot', icon: FaRobot, tags: ['futuristic', 'sci-fi', 'technology'] },
+  { id: 'car-side', name: 'Car', icon: FaCarSide, tags: ['vehicle', 'concept', 'transport'] },
+  { id: 'gem', name: 'Gem', icon: FaGem, tags: ['product', 'luxury', 'premium'] },
+  { id: 'globe', name: 'Globe', icon: FaGlobe, tags: ['world', 'global', 'travel'] },
+  { id: 'lightbulb', name: 'Lightbulb', icon: FaLightbulb, tags: ['idea', 'concept', 'inspiration'] },
+  { id: 'magic', name: 'Magic Wand', icon: FaMagic, tags: ['fantasy', 'magic', 'creative'] },
+  { id: 'pen-nib', name: 'Pen Nib', icon: FaPenNib, tags: ['writing', 'ink', 'sketch'] },
+  { id: 'leaf', name: 'Leaf', icon: FaLeaf, tags: ['nature', 'organic', 'eco'] },
+  { id: 'industry', name: 'Industry', icon: FaIndustry, tags: ['industrial', 'manufacturing', 'product'] },
+  { id: 'film', name: 'Film', icon: FaFilm, tags: ['cinematic', 'film', 'story'] },
+  { id: 'user', name: 'User', icon: FaUser, tags: ['people', 'portrait', 'profile'] },
+  { id: 'shapes', name: 'Shapes', icon: FaShapes, tags: ['geometry', 'abstract', 'design'] },
+  { id: 'music', name: 'Music', icon: FaMusic, tags: ['audio', 'creative', 'entertainment'] },
+  { id: 'book-open', name: 'Book', icon: FaBookOpen, tags: ['story', 'knowledge', 'learning'] },
+  { id: 'cloud', name: 'Cloud', icon: FaCloud, tags: ['sky', 'environment', 'weather'] },
+  { id: 'layer-group', name: 'Layers', icon: FaLayerGroup, tags: ['composition', 'stack', 'design'] },
+];
+
+const FONT_AWESOME_LOOKUP = FONT_AWESOME_ICONS.reduce<Record<string, IconType>>((acc, option) => {
+  acc[option.id] = option.icon;
+  return acc;
+}, {});
+
+const ICON_PICKER_TABS: Array<{ id: IconPickerTab; label: { en: string; zh: string } }> = [
+  { id: 'emoji', label: { en: 'Emoji', zh: '表情符号' } },
+  { id: 'fontawesome', label: { en: 'Font Awesome', zh: 'Font Awesome' } },
+  { id: 'url', label: { en: 'Image URL', zh: '图片链接' } },
+  { id: 'upload', label: { en: 'Upload', zh: '上传图标' } },
+];
+
+const renderIconValue = (value?: string, className?: string) => {
+  if (!value) {
+    return null;
+  }
+
+  if (value.startsWith('fa:')) {
+    const iconId = value.slice(3);
+    const IconComponent = FONT_AWESOME_LOOKUP[iconId];
+    if (IconComponent) {
+      return <IconComponent className={cn('shrink-0', className)} />;
+    }
+  }
+
+  const normalized = value.toLowerCase();
+  if (
+    value.startsWith('url:') ||
+    value.startsWith('data:') ||
+    normalized.startsWith('http://') ||
+    normalized.startsWith('https://')
+  ) {
+    const src = value.startsWith('url:') ? value.slice(4) : value;
+    return (
+      <img
+        src={src}
+        alt=""
+        className={cn('h-full w-full object-cover', className)}
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+        }}
+      />
+    );
+  }
+
+  return (
+    <span className={cn('inline-flex items-center justify-center leading-none', className)}>
+      {value}
+    </span>
+  );
+};
+
+const getIconLabel = (value?: string) => {
+  if (!value) {
+    return '';
+  }
+
+  if (value.startsWith('fa:')) {
+    const iconId = value.slice(3);
+    const match = FONT_AWESOME_ICONS.find((icon) => icon.id === iconId);
+    return match ? `${match.name} ` : '';
+  }
+
+  const normalized = value.toLowerCase();
+  if (
+    value.startsWith('url:') ||
+    value.startsWith('data:') ||
+    normalized.startsWith('http://') ||
+    normalized.startsWith('https://')
+  ) {
+    return '';
+  }
+
+  return `${value} `;
+};
+
+export const getDefaultTemplates = (language: string): PromptTemplate[] => {
   const isZh = language === 'zh';
+
   const categoryAssignments: Record<string, string> = {
     anime: 'art-style',
     architectural: 'architecture',
@@ -109,284 +251,284 @@ export const getDefaultTemplates = (language: Language): PromptTemplate[] => {
     'photography-general': 'photography',
     'photography-landscape': 'landscape',
     'photography-portrait': 'portrait',
-    'photography-studio': 'portrait',
+    'photography-studio': 'photography',
     'product-rendering': 'product',
     sketch: 'art-style',
     vehicles: 'concept',
   };
 
   const baseTemplates: PromptTemplate[] = [
-  {
-    id: 'anime',
-    name: isZh ? '动漫' : 'Anime',
-    emoji: '🎨',
-    image: templateThumbnails['anime'],
-    description: isZh ? '动漫风格，粗线条和赛璐璐着色' : 'Anime style with bold outlines and cel-shaded coloring',
-    positivePrompt: isZh 
-      ? '{prompt} 动漫风格, 粗线条, 赛璐璐着色, 少年漫画, 青年漫画'
-      : '{prompt} anime++, bold outline, cel-shaded coloring, shounen, seinen',
-    negativePrompt: isZh 
-      ? '{photo}+++, 灰度, 纯黑, 绘画'
-      : '{photo}+++, greyscale, solid black, painting',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'architectural',
-    name: isZh ? '建筑可视化' : 'Architectural Visualization',
-    emoji: '🏛️',
-    image: templateThumbnails['architectural'],
-    description: isZh ? '专业建筑渲染' : 'Professional architectural renders',
-    positivePrompt: isZh
-      ? '{prompt} 建筑可视化, 照片级渲染, 简洁线条, 柔和日光'
-      : '{prompt} architectural visualization, photoreal render, clean lines, soft daylight',
-    negativePrompt: isZh
-      ? '草图, 手绘, 噪点, 低质量'
-      : 'sketch, hand-drawn, noisy, low quality',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'concept-art-character',
-    name: isZh ? '概念艺术（角色）' : 'Concept Art (Character)',
-    emoji: '🎭',
-    image: templateThumbnails['concept-art-character'],
-    description: isZh ? '角色概念艺术，动态姿势' : 'Character concept art with dynamic posing',
-    positivePrompt: isZh
-      ? '{prompt} 角色概念艺术, 动态姿势, 富有表现力的光照, 详细服装'
-      : '{prompt} character concept art, dynamic pose, expressive lighting, detailed costume',
-    negativePrompt: isZh
-      ? '平面着色, 僵硬姿势, 低细节, 杂乱背景'
-      : 'flat shading, stiff pose, low detail, cluttered background',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'concept-art-fantasy',
-    name: isZh ? '概念艺术（奇幻）' : 'Concept Art (Fantasy)',
-    emoji: '🐉',
-    image: templateThumbnails['concept-art-fantasy'],
-    description: isZh ? '奇幻概念艺术，魔法氛围' : 'Fantasy concept art with magical atmosphere',
-    positivePrompt: isZh
-      ? '{prompt} 奇幻概念艺术, 魔法氛围, 详细环境, 史诗规模'
-      : '{prompt} fantasy concept art, magical atmosphere, detailed environment, epic scale',
-    negativePrompt: isZh
-      ? '现代, 写实, 照片, 当代'
-      : 'modern, realistic, photo, contemporary',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'concept-art-painterly',
-    name: isZh ? '概念艺术（绘画风）' : 'Concept Art (Painterly)',
-    emoji: '�️',
-    image: templateThumbnails['concept-art-painterly'],
-    description: isZh ? '绘画风概念艺术，大胆笔触' : 'Painterly concept art with bold brush strokes',
-    positivePrompt: isZh
-      ? '{prompt} 绘画风概念艺术, 可见笔触, 丰富色彩渐变, 高度奇幻'
-      : '{prompt} painterly concept art, visible brush strokes, rich color gradients, high fantasy',
-    negativePrompt: isZh
-      ? '照片级写实, 无菌, 低对比度, 平面色彩'
-      : 'photorealistic, sterile, low contrast, flat color',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'concept-art-scifi',
-    name: isZh ? '概念艺术（科幻）' : 'Concept Art (Sci-Fi)',
-    emoji: '🚀',
-    image: templateThumbnails['concept-art-scifi'],
-    description: isZh ? '未来科幻概念艺术' : 'Futuristic sci-fi concept art',
-    positivePrompt: isZh
-      ? '{prompt} 科幻概念艺术, 未来主义, 先进科技, 电影感'
-      : '{prompt} sci-fi concept art, futuristic, advanced technology, cinematic',
-    negativePrompt: isZh
-      ? '中世纪, 奇幻, 历史, 复古'
-      : 'medieval, fantasy, historical, vintage',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'environment-art',
-    name: isZh ? '环境艺术' : 'Environment Art',
-    emoji: '🌄',
-    image: templateThumbnails['environment-art'],
-    description: isZh ? '环境概念艺术，电影般的景观' : 'Environment concept art with cinematic vistas',
-    positivePrompt: isZh
-      ? '{prompt} 环境概念艺术, 壮丽景色, 体积光照, 大气透视'
-      : '{prompt} environment concept art, sweeping vista, volumetric lighting, atmospheric perspective',
-    negativePrompt: isZh
-      ? '拥挤, 暗淡光照, 低细节, 噪点'
-      : 'crowded, dull lighting, low detail, noisy',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'illustration',
-    name: isZh ? '插画' : 'Illustration',
-    emoji: '🖼️',
-    image: templateThumbnails['illustration'],
-    description: isZh ? '数字插画，鲜艳色彩' : 'Digital illustration with vibrant colors',
-    positivePrompt: isZh
-      ? '{prompt} 数字插画, 鲜艳色彩, 风格化, 艺术感'
-      : '{prompt} digital illustration, vibrant colors, stylized, artistic',
-    negativePrompt: isZh
-      ? '照片, 写实, 3D渲染'
-      : 'photo, realistic, 3d render',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'interior-design',
-    name: isZh ? '室内设计（可视化）' : 'Interior Design (Visualization)',
-    emoji: '🛋️',
-    image: templateThumbnails['interior-design'],
-    description: isZh ? '照片级室内设计可视化' : 'Photoreal interior design visualization',
-    positivePrompt: isZh
-      ? '{prompt} 室内设计可视化, 现代家具风格, 全局光照, 照片级渲染'
-      : '{prompt} interior design visualization, modern furniture styling, global illumination, photoreal rendering',
-    negativePrompt: isZh
-      ? '杂乱, 凌乱, 低光照, 未完成'
-      : 'clutter, messy, low light, unfinished',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'line-art',
-    name: isZh ? '线稿' : 'Line Art',
-    emoji: '✍️',
-    image: templateThumbnails['line-art'],
-    description: isZh ? '清晰线稿，墨水细节' : 'Clean line art with inking detail',
-    positivePrompt: isZh
-      ? '{prompt} 清晰线稿, 清脆轮廓, 墨水绘制, 高对比度'
-      : '{prompt} clean line art, crisp outlines, inked drawing, high contrast',
-    negativePrompt: isZh
-      ? '彩色, 阴影, 渐变, 绘画'
-      : 'color, shading, gradients, paint',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'photography-black-white',
-    name: isZh ? '摄影（黑白）' : 'Photography (Black and White)',
-    emoji: '📷',
-    image: templateThumbnails['photography-black-white'],
-    description: isZh ? '高对比度黑白摄影' : 'High contrast black and white photography',
-    positivePrompt: isZh
-      ? '{prompt} 黑白摄影, 戏剧性光照, 细颗粒, 高对比度'
-      : '{prompt} black and white photography, dramatic lighting, fine grain, high contrast',
-    negativePrompt: isZh
-      ? '彩色, 过度饱和, 卡通, 插画'
-      : 'colorful, oversaturated, cartoon, illustration',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'photography-general',
-    name: isZh ? '摄影（通用）' : 'Photography (General)',
-    emoji: '📸',
-    image: templateThumbnails['photography-general'],
-    description: isZh ? '通用多功能摄影' : 'Versatile general-purpose photography',
-    positivePrompt: isZh
-      ? '{prompt} 专业摄影, 锐利对焦, 自然光照, 景深'
-      : '{prompt} professional photography, sharp focus, natural lighting, depth of field',
-    negativePrompt: isZh
-      ? '模糊, 噪点, 低分辨率, 业余快照'
-      : 'blurry, noisy, low resolution, amateur snapshot',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'photography-landscape',
-    name: isZh ? '摄影（风景）' : 'Photography (Landscape)',
-    emoji: '🏞️',
-    image: templateThumbnails['photography-landscape'],
-    description: isZh ? '风景摄影，戏剧性光照' : 'Landscape photography with dramatic lighting',
-    positivePrompt: isZh
-      ? '{prompt} 风景摄影, 黄金时刻, 广阔景色, 戏剧性天空'
-      : '{prompt} landscape photography, golden hour, expansive scenery, dramatic sky',
-    negativePrompt: isZh
-      ? '室内, 工作室, 人工光照, 杂乱前景'
-      : 'indoor, studio, artificial lighting, cluttered foreground',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'photography-portrait',
-    name: isZh ? '摄影（肖像）' : 'Photography (Portrait)',
-    emoji: '�',
-    image: templateThumbnails['photography-portrait'],
-    description: isZh ? '专业肖像摄影，工作室灯光' : 'Professional portrait photography with studio lighting',
-    positivePrompt: isZh
-      ? '{prompt} 肖像摄影, 专业照明, 虚化背景, 锐利对焦'
-      : '{prompt} portrait photography, professional lighting, bokeh background, sharp focus',
-    negativePrompt: isZh
-      ? '插画, 绘画, 素描, 卡通, 动漫'
-      : 'illustration, painting, drawing, cartoon, anime',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'photography-studio',
-    name: isZh ? '摄影（工作室灯光）' : 'Photography (Studio Lighting)',
-    emoji: '💡',
-    image: templateThumbnails['photography-studio'],
-    description: isZh ? '工作室肖像摄影，可控照明' : 'Studio portrait photography with controlled lighting',
-    positivePrompt: isZh
-      ? '{prompt} 工作室肖像, 柔光箱照明, 轮廓光, 干净背景, 超级细节'
-      : '{prompt} studio portrait, softbox lighting, rim light, clean backdrop, ultra detailed',
-    negativePrompt: isZh
-      ? '强烈闪光, 颗粒感, 低光照, 抓拍快照'
-      : 'harsh flash, grainy, low light, candid snapshot',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'product-rendering',
-    name: isZh ? '产品渲染' : 'Product Rendering',
-    emoji: '📦',
-    image: templateThumbnails['product-rendering'],
-    description: isZh ? '精致产品渲染，用于营销' : 'Polished product renders for marketing',
-    positivePrompt: isZh
-      ? '{prompt} 产品渲染, 工作室照明, 无缝背景, 光泽反射, 广告质量'
-      : '{prompt} product render, studio lighting, seamless background, glossy reflections, advertising quality',
-    negativePrompt: isZh
-      ? '划痕, 指纹, 噪点, 低多边形'
-      : 'scratches, fingerprints, noisy, low poly',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'sketch',
-    name: isZh ? '草图' : 'Sketch',
-    emoji: '✏️',
-    image: templateThumbnails['sketch'],
-    description: isZh ? '宽松铅笔草图风格' : 'Loose pencil sketch style',
-    positivePrompt: isZh
-      ? '{prompt} 铅笔草图, 构图线, 宽松阴影, 概念草稿'
-      : '{prompt} pencil sketch, construction lines, loose shading, concept rough',
-    negativePrompt: isZh
-      ? '数字绘画, 全彩色, 精细, 照片级'
-      : 'digital painting, full color, polished, photoreal',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-  {
-    id: 'vehicles',
-    name: isZh ? '车辆' : 'Vehicles',
-    emoji: '🚗',
-    image: templateThumbnails['vehicles'],
-    description: isZh ? '车辆概念艺术，动态感' : 'Vehicle concept art with motion',
-    positivePrompt: isZh
-      ? '{prompt} 车辆概念艺术, 动态视角, 运动模糊, 反射材质'
-      : '{prompt} vehicle concept art, dynamic perspective, motion blur, reflective materials',
-    negativePrompt: isZh
-      ? '静态侧面, 低细节, 卡通化, 低多边形'
-      : 'static profile, low detail, cartoonish, low poly',
-    isDefault: true,
-    createdAt: Date.now(),
-  },
-];
+    {
+      id: 'anime',
+      name: isZh ? '动漫' : 'Anime',
+      emoji: '🎨',
+      image: templateThumbnails['anime'],
+      description: isZh ? '动漫风格，粗线条和赛璐璐着色' : 'Anime style with bold outlines and cel-shaded coloring',
+      positivePrompt: isZh
+        ? '{prompt} 动漫风格, 粗线条, 赛璐璐着色, 少年漫画, 青年漫画'
+        : '{prompt} anime++, bold outline, cel-shaded coloring, shounen, seinen',
+      negativePrompt: isZh
+        ? '{photo}+++, 灰度, 纯黑, 绘画'
+        : '{photo}+++, greyscale, solid black, painting',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'architectural',
+      name: isZh ? '建筑可视化' : 'Architectural Visualization',
+      emoji: '🏛️',
+      image: templateThumbnails['architectural'],
+      description: isZh ? '专业建筑渲染' : 'Professional architectural renders',
+      positivePrompt: isZh
+        ? '{prompt} 建筑可视化, 照片级渲染, 简洁线条, 柔和日光'
+        : '{prompt} architectural visualization, photoreal render, clean lines, soft daylight',
+      negativePrompt: isZh
+        ? '草图, 手绘, 噪点, 低质量'
+        : 'sketch, hand-drawn, noisy, low quality',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'concept-art-character',
+      name: isZh ? '概念艺术（角色）' : 'Concept Art (Character)',
+      emoji: '🎭',
+      image: templateThumbnails['concept-art-character'],
+      description: isZh ? '角色概念艺术，动态姿势' : 'Character concept art with dynamic posing',
+      positivePrompt: isZh
+        ? '{prompt} 角色概念艺术, 动态姿势, 富有表现力的光照, 详细服装'
+        : '{prompt} character concept art, dynamic pose, expressive lighting, detailed costume',
+      negativePrompt: isZh
+        ? '平面着色, 僵硬姿势, 低细节, 杂乱背景'
+        : 'flat shading, stiff pose, low detail, cluttered background',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'concept-art-fantasy',
+      name: isZh ? '概念艺术（奇幻）' : 'Concept Art (Fantasy)',
+      emoji: '🐉',
+      image: templateThumbnails['concept-art-fantasy'],
+      description: isZh ? '奇幻概念艺术，魔法氛围' : 'Fantasy concept art with magical atmosphere',
+      positivePrompt: isZh
+        ? '{prompt} 奇幻概念艺术, 魔法氛围, 详细环境, 史诗规模'
+        : '{prompt} fantasy concept art, magical atmosphere, detailed environment, epic scale',
+      negativePrompt: isZh
+        ? '现代, 写实, 照片, 当代'
+        : 'modern, realistic, photo, contemporary',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'concept-art-painterly',
+      name: isZh ? '概念艺术（绘画风）' : 'Concept Art (Painterly)',
+      emoji: '🖌️',
+      image: templateThumbnails['concept-art-painterly'],
+      description: isZh ? '绘画风概念艺术，大胆笔触' : 'Painterly concept art with bold brush strokes',
+      positivePrompt: isZh
+        ? '{prompt} 绘画风概念艺术, 可见笔触, 丰富色彩渐变, 高度奇幻'
+        : '{prompt} painterly concept art, visible brush strokes, rich color gradients, high fantasy',
+      negativePrompt: isZh
+        ? '照片级写实, 无菌, 低对比度, 平面色彩'
+        : 'photorealistic, sterile, low contrast, flat color',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'concept-art-scifi',
+      name: isZh ? '概念艺术（科幻）' : 'Concept Art (Sci-Fi)',
+      emoji: '🚀',
+      image: templateThumbnails['concept-art-scifi'],
+      description: isZh ? '未来科幻概念艺术' : 'Futuristic sci-fi concept art',
+      positivePrompt: isZh
+        ? '{prompt} 科幻概念艺术, 未来主义, 先进科技, 电影感'
+        : '{prompt} sci-fi concept art, futuristic, advanced technology, cinematic',
+      negativePrompt: isZh
+        ? '中世纪, 奇幻, 历史, 复古'
+        : 'medieval, fantasy, historical, vintage',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'environment-art',
+      name: isZh ? '环境艺术' : 'Environment Art',
+      emoji: '🌄',
+      image: templateThumbnails['environment-art'],
+      description: isZh ? '环境概念艺术，电影般的景观' : 'Environment concept art with cinematic vistas',
+      positivePrompt: isZh
+        ? '{prompt} 环境概念艺术, 壮丽景色, 体积光照, 大气透视'
+        : '{prompt} environment concept art, sweeping vista, volumetric lighting, atmospheric perspective',
+      negativePrompt: isZh
+        ? '拥挤, 暗淡光照, 低细节, 噪点'
+        : 'crowded, dull lighting, low detail, noisy',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'illustration',
+      name: isZh ? '插画' : 'Illustration',
+      emoji: '🖼️',
+      image: templateThumbnails['illustration'],
+      description: isZh ? '数字插画，鲜艳色彩' : 'Digital illustration with vibrant colors',
+      positivePrompt: isZh
+        ? '{prompt} 数字插画, 鲜艳色彩, 风格化, 艺术感'
+        : '{prompt} digital illustration, vibrant colors, stylized, artistic',
+      negativePrompt: isZh
+        ? '照片, 写实, 3D渲染'
+        : 'photo, realistic, 3d render',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'interior-design',
+      name: isZh ? '室内设计（可视化）' : 'Interior Design (Visualization)',
+      emoji: '🛋️',
+      image: templateThumbnails['interior-design'],
+      description: isZh ? '照片级室内设计可视化' : 'Photoreal interior design visualization',
+      positivePrompt: isZh
+        ? '{prompt} 室内设计可视化, 现代家具风格, 全局光照, 照片级渲染'
+        : '{prompt} interior design visualization, modern furniture styling, global illumination, photoreal rendering',
+      negativePrompt: isZh
+        ? '杂乱, 凌乱, 低光照, 未完成'
+        : 'clutter, messy, low light, unfinished',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'line-art',
+      name: isZh ? '线稿' : 'Line Art',
+      emoji: '✍️',
+      image: templateThumbnails['line-art'],
+      description: isZh ? '清晰线稿，墨水细节' : 'Clean line art with inking detail',
+      positivePrompt: isZh
+        ? '{prompt} 清晰线稿, 清脆轮廓, 墨水绘制, 高对比度'
+        : '{prompt} clean line art, crisp outlines, inked drawing, high contrast',
+      negativePrompt: isZh
+        ? '彩色, 阴影, 渐变, 绘画'
+        : 'color, shading, gradients, paint',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'photography-black-white',
+      name: isZh ? '摄影（黑白）' : 'Photography (Black and White)',
+      emoji: '📷',
+      image: templateThumbnails['photography-black-white'],
+      description: isZh ? '高对比度黑白摄影' : 'High contrast black and white photography',
+      positivePrompt: isZh
+        ? '{prompt} 黑白摄影, 戏剧性光照, 细颗粒, 高对比度'
+        : '{prompt} black and white photography, dramatic lighting, fine grain, high contrast',
+      negativePrompt: isZh
+        ? '彩色, 过度饱和, 卡通, 插画'
+        : 'colorful, oversaturated, cartoon, illustration',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'photography-general',
+      name: isZh ? '摄影（通用）' : 'Photography (General)',
+      emoji: '📸',
+      image: templateThumbnails['photography-general'],
+      description: isZh ? '通用多功能摄影' : 'Versatile general-purpose photography',
+      positivePrompt: isZh
+        ? '{prompt} 专业摄影, 锐利对焦, 自然光照, 景深'
+        : '{prompt} professional photography, sharp focus, natural lighting, depth of field',
+      negativePrompt: isZh
+        ? '模糊, 噪点, 低分辨率, 业余快照'
+        : 'blurry, noisy, low resolution, amateur snapshot',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'photography-landscape',
+      name: isZh ? '摄影（风景）' : 'Photography (Landscape)',
+      emoji: '🏞️',
+      image: templateThumbnails['photography-landscape'],
+      description: isZh ? '风景摄影，戏剧性光照' : 'Landscape photography with dramatic lighting',
+      positivePrompt: isZh
+        ? '{prompt} 风景摄影, 黄金时刻, 广阔景色, 戏剧性天空'
+        : '{prompt} landscape photography, golden hour, expansive scenery, dramatic sky',
+      negativePrompt: isZh
+        ? '室内, 工作室, 人工光照, 杂乱前景'
+        : 'indoor, studio, artificial lighting, cluttered foreground',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'photography-portrait',
+      name: isZh ? '摄影（肖像）' : 'Photography (Portrait)',
+      emoji: '👤',
+      image: templateThumbnails['photography-portrait'],
+      description: isZh ? '专业肖像摄影，工作室灯光' : 'Professional portrait photography with studio lighting',
+      positivePrompt: isZh
+        ? '{prompt} 肖像摄影, 专业照明, 虚化背景, 锐利对焦'
+        : '{prompt} portrait photography, professional lighting, bokeh background, sharp focus',
+      negativePrompt: isZh
+        ? '插画, 绘画, 素描, 卡通, 动漫'
+        : 'illustration, painting, drawing, cartoon, anime',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'photography-studio',
+      name: isZh ? '摄影（工作室灯光）' : 'Photography (Studio Lighting)',
+      emoji: '💡',
+      image: templateThumbnails['photography-studio'],
+      description: isZh ? '工作室肖像摄影，可控照明' : 'Studio portrait photography with controlled lighting',
+      positivePrompt: isZh
+        ? '{prompt} 工作室肖像, 柔光箱照明, 轮廓光, 干净背景, 超级细节'
+        : '{prompt} studio portrait, softbox lighting, rim light, clean backdrop, ultra detailed',
+      negativePrompt: isZh
+        ? '强烈闪光, 颗粒感, 低光照, 抓拍快照'
+        : 'harsh flash, grainy, low light, candid snapshot',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'product-rendering',
+      name: isZh ? '产品渲染' : 'Product Rendering',
+      emoji: '📦',
+      image: templateThumbnails['product-rendering'],
+      description: isZh ? '精致产品渲染，用于营销' : 'Polished product renders for marketing',
+      positivePrompt: isZh
+        ? '{prompt} 产品渲染, 工作室照明, 无缝背景, 光泽反射, 广告质量'
+        : '{prompt} product render, studio lighting, seamless background, glossy reflections, advertising quality',
+      negativePrompt: isZh
+        ? '划痕, 指纹, 噪点, 低多边形'
+        : 'scratches, fingerprints, noisy, low poly',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'sketch',
+      name: isZh ? '草图' : 'Sketch',
+      emoji: '✏️',
+      image: templateThumbnails['sketch'],
+      description: isZh ? '宽松铅笔草图风格' : 'Loose pencil sketch style',
+      positivePrompt: isZh
+        ? '{prompt} 铅笔草图, 构图线, 宽松阴影, 概念草稿'
+        : '{prompt} pencil sketch, construction lines, loose shading, concept rough',
+      negativePrompt: isZh
+        ? '数字绘画, 全彩色, 精细, 照片级'
+        : 'digital painting, full color, polished, photoreal',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+    {
+      id: 'vehicles',
+      name: isZh ? '车辆' : 'Vehicles',
+      emoji: '🚗',
+      image: templateThumbnails['vehicles'],
+      description: isZh ? '车辆概念艺术，动态感' : 'Vehicle concept art with motion',
+      positivePrompt: isZh
+        ? '{prompt} 车辆概念艺术, 动态视角, 运动模糊, 反射材质'
+        : '{prompt} vehicle concept art, dynamic perspective, motion blur, reflective materials',
+      negativePrompt: isZh
+        ? '静态侧面, 低细节, 卡通化, 低多边形'
+        : 'static profile, low detail, cartoonish, low poly',
+      isDefault: true,
+      createdAt: Date.now(),
+    },
+  ];
 
   return baseTemplates.map((template) => ({
     ...template,
@@ -411,6 +553,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     deleteCustomTemplate,
     promptCategories,
     addPromptCategory,
+    updatePromptCategory,
     deletePromptCategory
   } = useAppStore();
   const t = getTranslation(language);
@@ -426,12 +569,17 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [editingTemplate, setEditingTemplate] = React.useState<PromptTemplate | null>(null);
   const [activeCategory, setActiveCategory] = React.useState<string>('all');
-  const [showCategoryForm, setShowCategoryForm] = React.useState(false);
   const [categoryForm, setCategoryForm] = React.useState({
     name: '',
     emoji: '⭐',
   });
+  const [iconPickerTab, setIconPickerTab] = React.useState<'emoji' | 'fontawesome' | 'url' | 'upload'>('emoji');
+  const [iconSearch, setIconSearch] = React.useState('');
   const defaultCategoryId = React.useMemo(() => DEFAULT_CATEGORY_CONFIG[0]?.id ?? '', []);
+  const [viewMode, setViewMode] = React.useState<'list' | 'grid'>('list');
+  const [showCategoryModal, setShowCategoryModal] = React.useState(false);
+  const [categoryManagerMode, setCategoryManagerMode] = React.useState<'create' | 'edit' | 'view'>('create');
+  const [editingCategoryId, setEditingCategoryId] = React.useState<string | null>(null);
 
   const resolvedCategories = React.useMemo<DisplayCategory[]>(() => {
     const map = new Map<string, DisplayCategory>();
@@ -491,6 +639,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     image: '',
   });
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const iconUploadInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -509,12 +658,93 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     event.target.value = '';
   };
 
-  const handleAddCategory = () => {
+  const handleCategoryIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        setCategoryForm((prev) => ({ ...prev, emoji: result }));
+        setIconPickerTab('upload');
+      }
+    };
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  };
+
+  const resetCategoryForm = React.useCallback(() => {
+    setCategoryForm({ name: '', emoji: '⭐' });
+    setIconPickerTab('emoji');
+    setIconSearch('');
+    setEditingCategoryId(null);
+    setCategoryManagerMode('create');
+  }, []);
+
+  const filteredFontAwesomeIcons = React.useMemo(() => {
+    const query = iconSearch.trim().toLowerCase();
+    if (!query) {
+      return FONT_AWESOME_ICONS;
+    }
+    return FONT_AWESOME_ICONS.filter((option) =>
+      option.name.toLowerCase().includes(query) ||
+      option.tags.some((tag) => tag.includes(query))
+    );
+  }, [iconSearch]);
+
+  React.useEffect(() => {
+    if (iconPickerTab !== 'fontawesome') {
+      setIconSearch('');
+    }
+  }, [iconPickerTab]);
+
+  const openCategoryModal = React.useCallback((categoryId?: string) => {
+    if (categoryId) {
+      const resolved = resolvedCategories.find((category) => category.id === categoryId);
+      if (resolved) {
+        setCategoryForm({
+          name: resolved.name,
+          emoji: resolved.emoji ?? '⭐',
+        });
+        setIconPickerTab('emoji');
+        setIconSearch('');
+        if (resolved.source === 'custom') {
+          setEditingCategoryId(categoryId);
+          setCategoryManagerMode('edit');
+        } else {
+          setEditingCategoryId(null);
+          setCategoryManagerMode('view');
+        }
+      } else {
+        resetCategoryForm();
+      }
+    } else {
+      resetCategoryForm();
+    }
+
+    setShowCategoryModal(true);
+  }, [resetCategoryForm, resolvedCategories]);
+
+  const handleSaveCategory = () => {
     const name = categoryForm.name.trim();
     const emoji = categoryForm.emoji.trim();
 
     if (!name) {
       alert(language === 'zh' ? '请填写分类名称' : 'Please provide a category name');
+      return;
+    }
+
+    if (categoryManagerMode === 'edit' && editingCategoryId) {
+      updatePromptCategory(editingCategoryId, {
+        name,
+        emoji: emoji || undefined,
+      });
+      setActiveCategory(editingCategoryId);
+      setShowCategoryModal(false);
+      resetCategoryForm();
       return;
     }
 
@@ -536,9 +766,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       updatedAt: Date.now(),
     });
 
-    setCategoryForm({ name: '', emoji: '⭐' });
     setActiveCategory(id);
-    setShowCategoryForm(false);
+    setShowCategoryModal(false);
+    resetCategoryForm();
   };
 
   const handleDeleteCategory = (categoryId: string) => {
@@ -553,6 +783,20 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     deletePromptCategory(categoryId);
 
     setActiveCategory((prev) => (prev === categoryId ? 'all' : prev));
+    if (editingCategoryId === categoryId) {
+      resetCategoryForm();
+      setShowCategoryModal(false);
+    }
+  };
+
+  const handleCategoryChipClick = (category: DisplayCategory) => {
+    setActiveCategory(category.id);
+
+    if (category.id === 'all' || category.id === 'uncategorized') {
+      return;
+    }
+
+    openCategoryModal(category.id);
   };
 
   // No longer needed - templates are now in Zustand store which persists automatically
@@ -716,156 +960,187 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
   const renderTemplateCard = (template: PromptTemplate, isCustom: boolean) => {
     const categoryInfo = template.categoryId ? categoryLookup.get(template.categoryId) : undefined;
+    const isGridView = viewMode === 'grid';
+
+    const cardClasses = cn(
+      'group relative w-full cursor-pointer overflow-hidden rounded-xl border bg-gradient-to-br from-slate-950/90 via-slate-900/70 to-slate-950/90 backdrop-blur transition-all duration-300',
+      selectedTemplate === template.id
+        ? 'border-purple-500/70 shadow-[0_15px_35px_-18px_rgba(168,85,247,0.85)]'
+        : 'border-slate-800/80 hover:border-purple-500/40 hover:shadow-[0_18px_36px_-20px_rgba(168,85,247,0.7)] hover:-translate-y-0.5',
+      isGridView && 'h-full'
+    );
+
+    const contentClasses = cn(
+      'cursor-pointer',
+      isGridView ? 'flex h-full flex-col gap-4 p-4' : 'flex items-center gap-4 p-4'
+    );
+
+    const thumbnailClasses = cn(
+      'relative overflow-hidden rounded-lg border border-gray-800/80 bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center',
+      isGridView ? 'w-full h-32' : 'h-14 w-14 flex-shrink-0'
+    );
+
+    const templateIconNode = !template.image
+      ? renderIconValue(
+          template.emoji,
+          isGridView
+            ? 'w-12 h-12 text-3xl text-purple-200 leading-none flex items-center justify-center'
+            : 'text-2xl text-purple-200 leading-none'
+        )
+      : null;
+
+    const categoryIconNode = renderIconValue(
+      categoryInfo?.emoji,
+      'w-4 h-4 text-xs text-purple-200 flex items-center justify-center'
+    );
+
+    const activeActionsClasses = isGridView
+      ? 'flex w-full items-center justify-end gap-2 pt-2'
+      : 'flex items-center gap-2 flex-shrink-0 self-end sm:self-auto';
+
+    const hoverActionsClasses = isGridView
+      ? 'flex w-full items-center justify-end gap-2 pt-2 opacity-0 transition-opacity group-hover:opacity-100'
+      : 'flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100';
 
     return (
-    <div
-      key={template.id}
-      className={cn(
-        "group relative bg-gray-900 rounded-lg border transition-all overflow-visible text-left w-full cursor-pointer",
-        selectedTemplate === template.id 
-          ? "border-purple-500 bg-purple-500/10" 
-          : "border-gray-800 hover:border-gray-700"
-      )}
-    >
-      {/* Main card content */}
-      <div 
-        className="flex items-center gap-3 p-3"
-        onClick={() => {
-          setSelectedTemplate(template.id);
-          // Update parent component with template info
-          if (onTemplateSelect) {
-            onTemplateSelect({
-              name: template.name,
-              image: template.image,
-              emoji: template.emoji
-            });
-          }
-        }}
-      >
-        {/* Template Thumbnail */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border border-gray-800 overflow-hidden">
-          {template.image ? (
-            <img 
-              src={template.image} 
-              alt={template.name}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                const firstLetter = template.name.charAt(0).toUpperCase();
-                e.currentTarget.parentElement!.innerHTML = `<span class="text-2xl font-bold text-purple-400">${firstLetter}</span>`;
-              }}
-            />
-          ) : template.emoji ? (
-            <span className="text-2xl">{template.emoji}</span>
-          ) : (
-            <span className="text-2xl font-bold text-purple-400">
-              {template.name.charAt(0).toUpperCase()}
-            </span>
-          )}
-        </div>
-
-        {/* Template Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h4 className="text-sm font-medium text-gray-200 mb-0.5">{template.name}</h4>
-            {selectedTemplate === template.id && (
-              <span className="text-xs px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded border border-purple-500/30">
-                Active
-              </span>
+      <div key={template.id} className={cardClasses}>
+        <div
+          className={contentClasses}
+          onClick={() => {
+            setSelectedTemplate(template.id);
+            if (onTemplateSelect) {
+              onTemplateSelect({
+                name: template.name,
+                image: template.image,
+                emoji: template.emoji,
+              });
+            }
+          }}
+        >
+          <div className={thumbnailClasses}>
+            {template.image ? (
+              <img
+                src={template.image}
+                alt={template.name}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              templateIconNode || (
+                <span className="text-2xl font-semibold text-purple-200">
+                  {template.name.charAt(0).toUpperCase()}
+                </span>
+              )
             )}
           </div>
-          {template.description && (
-            <p className="text-xs text-gray-500 line-clamp-1">{template.description}</p>
-          )}
-          {categoryInfo && (
-            <div className="mt-1 flex items-center gap-1 text-xs text-gray-500">
-              {categoryInfo.emoji && (
-                <span className="text-sm leading-none">{categoryInfo.emoji}</span>
+
+          <div className={cn('flex-1 min-w-0', isGridView ? 'flex flex-col gap-2' : 'space-y-1')}>
+            <div className={cn('flex items-center gap-2', isGridView && 'flex-wrap')}>
+              <h4 className="text-sm font-semibold text-gray-100">{template.name}</h4>
+              {selectedTemplate === template.id && (
+                <span className="rounded-full border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-purple-200">
+                  {language === 'zh' ? '已应用' : 'Active'}
+                </span>
               )}
-              <span>{categoryInfo.name}</span>
             </div>
-          )}
-          {!categoryInfo && !template.categoryId && (
-            <div className="mt-1 text-xs text-gray-600">{t.uncategorized}</div>
+
+            {template.description && (
+              <p
+                className={cn(
+                  'text-xs text-gray-400',
+                  isGridView ? 'line-clamp-3' : 'line-clamp-2'
+                )}
+              >
+                {template.description}
+              </p>
+            )}
+
+            {categoryInfo ? (
+              <div className="flex items-center gap-1 text-[11px] text-gray-500">
+                {categoryIconNode}
+                <span>{categoryInfo.name}</span>
+              </div>
+            ) : !template.categoryId ? (
+              <div className="text-[11px] text-gray-600">{t.uncategorized}</div>
+            ) : null}
+          </div>
+
+          {selectedTemplate === template.id ? (
+            <div className={activeActionsClasses}>
+              <div className="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-500">
+                <ChevronDown className="h-4 w-4" />
+              </div>
+            </div>
+          ) : (
+            <div className={hoverActionsClasses}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:text-gray-100 hover:bg-gray-800/80"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openDuplicateModal(template);
+                }}
+                title={t.duplicateTemplate}
+              >
+                <Copy className="h-3.5 w-3.5" />
+              </Button>
+              {isCustom && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-gray-400 hover:text-gray-100 hover:bg-gray-800/80"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditModal(template);
+                    }}
+                    title={t.editTemplate}
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-red-400 hover:text-red-200 hover:bg-red-500/15"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTemplate(template.id);
+                    }}
+                    title={t.deleteTemplate}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Template Action Icons - Show when active */}
-        {selectedTemplate === template.id ? (
-          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 self-end sm:self-auto">
-     
-            <div className="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-500 transition-all">
-              <ChevronDown className="h-4 w-4" />
+        {template.image && viewMode === 'list' && (
+          <div className="pointer-events-none absolute left-full top-0 z-50 ml-3 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="rounded-lg border border-gray-700 bg-gray-900 p-2 shadow-2xl">
+              <img
+                src={template.image}
+                alt={template.name}
+                className="h-48 w-48 rounded object-cover"
+                onError={(e) => {
+                  e.currentTarget.parentElement!.style.display = 'none';
+                }}
+              />
+              <p className="mt-2 text-center text-xs text-gray-400">{template.name}</p>
             </div>
-          </div>
-        ) : (
-          /* Custom Template Actions - Show on hover when not active */
-          <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-gray-500 hover:text-gray-200 hover:bg-gray-800"
-              onClick={(e) => {
-                e.stopPropagation();
-                openDuplicateModal(template);
-              }}
-              title={t.duplicateTemplate}
-            >
-              <Copy className="h-3 w-3" />
-            </Button>
-            {isCustom && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-gray-500 hover:text-gray-200 hover:bg-gray-800"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openEditModal(template);
-                  }}
-                  title={t.editTemplate}
-                >
-                  <Edit2 className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-red-400 hover:text-red-300 hover:bg-red-500/20"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteTemplate(template.id);
-                  }}
-                  title={t.deleteTemplate}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </>
-            )}
           </div>
         )}
       </div>
-
-
-      
-      {/* Image Preview on Hover */}
-      {template.image && (
-        <div className="absolute left-full ml-2 top-0 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          <div className="bg-gray-900 border border-gray-700 rounded-lg p-2 shadow-2xl">
-            <img 
-              src={template.image} 
-              alt={template.name}
-              className="w-48 h-48 object-cover rounded"
-              onError={(e) => {
-                e.currentTarget.parentElement!.style.display = 'none';
-              }}
-            />
-            <p className="text-xs text-gray-400 mt-2 text-center">{template.name}</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    );
   };
+
+  const templateListClasses = viewMode === 'grid'
+    ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5'
+    : 'flex flex-col gap-3';
 
   return (
     <div className="flex flex-col w-full h-full min-h-0">
@@ -880,6 +1155,32 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             className="w-full sm:flex-1"
           />
           <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              onClick={() => setViewMode('list')}
+              title={language === 'zh' ? '列表视图' : 'List view'}
+              className={cn(
+                "h-8 w-8 text-gray-400 hover:text-gray-200 hover:bg-gray-800",
+                viewMode === 'list' && "bg-purple-500/20 text-purple-200 border border-purple-500/30"
+              )}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              type="button"
+              onClick={() => setViewMode('grid')}
+              title={language === 'zh' ? '网格视图' : 'Grid view'}
+              className={cn(
+                "h-8 w-8 text-gray-400 hover:text-gray-200 hover:bg-gray-800",
+                viewMode === 'grid' && "bg-purple-500/20 text-purple-200 border border-purple-500/30"
+              )}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -902,13 +1203,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               variant="ghost"
               size="sm"
               className="h-8 px-2 text-xs text-gray-400 hover:text-gray-200"
-              onClick={() => {
-                setShowCategoryForm((prev) => {
-                  const next = !prev;
-                  setCategoryForm({ name: '', emoji: '⭐' });
-                  return next;
-                });
-              }}
+              onClick={() => openCategoryModal()}
               type="button"
             >
               <Tag className="h-3 w-3" />
@@ -922,7 +1217,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               return (
                 <button
                   key={category.id}
-                  onClick={() => setActiveCategory(category.id)}
+                  onClick={() => handleCategoryChipClick(category)}
                   className={cn(
                     'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition-all',
                     isActive
@@ -931,93 +1226,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   )}
                   type="button"
                 >
-                  {category.emoji && (
-                    <span className="text-sm leading-none">{category.emoji}</span>
-                  )}
+                  {renderIconValue(category.emoji, 'w-4 h-4 text-sm leading-none flex items-center justify-center')}
                   <span>{category.name}</span>
                 </button>
               );
             })}
           </div>
-
-          {showCategoryForm && (
-            <div className="rounded-lg border border-gray-800 bg-gray-950 p-4 space-y-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">
-                    {t.categoryNameLabel}
-                  </label>
-                  <Input
-                    value={categoryForm.name}
-                    onChange={(e) => setCategoryForm((prev) => ({ ...prev, name: e.target.value }))}
-                    placeholder={t.categoryNameLabel}
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">
-                    {t.categoryEmojiLabel}
-                  </label>
-                  <Input
-                    value={categoryForm.emoji}
-                    onChange={(e) => setCategoryForm((prev) => ({ ...prev, emoji: e.target.value }))}
-                    placeholder="⭐"
-                    maxLength={6}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {promptCategories.length > 0 && (
-                <div className="space-y-2 border-t border-gray-800 pt-3">
-                  <div className="flex flex-wrap gap-2">
-                    {promptCategories.map((category) => (
-                      <div
-                        key={category.id}
-                        className="flex items-center gap-2 rounded-full border border-gray-800 bg-gray-900 px-3 py-1.5 text-xs text-gray-300"
-                      >
-                        <span className="text-sm leading-none">{category.emoji || '⭐'}</span>
-                        <span>{category.name}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-gray-500 hover:text-red-400"
-                          onClick={() => handleDeleteCategory(category.id)}
-                          title={t.deleteCategory}
-                          type="button"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setShowCategoryForm(false);
-                    setCategoryForm({ name: '', emoji: '⭐' });
-                  }}
-                  type="button"
-                >
-                  {t.cancel}
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-purple-600 hover:bg-purple-500"
-                  onClick={handleAddCategory}
-                  disabled={!categoryForm.name.trim()}
-                  type="button"
-                >
-                  {t.addCategory}
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -1047,7 +1261,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   {searchQuery ? 'No matching templates' : 'No templates yet. Create one to get started.'}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-3">
+                <div className={templateListClasses}>
                   {filteredMyTemplates.map(template => renderTemplateCard(template, true))}
                 </div>
               )}
@@ -1079,7 +1293,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   No matching templates
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-3">
+                <div className={templateListClasses}>
                   {filteredDefaultTemplates.map(template => renderTemplateCard(template, false))}
                 </div>
               )}
@@ -1087,6 +1301,286 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           )}
         </div>
       </div>
+
+      {/* Category Management Modal */}
+      <Dialog.Root
+        open={showCategoryModal}
+        onOpenChange={(open) => {
+          setShowCategoryModal(open);
+          if (!open) {
+            resetCategoryForm();
+          }
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/70 z-50" />
+          <Dialog.Content
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 border border-gray-800 rounded-lg p-6 z-50 shadow-2xl"
+            style={{ width: '90vw', maxWidth: '960px', maxHeight: '85vh' }}
+          >
+            {(() => {
+              const isViewOnly = categoryManagerMode === 'view';
+              const modalTitle = categoryManagerMode === 'edit'
+                ? language === 'zh' ? '编辑分类' : 'Edit Category'
+                : categoryManagerMode === 'view'
+                  ? language === 'zh' ? '查看分类' : 'View Category'
+                  : t.addCategory;
+
+              return (
+                <div className="flex flex-col h-full">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <Dialog.Title className="text-xl font-semibold text-gray-100">
+                        {modalTitle}
+                      </Dialog.Title>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {language === 'zh'
+                          ? '管理模板分类、图标与名称。默认分类不可编辑。'
+                          : 'Manage names and icons for your categories. Default categories are view only.'}
+                      </p>
+                    </div>
+                    <Dialog.Close asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" type="button">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </Dialog.Close>
+                  </div>
+
+                  <div className="grid gap-6 mt-6 md:grid-cols-[240px_minmax(0,1fr)]">
+                    <div className="space-y-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-dashed border-purple-500/40 text-purple-200 hover:text-purple-100"
+                        type="button"
+                        onClick={() => {
+                          resetCategoryForm();
+                          setShowCategoryModal(true);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        {t.addCategory}
+                      </Button>
+
+                      <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">
+                        {resolvedCategories.map((category) => {
+                          const isSelected = editingCategoryId === category.id || (categoryManagerMode !== 'create' && categoryForm.name === category.name);
+                          return (
+                            <button
+                              key={category.id}
+                              type="button"
+                              onClick={() => openCategoryModal(category.id)}
+                              className={cn(
+                                'w-full flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all text-left',
+                                isSelected
+                                  ? 'border-purple-500 bg-purple-500/10 text-purple-100'
+                                  : 'border-gray-800 text-gray-300 hover:text-gray-100 hover:border-gray-600'
+                              )}
+                            >
+                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gray-800/80">
+                                {renderIconValue(category.emoji, 'h-5 w-5 text-base') || '✨'}
+                              </span>
+                              <span className="truncate">{category.name}</span>
+                              {category.source === 'default' && (
+                                <span className="ml-auto text-xs uppercase tracking-wide text-gray-500">
+                                  {language === 'zh' ? '默认' : 'Default'}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          {t.categoryNameLabel}
+                        </label>
+                        <Input
+                          value={categoryForm.name}
+                          onChange={(e) => !isViewOnly && setCategoryForm((prev) => ({ ...prev, name: e.target.value }))}
+                          placeholder={language === 'zh' ? '新的分类名称' : 'New category name'}
+                          disabled={isViewOnly}
+                        />
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="h-14 w-14 rounded-lg border border-gray-800 bg-gray-950 flex items-center justify-center text-2xl text-purple-300">
+                            {renderIconValue(categoryForm.emoji, 'h-10 w-10 text-3xl') || '⭐'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-300">{t.categoryEmojiLabel}</p>
+                            <p className="text-xs text-gray-500">
+                              {language === 'zh'
+                                ? '从下方选项卡中选择图标，或输入自定义图标。'
+                                : 'Pick an icon from the tabs below or provide your own.'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {ICON_PICKER_TABS.map((tab) => (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => !isViewOnly && setIconPickerTab(tab.id)}
+                              className={cn(
+                                'px-3 py-1.5 text-xs rounded-full border transition-colors',
+                                iconPickerTab === tab.id
+                                  ? 'border-purple-500 bg-purple-500/10 text-purple-200'
+                                  : 'border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-600',
+                                isViewOnly && 'opacity-60 cursor-not-allowed'
+                              )}
+                              disabled={isViewOnly}
+                            >
+                              {tab.label[language as keyof typeof tab.label] ?? tab.label.en}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="space-y-4">
+                          {iconPickerTab === 'emoji' && (
+                            <Input
+                              value={categoryForm.emoji}
+                              onChange={(e) => !isViewOnly && setCategoryForm((prev) => ({ ...prev, emoji: e.target.value }))}
+                              placeholder={language === 'zh' ? '输入 emoji 或字符' : 'Type an emoji or character'}
+                              disabled={isViewOnly}
+                            />
+                          )}
+
+                          {iconPickerTab === 'fontawesome' && (
+                            <div className="space-y-3">
+                              <Input
+                                value={iconSearch}
+                                onChange={(e) => setIconSearch(e.target.value)}
+                                placeholder={language === 'zh' ? '搜索图标...' : 'Search icons...'}
+                                disabled={isViewOnly}
+                              />
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                                {filteredFontAwesomeIcons.map((option) => {
+                                  const isActive = categoryForm.emoji === `fa:${option.id}`;
+                                  return (
+                                    <button
+                                      key={option.id}
+                                      type="button"
+                                      onClick={() => {
+                                        if (isViewOnly) {
+                                          return;
+                                        }
+                                        setCategoryForm((prev) => ({ ...prev, emoji: `fa:${option.id}` }));
+                                      }}
+                                      className={cn(
+                                        'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors',
+                                        isActive
+                                          ? 'border-purple-500 bg-purple-500/20 text-purple-100'
+                                          : 'border-gray-800 text-gray-300 hover:text-gray-100 hover:border-gray-600',
+                                        isViewOnly && 'cursor-default opacity-50'
+                                      )}
+                                      disabled={isViewOnly}
+                                    >
+                                      <option.icon className="h-4 w-4" />
+                                      <span className="truncate">{option.name}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {iconPickerTab === 'url' && (
+                            <Input
+                              value={categoryForm.emoji.startsWith('url:') ? categoryForm.emoji.slice(4) : categoryForm.emoji}
+                              onChange={(e) => {
+                                if (isViewOnly) {
+                                  return;
+                                }
+                                const value = e.target.value.trim();
+                                setCategoryForm((prev) => ({ ...prev, emoji: value ? (value.startsWith('http') ? value : `url:${value}`) : '' }));
+                              }}
+                              placeholder={language === 'zh' ? '粘贴图片链接' : 'Paste an image URL'}
+                              disabled={isViewOnly}
+                            />
+                          )}
+
+                          {iconPickerTab === 'upload' && (
+                            <div className="space-y-3">
+                              <input
+                                ref={iconUploadInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleCategoryIconUpload}
+                                disabled={isViewOnly}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="flex items-center gap-2 border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800"
+                                onClick={() => {
+                                  if (isViewOnly) {
+                                    return;
+                                  }
+                                  iconUploadInputRef.current?.click();
+                                }}
+                                disabled={isViewOnly}
+                              >
+                                <UploadCloud className="h-4 w-4" />
+                                <span>{language === 'zh' ? '上传自定义图标' : 'Upload custom icon'}</span>
+                              </Button>
+                              <p className="text-xs text-gray-500">
+                                {language === 'zh'
+                                  ? '我们会将图像以 Base64 的形式保存在浏览器中。'
+                                  : 'Images are stored locally as base64 data in your browser.'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between gap-3 border-t border-gray-800 pt-4">
+                    {categoryManagerMode === 'edit' && editingCategoryId && (
+                      <Button
+                        variant="ghost"
+                        className="text-sm text-red-400 hover:text-red-300"
+                        type="button"
+                        onClick={() => handleDeleteCategory(editingCategoryId)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {t.deleteCategory}
+                      </Button>
+                    )}
+                    <div className="ml-auto flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        type="button"
+                        onClick={() => {
+                          setShowCategoryModal(false);
+                          resetCategoryForm();
+                        }}
+                      >
+                        {t.cancel}
+                      </Button>
+                      {categoryManagerMode !== 'view' && (
+                        <Button
+                          type="button"
+                          onClick={handleSaveCategory}
+                          className="px-5"
+                        >
+                          {t.save}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* Create/Edit Template Modal */}
       <Dialog.Root open={showCreateModal} onOpenChange={setShowCreateModal}>
@@ -1158,7 +1652,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     <option value="">{t.uncategorized}</option>
                     {resolvedCategories.map((category) => (
                       <option key={category.id} value={category.id}>
-                        {category.emoji ? `${category.emoji} ` : ''}{category.name}
+                          {`${getIconLabel(category.emoji)}${category.name}`}
                       </option>
                     ))}
                   </select>

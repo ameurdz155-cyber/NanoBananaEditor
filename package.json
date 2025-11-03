@@ -37,6 +37,7 @@
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+  "react-icons": "^4.12.0",
     "react-konva": "^18.2.10",
     "tailwind-merge": "^3.3.1",
     "zustand": "^5.0.8"
