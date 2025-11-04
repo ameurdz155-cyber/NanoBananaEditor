@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from './ui/Button';
-import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut, BookOpen, Users, Package, Wallet, Sparkles, Loader2 } from 'lucide-react';
+import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut, BookOpen, Users, Package, Wallet, Sparkles, Loader2, FolderTree, FileText } from 'lucide-react';
 import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
 import { SaveSuccessModal } from './SaveSuccessModal';
+import { CategoryManagementPage } from './CategoryManagementPage';
+import { TemplateManagementPage } from './TemplateManagementPage';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import { cn } from '../utils/cn';
@@ -47,6 +49,8 @@ export const Header: React.FC = () => {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [savedGalleryName, setSavedGalleryName] = useState('');
   const [savedImagePath, setSavedImagePath] = useState<string | undefined>();
   const [savedImageData, setSavedImageData] = useState<string | undefined>();
@@ -418,6 +422,26 @@ export const Header: React.FC = () => {
                   <BookOpen className="h-4 w-4" />
                   <span>{t.menuTutorials}</span>
                 </a>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800 flex items-center space-x-2"
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowCategoryModal(true);
+                  }}
+                >
+                  <FolderTree className="h-4 w-4" />
+                  <span>{t.menuPromptCategories}</span>
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800 flex items-center space-x-2"
+                  onClick={() => {
+                    setShowMenu(false);
+                    setShowTemplateModal(true);
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>{t.menuTemplateManagement}</span>
+                </button>
                 <a
                   href="/community/?utm_source=AI_POD_Lite"
                   target="_blank"
@@ -494,6 +518,20 @@ export const Header: React.FC = () => {
         savedPath={savedImagePath}
         imageData={savedImageData}
       />
+      
+      {/* Category Management Modal */}
+      {showCategoryModal && (
+        <CategoryManagementPage 
+          onClose={() => setShowCategoryModal(false)}
+        />
+      )}
+      
+      {/* Template Management Modal */}
+      {showTemplateModal && (
+        <TemplateManagementPage 
+          onClose={() => setShowTemplateModal(false)}
+        />
+      )}
     </>
   );
 };

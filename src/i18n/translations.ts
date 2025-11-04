@@ -8,6 +8,8 @@ export interface Translations {
   pageTitle: string;
   // Header links
   menuTutorials: string;
+  menuPromptCategories: string;
+  menuTemplateManagement: string;
   menuCommunity: string;
   menuAssets: string;
   menuWallet: string;
@@ -405,6 +407,8 @@ export const translations: Record<Language, Translations> = {
     versionBadge: 'V2.0 Free Version',
     pageTitle: 'AI POD Lite - AI Image Generator & Editor',
   menuTutorials: 'Tutorials',
+  menuPromptCategories: 'Prompt Categories',
+  menuTemplateManagement: 'Template Management',
   menuCommunity: 'Community',
   menuAssets: 'My Assets',
   menuWallet: 'Withdraw & Deposit',
@@ -800,6 +804,8 @@ export const translations: Record<Language, Translations> = {
     versionBadge: 'V2.0 免费版',
   pageTitle: 'AI POD Lite - AI图像生成器和编辑器',
   menuTutorials: '使用教程',
+  menuPromptCategories: '提示语分类',
+  menuTemplateManagement: '提示语模板',
   menuCommunity: '用户社群',
   menuAssets: '我的资产',
   menuWallet: '提现与充值',
