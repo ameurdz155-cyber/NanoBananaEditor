@@ -256,11 +256,25 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
     return matchesSearch && matchesCategory;
   });
 
+  // Helper to get display text for emoji (converts fa: icons to emoji or text)
+  const getEmojiDisplay = (emoji: string) => {
+    if (!emoji) return '📁';
+    if (emoji.startsWith('fa:')) {
+      // For Font Awesome icons in select options, show a placeholder emoji
+      return '🏷️';
+    }
+    if (emoji.startsWith('data:image')) {
+      // For uploaded images, show a placeholder
+      return '🖼️';
+    }
+    return emoji;
+  };
+
   // Get category name
   const getCategoryName = (categoryId?: string) => {
     if (!categoryId) return language === 'zh' ? '未分类' : 'Uncategorized';
     const category = categories.find(c => c.id === categoryId);
-    return category ? `${category.emoji} ${category.name}` : language === 'zh' ? '未分类' : 'Uncategorized';
+    return category ? `${getEmojiDisplay(category.emoji)} ${category.name}` : language === 'zh' ? '未分类' : 'Uncategorized';
   };
 
   return (
@@ -326,7 +340,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
               </option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id} className="bg-gray-900 text-gray-100 py-2">
-                  {cat.emoji} {cat.name}
+                  {getEmojiDisplay(cat.emoji)} {cat.name}
                 </option>
               ))}
             </select>
@@ -344,7 +358,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTemplates.map((template) => (
               <div
                 key={template.id}
@@ -510,7 +524,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                         </option>
                         {categories.map(cat => (
                           <option key={cat.id} value={cat.id} className="bg-gray-900 text-gray-100 py-2">
-                            {cat.emoji} {cat.name}
+                            {getEmojiDisplay(cat.emoji)} {cat.name}
                           </option>
                         ))}
                       </select>

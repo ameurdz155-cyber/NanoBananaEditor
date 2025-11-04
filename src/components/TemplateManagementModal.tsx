@@ -185,10 +185,24 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     return matchesSearch && matchesCategory;
   });
 
+  // Helper to get display text for emoji (converts fa: icons to emoji or text)
+  const getEmojiDisplay = (emoji: string) => {
+    if (!emoji) return '📁';
+    if (emoji.startsWith('fa:')) {
+      // For Font Awesome icons in select options, show a placeholder emoji
+      return '🏷️';
+    }
+    if (emoji.startsWith('data:image')) {
+      // For uploaded images, show a placeholder
+      return '🖼️';
+    }
+    return emoji;
+  };
+
   const getCategoryName = (categoryId?: string) => {
     if (!categoryId) return t.uncategorized;
     const cat = categories.find(c => c.id === categoryId);
-    return cat ? `${cat.emoji} ${cat.name}` : t.uncategorized;
+    return cat ? `${getEmojiDisplay(cat.emoji)} ${cat.name}` : t.uncategorized;
   };
 
   return (
@@ -288,7 +302,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                         : "text-gray-400 hover:text-gray-200"
                     )}
                   >
-                    {cat.emoji} {cat.name}
+                    {getEmojiDisplay(cat.emoji)} {cat.name}
                   </Button>
                 ))}
               </div>
@@ -348,7 +362,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                         <option value="">{t.uncategorized}</option>
                         {categories.map(cat => (
                           <option key={cat.id} value={cat.id}>
-                            {cat.emoji} {cat.name}
+                            {getEmojiDisplay(cat.emoji)} {cat.name}
                           </option>
                         ))}
                       </select>

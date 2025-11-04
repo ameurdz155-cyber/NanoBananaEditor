@@ -6,28 +6,27 @@ import { X, Plus, Edit2, Trash2, FolderTree, Smile } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { createPortal } from 'react-dom';
 import { 
-  faFolder, faFolderOpen, faFile, faFileAlt, faFileImage, faFilePdf, faFileCode,
-  faHome, faUser, faUsers, faCog, faChartBar, faChartLine, faChartPie,
-  faHeart, faStar, faFlag, faBookmark, faBell, faEnvelope, faInbox,
-  faCamera, faImage, faPalette, faBrush, faPaintBrush, faMusic, faVideo,
-  faShoppingCart, faShoppingBag, faCreditCard, faTag, faGift, faStore,
-  faBriefcase, faBuilding, faIndustry, faLandmark, faUniversity, faHospital,
-  faGraduationCap, faBook, faBookOpen, faPen, faPencilAlt, faHighlighter,
-  faPhone, faMobile, faTablet, faLaptop, faDesktop, faKeyboard, faMouse,
-  faCoffee, faUtensils, faPizzaSlice, faBirthdayCake, faWineGlass, faCocktail,
-  faCar, faBus, faTrain, faPlane, faRocket, faShip, faBicycle,
-  faMapMarkedAlt, faMapPin, faGlobe, faCompass, faMap, faRoute,
-  faClock, faCalendar, faCalendarAlt, faCalendarCheck, faStopwatch, faHourglass,
-  faLightbulb, faBolt, faFire, faSnowflake, faSun, faMoon, faCloudSun,
-  faTree, faLeaf, faSeedling, faMountain, faWater, faUmbrella,
-  faDumbbell, faRunning, faSwimmer, faBiking, faFootballBall, faBasketballBall,
-  faGamepad, faDice, faPuzzlePiece, faChess, faTrophy, faMedal, faAward,
-  faLock, faUnlock, faKey, faShield, faUserShield, faFingerprint,
-  faWrench, faTools, faScrewdriver, faHammer, faCogs, faCircle, faSquare
-} from '@fortawesome/free-solid-svg-icons';
+  FaFolder, FaFolderOpen, FaFile, FaFileAlt, FaFileImage, FaFilePdf, FaFileCode,
+  FaHome, FaUser, FaUsers, FaCog, FaChartBar, FaChartLine, FaChartPie,
+  FaHeart, FaStar, FaFlag, FaBookmark, FaBell, FaEnvelope, FaInbox,
+  FaCamera, FaImage, FaPalette, FaBrush, FaPaintBrush, FaMusic, FaVideo,
+  FaShoppingCart, FaShoppingBag, FaCreditCard, FaTag, FaGift, FaStore,
+  FaBriefcase, FaBuilding, FaIndustry, FaLandmark, FaUniversity, FaHospital,
+  FaGraduationCap, FaBook, FaBookOpen, FaPen, FaPencilAlt, FaHighlighter,
+  FaPhone, FaMobile, FaTablet, FaLaptop, FaDesktop, FaKeyboard, FaMouse,
+  FaCoffee, FaUtensils, FaPizzaSlice, FaBirthdayCake, FaWineGlass, FaCocktail,
+  FaCar, FaBus, FaTrain, FaPlane, FaRocket, FaShip, FaBicycle,
+  FaMapMarkedAlt, FaMapPin, FaGlobe, FaCompass, FaMap, FaRoute,
+  FaClock, FaCalendar, FaCalendarAlt, FaCalendarCheck, FaStopwatch, FaHourglass,
+  FaLightbulb, FaBolt, FaFire, FaSnowflake, FaSun, FaMoon, FaCloudSun,
+  FaTree, FaLeaf, FaSeedling, FaMountain, FaWater, FaUmbrella,
+  FaDumbbell, FaRunning, FaSwimmer, FaBiking, FaFootballBall, FaBasketballBall,
+  FaGamepad, FaDice, FaPuzzlePiece, FaChess, FaTrophy, FaMedal, FaAward,
+  FaLock, FaUnlock, FaKey, FaUserShield, FaFingerprint,
+  FaWrench, FaTools, FaScrewdriver, FaHammer, FaCogs, FaCircle, FaSquare
+} from 'react-icons/fa';
 
 interface Category {
   id: string;
@@ -173,145 +172,159 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     }
   };
 
-  // Font Awesome icons list
+  // Font Awesome icons list using react-icons
   const fontAwesomeIcons = [
     // Files & Folders
-    { icon: faFolder, name: 'folder' },
-    { icon: faFolderOpen, name: 'folder-open' },
-    { icon: faFile, name: 'file' },
-    { icon: faFileAlt, name: 'file-alt' },
-    { icon: faFileImage, name: 'file-image' },
-    { icon: faFilePdf, name: 'file-pdf' },
-    { icon: faFileCode, name: 'file-code' },
+    { id: 'folder', name: 'Folder', icon: FaFolder },
+    { id: 'folder-open', name: 'Folder Open', icon: FaFolderOpen },
+    { id: 'file', name: 'File', icon: FaFile },
+    { id: 'file-alt', name: 'File Alt', icon: FaFileAlt },
+    { id: 'file-image', name: 'File Image', icon: FaFileImage },
+    { id: 'file-pdf', name: 'File PDF', icon: FaFilePdf },
+    { id: 'file-code', name: 'File Code', icon: FaFileCode },
     // Home & Users
-    { icon: faHome, name: 'home' },
-    { icon: faUser, name: 'user' },
-    { icon: faUsers, name: 'users' },
-    { icon: faCog, name: 'cog' },
+    { id: 'home', name: 'Home', icon: FaHome },
+    { id: 'user', name: 'User', icon: FaUser },
+    { id: 'users', name: 'Users', icon: FaUsers },
+    { id: 'cog', name: 'Cog', icon: FaCog },
     // Charts & Analytics
-    { icon: faChartBar, name: 'chart-bar' },
-    { icon: faChartLine, name: 'chart-line' },
-    { icon: faChartPie, name: 'chart-pie' },
+    { id: 'chart-bar', name: 'Chart Bar', icon: FaChartBar },
+    { id: 'chart-line', name: 'Chart Line', icon: FaChartLine },
+    { id: 'chart-pie', name: 'Chart Pie', icon: FaChartPie },
     // Favorites & Bookmarks
-    { icon: faHeart, name: 'heart' },
-    { icon: faStar, name: 'star' },
-    { icon: faFlag, name: 'flag' },
-    { icon: faBookmark, name: 'bookmark' },
-    { icon: faBell, name: 'bell' },
-    { icon: faEnvelope, name: 'envelope' },
-    { icon: faInbox, name: 'inbox' },
+    { id: 'heart', name: 'Heart', icon: FaHeart },
+    { id: 'star', name: 'Star', icon: FaStar },
+    { id: 'flag', name: 'Flag', icon: FaFlag },
+    { id: 'bookmark', name: 'Bookmark', icon: FaBookmark },
+    { id: 'bell', name: 'Bell', icon: FaBell },
+    { id: 'envelope', name: 'Envelope', icon: FaEnvelope },
+    { id: 'inbox', name: 'Inbox', icon: FaInbox },
     // Creative & Media
-    { icon: faCamera, name: 'camera' },
-    { icon: faImage, name: 'image' },
-    { icon: faPalette, name: 'palette' },
-    { icon: faBrush, name: 'brush' },
-    { icon: faPaintBrush, name: 'paint-brush' },
-    { icon: faMusic, name: 'music' },
-    { icon: faVideo, name: 'video' },
+    { id: 'camera', name: 'Camera', icon: FaCamera },
+    { id: 'image', name: 'Image', icon: FaImage },
+    { id: 'palette', name: 'Palette', icon: FaPalette },
+    { id: 'brush', name: 'Brush', icon: FaBrush },
+    { id: 'paint-brush', name: 'Paint Brush', icon: FaPaintBrush },
+    { id: 'music', name: 'Music', icon: FaMusic },
+    { id: 'video', name: 'Video', icon: FaVideo },
     // Shopping & Commerce
-    { icon: faShoppingCart, name: 'shopping-cart' },
-    { icon: faShoppingBag, name: 'shopping-bag' },
-    { icon: faCreditCard, name: 'credit-card' },
-    { icon: faTag, name: 'tag' },
-    { icon: faGift, name: 'gift' },
-    { icon: faStore, name: 'store' },
+    { id: 'shopping-cart', name: 'Shopping Cart', icon: FaShoppingCart },
+    { id: 'shopping-bag', name: 'Shopping Bag', icon: FaShoppingBag },
+    { id: 'credit-card', name: 'Credit Card', icon: FaCreditCard },
+    { id: 'tag', name: 'Tag', icon: FaTag },
+    { id: 'gift', name: 'Gift', icon: FaGift },
+    { id: 'store', name: 'Store', icon: FaStore },
     // Business & Buildings
-    { icon: faBriefcase, name: 'briefcase' },
-    { icon: faBuilding, name: 'building' },
-    { icon: faIndustry, name: 'industry' },
-    { icon: faLandmark, name: 'landmark' },
-    { icon: faUniversity, name: 'university' },
-    { icon: faHospital, name: 'hospital' },
+    { id: 'briefcase', name: 'Briefcase', icon: FaBriefcase },
+    { id: 'building', name: 'Building', icon: FaBuilding },
+    { id: 'industry', name: 'Industry', icon: FaIndustry },
+    { id: 'landmark', name: 'Landmark', icon: FaLandmark },
+    { id: 'university', name: 'University', icon: FaUniversity },
+    { id: 'hospital', name: 'Hospital', icon: FaHospital },
     // Education
-    { icon: faGraduationCap, name: 'graduation-cap' },
-    { icon: faBook, name: 'book' },
-    { icon: faBookOpen, name: 'book-open' },
-    { icon: faPen, name: 'pen' },
-    { icon: faPencilAlt, name: 'pencil-alt' },
-    { icon: faHighlighter, name: 'highlighter' },
+    { id: 'graduation-cap', name: 'Graduation Cap', icon: FaGraduationCap },
+    { id: 'book', name: 'Book', icon: FaBook },
+    { id: 'book-open', name: 'Book Open', icon: FaBookOpen },
+    { id: 'pen', name: 'Pen', icon: FaPen },
+    { id: 'pencil-alt', name: 'Pencil Alt', icon: FaPencilAlt },
+    { id: 'highlighter', name: 'Highlighter', icon: FaHighlighter },
     // Devices & Technology
-    { icon: faPhone, name: 'phone' },
-    { icon: faMobile, name: 'mobile' },
-    { icon: faTablet, name: 'tablet' },
-    { icon: faLaptop, name: 'laptop' },
-    { icon: faDesktop, name: 'desktop' },
-    { icon: faKeyboard, name: 'keyboard' },
-    { icon: faMouse, name: 'mouse' },
+    { id: 'phone', name: 'Phone', icon: FaPhone },
+    { id: 'mobile', name: 'Mobile', icon: FaMobile },
+    { id: 'tablet', name: 'Tablet', icon: FaTablet },
+    { id: 'laptop', name: 'Laptop', icon: FaLaptop },
+    { id: 'desktop', name: 'Desktop', icon: FaDesktop },
+    { id: 'keyboard', name: 'Keyboard', icon: FaKeyboard },
+    { id: 'mouse', name: 'Mouse', icon: FaMouse },
     // Food & Drink
-    { icon: faCoffee, name: 'coffee' },
-    { icon: faUtensils, name: 'utensils' },
-    { icon: faPizzaSlice, name: 'pizza-slice' },
-    { icon: faBirthdayCake, name: 'birthday-cake' },
-    { icon: faWineGlass, name: 'wine-glass' },
-    { icon: faCocktail, name: 'cocktail' },
+    { id: 'coffee', name: 'Coffee', icon: FaCoffee },
+    { id: 'utensils', name: 'Utensils', icon: FaUtensils },
+    { id: 'pizza-slice', name: 'Pizza Slice', icon: FaPizzaSlice },
+    { id: 'birthday-cake', name: 'Birthday Cake', icon: FaBirthdayCake },
+    { id: 'wine-glass', name: 'Wine Glass', icon: FaWineGlass },
+    { id: 'cocktail', name: 'Cocktail', icon: FaCocktail },
     // Transportation
-    { icon: faCar, name: 'car' },
-    { icon: faBus, name: 'bus' },
-    { icon: faTrain, name: 'train' },
-    { icon: faPlane, name: 'plane' },
-    { icon: faRocket, name: 'rocket' },
-    { icon: faShip, name: 'ship' },
-    { icon: faBicycle, name: 'bicycle' },
+    { id: 'car', name: 'Car', icon: FaCar },
+    { id: 'bus', name: 'Bus', icon: FaBus },
+    { id: 'train', name: 'Train', icon: FaTrain },
+    { id: 'plane', name: 'Plane', icon: FaPlane },
+    { id: 'rocket', name: 'Rocket', icon: FaRocket },
+    { id: 'ship', name: 'Ship', icon: FaShip },
+    { id: 'bicycle', name: 'Bicycle', icon: FaBicycle },
     // Maps & Location
-    { icon: faMapMarkedAlt, name: 'map-marked-alt' },
-    { icon: faMapPin, name: 'map-pin' },
-    { icon: faGlobe, name: 'globe' },
-    { icon: faCompass, name: 'compass' },
-    { icon: faMap, name: 'map' },
-    { icon: faRoute, name: 'route' },
+    { id: 'map-marked-alt', name: 'Map Marked', icon: FaMapMarkedAlt },
+    { id: 'map-pin', name: 'Map Pin', icon: FaMapPin },
+    { id: 'globe', name: 'Globe', icon: FaGlobe },
+    { id: 'compass', name: 'Compass', icon: FaCompass },
+    { id: 'map', name: 'Map', icon: FaMap },
+    { id: 'route', name: 'Route', icon: FaRoute },
     // Time & Calendar
-    { icon: faClock, name: 'clock' },
-    { icon: faCalendar, name: 'calendar' },
-    { icon: faCalendarAlt, name: 'calendar-alt' },
-    { icon: faCalendarCheck, name: 'calendar-check' },
-    { icon: faStopwatch, name: 'stopwatch' },
-    { icon: faHourglass, name: 'hourglass' },
+    { id: 'clock', name: 'Clock', icon: FaClock },
+    { id: 'calendar', name: 'Calendar', icon: FaCalendar },
+    { id: 'calendar-alt', name: 'Calendar Alt', icon: FaCalendarAlt },
+    { id: 'calendar-check', name: 'Calendar Check', icon: FaCalendarCheck },
+    { id: 'stopwatch', name: 'Stopwatch', icon: FaStopwatch },
+    { id: 'hourglass', name: 'Hourglass', icon: FaHourglass },
     // Weather & Nature
-    { icon: faLightbulb, name: 'lightbulb' },
-    { icon: faBolt, name: 'bolt' },
-    { icon: faFire, name: 'fire' },
-    { icon: faSnowflake, name: 'snowflake' },
-    { icon: faSun, name: 'sun' },
-    { icon: faMoon, name: 'moon' },
-    { icon: faCloudSun, name: 'cloud-sun' },
-    { icon: faTree, name: 'tree' },
-    { icon: faLeaf, name: 'leaf' },
-    { icon: faSeedling, name: 'seedling' },
-    { icon: faMountain, name: 'mountain' },
-    { icon: faWater, name: 'water' },
-    { icon: faUmbrella, name: 'umbrella' },
+    { id: 'lightbulb', name: 'Lightbulb', icon: FaLightbulb },
+    { id: 'bolt', name: 'Bolt', icon: FaBolt },
+    { id: 'fire', name: 'Fire', icon: FaFire },
+    { id: 'snowflake', name: 'Snowflake', icon: FaSnowflake },
+    { id: 'sun', name: 'Sun', icon: FaSun },
+    { id: 'moon', name: 'Moon', icon: FaMoon },
+    { id: 'cloud-sun', name: 'Cloud Sun', icon: FaCloudSun },
+    { id: 'tree', name: 'Tree', icon: FaTree },
+    { id: 'leaf', name: 'Leaf', icon: FaLeaf },
+    { id: 'seedling', name: 'Seedling', icon: FaSeedling },
+    { id: 'mountain', name: 'Mountain', icon: FaMountain },
+    { id: 'water', name: 'Water', icon: FaWater },
+    { id: 'umbrella', name: 'Umbrella', icon: FaUmbrella },
     // Sports & Activities
-    { icon: faDumbbell, name: 'dumbbell' },
-    { icon: faRunning, name: 'running' },
-    { icon: faSwimmer, name: 'swimmer' },
-    { icon: faBiking, name: 'biking' },
-    { icon: faFootballBall, name: 'football-ball' },
-    { icon: faBasketballBall, name: 'basketball-ball' },
+    { id: 'dumbbell', name: 'Dumbbell', icon: FaDumbbell },
+    { id: 'running', name: 'Running', icon: FaRunning },
+    { id: 'swimmer', name: 'Swimmer', icon: FaSwimmer },
+    { id: 'biking', name: 'Biking', icon: FaBiking },
+    { id: 'football-ball', name: 'Football Ball', icon: FaFootballBall },
+    { id: 'basketball-ball', name: 'Basketball Ball', icon: FaBasketballBall },
     // Gaming & Entertainment
-    { icon: faGamepad, name: 'gamepad' },
-    { icon: faDice, name: 'dice' },
-    { icon: faPuzzlePiece, name: 'puzzle-piece' },
-    { icon: faChess, name: 'chess' },
-    { icon: faTrophy, name: 'trophy' },
-    { icon: faMedal, name: 'medal' },
-    { icon: faAward, name: 'award' },
+    { id: 'gamepad', name: 'Gamepad', icon: FaGamepad },
+    { id: 'dice', name: 'Dice', icon: FaDice },
+    { id: 'puzzle-piece', name: 'Puzzle Piece', icon: FaPuzzlePiece },
+    { id: 'chess', name: 'Chess', icon: FaChess },
+    { id: 'trophy', name: 'Trophy', icon: FaTrophy },
+    { id: 'medal', name: 'Medal', icon: FaMedal },
+    { id: 'award', name: 'Award', icon: FaAward },
     // Security
-    { icon: faLock, name: 'lock' },
-    { icon: faUnlock, name: 'unlock' },
-    { icon: faKey, name: 'key' },
-    { icon: faShield, name: 'shield' },
-    { icon: faUserShield, name: 'user-shield' },
-    { icon: faFingerprint, name: 'fingerprint' },
+    { id: 'lock', name: 'Lock', icon: FaLock },
+    { id: 'unlock', name: 'Unlock', icon: FaUnlock },
+    { id: 'key', name: 'Key', icon: FaKey },
+    { id: 'user-shield', name: 'User Shield', icon: FaUserShield },
+    { id: 'fingerprint', name: 'Fingerprint', icon: FaFingerprint },
     // Tools & Settings
-    { icon: faWrench, name: 'wrench' },
-    { icon: faTools, name: 'tools' },
-    { icon: faScrewdriver, name: 'screwdriver' },
-    { icon: faHammer, name: 'hammer' },
-    { icon: faCogs, name: 'cogs' },
+    { id: 'wrench', name: 'Wrench', icon: FaWrench },
+    { id: 'tools', name: 'Tools', icon: FaTools },
+    { id: 'screwdriver', name: 'Screwdriver', icon: FaScrewdriver },
+    { id: 'hammer', name: 'Hammer', icon: FaHammer },
+    { id: 'cogs', name: 'Cogs', icon: FaCogs },
     // Shapes
-    { icon: faCircle, name: 'circle' },
-    { icon: faSquare, name: 'square' },
+    { id: 'circle', name: 'Circle', icon: FaCircle },
+    { id: 'square', name: 'Square', icon: FaSquare },
   ];
+
+  // Helper function to render icon
+  const renderIcon = (emoji: string, size: string = 'text-2xl') => {
+    if (emoji.startsWith('data:image')) {
+      return <img src={emoji} alt="Category icon" className="w-8 h-8 object-cover rounded" />;
+    } else if (emoji.startsWith('fa:')) {
+      const iconId = emoji.slice(3);
+      const iconData = fontAwesomeIcons.find(i => i.id === iconId);
+      if (iconData) {
+        const IconComponent = iconData.icon;
+        return <IconComponent className={size} />;
+      }
+    }
+    return <span className={size}>{emoji}</span>;
+  };
 
   // Close emoji picker when clicking outside
   useEffect(() => {
@@ -443,16 +456,9 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          {category.emoji.startsWith('data:image') ? (
-                            <img src={category.emoji} alt={category.name} className="w-8 h-8 object-cover rounded" />
-                          ) : category.emoji.startsWith('fa-') ? (
-                            <FontAwesomeIcon 
-                              icon={fontAwesomeIcons.find(i => `fa-${i.name}` === category.emoji)?.icon || faFolder} 
-                              className="text-2xl text-lime-400" 
-                            />
-                          ) : (
-                            <span className="text-2xl">{category.emoji}</span>
-                          )}
+                          <div className="w-8 h-8 flex items-center justify-center text-lime-400">
+                            {renderIcon(category.emoji)}
+                          </div>
                           <div>
                             <p className="text-gray-200 font-medium">{category.name}</p>
                             <p className="text-xs text-gray-500">
@@ -535,17 +541,8 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                     {t.categoryEmojiLabel}
                   </label>
                   <div className="flex gap-2">
-                    <div className="flex-1 h-16 flex items-center justify-center border border-gray-700 rounded-lg bg-gray-800/40 text-3xl">
-                      {formEmoji.startsWith('data:image') ? (
-                        <img src={formEmoji} alt="Category icon" className="w-12 h-12 object-cover rounded" />
-                      ) : formEmoji.startsWith('fa-') ? (
-                        <FontAwesomeIcon 
-                          icon={fontAwesomeIcons.find(i => `fa-${i.name}` === formEmoji)?.icon || faFolder} 
-                          className="text-4xl text-lime-400" 
-                        />
-                      ) : (
-                        <span>{formEmoji || '📁'}</span>
-                      )}
+                    <div className="flex-1 h-16 flex items-center justify-center border border-gray-700 rounded-lg bg-gray-800/40 text-lime-400">
+                      {renderIcon(formEmoji || '📁', 'text-4xl')}
                     </div>
                     <Button
                       ref={emojiButtonRef}
@@ -649,15 +646,15 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                             />
                             <div className="grid grid-cols-7 gap-2">
                               {fontAwesomeIcons
-                                .filter(({ name }) => !iconSearch || name.toLowerCase().includes(iconSearch.toLowerCase()))
-                                .map(({ icon, name }, index) => (
+                                .filter(({ name, id }) => !iconSearch || name.toLowerCase().includes(iconSearch.toLowerCase()) || id.includes(iconSearch.toLowerCase()))
+                                .map(({ icon: IconComponent, name, id }, index) => (
                                   <button
                                     key={index}
-                                    onClick={() => handleIconSelect(`fa-${name}`)}
+                                    onClick={() => handleIconSelect(`fa:${id}`)}
                                     className="w-12 h-12 flex items-center justify-center hover:bg-gray-800 rounded transition-colors border border-transparent hover:border-lime-400"
                                     title={name}
                                   >
-                                    <FontAwesomeIcon icon={icon} className="text-xl text-gray-300" />
+                                    <IconComponent className="text-xl text-gray-300" />
                                   </button>
                                 ))}
                             </div>
