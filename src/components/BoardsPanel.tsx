@@ -188,10 +188,10 @@ export const BoardsPanel: React.FC = () => {
                         <div
                           key={board.id}
                           className={cn(
-                            "group relative w-full px-3 py-2.5 cursor-pointer transition-all border-l-4 rounded bg-gray-900/30",
+                            "group relative w-full px-3 py-2.5 cursor-pointer transition-all border-l-4 rounded bg-[var(--surface-secondary)] hover:bg-[var(--bg-hover)]",
                             isSelected
-                              ? "border-purple-500 bg-gray-800/50"
-                              : "border-transparent hover:bg-gray-800/40 hover:border-gray-700"
+                              ? "bg-[rgba(124,58,237,0.12)] border-[rgba(124,58,237,0.45)] shadow-sm"
+                              : "border-transparent hover:border-[rgba(124,58,237,0.25)]"
                           )}
                           onClick={() => setSelectedBoard(isSelected ? null : board.id)}
                         >
@@ -205,10 +205,14 @@ export const BoardsPanel: React.FC = () => {
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <div className={cn(
-                                  "text-sm font-semibold truncate",
-                                  isSelected ? "text-gray-100" : "text-gray-300"
-                                )}>
+                                <div
+                                  className={cn(
+                                    "text-sm font-semibold truncate",
+                                    isSelected
+                                      ? 'text-[var(--text-primary)]'
+                                      : 'text-[var(--text-secondary)]'
+                                  )}
+                                >
                                   {board.name}
                                 </div>
                                 {board.id === 'default' && (

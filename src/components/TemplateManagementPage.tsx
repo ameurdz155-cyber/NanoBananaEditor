@@ -328,15 +328,13 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button
+              <button
                 onClick={toggleTheme}
-                variant="ghost"
-                size="sm"
                 className={cn(
-                  "transition-colors",
+                  "p-2.5 rounded-lg border-2 transition-all duration-200",
                   isDarkMode 
-                    ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50" 
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "border-red-500 bg-gray-800/50 text-yellow-400 hover:bg-gray-700/50 hover:border-red-400" 
+                    : "border-orange-500 bg-white text-gray-700 hover:bg-gray-50 hover:border-orange-400"
                 )}
                 title={isDarkMode 
                   ? (language === 'zh' ? '切换到浅色模式' : 'Switch to Light Mode')
@@ -344,7 +342,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                 }
               >
                 {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
+              </button>
               <Button
                 onClick={handleOpenCreate}
                 className="bg-cyan-600 hover:bg-cyan-700 text-white"

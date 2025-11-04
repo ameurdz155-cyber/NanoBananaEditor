@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from './ui/Button';
-import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut, BookOpen, Users, Package, Wallet, Sparkles, Loader2, FolderTree, FileText } from 'lucide-react';
+import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut, BookOpen, Users, Package, Wallet, Sparkles, Loader2, FolderTree, FileText, Moon, Sun } from 'lucide-react';
 import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
 import { SaveSuccessModal } from './SaveSuccessModal';
@@ -59,6 +59,21 @@ export const Header: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('app-theme');
+    return savedTheme !== 'light';
+  });
+
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem('app-theme', newTheme ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', newTheme);
+    document.documentElement.classList.toggle('light', !newTheme);
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event('themeChange'));
+  };
+
   const updateMenuPosition = () => {
     if (!menuButtonRef.current) return;
     const rect = menuButtonRef.current.getBoundingClientRect();
@@ -378,6 +393,19 @@ export const Header: React.FC = () => {
               <span className="text-sm font-medium text-gray-200">{user.username}</span>
             </div>
           )}
+          
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg border-2 border-purple-500/60 bg-gray-800/50 text-yellow-400 hover:bg-gray-700/50 hover:border-purple-400/80 transition-all duration-200"
+            title={isDarkMode 
+              ? (language === 'zh' ? '切换到浅色模式' : 'Switch to Light Mode')
+              : (language === 'zh' ? '切换到深色模式' : 'Switch to Dark Mode')
+            }
+          >
+            {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+          
           {/* Menu Dropdown */}
           <div>
             <Button 

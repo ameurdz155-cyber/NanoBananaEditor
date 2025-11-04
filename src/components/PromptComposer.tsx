@@ -13,7 +13,7 @@ import { getTranslation } from '../i18n/translations';
 import { usePromptPanelResize } from './PromptComposer/usePromptPanelResize';
 import { ModelSelector } from './PromptComposer/ModelSelector';
 import { TemplateSelector } from './PromptComposer/TemplateSelector';
-import type { PromptTemplate } from './TemplatesView';
+import type { PromptTemplate } from '../types';
 
 const DEFAULT_MODEL_FAMILY = 'gemini';
 const DEFAULT_MODEL_NAME = 'models/gemini-2.5-flash-image';
@@ -62,11 +62,10 @@ export const PromptComposer: React.FC = () => {
     modelName,
     setModelFamily,
     setModelName,
-    availableImagenModels,
-    setAvailableImagenModels,
-    iterations,
-    setIterations,
-    setIsValidating,
+  availableImagenModels,
+  setAvailableImagenModels,
+  iterations,
+  setIsValidating,
   } = useAppStore();
 
   const t = getTranslation(language);
@@ -609,71 +608,71 @@ export const PromptComposer: React.FC = () => {
           <ChevronLeft className="h-4 w-4" />
         </Button>
       </div>
-  <div className="h-full overflow-visible">
+      <div className="h-full overflow-visible">
         <div className="h-full p-6 flex flex-col space-y-6 overflow-y-auto sidebar-scrollbar">
           <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 flex-shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-200">{t.selectMode}</h3>
-            <p className="text-xs text-gray-500 mt-0.5">{t.chooseHowToCreate}</p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-200">{t.selectMode}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{t.chooseHowToCreate}</p>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowHintsModal(true)}
+                  className="h-7 w-7 hover:bg-gray-800"
+                  title={t.promptTips}
+                >
+                  <HelpCircle className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {tools.map((tool) => (
+                <button
+                  key={tool.id}
+                  onClick={() => setSelectedTool(tool.id)}
+                  className={cn(
+                    'flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200 group relative overflow-hidden',
+                    selectedTool === tool.id
+                      ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500 shadow-lg shadow-purple-500/20'
+                      : 'bg-gray-800/50 border-gray-700 hover:bg-gray-800 hover:border-gray-600'
+                  )}
+                >
+                  {selectedTool === tool.id && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 animate-pulse" />
+                  )}
+                  <tool.icon className={cn(
+                    "h-5 w-5 mb-2 relative z-10 transition-colors",
+                    selectedTool === tool.id ? 'text-purple-400' : 'text-gray-400 group-hover:text-gray-300'
+                  )} />
+                  <span className={cn(
+                    "text-xs font-semibold relative z-10 transition-colors",
+                    selectedTool === tool.id ? 'text-purple-300' : 'text-gray-400 group-hover:text-gray-300'
+                  )}>{tool.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowHintsModal(true)}
-              className="h-7 w-7 hover:bg-gray-800"
-              title={t.promptTips}
-            >
-              <HelpCircle className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {tools.map((tool) => (
-            <button
-              key={tool.id}
-              onClick={() => setSelectedTool(tool.id)}
-              className={cn(
-                'flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200 group relative overflow-hidden',
-                selectedTool === tool.id
-                  ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500 shadow-lg shadow-purple-500/20'
-                  : 'bg-gray-800/50 border-gray-700 hover:bg-gray-800 hover:border-gray-600'
-              )}
-            >
-              {selectedTool === tool.id && (
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 animate-pulse" />
-              )}
-              <tool.icon className={cn(
-                "h-5 w-5 mb-2 relative z-10 transition-colors",
-                selectedTool === tool.id ? 'text-purple-400' : 'text-gray-400 group-hover:text-gray-300'
-              )} />
-              <span className={cn(
-                "text-xs font-semibold relative z-10 transition-colors",
-                selectedTool === tool.id ? 'text-purple-300' : 'text-gray-400 group-hover:text-gray-300'
-              )}>{tool.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* Prompt Template Selector */}
-      <TemplateSelector
-        selectedTemplate={selectedTemplate}
-        currentTemplate={currentTemplate}
-        lastSelectedTemplate={lastSelectedTemplate}
-        isTemplatePromptActive={isTemplatePromptActive}
-        savedPromptBeforeTemplate={savedPromptBeforeTemplate}
-        currentPrompt={currentPrompt}
-        onShowTemplatesModal={() => setShowTemplatesModal(true)}
-        onViewTemplate={handleViewTemplate}
-        onFlattenTemplate={handleFlattenTemplate}
-        onClearTemplate={handleClearTemplateSelection}
-        t={t}
-      />
+          {/* Prompt Template Selector */}
+          <TemplateSelector
+            selectedTemplate={selectedTemplate}
+            currentTemplate={currentTemplate}
+            lastSelectedTemplate={lastSelectedTemplate}
+            isTemplatePromptActive={isTemplatePromptActive}
+            savedPromptBeforeTemplate={savedPromptBeforeTemplate}
+            currentPrompt={currentPrompt}
+            onShowTemplatesModal={() => setShowTemplatesModal(true)}
+            onViewTemplate={handleViewTemplate}
+            onFlattenTemplate={handleFlattenTemplate}
+            onClearTemplate={handleClearTemplateSelection}
+            t={t}
+          />
 
-      {/* Prompt Input - Enhanced Card Design */}
-  <div className="bg-[#1a1c24] rounded-xl p-4 border border-gray-800/80 hover:border-gray-700 transition-all flex-shrink-0 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.8)]">
+          {/* Prompt Input - Enhanced Card Design */}
+          <div className="bg-gray-950 rounded-xl p-4 border border-gray-800/80 hover:border-gray-700 transition-all flex-shrink-0 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.8)]">
         <div className="flex items-center justify-between mb-3">
           <label className="text-sm font-semibold text-gray-200 flex items-center">
             <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mr-2"></span>
@@ -689,7 +688,7 @@ export const PromptComposer: React.FC = () => {
         </div>
         
         {/* Mode-specific help text */}
-  <div className="mb-3 p-3 bg-[#20222c] border border-gray-800/80 rounded-lg">
+  <div className="mb-3 p-3 bg-gray-900 border border-gray-800/80 rounded-lg">
           {selectedTool === 'generate' && (
             <div className="space-y-1.5">
               <p className="text-xs text-cyan-400 font-medium flex items-center">
@@ -749,7 +748,7 @@ export const PromptComposer: React.FC = () => {
                 ? t.promptPlaceholderGenerate
                 : t.promptPlaceholderEdit
             }
-            className="min-h-[140px] resize-none bg-[#11131b] border border-gray-800/70 focus:border-purple-400/70 focus:ring-0 transition-colors pr-20 text-[13px] leading-relaxed"
+            className="min-h-[140px] resize-none bg-gray-950 border border-gray-800/70 focus:border-purple-400/70 focus:ring-0 transition-colors pr-20 text-[13px] leading-relaxed"
           />
           <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
             <button
@@ -760,7 +759,7 @@ export const PromptComposer: React.FC = () => {
                 "h-8 w-8 flex items-center justify-center rounded-md text-gray-400 transition-all duration-200",
                 showPromptHistory
                   ? "bg-red-500/15 text-red-200 shadow-[0_0_12px_rgba(248,113,113,0.35)]"
-                  : "hover:text-gray-100 hover:bg-[#2a2c35]"
+                  : "hover:text-gray-100 hover:bg-gray-800"
               )}
               title={t.promptHistory}
             >
@@ -784,7 +783,7 @@ export const PromptComposer: React.FC = () => {
                 "h-8 w-8 flex items-center justify-center rounded-md text-gray-400 transition-all duration-200",
                 showNegativePrompt
                   ? "bg-orange-500/15 text-orange-200 shadow-[0_0_12px_rgba(251,146,60,0.35)]"
-                  : "hover:text-gray-100 hover:bg-[#2a2c35]"
+                  : "hover:text-gray-100 hover:bg-gray-800"
               )}
               title={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
               aria-label={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
@@ -797,7 +796,7 @@ export const PromptComposer: React.FC = () => {
             <div
               ref={historyPopoverRef}
               className={cn(
-                'rounded-xl border border-gray-800 bg-[#1b1d26] shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-50 overflow-hidden',
+                'rounded-xl border border-gray-800 bg-gray-950 shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-50 overflow-hidden',
                 isMobileViewport
                   ? 'fixed inset-x-5 bottom-24 max-h-[60vh] overflow-y-auto'
                   : 'absolute top-14 right-0'
@@ -809,7 +808,7 @@ export const PromptComposer: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPromptHistory(false)}
-                  className="h-6 w-6 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-200 hover:bg-[#2a2c35]"
+                  className="h-6 w-6 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-800"
                 >
                   <span className="sr-only">Close history</span>
                   <X className="h-3.5 w-3.5" />
@@ -824,7 +823,7 @@ export const PromptComposer: React.FC = () => {
                     value={historySearchQuery}
                     onChange={(e) => setHistorySearchQuery(e.target.value)}
                     disabled={promptHistory.length === 0}
-                    className="w-full pl-9 pr-8 py-2 bg-[#151720] border border-gray-800 rounded-lg text-sm text-gray-200 placeholder-gray-500 disabled:opacity-50 focus:outline-none focus:border-purple-500/50 focus:bg-[#191b24] transition-all"
+                    className="w-full pl-9 pr-8 py-2 bg-gray-950 border border-gray-800 rounded-lg text-sm text-gray-200 placeholder-gray-500 disabled:opacity-50 focus:outline-none focus:border-purple-500/50 focus:bg-gray-900 transition-all"
                   />
                   <svg
                     className="absolute left-2.5 top-3 h-4 w-4 text-gray-500"
@@ -849,7 +848,7 @@ export const PromptComposer: React.FC = () => {
                   type="button"
                   onClick={handleClearHistory}
                   disabled={promptHistory.length === 0}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-800 bg-[#151720] py-2 text-xs font-semibold text-gray-300 hover:border-red-500/60 hover:text-red-300 hover:bg-[#201f2a] disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-800 bg-gray-950 py-2 text-xs font-semibold text-gray-300 hover:border-red-500/60 hover:text-red-300 hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                   Clear History
@@ -878,7 +877,7 @@ export const PromptComposer: React.FC = () => {
                             setCurrentPrompt(prompt);
                             setShowPromptHistory(false);
                           }}
-                          className="w-full rounded-lg bg-[#1f212b] px-3 py-2 text-left text-sm text-gray-200 hover:bg-[#242733]"
+                          className="w-full rounded-lg bg-gray-900 px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800"
                         >
                           <p className="text-[11px] uppercase tracking-wide text-purple-400/80 mb-1">
                             Prompt #{displayNumber}
@@ -910,7 +909,7 @@ export const PromptComposer: React.FC = () => {
               value={negativePrompt}
               onChange={(e) => setNegativePrompt(e.target.value)}
               placeholder={t.enterNegativePrompt}
-              className="min-h-[100px] resize-none bg-[#11131b] border border-gray-800/70 focus:border-orange-400/70 transition-colors text-[13px] leading-relaxed"
+              className="min-h-[100px] resize-none bg-gray-950 border border-gray-800/70 focus:border-orange-400/70 transition-colors text-[13px] leading-relaxed"
             />
           </div>
         )}

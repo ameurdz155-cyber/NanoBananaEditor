@@ -1,5 +1,6 @@
 /* Professional Theme for AI Image Studio Pro */
-:root {
+:root,
+:root.dark {
   /* Primary Brand Colors */
   --primary-gradient-start: #667eea;
   --primary-gradient-end: #764ba2;
@@ -26,6 +27,8 @@
   --surface-secondary: #2a2a3e;
   --surface-border: #3a3a52;
   --surface-border-light: #4a4a66;
+  --modal-surface-background: linear-gradient(135deg, rgba(31, 31, 46, 0.98), rgba(20, 20, 34, 0.94));
+  --modal-surface-border: rgba(124, 58, 237, 0.25);
   
   /* Text Colors */
   --text-primary: #f8f8f2;
@@ -56,6 +59,58 @@
   --radius-lg: 14px;
   --radius-xl: 20px;
   --radius-full: 9999px;
+  
+  /* Gradient Mesh */
+  --gradient-mesh: 
+    radial-gradient(at 40% 20%, hsla(251, 69%, 61%, 0.2) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(339, 82%, 65%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 80% 80%, hsla(272, 71%, 54%, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(200, 80%, 50%, 0.1) 0px, transparent 50%);
+}
+
+/* Light Theme Colors */
+:root.light {
+  /* Light Theme Colors - matching the image */
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f3f5;
+  --bg-elevated: #ffffff;
+  --bg-hover: #e9ecef;
+  
+  /* Surface Colors */
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8f9fa;
+  --surface-border: #dee2e6;
+  --surface-border-light: #e9ecef;
+  --modal-surface-background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(245, 246, 250, 0.94));
+  --modal-surface-border: rgba(124, 58, 237, 0.2);
+  
+  /* Text Colors */
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --text-tertiary: #6c757d;
+  --text-muted: #adb5bd;
+  
+  /* Glass Effect - lighter for light mode */
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-hover: rgba(248, 249, 250, 1);
+  
+  /* Shadows - softer for light mode */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 40px rgba(124, 58, 237, 0.1);
+  
+  /* Gradient Mesh for Light Mode - very subtle */
+  --gradient-mesh: 
+    radial-gradient(at 40% 20%, hsla(251, 69%, 61%, 0.03) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.02) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(339, 82%, 65%, 0.02) 0px, transparent 50%),
+    radial-gradient(at 80% 80%, hsla(272, 71%, 54%, 0.02) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(200, 80%, 50%, 0.02) 0px, transparent 50%);
 }
 
 /* Premium Gradients */

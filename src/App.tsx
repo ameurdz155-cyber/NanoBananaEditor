@@ -11,6 +11,7 @@ import { SideNavigation } from './components/SideNavigation';
 import { useAuthStore } from './store/useAuthStore';
 import { LoginPage } from './components/LoginPage';
 import { UpscalingPanel } from './components/UpscalingPanel';
+import { cn } from './utils/cn';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,42 @@ function AppContent() {
   const setShowHistory = useAppStore((state) => state.setShowHistory);
   const language = useAppStore((state) => state.language);
   const activePrimarySection = useAppStore((state) => state.activePrimarySection);
+  
+  // Theme state
+  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+    const savedTheme = localStorage.getItem('app-theme');
+    return savedTheme !== 'light';
+  });
+
+  // Listen for theme changes from Header component
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      const savedTheme = localStorage.getItem('app-theme');
+      setIsDarkMode(savedTheme !== 'light');
+    };
+
+    // Listen to storage events (for changes from other tabs)
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Custom event for same-tab changes
+    window.addEventListener('themeChange', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('themeChange', handleStorageChange);
+    };
+  }, []);
+
+  // Apply theme to document element
+  React.useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
   
   // Update page title when language changes
   React.useEffect(() => {
@@ -122,7 +159,14 @@ function AppContent() {
   }, [activePrimarySection, setShowHistory, setShowPromptPanel]);
 
   return (
-    <div className="h-screen flex flex-col font-sans relative" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <div 
+      className={cn(
+        "h-screen flex flex-col font-sans relative transition-colors duration-300",
+        isDarkMode 
+          ? "bg-gray-900 text-gray-100" 
+          : "bg-gray-50 text-gray-900"
+      )}
+    >
       <Header />
       
       <div className="flex-1 flex overflow-hidden relative">

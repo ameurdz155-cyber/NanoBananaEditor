@@ -209,18 +209,31 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-gray-700/50 rounded-2xl w-[90vw] max-w-5xl h-[90vh] overflow-hidden z-[100] shadow-2xl">
+        <Dialog.Content
+          className={cn(
+            "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-5xl h-[90vh] overflow-hidden z-[100] rounded-2xl border shadow-2xl",
+            "text-[var(--text-primary)]"
+          )}
+          style={{
+            background: 'var(--modal-surface-background)',
+            borderColor: 'var(--modal-surface-border)'
+          }}
+        >
           
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50 bg-gray-800/30">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[color:var(--surface-border-light)] bg-[var(--surface-secondary)]">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-cyan-600/20 rounded-lg">
                 <FileText className="h-5 w-5 text-cyan-400" />
               </div>
-              <div>
-                <Dialog.Title className="text-lg font-bold text-gray-100">
-                  {t.menuTemplateManagement}
-                </Dialog.Title>
+                      <div
+                        key={tpl.id}
+                        className="p-4 rounded-lg border transition-all hover:bg-[var(--bg-hover)]"
+                        style={{
+                          background: 'var(--surface-secondary)',
+                          borderColor: 'var(--surface-border)'
+                        }}
+                      >
                 <p className="text-xs text-gray-400 mt-0.5">
                   {t.clickToManageTemplates}
                 </p>
@@ -237,7 +250,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
           <div className="flex flex-col h-[calc(100%-80px)]">
             
             {/* Filters and Actions */}
-            <div className="px-6 py-4 border-b border-gray-700/30 space-y-3">
+            <div className="px-6 py-4 border-b border-[color:var(--surface-border-light)] bg-[var(--surface-primary)] space-y-3">
               <div className="flex gap-3">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -357,7 +370,12 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                       <select
                         value={formData.categoryId}
                         onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        style={{
+                          background: 'var(--surface-secondary)',
+                          borderColor: 'var(--surface-border)',
+                          color: 'var(--text-primary)'
+                        }}
                       >
                         <option value="">{t.uncategorized}</option>
                         {categories.map(cat => (
@@ -434,7 +452,11 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                   {filteredTemplates.map((template) => (
                     <div
                       key={template.id}
-                      className="p-4 rounded-lg border bg-gray-800/40 border-gray-700/50 hover:bg-gray-800/60 transition-all"
+                      className="p-4 rounded-lg border transition-all hover:bg-[var(--bg-hover)]"
+                      style={{
+                        background: 'var(--surface-secondary)',
+                        borderColor: 'var(--surface-border)'
+                      }}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-start space-x-3 flex-1">
@@ -512,7 +534,13 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-700/50 bg-gray-800/30">
+            <div
+              className="px-6 py-4 border-t"
+              style={{
+                borderColor: 'var(--surface-border-light)',
+                background: 'var(--surface-secondary)'
+              }}
+            >
               <div className="flex justify-between items-center">
                 <p className="text-sm text-gray-400">
                   {filteredTemplates.length} {t.templates.toLowerCase()}

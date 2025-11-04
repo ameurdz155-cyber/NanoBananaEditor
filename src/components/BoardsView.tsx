@@ -575,7 +575,10 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Boards Header */}
-      <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-800 flex-shrink-0">
+      <div
+        className="flex items-center justify-between mb-3 pb-2 border-b flex-shrink-0"
+        style={{ borderColor: 'var(--surface-border)' }}
+      >
         <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
           {t.boards}
         </h4>
@@ -696,10 +699,10 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       }
                     }}
                     className={cn(
-                      "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all group cursor-pointer",
+                      "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all group cursor-pointer border",
                       isSelected
-                        ? "bg-purple-500/20 text-purple-300 border border-purple-500/50"
-                        : "hover:bg-gray-800/50 text-gray-400 border border-transparent"
+                        ? "bg-[rgba(124,58,237,0.12)] text-[var(--text-primary)] border-[rgba(124,58,237,0.35)] shadow-sm"
+                        : "border-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
                     )}
                   >
                     <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -713,7 +716,14 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       ) : (
                         <FolderOpen className="h-4 w-4 flex-shrink-0" />
                       )}
-                      <span className="text-sm font-medium truncate">
+                      <span
+                        className={cn(
+                          "text-sm font-medium truncate",
+                          isSelected
+                            ? 'text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)]'
+                        )}
+                      >
                         {board.id === 'default' ? t.myCreations : board.name}
                       </span>
                     </div>
@@ -768,12 +778,21 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       {/* Context menu for boards (right click) - Using Portal to render outside container */}
       {contextMenu.open && contextMenu.boardId && ReactDOM.createPortal(
         <div
-          className="fixed z-[9999] bg-gray-950 border border-gray-800 rounded-md shadow-xl py-1 w-48"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+          className="fixed z-[9999] rounded-md shadow-xl py-1 w-48 border"
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.y,
+            background: 'var(--surface-primary)',
+            borderColor: 'var(--surface-border)',
+            color: 'var(--text-primary)'
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Board Title Header */}
-          <div className="px-3 py-2 border-b border-gray-800">
+          <div
+            className="px-3 py-2 border-b"
+            style={{ borderColor: 'var(--surface-border-light)' }}
+          >
             <div className="flex items-center space-x-2">
               {(() => {
                 const board = boards.find(b => b.id === contextMenu.boardId);
@@ -897,7 +916,13 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       {selectedBoardId && (
         <>
           <div className="flex-shrink-0 mb-3">
-            <div className="flex w-full rounded-md bg-gray-800/60 p-0.5 border border-gray-700">
+            <div
+              className="flex w-full rounded-md p-0.5 border"
+              style={{
+                background: 'var(--surface-secondary)',
+                borderColor: 'var(--surface-border)'
+              }}
+            >
               <button
                 className={cn(
                   "flex-1 px-3 py-1.5 text-xs font-medium rounded-sm transition-colors",
@@ -1019,7 +1044,13 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
 
                     {activeBoardImageMenu === item.imageId && (
                       <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 z-10">
-                        <div className="bg-gray-900 rounded-lg p-3 w-full max-h-40 overflow-y-auto">
+                        <div
+                          className="rounded-lg p-3 w-full max-h-40 overflow-y-auto border"
+                          style={{
+                            background: 'var(--surface-secondary)',
+                            borderColor: 'var(--surface-border)'
+                          }}
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-semibold text-gray-300">{t.moveToBoardTitle}</span>
                             <button
@@ -1117,7 +1148,14 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       <Dialog.Root open={showCreateBoardModal} onOpenChange={setShowCreateBoardModal}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-purple-500/30 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl">
+          <Dialog.Content
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl border"
+            style={{
+              background: 'var(--modal-surface-background)',
+              borderColor: 'var(--modal-surface-border)',
+              color: 'var(--text-primary)'
+            }}
+          >
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-purple-600/20 rounded-lg">
@@ -1193,7 +1231,14 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       <Dialog.Root open={showEditBoardModal} onOpenChange={setShowEditBoardModal}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-purple-500/30 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl">
+          <Dialog.Content
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl border"
+            style={{
+              background: 'var(--modal-surface-background)',
+              borderColor: 'var(--modal-surface-border)',
+              color: 'var(--text-primary)'
+            }}
+          >
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-purple-600/20 rounded-lg">
@@ -1270,7 +1315,14 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       <Dialog.Root open={showDeleteBoardModal} onOpenChange={setShowDeleteBoardModal}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-red-500/30 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl">
+          <Dialog.Content
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl border"
+            style={{
+              background: 'var(--modal-surface-background)',
+              borderColor: 'var(--modal-surface-border)',
+              color: 'var(--text-primary)'
+            }}
+          >
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-red-600/20 rounded-lg">
@@ -1329,9 +1381,15 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
 
       {boardImageContextMenu.open && boardImageContextMenu.imageId && ReactDOM.createPortal(
         <div
-          className="fixed z-[9999] min-w-[220px] rounded-xl border border-gray-800 bg-gray-950/95 shadow-2xl backdrop-blur p-2"
+          className="fixed z-[9999] min-w-[220px] rounded-xl border shadow-2xl backdrop-blur p-2"
           ref={boardImageMenuRef}
-          style={{ left: boardImageContextMenu.x, top: boardImageContextMenu.y }}
+          style={{
+            left: boardImageContextMenu.x,
+            top: boardImageContextMenu.y,
+            background: 'var(--surface-primary)',
+            borderColor: 'var(--surface-border)',
+            color: 'var(--text-primary)'
+          }}
           onPointerDown={(event) => event.stopPropagation()}
         >
           <MenuItem

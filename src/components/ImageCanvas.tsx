@@ -554,7 +554,8 @@ export const ImageCanvas: React.FC = () => {
       {/* Canvas Area */}
       <div 
         id="canvas-container" 
-        className="flex-1 relative overflow-hidden bg-gray-800"
+        className="flex-1 relative overflow-hidden"
+        style={{ background: 'var(--bg-elevated)' }}
         onContextMenu={(event) => {
           event.preventDefault();
           if (isGenerating) return;
@@ -575,15 +576,21 @@ export const ImageCanvas: React.FC = () => {
               <h2 className="text-3xl font-bold text-gradient mb-3">
                 {t.createWithAI}
               </h2>
-              <p className="text-gray-400 text-base leading-relaxed mb-6">
+              <p className="text-base leading-relaxed mb-6" style={{ color: 'var(--text-secondary)' }}>
                 {selectedTool === 'generate' 
                   ? t.enterPromptToGenerate
                   : t.uploadToStartEditing
                 }
               </p>
-              <div className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+              <div 
+                className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg border"
+                style={{
+                  background: 'rgba(168, 85, 247, 0.08)',
+                  borderColor: 'rgba(168, 85, 247, 0.2)'
+                }}
+              >
                 <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"></div>
-                <span className="text-sm text-purple-300">{t.readyToCreate}</span>
+                <span className="text-sm" style={{ color: 'var(--primary-light)' }}>{t.readyToCreate}</span>
               </div>
             </div>
           </div>
