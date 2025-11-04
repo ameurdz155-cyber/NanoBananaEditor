@@ -3,7 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
-import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, ArrowLeft, Upload } from 'lucide-react';
+import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, ArrowLeft, Upload, Moon, Sun } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import { cn } from '../utils/cn';
@@ -25,6 +25,11 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Get theme from localStorage or default to dark
+    const savedTheme = localStorage.getItem('template-page-theme');
+    return savedTheme !== 'light';
+  });
   
   // Form state
   const [formData, setFormData] = useState({
@@ -38,6 +43,13 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
   });
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Toggle theme
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem('template-page-theme', newTheme ? 'dark' : 'light');
+  };
 
   // Load templates and categories
   useEffect(() => {
@@ -278,9 +290,19 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 z-50 overflow-y-auto">
+    <div className={cn(
+      "fixed inset-0 z-50 overflow-y-auto transition-colors duration-300",
+      isDarkMode 
+        ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" 
+        : "bg-gradient-to-br from-gray-50 via-white to-gray-100"
+    )}>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700/50">
+      <div className={cn(
+        "sticky top-0 z-10 backdrop-blur-sm border-b transition-colors duration-300",
+        isDarkMode 
+          ? "bg-gray-900/95 border-gray-700/50" 
+          : "bg-white/95 border-gray-200/50"
+      )}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -288,7 +310,12 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                 onClick={onClose}
                 variant="ghost"
                 size="sm"
-                className="text-gray-400 hover:text-gray-200"
+                className={cn(
+                  "transition-colors",
+                  isDarkMode 
+                    ? "text-gray-400 hover:text-gray-200" 
+                    : "text-gray-600 hover:text-gray-900"
+                )}
               >
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 {language === 'zh' ? '返回' : 'Back'}
@@ -300,13 +327,32 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                 </h1>
               </div>
             </div>
-            <Button
-              onClick={handleOpenCreate}
-              className="bg-cyan-600 hover:bg-cyan-700 text-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {language === 'zh' ? '新建模板' : 'New Template'}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={toggleTheme}
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "transition-colors",
+                  isDarkMode 
+                    ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50" 
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                )}
+                title={isDarkMode 
+                  ? (language === 'zh' ? '切换到浅色模式' : 'Switch to Light Mode')
+                  : (language === 'zh' ? '切换到深色模式' : 'Switch to Dark Mode')
+                }
+              >
+                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+              <Button
+                onClick={handleOpenCreate}
+                className="bg-cyan-600 hover:bg-cyan-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {language === 'zh' ? '新建模板' : 'New Template'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -316,30 +362,43 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
         {/* Filters */}
         <div className="mb-6 flex gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className={cn(
+              "absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5",
+              isDarkMode ? "text-gray-400" : "text-gray-500"
+            )} />
             <Input
               placeholder={language === 'zh' ? '搜索模板...' : 'Search templates...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className={cn(
+                "pl-10 transition-colors",
+                isDarkMode 
+                  ? "bg-gray-800 border-gray-700 text-gray-100" 
+                  : "bg-white border-gray-200 text-gray-900"
+              )}
             />
           </div>
           <div className="w-64">
             <select
               value={selectedCategoryFilter}
               onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-800/80 backdrop-blur-sm border border-gray-700/60 rounded-xl text-gray-100 font-medium shadow-sm hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200 cursor-pointer appearance-none bg-no-repeat bg-right pr-10"
+              className={cn(
+                "w-full px-4 py-2.5 backdrop-blur-sm border rounded-xl font-medium shadow-sm hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200 cursor-pointer appearance-none bg-no-repeat bg-right pr-10",
+                isDarkMode
+                  ? "bg-gray-800/80 border-gray-700/60 text-gray-100"
+                  : "bg-white border-gray-300 text-gray-900"
+              )}
               style={{
-                backgroundImage: `url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%2394a3b8' d='M11.293 4.293L7 8.586 2.707 4.293A1 1 0 001.293 5.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E\")`,
+                backgroundImage: `url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='${isDarkMode ? '%2394a3b8' : '%236b7280'}' d='M11.293 4.293L7 8.586 2.707 4.293A1 1 0 001.293 5.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E\")`,
                 backgroundPosition: 'right 0.875rem center',
                 backgroundSize: '1.125rem'
               }}
             >
-              <option value="all" className="bg-gray-900 text-gray-100 py-2">
+              <option value="all" className={isDarkMode ? "bg-gray-900 text-gray-100 py-2" : "bg-white text-gray-900 py-2"}>
                 {language === 'zh' ? '所有分类' : 'All Categories'}
               </option>
               {categories.map(cat => (
-                <option key={cat.id} value={cat.id} className="bg-gray-900 text-gray-100 py-2">
+                <option key={cat.id} value={cat.id} className={isDarkMode ? "bg-gray-900 text-gray-100 py-2" : "bg-white text-gray-900 py-2"}>
                   {getEmojiDisplay(cat.emoji)} {cat.name}
                 </option>
               ))}
@@ -350,8 +409,14 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
         {/* Templates Grid */}
         {filteredTemplates.length === 0 ? (
           <div className="text-center py-16">
-            <FileText className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">
+            <FileText className={cn(
+              "h-16 w-16 mx-auto mb-4",
+              isDarkMode ? "text-gray-600" : "text-gray-400"
+            )} />
+            <p className={cn(
+              "text-lg",
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            )}>
               {searchQuery || selectedCategoryFilter !== 'all'
                 ? (language === 'zh' ? '未找到匹配的模板' : 'No templates found')
                 : (language === 'zh' ? '还没有模板' : 'No templates yet')}
@@ -362,11 +427,19 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
             {filteredTemplates.map((template) => (
               <div
                 key={template.id}
-                className="p-5 rounded-lg border bg-gray-800/40 border-gray-700/50 hover:bg-gray-800/60 transition-all hover:border-cyan-400/30"
+                className={cn(
+                  "p-5 rounded-lg border transition-all",
+                  isDarkMode
+                    ? "bg-gray-800/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-cyan-400/30"
+                    : "bg-white border-gray-200 hover:bg-gray-50 hover:border-cyan-400/40 shadow-sm hover:shadow-md"
+                )}
               >
                 {/* Preview Image */}
                 {template.image && (
-                  <div className="mb-4 rounded-lg overflow-hidden bg-gray-900/50">
+                  <div className={cn(
+                    "mb-4 rounded-lg overflow-hidden",
+                    isDarkMode ? "bg-gray-900/50" : "bg-gray-100"
+                  )}>
                     <img 
                       src={template.image} 
                       alt={template.name}
@@ -380,8 +453,14 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{template.emoji || '✨'}</span>
                     <div>
-                      <h3 className="text-lg font-medium text-gray-200">{template.name}</h3>
-                      <p className="text-xs text-gray-500">
+                      <h3 className={cn(
+                        "text-lg font-medium",
+                        isDarkMode ? "text-gray-200" : "text-gray-800"
+                      )}>{template.name}</h3>
+                      <p className={cn(
+                        "text-xs",
+                        isDarkMode ? "text-gray-500" : "text-gray-600"
+                      )}>
                         {getCategoryName(template.categoryId)}
                       </p>
                     </div>
@@ -416,27 +495,41 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 
                 {/* Description */}
                 {template.description && (
-                  <p className="text-sm text-gray-400 mb-3">{template.description}</p>
+                  <p className={cn(
+                    "text-sm mb-3",
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  )}>{template.description}</p>
                 )}
 
                 {/* Prompts Preview */}
                 <div className="space-y-2">
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-gray-500">
+                      <span className={cn(
+                        "text-xs font-medium",
+                        isDarkMode ? "text-gray-500" : "text-gray-600"
+                      )}>
                         {language === 'zh' ? '正向提示词' : 'Positive Prompt'}
                       </span>
                       <Button
                         onClick={() => setExpandedId(expandedId === template.id ? null : template.id)}
                         size="sm"
                         variant="ghost"
-                        className="text-gray-400 hover:text-gray-200 h-6 px-2"
+                        className={cn(
+                          "h-6 px-2",
+                          isDarkMode 
+                            ? "text-gray-400 hover:text-gray-200" 
+                            : "text-gray-600 hover:text-gray-900"
+                        )}
                       >
                         {expandedId === template.id ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                       </Button>
                     </div>
                     <p className={cn(
-                      "text-sm text-gray-300 bg-gray-900/50 p-2 rounded",
+                      "text-sm p-2 rounded",
+                      isDarkMode 
+                        ? "text-gray-300 bg-gray-900/50" 
+                        : "text-gray-700 bg-gray-100",
                       expandedId !== template.id && "line-clamp-2"
                     )}>
                       {template.positivePrompt}
@@ -445,11 +538,17 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 
                   {template.negativePrompt && (
                     <div>
-                      <span className="text-xs font-medium text-gray-500 block mb-1">
+                      <span className={cn(
+                        "text-xs font-medium block mb-1",
+                        isDarkMode ? "text-gray-500" : "text-gray-600"
+                      )}>
                         {language === 'zh' ? '负向提示词' : 'Negative Prompt'}
                       </span>
                       <p className={cn(
-                        "text-sm text-gray-300 bg-gray-900/50 p-2 rounded",
+                        "text-sm p-2 rounded",
+                        isDarkMode 
+                          ? "text-gray-300 bg-gray-900/50" 
+                          : "text-gray-700 bg-gray-100",
                         expandedId !== template.id && "line-clamp-1"
                       )}>
                         {template.negativePrompt}
@@ -459,7 +558,10 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                 </div>
 
                 {/* Footer */}
-                <div className="mt-3 text-xs text-gray-500">
+                <div className={cn(
+                  "mt-3 text-xs",
+                  isDarkMode ? "text-gray-500" : "text-gray-600"
+                )}>
                   {language === 'zh' ? '更新于' : 'Updated'} {new Date(template.updatedAt || template.createdAt).toLocaleDateString()}
                 </div>
               </div>
@@ -473,7 +575,12 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
         <Dialog.Root open={showEditModal} onOpenChange={setShowEditModal}>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
-            <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-cyan-500/30 rounded-2xl shadow-2xl shadow-cyan-500/20 w-full max-w-3xl max-h-[90vh] overflow-y-auto z-[101]">
+            <Dialog.Content className={cn(
+              "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto z-[101]",
+              isDarkMode
+                ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-cyan-500/30 shadow-cyan-500/20"
+                : "bg-gradient-to-br from-white via-gray-50 to-white border-cyan-400/40 shadow-cyan-400/10"
+            )}>
               <div className="p-6">
                 {/* Modal Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -484,7 +591,11 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+                      className={cn(
+                        isDarkMode
+                          ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      )}
                     >
                       <X className="h-5 w-5" />
                     </Button>
@@ -495,35 +606,57 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label className={cn(
+                        "block text-sm font-medium mb-2",
+                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                      )}>
                         {language === 'zh' ? '模板名称' : 'Template Name'}
                       </label>
                       <Input
                         placeholder={language === 'zh' ? '输入模板名称' : 'Enter template name'}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className={cn(
+                          isDarkMode
+                            ? "bg-gray-800 border-gray-700 text-gray-100"
+                            : "bg-white border-gray-300 text-gray-900"
+                        )}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label className={cn(
+                        "block text-sm font-medium mb-2",
+                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                      )}>
                         {language === 'zh' ? '分类' : 'Category'}
                       </label>
                       <select
                         value={formData.categoryId}
                         onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-gray-800/60 backdrop-blur-sm border border-gray-600/50 rounded-lg text-gray-100 font-medium shadow-sm hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200 cursor-pointer appearance-none bg-no-repeat bg-right pr-10"
+                        className={cn(
+                          "w-full px-4 py-2.5 backdrop-blur-sm border rounded-lg font-medium shadow-sm hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200 cursor-pointer appearance-none bg-no-repeat bg-right pr-10",
+                          isDarkMode
+                            ? "bg-gray-800/60 border-gray-600/50 text-gray-100"
+                            : "bg-white border-gray-300 text-gray-900"
+                        )}
                         style={{
-                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%2394a3b8' d='M11.293 4.293L7 8.586 2.707 4.293A1 1 0 001.293 5.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E")`,
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='${isDarkMode ? '%2394a3b8' : '%236b7280'}' d='M11.293 4.293L7 8.586 2.707 4.293A1 1 0 001.293 5.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E")`,
                           backgroundPosition: 'right 0.875rem center',
                           backgroundSize: '1.125rem'
                         }}
                       >
-                        <option value="" className="bg-gray-900 text-gray-400 py-2">
+                        <option value="" className={cn(
+                          "py-2",
+                          isDarkMode ? "bg-gray-900 text-gray-400" : "bg-white text-gray-500"
+                        )}>
                           {language === 'zh' ? '无分类' : 'No Category'}
                         </option>
                         {categories.map(cat => (
-                          <option key={cat.id} value={cat.id} className="bg-gray-900 text-gray-100 py-2">
+                          <option key={cat.id} value={cat.id} className={cn(
+                            "py-2",
+                            isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"
+                          )}>
                             {getEmojiDisplay(cat.emoji)} {cat.name}
                           </option>
                         ))}
@@ -532,19 +665,30 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={cn(
+                      "block text-sm font-medium mb-2",
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    )}>
                       {language === 'zh' ? '描述' : 'Description'}
                     </label>
                     <Input
                       placeholder={language === 'zh' ? '简短描述（可选）' : 'Brief description (optional)'}
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className={cn(
+                        isDarkMode
+                          ? "bg-gray-800 border-gray-700 text-gray-100"
+                          : "bg-white border-gray-300 text-gray-900"
+                      )}
                     />
                   </div>
 
                   {/* Representative Image Upload */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={cn(
+                      "block text-sm font-medium mb-2",
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    )}>
                       {language === 'zh' ? '代表图片' : 'Representative Image'}
                     </label>
                     <div className="space-y-3">
@@ -553,7 +697,10 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                           <img
                             src={formData.image}
                             alt="Preview"
-                            className="w-full h-40 object-cover rounded-lg border-2 border-gray-700"
+                            className={cn(
+                              "w-full h-40 object-cover rounded-lg border-2",
+                              isDarkMode ? "border-gray-700" : "border-gray-300"
+                            )}
                           />
                           <button
                             onClick={() => {
@@ -574,7 +721,11 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
                           variant="outline"
-                          className="border-gray-700 text-gray-300 hover:bg-gray-800/50"
+                          className={cn(
+                            isDarkMode
+                              ? "border-gray-700 text-gray-300 hover:bg-gray-800/50"
+                              : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                          )}
                         >
                           <Upload className="h-4 w-4 mr-2" />
                           {formData.image 
@@ -594,7 +745,10 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={cn(
+                      "block text-sm font-medium mb-2",
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    )}>
                       {language === 'zh' ? '正向提示词' : 'Positive Prompt'} *
                     </label>
                     <Textarea
@@ -602,12 +756,20 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                       value={formData.positivePrompt}
                       onChange={(e) => setFormData({ ...formData, positivePrompt: e.target.value })}
                       rows={5}
-                      className="resize-none"
+                      className={cn(
+                        "resize-none",
+                        isDarkMode
+                          ? "bg-gray-800 border-gray-700 text-gray-100"
+                          : "bg-white border-gray-300 text-gray-900"
+                      )}
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={cn(
+                      "block text-sm font-medium mb-2",
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    )}>
                       {language === 'zh' ? '负向提示词' : 'Negative Prompt'}
                     </label>
                     <Textarea
@@ -615,7 +777,12 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                       value={formData.negativePrompt}
                       onChange={(e) => setFormData({ ...formData, negativePrompt: e.target.value })}
                       rows={3}
-                      className="resize-none"
+                      className={cn(
+                        "resize-none",
+                        isDarkMode
+                          ? "bg-gray-800 border-gray-700 text-gray-100"
+                          : "bg-white border-gray-300 text-gray-900"
+                      )}
                     />
                   </div>
                 </div>
@@ -633,7 +800,12 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
                   <Button
                     onClick={handleCancelEdit}
                     variant="ghost"
-                    className="flex-1 text-gray-400 hover:text-gray-200"
+                    className={cn(
+                      "flex-1",
+                      isDarkMode
+                        ? "text-gray-400 hover:text-gray-200"
+                        : "text-gray-600 hover:text-gray-900"
+                    )}
                   >
                     {t.cancel}
                   </Button>
