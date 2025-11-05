@@ -791,12 +791,6 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
   const handleCategoryChipClick = (category: DisplayCategory) => {
     setActiveCategory(category.id);
-
-    if (category.id === 'all' || category.id === 'uncategorized') {
-      return;
-    }
-
-    openCategoryModal(category.id);
   };
 
   // No longer needed - templates are now in Zustand store which persists automatically

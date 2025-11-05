@@ -133,6 +133,10 @@ interface AppState {
   savePath: string | null;
   setSavePath: (path: string | null) => void;
 
+  // Auto-save setting
+  autoSaveEnabled: boolean;
+  setAutoSaveEnabled: (enabled: boolean) => void;
+
   // Generation progress
   generationProgress: { current: number; total: number };
   setGenerationProgress: (progress: { current: number; total: number }) => void;
@@ -232,6 +236,9 @@ export const useAppStore = create<AppState>()(
       
       // Save Path state (Desktop app only)
       savePath: null,
+
+      // Auto-save setting
+      autoSaveEnabled: true,
 
       generationProgress: { current: 0, total: 0 },
       lastGenerationParameters: null,
@@ -420,6 +427,8 @@ export const useAppStore = create<AppState>()(
       setApiKeyError: (error) => set({ apiKeyError: error }),
       
       setSavePath: (path) => set({ savePath: path }),
+      
+      setAutoSaveEnabled: (enabled) => set({ autoSaveEnabled: enabled }),
 
   setGenerationProgress: (progress) => set({ generationProgress: progress }),
   setLastGenerationParameters: (params) => set({ lastGenerationParameters: params }),
@@ -558,6 +567,7 @@ export const useAppStore = create<AppState>()(
           language: state.language,
           apiKey: state.apiKey,
           savePath: state.savePath,
+          autoSaveEnabled: state.autoSaveEnabled,
           brushSize: state.brushSize,
           temperature: state.temperature,
           selectedTool: state.selectedTool,

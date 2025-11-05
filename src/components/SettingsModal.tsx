@@ -1,11 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Globe, Folder, FolderOpen, Shield, Key } from 'lucide-react';
+import { X, Globe, Folder, FolderOpen, Key, Save } from 'lucide-react';
 import { Button } from './ui/Button';
-import {
-  getStoredBackendUrl,
-  getStoredApiKey,
-} from '../services/apiConfig';
+import { cn } from '../utils/cn';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation, Language } from '../i18n/translations';
 import { isTauriEnvironment } from '../utils/fileSaver';
@@ -15,12 +12,41 @@ interface SettingsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const resolveIsDarkMode = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  const savedTheme = localStorage.getItem('app-theme');
+  if (savedTheme === 'light') {
+    return false;
+  }
+  if (savedTheme === 'dark') {
+    return true;
+  }
+  return document.documentElement.classList.contains('dark');
+};
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange }) => {
-  const { language, setLanguage, savePath, setSavePath } = useAppStore();
+  const { language, setLanguage, savePath, setSavePath, autoSaveEnabled, setAutoSaveEnabled } = useAppStore();
   const t = getTranslation(language);
   const isTauri = isTauriEnvironment();
-  const backendUrl = React.useMemo(() => getStoredBackendUrl(), []);
-  const apiKey = React.useMemo(() => getStoredApiKey(), []);
+  
+  const [isDarkMode, setIsDarkMode] = useState(resolveIsDarkMode);
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      setIsDarkMode(resolveIsDarkMode());
+    };
+
+    window.addEventListener('themeChange', handleThemeChange);
+    return () => window.removeEventListener('themeChange', handleThemeChange);
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      setIsDarkMode(resolveIsDarkMode());
+    }
+  }, [open]);
 
   const handleChooseFolder = async () => {
     if (!isTauri) return;
@@ -55,21 +81,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass border border-purple-500/20 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl">
-          <div className="absolute inset-0 bg-gradient-mesh opacity-30 rounded-2xl pointer-events-none" />
+        <Dialog.Overlay className={cn(
+          "fixed inset-0 backdrop-blur-sm z-50",
+          isDarkMode ? "bg-black/60" : "bg-black/40"
+        )} />
+        <Dialog.Content className={cn(
+          "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl border transition-colors",
+          isDarkMode 
+            ? "bg-gray-950 border-gray-800" 
+            : "bg-white border-gray-200"
+        )}>
           <div className="relative">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-xl">
-                  <Key className="h-5 w-5 text-purple-400" />
+                <div className={cn(
+                  "p-2 rounded-xl",
+                  isDarkMode 
+                    ? "bg-gradient-to-br from-purple-500/20 to-pink-500/20" 
+                    : "bg-gradient-to-br from-purple-100 to-pink-100"
+                )}>
+                  <Key className={cn(
+                    "h-5 w-5",
+                    isDarkMode ? "text-purple-400" : "text-purple-600"
+                  )} />
                 </div>
-                <Dialog.Title className="text-xl font-bold text-gradient">
+                <Dialog.Title className={cn(
+                  "text-xl font-bold",
+                  isDarkMode ? "text-white" : "text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+                )}>
                   {t.settings}
                 </Dialog.Title>
               </div>
               <Dialog.Close asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={cn(
+                    "h-8 w-8",
+                    isDarkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
+                  )}
+                >
                   <X className="h-5 w-5" />
                 </Button>
               </Dialog.Close>
@@ -77,10 +128,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
           
             <div className="space-y-4">
               {/* Language Selector */}
-              <div className="p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
+              <div className={cn(
+                "p-4 rounded-xl border",
+                isDarkMode 
+                  ? "bg-blue-900/20 border-blue-500/30" 
+                  : "bg-blue-50/50 border-blue-200/50"
+              )}>
                 <div className="flex items-center mb-3">
-                  <Globe className="h-4 w-4 text-blue-400 mr-2" />
-                  <label htmlFor="language" className="text-sm font-medium text-blue-300">
+                  <Globe className={cn(
+                    "h-4 w-4 mr-2",
+                    isDarkMode ? "text-blue-400" : "text-blue-600"
+                  )} />
+                  <label htmlFor="language" className={cn(
+                    "text-sm font-medium",
+                    isDarkMode ? "text-blue-300" : "text-blue-700"
+                  )}>
                     {t.language}
                   </label>
                 </div>
@@ -88,29 +150,114 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                   id="language"
                   value={language}
                   onChange={(e) => setLanguage(e.target.value as Language)}
-                  className="w-full h-10 px-3 bg-gray-900 border border-gray-700 rounded-lg text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={cn(
+                    "w-full h-10 px-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors",
+                    isDarkMode 
+                      ? "bg-gray-900 border border-gray-700 text-gray-100" 
+                      : "bg-white border border-gray-300 text-gray-900"
+                  )}
                 >
                   <option value="en">English</option>
                   <option value="zh">中文 (Chinese)</option>
                 </select>
-                <p className="text-xs text-gray-400 mt-2">
+                <p className={cn(
+                  "text-xs mt-2",
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                )}>
                   {t.selectLanguage}
                 </p>
               </div>
 
+              {/* Auto-Save Toggle */}
+              <div className={cn(
+                "p-4 rounded-xl border",
+                isDarkMode 
+                  ? "bg-cyan-900/20 border-cyan-500/30" 
+                  : "bg-cyan-50/50 border-cyan-200/50"
+              )}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center flex-1">
+                    <Save className={cn(
+                      "h-4 w-4 mr-2",
+                      isDarkMode ? "text-cyan-400" : "text-cyan-600"
+                    )} />
+                    <div className="flex-1">
+                      <label 
+                        htmlFor="auto-save-toggle" 
+                        className={cn(
+                          "text-sm font-medium cursor-pointer",
+                          isDarkMode ? "text-cyan-300" : "text-cyan-700"
+                        )}
+                      >
+                        {language === 'zh' ? '自动保存' : 'Auto-Save'}
+                      </label>
+                      <p className={cn(
+                        "text-xs mt-0.5",
+                        isDarkMode ? "text-gray-400" : "text-gray-600"
+                      )}>
+                        {language === 'zh' 
+                          ? '生成后自动保存图像到画廊' 
+                          : 'Automatically save images to gallery after generation'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    id="auto-save-toggle"
+                    role="switch"
+                    aria-checked={autoSaveEnabled}
+                    onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                    className={cn(
+                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2",
+                      isDarkMode ? "focus:ring-offset-gray-900" : "focus:ring-offset-white",
+                      autoSaveEnabled
+                        ? "bg-cyan-600"
+                        : isDarkMode
+                          ? "bg-gray-700"
+                          : "bg-gray-300"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                        autoSaveEnabled ? "translate-x-6" : "translate-x-1"
+                      )}
+                    />
+                  </button>
+                </div>
+              </div>
+
               {/* Save Path Section - Desktop App Only */}
-              <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-xl">
+              <div className={cn(
+                "p-4 rounded-xl border",
+                isDarkMode 
+                  ? "bg-green-900/20 border-green-500/30" 
+                  : "bg-green-50/50 border-green-200/50"
+              )}>
                 <div className="flex items-center mb-3">
-                  <Folder className="h-4 w-4 text-green-400 mr-2" />
-                  <label className="text-sm font-medium text-green-300">
+                  <Folder className={cn(
+                    "h-4 w-4 mr-2",
+                    isDarkMode ? "text-green-400" : "text-green-600"
+                  )} />
+                  <label className={cn(
+                    "text-sm font-medium",
+                    isDarkMode ? "text-green-300" : "text-green-700"
+                  )}>
                     {t.savePath}
                   </label>
                 </div>
                 
                 {isTauri ? (
                   <>
-                    <div className="mb-3 p-2 bg-gray-900/50 rounded-lg border border-gray-700">
-                      <p className="text-xs text-gray-300 break-all">
+                    <div className={cn(
+                      "mb-3 p-2 rounded-lg border",
+                      isDarkMode 
+                        ? "bg-gray-900/50 border-gray-700" 
+                        : "bg-gray-50 border-gray-300"
+                    )}>
+                      <p className={cn(
+                        "text-xs break-all",
+                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                      )}>
                         {savePath || t.defaultSavePath}
                       </p>
                     </div>
@@ -138,37 +285,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                     </div>
                   </>
                 ) : (
-                  <div className="p-3 bg-gray-900/50 rounded-lg border border-gray-700">
-                    <p className="text-xs text-gray-400 text-center">
+                  <div className={cn(
+                    "p-3 rounded-lg border",
+                    isDarkMode 
+                      ? "bg-gray-900/50 border-gray-700" 
+                      : "bg-gray-50 border-gray-300"
+                  )}>
+                    <p className={cn(
+                      "text-xs text-center",
+                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                    )}>
                       {t.desktopAppOnly}
                     </p>
                   </div>
                 )}
                 
-                <p className="text-xs text-gray-400 mt-2">
+                <p className={cn(
+                  "text-xs mt-2",
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                )}>
                   {t.savePathDescription}
-                </p>
-              </div>
-              
-              <div className="p-4 bg-purple-900/10 border border-purple-500/20 rounded-xl">
-                <div className="flex items-center mb-2">
-                  <Shield className="h-4 w-4 text-purple-300 mr-2" />
-                  <span className="text-sm font-medium text-purple-200">{t.geminiApiKey}</span>
-                </div>
-                <p className="text-xs text-gray-400">
-                  {t.imageServiceUrl}:&nbsp;
-                  <span className="text-gray-200">{backendUrl}</span>
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {t.geminiApiKey}:&nbsp;
-                  <span className="text-gray-200">
-                    {apiKey ? 'Provided via VITE_GEMINI_API_KEY' : 'Not provided'}
-                  </span>
-                </p>
-                <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-                  {language === 'zh'
-                    ? '在项目根目录的 .env 文件中更新 VITE_API_BASE_URL 和 VITE_GEMINI_API_KEY 以修改这些设置。'
-                    : 'Update the .env variables VITE_API_BASE_URL and VITE_GEMINI_API_KEY in the project root to change these values.'}
                 </p>
               </div>
             </div>

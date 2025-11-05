@@ -6,17 +6,30 @@ import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration
 import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus, Minus, Trash2 } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
-import { validateApiKey, improvePromptText, listImagenModels } from '../services/geminiService';
+import { validateApiKey, improvePromptText } from '../services/geminiService';
 import { TemplatesView, getDefaultTemplates } from './TemplatesView';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
 import { usePromptPanelResize } from './PromptComposer/usePromptPanelResize';
-import { ModelSelector } from './PromptComposer/ModelSelector';
 import { TemplateSelector } from './PromptComposer/TemplateSelector';
 import type { PromptTemplate } from '../types';
 
 const DEFAULT_MODEL_FAMILY = 'gemini';
 const DEFAULT_MODEL_NAME = 'models/gemini-2.5-flash-image';
+
+const resolveIsDarkMode = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  const savedTheme = localStorage.getItem('app-theme');
+  if (savedTheme === 'light') {
+    return false;
+  }
+  if (savedTheme === 'dark') {
+    return true;
+  }
+  return document.documentElement.classList.contains('dark');
+};
 
 export const PromptComposer: React.FC = () => {
   const {
@@ -62,8 +75,6 @@ export const PromptComposer: React.FC = () => {
     modelName,
     setModelFamily,
     setModelName,
-  availableImagenModels,
-  setAvailableImagenModels,
   iterations,
   setIsValidating,
   } = useAppStore();
@@ -104,9 +115,20 @@ export const PromptComposer: React.FC = () => {
   const [savedPromptBeforeTemplate, setSavedPromptBeforeTemplate] = useState<string>('');
   const [showNegativePrompt, setShowNegativePrompt] = useState(false);
   const [negativePrompt, setNegativePrompt] = useState<string>('');
-  const [isLoadingModels, setIsLoadingModels] = useState(false);
-  const [modelLoadError, setModelLoadError] = useState<string | null>(null);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(resolveIsDarkMode);
+
+  const widthSliderBackground = React.useMemo(() => {
+    const progress = ((imageWidth - 64) / (1536 - 64)) * 100;
+    const trackColor = isDarkMode ? 'rgb(55, 65, 81)' : 'rgb(226, 232, 240)';
+    return `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${progress}%, ${trackColor} ${progress}%, ${trackColor} 100%)`;
+  }, [imageWidth, isDarkMode]);
+
+  const heightSliderBackground = React.useMemo(() => {
+    const progress = ((imageHeight - 64) / (1536 - 64)) * 100;
+    const trackColor = isDarkMode ? 'rgb(55, 65, 81)' : 'rgb(226, 232, 240)';
+    return `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${progress}%, ${trackColor} ${progress}%, ${trackColor} 100%)`;
+  }, [imageHeight, isDarkMode]);
 
   const filteredPromptHistory = React.useMemo(() => {
     const query = historySearchQuery.trim().toLowerCase();
@@ -129,6 +151,23 @@ export const PromptComposer: React.FC = () => {
   });
 
   React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleThemeChange = () => {
+      setIsDarkMode(resolveIsDarkMode());
+    };
+
+    window.addEventListener('themeChange', handleThemeChange);
+    handleThemeChange();
+
+    return () => {
+      window.removeEventListener('themeChange', handleThemeChange);
+    };
+  }, []);
+
+  React.useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
       return;
     }
@@ -143,44 +182,6 @@ export const PromptComposer: React.FC = () => {
       mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);
-
-  React.useEffect(() => {
-    if (availableImagenModels.length > 1) {
-      return;
-    }
-
-    let isSubscribed = true;
-
-    const loadModels = async () => {
-      try {
-        setIsLoadingModels(true);
-        setModelLoadError(null);
-        const models = await listImagenModels();
-        if (!isSubscribed) return;
-        if (models.length > 0) {
-          setAvailableImagenModels(models);
-        }
-      } catch (error) {
-        if (!isSubscribed) return;
-        console.error('Failed to load Imagen models:', error);
-        setModelLoadError(t.modelLoadError);
-      } finally {
-        if (isSubscribed) {
-          setIsLoadingModels(false);
-        }
-      }
-    };
-
-    loadModels();
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [availableImagenModels.length, setAvailableImagenModels, t.modelLoadError]);
-
-  React.useEffect(() => {
-    setModelLoadError((prev) => (prev ? t.modelLoadError : null));
-  }, [t.modelLoadError]);
 
   // Update width/height when aspect ratio changes
   const handleAspectRatioChange = (newRatio: string) => {
@@ -1204,30 +1205,37 @@ export const PromptComposer: React.FC = () => {
 
       {/* Iterations Input - Hidden per user request */}
 
-      {/* Model Selection - Right before Generate Button */}
-      <ModelSelector
-        modelFamily={modelFamily}
-        modelName={modelName}
-        availableImagenModels={availableImagenModels}
-        isLoadingModels={isLoadingModels}
-        modelLoadError={modelLoadError}
-        onModelFamilyChange={setModelFamily}
-        onModelNameChange={setModelName}
-        t={t}
-      />
-
       {/* Generate Button - Hidden per user request */}
 
       {/* Image Settings Controls - Only show for Generate mode */}
       {selectedTool === 'generate' && (
-        <div className="mt-3 p-4 bg-gradient-to-br from-gray-900/40 to-gray-800/40 rounded-xl border border-gray-700/40 space-y-4 backdrop-blur-sm">
+        <div
+          className={cn(
+            'mt-3 p-4 rounded-xl border space-y-4 transition-colors',
+            isDarkMode
+              ? 'bg-gradient-to-br from-gray-900/40 to-gray-800/40 border-gray-700/40 backdrop-blur-sm'
+              : 'border-gray-200'
+          )}
+        >
           {/* Aspect Ratio */}
           <div>
-            <label className="text-xs font-semibold text-gray-200 mb-2 block tracking-wide">{t.aspectRatioLabel}</label>
+            <label
+              className={cn(
+                'text-xs font-semibold mb-2 block tracking-wide transition-colors',
+                isDarkMode ? 'text-gray-200' : 'text-gray-700'
+              )}
+            >
+              {t.aspectRatioLabel}
+            </label>
             <select
               value={aspectRatio}
               onChange={(e) => handleAspectRatioChange(e.target.value)}
-              className="w-full h-10 px-3 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-100 font-medium cursor-pointer hover:border-gray-600/80 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
+              className={cn(
+                'w-full h-10 px-3 border rounded-lg text-sm font-medium cursor-pointer transition-all shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none',
+                isDarkMode
+                  ? 'bg-gray-900/90 border-gray-700/60 text-gray-100 hover:border-gray-600/80'
+                  : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white'
+              )}
             >
               <option value="auto">Auto</option>
               <option value="1:1">1:1 ({t.square})</option>
@@ -1243,14 +1251,31 @@ export const PromptComposer: React.FC = () => {
           </div>
 
           {/* Width Control */}
-          <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/20">
+          <div
+            className={cn(
+              'rounded-lg p-3 border transition-colors',
+              isDarkMode ? 'bg-gray-800/30 border-gray-700/20' : 'border-gray-200'
+            )}
+          >
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-gray-200 tracking-wide">{t.width}</label>
+              <label
+                className={cn(
+                  'text-xs font-semibold tracking-wide transition-colors',
+                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                )}
+              >
+                {t.width}
+              </label>
               <input
                 type="number"
                 value={imageWidth}
                 onChange={(e) => handleWidthChange(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
-                className="w-16 h-8 px-2 bg-gray-900/90 border border-gray-700/60 rounded-md text-sm text-gray-100 font-medium text-center hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
+                className={cn(
+                  'w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none',
+                  isDarkMode
+                    ? 'bg-gray-900/90 border-gray-700/60 text-gray-100 hover:border-gray-600'
+                    : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white'
+                )}
                 min="64"
                 max="1536"
               />
@@ -1262,22 +1287,39 @@ export const PromptComposer: React.FC = () => {
               step="64"
               value={imageWidth}
               onChange={(e) => handleWidthChange(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-700/40 rounded-full appearance-none cursor-pointer"
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
               style={{
-                background: `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${((imageWidth - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) ${((imageWidth - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) 100%)`
+                background: widthSliderBackground
               }}
             />
           </div>
 
           {/* Height Control */}
-          <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/20">
+          <div
+            className={cn(
+              'rounded-lg p-3 border transition-colors',
+              isDarkMode ? 'bg-gray-800/30 border-gray-700/20' : 'border-gray-200'
+            )}
+          >
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-gray-200 tracking-wide">{t.height}</label>
+              <label
+                className={cn(
+                  'text-xs font-semibold tracking-wide transition-colors',
+                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                )}
+              >
+                {t.height}
+              </label>
               <input
                 type="number"
                 value={imageHeight}
                 onChange={(e) => handleHeightChange(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
-                className="w-16 h-8 px-2 bg-gray-900/90 border border-gray-700/60 rounded-md text-sm text-gray-100 font-medium text-center hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all shadow-sm"
+                className={cn(
+                  'w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none',
+                  isDarkMode
+                    ? 'bg-gray-900/90 border-gray-700/60 text-gray-100 hover:border-gray-600'
+                    : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white'
+                )}
                 min="64"
                 max="1536"
               />
@@ -1289,24 +1331,46 @@ export const PromptComposer: React.FC = () => {
               step="64"
               value={imageHeight}
               onChange={(e) => handleHeightChange(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-700/40 rounded-full appearance-none cursor-pointer"
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
               style={{
-                background: `linear-gradient(to right, rgb(139, 92, 246) 0%, rgb(139, 92, 246) ${((imageHeight - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) ${((imageHeight - 64) / (1536 - 64)) * 100}%, rgb(55, 65, 81) 100%)`
+                background: heightSliderBackground
               }}
             />
           </div>
 
           {/* Seed Controls */}
-          <div className="pt-3 border-t border-gray-700/40">
-            <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/20 space-y-3">
-              <label className="text-xs font-semibold text-gray-200 block tracking-wide">{t.seed}</label>
+          <div
+            className={cn(
+              'pt-3 border-t transition-colors',
+              isDarkMode ? 'border-gray-700/40' : 'border-gray-200'
+            )}
+          >
+            <div
+              className={cn(
+                'rounded-lg p-3 border space-y-3 transition-colors',
+                isDarkMode ? 'bg-gray-800/30 border-gray-700/20' : 'border-gray-200'
+              )}
+            >
+              <label
+                className={cn(
+                  'text-xs font-semibold block tracking-wide transition-colors',
+                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                )}
+              >
+                {t.seed}
+              </label>
               <input
                 type="number"
                 value={seed || 0}
                 onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : null)}
                 placeholder="0"
                 disabled={randomSeed}
-                className="w-full h-10 px-3 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-100 font-medium hover:border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
+                className={cn(
+                  'w-full h-10 px-3 border rounded-lg text-sm font-medium transition-all shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed',
+                  isDarkMode
+                    ? 'bg-gray-900/90 border-gray-700/60 text-gray-100 hover:border-gray-600'
+                    : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white disabled:bg-slate-200'
+                )}
               />
               <div className="flex items-center gap-2">
                 <button
@@ -1408,20 +1472,6 @@ export const PromptComposer: React.FC = () => {
                 className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer slider"
               />
             </div>
-            
-            {/* Seed */}
-            <div>
-              <label className="text-xs text-gray-400 mb-2 block">
-                {t.seed}
-              </label>
-              <input
-                type="number"
-                value={seed || ''}
-                onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : null)}
-                placeholder={t.random}
-                className="w-full h-8 px-2 bg-gray-900 border border-gray-700 rounded text-xs text-gray-100"
-              />
-            </div>
           </div>
         )}
       </div>
@@ -1501,16 +1551,40 @@ export const PromptComposer: React.FC = () => {
     {/* Reference Images Modal */}
     <Dialog.Root open={showReferenceModal} onOpenChange={setShowReferenceModal}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-gray-700/50 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden z-50 shadow-2xl">
+        <Dialog.Overlay
+          className={cn(
+            'fixed inset-0 backdrop-blur-sm z-50 transition-colors',
+            isDarkMode ? 'bg-black/60' : 'bg-black/30'
+          )}
+        />
+        <Dialog.Content
+          className={cn(
+            'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden z-50 shadow-2xl border transition-colors',
+            isDarkMode
+              ? 'bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-gray-700/50'
+              : 'bg-white border-gray-200'
+          )}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50 bg-gray-800/30">
+          <div
+            className={cn(
+              'flex items-center justify-between px-6 py-4 border-b transition-colors',
+              isDarkMode ? 'border-gray-700/50 bg-gray-800/30' : 'border-gray-200 bg-white'
+            )}
+          >
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-cyan-600/20 rounded-lg">
-                <History className="h-5 w-5 text-cyan-400" />
+              <div
+                className={cn(
+                  'p-2 rounded-lg transition-colors',
+                  isDarkMode ? 'bg-cyan-600/20' : 'bg-cyan-100'
+                )}
+              >
+                <History className={cn('h-5 w-5', isDarkMode ? 'text-cyan-400' : 'text-cyan-600')} />
               </div>
               <div>
-                <Dialog.Title className="text-lg font-bold text-gray-100">
+                <Dialog.Title
+                  className={cn('text-lg font-bold transition-colors', isDarkMode ? 'text-gray-100' : 'text-gray-800')}
+                >
                   {t.referenceImagesTitle}
                 </Dialog.Title>
                 {/* <p className="text-xs text-gray-400 mt-0.5">
@@ -1519,20 +1593,35 @@ export const PromptComposer: React.FC = () => {
               </div>
             </div>
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-700">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'h-8 w-8 transition-colors',
+                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100 text-gray-500'
+                )}
+              >
                 <X className="h-5 w-5" />
               </Button>
             </Dialog.Close>
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto custom-scrollbar" style={{ maxHeight: 'calc(85vh - 140px)' }}>
+          <div
+            className={cn('p-6 overflow-y-auto custom-scrollbar transition-colors', isDarkMode ? '' : 'bg-white')}
+            style={{ maxHeight: 'calc(85vh - 140px)' }}
+          >
             {/* Current References */}
             {((selectedTool === 'generate' && uploadedImages.length > 0) ||
               (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
-                  <Check className="h-4 w-4 mr-2 text-green-400" />
+                <h3
+                  className={cn(
+                    'text-sm font-semibold mb-3 flex items-center transition-colors',
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  )}
+                >
+                  <Check className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-green-400' : 'text-green-600')} />
                   {`${t.currentReferences} (${(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length})`}
                 </h3>
                 <div 
@@ -1545,7 +1634,14 @@ export const PromptComposer: React.FC = () => {
                 >
                   {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
                     <div key={index} className="relative group flex-shrink-0">
-                      <div className="w-24 h-24 rounded-lg border-2 border-green-500/50 bg-gray-800 overflow-hidden">
+                      <div
+                        className={cn(
+                          'w-24 h-24 rounded-lg border-2 overflow-hidden transition-colors',
+                          isDarkMode
+                            ? 'border-green-500/50 bg-gray-800'
+                            : 'border-green-400/40 bg-slate-100'
+                        )}
+                      >
                         <img
                           src={image}
                           alt={`Reference ${index + 1}`}
@@ -1569,8 +1665,13 @@ export const PromptComposer: React.FC = () => {
 
             {/* Upload New */}
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
-                <Upload className="h-4 w-4 mr-2 text-purple-400" />
+              <h3
+                className={cn(
+                  'text-sm font-semibold mb-3 flex items-center transition-colors',
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                )}
+              >
+                <Upload className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-purple-400' : 'text-purple-500')} />
                 {t.uploadNewImage}
               </h3>
               <input
@@ -1582,18 +1683,30 @@ export const PromptComposer: React.FC = () => {
               />
               <button
                 onClick={() => document.getElementById('reference-modal-upload')?.click()}
-                className="w-full py-4 flex flex-col items-center justify-center bg-gray-800/50 hover:bg-gray-800 rounded-lg border-2 border-dashed border-gray-700 hover:border-cyan-500 transition-all"
+                className={cn(
+                  'w-full py-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all',
+                  isDarkMode
+                    ? 'bg-gray-800/50 hover:bg-gray-800 border-gray-700 hover:border-cyan-500'
+                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300 hover:border-cyan-400'
+                )}
               >
-                <Plus className="h-6 w-6 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-400">{t.clickToUploadImage}</span>
+                <Plus className={cn('h-6 w-6 mb-2', isDarkMode ? 'text-gray-400' : 'text-gray-500')} />
+                <span className={cn('text-sm', isDarkMode ? 'text-gray-400' : 'text-gray-600')}>
+                  {t.clickToUploadImage}
+                </span>
               </button>
             </div>
 
             {/* Recent Work */}
             {currentProject && currentProject.generations.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
-                  <Sparkles className="h-4 w-4 mr-2 text-blue-400" />
+                <h3
+                  className={cn(
+                    'text-sm font-semibold mb-3 flex items-center transition-colors',
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  )}
+                >
+                  <Sparkles className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
                   {t.recentWork}
                 </h3>
                 <div className="grid grid-cols-4 gap-3 max-h-80 overflow-y-auto custom-scrollbar">
@@ -1611,7 +1724,12 @@ export const PromptComposer: React.FC = () => {
                               addEditReferenceImage(asset.url);
                             }
                           }}
-                          className="relative group aspect-square rounded-lg overflow-hidden border-2 border-gray-700 hover:border-blue-500 transition-all duration-300 hover:scale-105"
+                          className={cn(
+                            'relative group aspect-square rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105',
+                            isDarkMode
+                              ? 'border-gray-700 hover:border-blue-500'
+                              : 'border-slate-200 hover:border-blue-500 shadow-sm'
+                          )}
                         >
                           <img
                             src={asset.url}
@@ -1635,7 +1753,9 @@ export const PromptComposer: React.FC = () => {
             {/* Upload History */}
             {uploadHistory.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-gray-300 mb-3">
+                <h3
+                  className={cn('text-sm font-semibold mb-3 transition-colors', isDarkMode ? 'text-gray-300' : 'text-gray-700')}
+                >
                   {`${t.previousUploads} (${uploadHistory.length})`}
                 </h3>
                 <div className="grid grid-cols-4 gap-3">
@@ -1654,7 +1774,12 @@ export const PromptComposer: React.FC = () => {
                             addEditReferenceImage(image);
                           }
                         }}
-                        className="relative aspect-square rounded-lg border-2 border-gray-700 hover:border-cyan-500 bg-gray-800 overflow-hidden transition-all group"
+                        className={cn(
+                          'relative aspect-square rounded-lg border-2 overflow-hidden transition-all group',
+                          isDarkMode
+                            ? 'border-gray-700 hover:border-cyan-500 bg-gray-800'
+                            : 'border-slate-200 hover:border-cyan-500 bg-slate-100'
+                        )}
                       >
                         <img
                           src={image}
@@ -1671,7 +1796,7 @@ export const PromptComposer: React.FC = () => {
                   const currentImages = selectedTool === 'generate' ? uploadedImages : editReferenceImages;
                   return !currentImages.includes(img);
                 }).length === 0 && (
-                  <p className="text-sm text-gray-500 text-center py-6">
+                  <p className={cn('text-sm text-center py-6', isDarkMode ? 'text-gray-500' : 'text-gray-600')}>
                     {t.allImagesAdded}
                   </p>
                 )}
@@ -1680,13 +1805,18 @@ export const PromptComposer: React.FC = () => {
 
             {uploadHistory.length === 0 && (
               <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center text-3xl">
+                <div
+                  className={cn(
+                    'w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center text-3xl transition-colors',
+                    isDarkMode ? 'bg-gray-800 text-white' : 'bg-slate-100 text-gray-600'
+                  )}
+                >
                   📁
                 </div>
-                <p className="text-sm text-gray-400">
+                <p className={cn('text-sm', isDarkMode ? 'text-gray-400' : 'text-gray-600')}>
                   {t.noUploadHistoryYet}
                 </p>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className={cn('text-xs mt-1', isDarkMode ? 'text-gray-600' : 'text-gray-500')}>
                   {t.uploadImageToSeeHistory}
                 </p>
               </div>
@@ -1694,8 +1824,13 @@ export const PromptComposer: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-3 bg-gray-800/30 border-t border-gray-700/50">
-            <p className="text-xs text-gray-500 text-center">
+          <div
+            className={cn(
+              'px-6 py-3 border-t transition-colors',
+              isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-gray-50 border-gray-200'
+            )}
+          >
+            <p className={cn('text-xs text-center', isDarkMode ? 'text-gray-500' : 'text-gray-500')}>
               {t.unlimitedUploads}
             </p>
           </div>

@@ -4,6 +4,8 @@ import { useAppStore } from '../store/useAppStore';
 import { generateId, transformImageToDimensions } from '../utils/imageUtils';
 import { Generation, Edit, Asset } from '../types';
 import { useRef } from 'react';
+import { saveImageToGallery } from '../utils/fileSaver';
+import { saveImageToGalleryDB } from '../utils/galleryStorage';
 
 export const useImageGeneration = () => {
   const {
@@ -16,6 +18,12 @@ export const useImageGeneration = () => {
     setGenerationProgress,
     modelFamily,
     modelName,
+    boards,
+    selectedBoardId,
+    addImageToBoard,
+    savePath,
+    autoSaveEnabled,
+    language,
   } = useAppStore();
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -100,10 +108,45 @@ export const useImageGeneration = () => {
 
         addGeneration(generation);
 
-        // Images are now only saved to history, not automatically added to gallery
-        // Users can manually save to gallery using the Save button
-        
-  setCanvasImage(outputAssets[0].url);
+        if (autoSaveEnabled) {
+          const defaultBoardName = language === 'zh' ? '画廊' : 'Gallery';
+          const selectedBoard = boards.find((board) => board.id === selectedBoardId);
+          const boardName = selectedBoard?.name || defaultBoardName;
+          let savedCount = 0;
+
+          for (const asset of outputAssets) {
+            try {
+              const result = await saveImageToGallery(asset.url, boardName, undefined, savePath);
+              if (!result.success) {
+                throw new Error('save-failed');
+              }
+
+              if (selectedBoardId) {
+                addImageToBoard(selectedBoardId, result.imageId);
+                await saveImageToGalleryDB(
+                  result.imageId,
+                  asset.url,
+                  selectedBoardId,
+                  boardName,
+                  result.path
+                );
+              }
+
+              savedCount += 1;
+            } catch (error) {
+              console.error('Auto-save failed for generated image', error);
+            }
+          }
+
+          if (savedCount > 0) {
+            window.dispatchEvent(new CustomEvent('galleryUpdated'));
+            window.dispatchEvent(
+              new CustomEvent('saveStatus', { detail: { success: true, auto: true } })
+            );
+          }
+        }
+
+        setCanvasImage(outputAssets[0].url);
         
         // Create project if none exists
         if (!currentProject) {
