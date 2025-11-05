@@ -7,7 +7,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'btn-premium text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5',
+  default: 'btn-premium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5',
         secondary: 'glass glass-hover text-white border border-white/10 hover:border-white/20',
         outline: 'border-2 bg-transparent hover:bg-white/5 border-purple-500/50 text-purple-300 hover:border-purple-400',
         ghost: 'text-gray-400 hover:text-white hover:bg-white/5',

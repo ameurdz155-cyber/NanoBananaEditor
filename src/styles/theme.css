@@ -165,6 +165,16 @@
   overflow: hidden;
 }
 
+:root.light .btn-premium {
+  color: #1f2937;
+  background: linear-gradient(135deg, rgba(237, 233, 254, 0.92), rgba(221, 214, 254, 0.92));
+  box-shadow: 0 10px 26px -18px rgba(124, 58, 237, 0.55);
+}
+
+:root.light .btn-premium:hover {
+  box-shadow: 0 12px 30px -16px rgba(124, 58, 237, 0.65);
+}
+
 .btn-premium::before {
   content: '';
   position: absolute;

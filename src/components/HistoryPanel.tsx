@@ -544,7 +544,10 @@ export const HistoryPanel: React.FC = () => {
         <>
           {/* Full History Grid - Scrollable */}
           <div className="mb-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-            <div className="sticky top-0 bg-gray-950 pb-2 mb-3 z-10 border-b border-gray-800">
+            <div
+              className="sticky top-0 bg-gray-950 pb-2 mb-3 z-10 border-b"
+              style={{ borderColor: 'var(--surface-border)' }}
+            >
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   Gallery

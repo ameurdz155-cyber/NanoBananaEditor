@@ -982,18 +982,28 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
         <>
           <div className="flex-shrink-0 mb-3">
             <div
-              className="flex w-full rounded-md p-0.5 border"
+              className="flex w-full rounded-md p-0.5 border transition-colors"
               style={{
-                background: 'var(--surface-secondary)',
-                borderColor: 'var(--surface-border)'
+                background: isDarkMode ? 'var(--surface-secondary)' : 'var(--surface-primary)',
+                borderColor: isDarkMode ? 'var(--surface-border)' : 'var(--surface-border-light)'
               }}
             >
               <button
                 className={cn(
                   "flex-1 px-3 py-1.5 text-xs font-medium rounded-sm transition-colors",
                   activeTab === 'images'
-                    ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-500/50'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? cn(
+                        'border shadow-sm',
+                        isDarkMode
+                          ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/45'
+                          : 'bg-cyan-100 text-cyan-700 border-cyan-200'
+                      )
+                    : cn(
+                        'border border-transparent',
+                        isDarkMode
+                          ? 'text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-black/5'
+                      )
                 )}
                 onClick={() => setActiveTab('images')}
               >
@@ -1003,8 +1013,18 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                 className={cn(
                   "flex-1 px-3 py-1.5 text-xs font-medium rounded-sm transition-colors",
                   activeTab === 'assets'
-                    ? 'bg-cyan-500/30 text-cyan-200 border border-cyan-500/50'
-                    : 'text-gray-400 hover:text-gray-200'
+                    ? cn(
+                        'border shadow-sm',
+                        isDarkMode
+                          ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/45'
+                          : 'bg-cyan-100 text-cyan-700 border-cyan-200'
+                      )
+                    : cn(
+                        'border border-transparent',
+                        isDarkMode
+                          ? 'text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                          : 'text-slate-500 hover:text-slate-900 hover:bg-black/5'
+                      )
                 )}
                 onClick={() => setActiveTab('assets')}
               >
@@ -1053,7 +1073,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                   <div key={item.imageId} className="relative group">
                     <button
                       onClick={() => onImageSelect(item.imageUrl, item.imageId, item.type)}
-                      className="relative aspect-square w-full rounded-lg overflow-hidden border-2 border-gray-800 hover:border-cyan-500 transition-all"
+                      className={cn(
+                        'relative aspect-square w-full rounded-lg overflow-hidden border-2 transition-all',
+                        isDarkMode
+                          ? 'border-[color:var(--surface-border)] hover:border-cyan-500/60'
+                          : 'border-slate-200 hover:border-cyan-400'
+                      )}
                       onContextMenu={(event) => {
                         event.preventDefault();
                         event.stopPropagation();

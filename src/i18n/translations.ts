@@ -332,6 +332,9 @@ export interface Translations {
   templateImageUpload: string;
   templateImageClear: string;
   deleteCategory: string;
+  noPromptTemplatesAvailable: string;
+  noMatchingTemplates: string;
+  createTemplateFirstMessage: string;
   
   // Error messages
   prohibitedContent: string;
@@ -734,6 +737,9 @@ export const translations: Record<Language, Translations> = {
   templateImageUpload: 'Upload image',
   templateImageClear: 'Remove image',
   deleteCategory: 'Delete category',
+  noPromptTemplatesAvailable: 'No prompt templates available',
+  noMatchingTemplates: 'No prompt templates available',
+  createTemplateFirstMessage: 'Create your first template to get started.',
     
     // Error messages
     prohibitedContent: 'Content Prohibited',
@@ -1134,6 +1140,9 @@ export const translations: Record<Language, Translations> = {
   templateImageUpload: '上传图片',
   templateImageClear: '移除图片',
   deleteCategory: '删除分类',
+  noPromptTemplatesAvailable: '暂无提示模板',
+  noMatchingTemplates: '暂无提示模板',
+  createTemplateFirstMessage: '创建您的第一个模板以开始。',
     
     // Error messages
     prohibitedContent: '内容被禁止',

@@ -16,6 +16,22 @@ interface TemplateManagementModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const resolveIsDarkMode = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const savedTheme = localStorage.getItem('app-theme');
+  if (savedTheme === 'light') {
+    return false;
+  }
+  if (savedTheme === 'dark') {
+    return true;
+  }
+
+  return document.documentElement.classList.contains('dark');
+};
+
 export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = ({ open, onOpenChange }) => {
   const language = useAppStore((state) => state.language);
   const t = getTranslation(language);
@@ -28,6 +44,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(resolveIsDarkMode);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -38,10 +55,23 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     categoryId: '',
     emoji: '✨',
   });
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
 
-  // Load templates and categories
+    const handleThemeChange = () => {
+      setIsDarkMode(resolveIsDarkMode());
+    };
+
+    window.addEventListener('themeChange', handleThemeChange);
+    return () => window.removeEventListener('themeChange', handleThemeChange);
+  }, []);
+
+  // Load templates and categories when the modal opens
   useEffect(() => {
     if (open) {
+      setIsDarkMode(resolveIsDarkMode());
       const storedTemplates = localStorage.getItem('promptTemplates');
       const storedCategories = localStorage.getItem('promptCategories');
       
@@ -214,14 +244,34 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     return cat ? `${getEmojiDisplay(cat.emoji)} ${cat.name}` : t.uncategorized;
   };
 
+  const getFilterButtonClasses = (isSelected: boolean) => {
+    if (isSelected) {
+      return isDarkMode
+        ? 'border border-cyan-500/40 bg-cyan-500/20 text-cyan-200 shadow-[0_0_24px_rgba(6,182,212,0.18)]'
+        : 'border border-cyan-200 bg-cyan-100 text-cyan-700 shadow-[0_12px_32px_rgba(6,182,212,0.16)]';
+    }
+
+    return isDarkMode
+      ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5';
+  };
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
+        <Dialog.Overlay
+          className={cn(
+            "fixed inset-0 backdrop-blur-md transition-colors z-[100]",
+            isDarkMode ? "bg-black/70" : "bg-black/40"
+          )}
+        />
         <Dialog.Content
           className={cn(
-            "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-5xl h-[90vh] overflow-hidden z-[100] rounded-2xl border shadow-2xl",
-            "text-[var(--text-primary)]"
+            "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-5xl h-[90vh] overflow-hidden z-[100] rounded-2xl border transition-[box-shadow]",
+            "text-[color:var(--text-primary)]",
+            isDarkMode
+              ? "shadow-[0_35px_80px_rgba(8,15,30,0.65)]"
+              : "shadow-[0_45px_80px_rgba(15,23,42,0.18)]"
           )}
           style={{
             background: 'var(--modal-surface-background)',
@@ -234,8 +284,13 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-[color:var(--surface-border-light)] bg-[var(--surface-secondary)]">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-cyan-600/20 rounded-lg">
-                <FileText className="h-5 w-5 text-cyan-400" />
+              <div
+                className={cn(
+                  'p-2 rounded-lg',
+                  isDarkMode ? 'bg-cyan-600/20 text-cyan-300' : 'bg-cyan-100 text-cyan-600'
+                )}
+              >
+                <FileText className="h-5 w-5" />
               </div>
               <div>
                 <Dialog.Title className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
@@ -250,8 +305,12 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 hover:bg-[var(--bg-hover)]"
-                style={{ color: 'var(--text-secondary)' }}
+                className={cn(
+                  'h-8 w-8',
+                  isDarkMode
+                    ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
+                )}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -265,12 +324,20 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
             <div className="px-6 py-4 border-b border-[color:var(--surface-border-light)] bg-[var(--surface-primary)] space-y-3">
               <div className="flex gap-3">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Search
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4"
+                    style={{ color: 'var(--text-tertiary)' }}
+                  />
                   <Input
                     placeholder={t.searchPrompts}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className={cn(
+                      'pl-10',
+                      isDarkMode
+                        ? 'bg-gray-900/60 border-purple-500/20 text-gray-100 placeholder:text-gray-400 focus-visible:bg-gray-900/70 focus-visible:border-cyan-400/40'
+                        : 'bg-white/95 text-gray-900 border-gray-300 placeholder:text-gray-500 focus-visible:bg-white focus-visible:border-cyan-400/40 focus-visible:shadow-[0_0_18px_rgba(6,182,212,0.16)]'
+                    )}
                   />
                 </div>
                 <Button
@@ -293,10 +360,8 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                   size="sm"
                   variant="ghost"
                   className={cn(
-                    "transition-all",
-                    selectedCategoryFilter === 'all'
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                      : "text-gray-400 hover:text-gray-200"
+                    'transition-colors rounded-full px-4 py-2 text-sm',
+                    getFilterButtonClasses(selectedCategoryFilter === 'all')
                   )}
                 >
                   {t.allCategories}
@@ -306,10 +371,8 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                   size="sm"
                   variant="ghost"
                   className={cn(
-                    "transition-all",
-                    selectedCategoryFilter === 'uncategorized'
-                      ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                      : "text-gray-400 hover:text-gray-200"
+                    'transition-colors rounded-full px-4 py-2 text-sm',
+                    getFilterButtonClasses(selectedCategoryFilter === 'uncategorized')
                   )}
                 >
                   {t.uncategorized}
@@ -321,10 +384,8 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                     size="sm"
                     variant="ghost"
                     className={cn(
-                      "transition-all",
-                      selectedCategoryFilter === cat.id
-                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
-                        : "text-gray-400 hover:text-gray-200"
+                      'transition-colors rounded-full px-4 py-2 text-sm',
+                      getFilterButtonClasses(selectedCategoryFilter === cat.id)
                     )}
                   >
                     {getEmojiDisplay(cat.emoji)} {cat.name}
@@ -335,48 +396,85 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
 
             {/* Add/Edit Form */}
             {showAddForm && (
-              <div className="px-6 py-4 bg-cyan-500/5 border-b border-cyan-500/20 max-h-[50vh] overflow-y-auto">
-                <h3 className="text-sm font-semibold text-cyan-300 mb-4">
+              <div
+                className={cn(
+                  'px-6 py-4 border-b max-h-[50vh] overflow-y-auto',
+                  isDarkMode ? 'bg-cyan-500/5 border-cyan-500/20' : 'bg-cyan-50 border-cyan-100'
+                )}
+              >
+                <h3
+                  className={cn(
+                    'text-sm font-semibold mb-4',
+                    isDarkMode ? 'text-cyan-200' : 'text-cyan-600'
+                  )}
+                >
                   {editingId ? t.editPromptTemplate : t.createPromptTemplate}
                 </h3>
                 <div className="space-y-4">
                   <div className="grid grid-cols-[auto_1fr] gap-3">
                     <div className="w-20">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
                         {t.templateEmojiLabel}
                       </label>
                       <Input
                         value={formData.emoji}
                         onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                        className="text-center text-2xl"
+                        className={cn(
+                          'text-center text-2xl',
+                          isDarkMode
+                            ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
+                            : 'bg-white/95 text-gray-900 border-gray-300'
+                        )}
                         maxLength={2}
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
                         {t.name} *
                       </label>
                       <Input
                         placeholder="e.g., Cinematic Portrait"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className={cn(
+                          isDarkMode
+                            ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
+                            : 'bg-white/95 text-gray-900 border-gray-300'
+                        )}
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
                         {t.description}
                       </label>
                       <Input
                         placeholder={t.briefDescription}
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className={cn(
+                          isDarkMode
+                            ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
+                            : 'bg-white/95 text-gray-900 border-gray-300'
+                        )}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
                         {t.templateCategoryLabel}
                       </label>
                       <select
@@ -384,7 +482,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                         onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                         className="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                         style={{
-                          background: 'var(--surface-secondary)',
+                          background: isDarkMode ? 'var(--surface-secondary)' : 'rgba(255,255,255,0.96)',
                           borderColor: 'var(--surface-border)',
                           color: 'var(--text-primary)'
                         }}
@@ -400,7 +498,10 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
                       {t.positivePrompt} *
                     </label>
                     <Textarea
@@ -408,13 +509,21 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                       value={formData.positivePrompt}
                       onChange={(e) => setFormData({ ...formData, positivePrompt: e.target.value })}
                       rows={3}
-                      className="resize-none"
+                      className={cn(
+                        'resize-none',
+                        isDarkMode
+                          ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
+                          : 'bg-white/95 text-gray-900 border-gray-300 placeholder:text-gray-500 focus-visible:bg-white focus-visible:border-cyan-400/40'
+                      )}
                     />
-                    <p className="text-xs text-gray-500 mt-1">{t.usePlaceholder}</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{t.usePlaceholder}</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
                       {t.negativePrompt}
                     </label>
                     <Textarea
@@ -422,7 +531,12 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                       value={formData.negativePrompt}
                       onChange={(e) => setFormData({ ...formData, negativePrompt: e.target.value })}
                       rows={2}
-                      className="resize-none"
+                      className={cn(
+                        'resize-none',
+                        isDarkMode
+                          ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
+                          : 'bg-white/95 text-gray-900 border-gray-300 placeholder:text-gray-500 focus-visible:bg-white focus-visible:border-cyan-400/40'
+                      )}
                     />
                   </div>
 
@@ -438,7 +552,11 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                     <Button
                       onClick={handleCancelEdit}
                       variant="ghost"
-                      className="text-gray-400 hover:text-gray-200"
+                      className={cn(
+                        isDarkMode
+                          ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                          : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
+                      )}
                     >
                       {t.cancel}
                     </Button>
@@ -453,10 +571,10 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 mx-auto mb-3" style={{ color: 'var(--text-tertiary)' }} />
                   <p className="mb-2" style={{ color: 'var(--text-secondary)' }}>
-                    {searchQuery ? t.noPromptsFound : 'No templates yet'}
+                    {searchQuery ? t.noMatchingTemplates : t.noPromptTemplatesAvailable}
                   </p>
                   <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                    {searchQuery ? t.tryDifferentSearch : 'Create your first template to get started'}
+                    {searchQuery ? t.tryDifferentSearch : t.createTemplateFirstMessage}
                   </p>
                 </div>
               ) : (
@@ -490,8 +608,12 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                             onClick={() => setExpandedId(expandedId === template.id ? null : template.id)}
                             size="sm"
                             variant="ghost"
-                            className="hover:bg-[var(--bg-hover)]"
-                            style={{ color: 'var(--text-secondary)' }}
+                            className={cn(
+                              'transition-colors',
+                              isDarkMode
+                                ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                                : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
+                            )}
                             title={expandedId === template.id ? t.hidePreview : t.showPreview}
                           >
                             {expandedId === template.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -576,8 +698,12 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                 <Button
                   onClick={() => onOpenChange(false)}
                   variant="ghost"
-                  className="hover:bg-[var(--bg-hover)]"
-                  style={{ color: 'var(--text-primary)' }}
+                  className={cn(
+                    'transition-colors',
+                    isDarkMode
+                      ? 'text-[color:var(--text-primary)] hover:bg-white/5'
+                      : 'text-[color:var(--text-primary)] hover:bg-black/5'
+                  )}
                 >
                   {t.ok}
                 </Button>
@@ -587,7 +713,12 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
           </>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
-              <div className="rounded-full bg-purple-500/15 p-4 text-purple-200">
+              <div
+                className={cn(
+                  'rounded-full p-4',
+                  isDarkMode ? 'bg-purple-500/15 text-purple-200' : 'bg-purple-100 text-purple-600'
+                )}
+              >
                 <Lock className="h-8 w-8" />
               </div>
               <Dialog.Title className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -596,11 +727,20 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
               <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 {t.premiumFeatureDescription}
               </p>
-              <Button className="btn-premium text-white" type="button">
+              <Button className="btn-premium" type="button">
                 {t.upgradeToUnlock}
               </Button>
               <Dialog.Close asChild>
-                <Button variant="ghost" className="mt-2" type="button">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    'mt-2 transition-colors',
+                    isDarkMode
+                      ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
+                  )}
+                  type="button"
+                >
                   {t.ok}
                 </Button>
               </Dialog.Close>

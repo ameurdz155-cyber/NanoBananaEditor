@@ -316,7 +316,7 @@ export const Header: React.FC = () => {
     <>
       <header
         className="h-16 glass flex items-center justify-between px-6 relative z-10 border-b"
-        style={{ borderColor: 'var(--glass-border)' }}
+        style={{ borderColor: isDarkMode ? 'var(--surface-border)' : 'var(--surface-border-light)' }}
       >
         {/* Left - Logo and Version */}
         <div className="flex items-center space-x-4">

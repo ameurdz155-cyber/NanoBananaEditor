@@ -781,10 +781,15 @@ export const PromptComposer: React.FC = () => {
                 }
               }}
               className={cn(
-                "h-8 w-8 flex items-center justify-center rounded-md text-gray-400 transition-all duration-200",
+                'h-8 w-8 flex items-center justify-center rounded-md transition-all duration-200',
+                isDarkMode ? 'text-gray-400' : 'text-slate-500',
                 showNegativePrompt
-                  ? "bg-orange-500/15 text-orange-200 shadow-[0_0_12px_rgba(251,146,60,0.35)]"
-                  : "hover:text-gray-100 hover:bg-gray-800"
+                  ? isDarkMode
+                    ? 'bg-orange-500/15 text-orange-200 shadow-[0_0_12px_rgba(251,146,60,0.35)]'
+                    : 'bg-orange-100 text-orange-600 shadow-[0_0_18px_rgba(251,146,60,0.3)] border border-orange-200/70'
+                  : isDarkMode
+                    ? 'hover:text-gray-100 hover:bg-gray-800'
+                    : 'hover:text-slate-900 hover:bg-black/5'
               )}
               title={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
               aria-label={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
@@ -1532,9 +1537,7 @@ export const PromptComposer: React.FC = () => {
               </Button>
             </Dialog.Close>
           </div>
-          <p className="mt-4 text-sm text-gray-400">
-            {t.clickToManageTemplates}
-          </p>
+        
           <div className="mt-6 flex-1 min-h-0 overflow-y-auto pr-1">
             <TemplatesView onTemplateSelect={(templateInfo) => {
               setLastSelectedTemplate(templateInfo ?? null);

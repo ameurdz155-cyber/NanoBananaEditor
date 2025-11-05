@@ -80,6 +80,7 @@ interface DisplayCategory {
   emoji?: string;
   image?: string;
   source: 'default' | 'custom';
+  count?: number;
 }
 
 type IconPickerTab = 'emoji' | 'fontawesome' | 'url' | 'upload';
@@ -167,6 +168,22 @@ const ICON_PICKER_TABS: Array<{ id: IconPickerTab; label: { en: string; zh: stri
   { id: 'url', label: { en: 'Image URL', zh: '图片链接' } },
   { id: 'upload', label: { en: 'Upload', zh: '上传图标' } },
 ];
+
+const resolveIsDarkMode = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const savedTheme = localStorage.getItem('app-theme');
+  if (savedTheme === 'light') {
+    return false;
+  }
+  if (savedTheme === 'dark') {
+    return true;
+  }
+
+  return document.documentElement.classList.contains('dark');
+};
 
 const renderIconValue = (value?: string, className?: string) => {
   if (!value) {
@@ -556,6 +573,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     deletePromptCategory
   } = useAppStore();
   const t = getTranslation(language);
+  const [isDarkMode, setIsDarkMode] = React.useState(resolveIsDarkMode);
   
   // Get localized default templates
   const localizedDefaultTemplates = React.useMemo(() => getDefaultTemplates(language), [language]);
@@ -579,6 +597,19 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const [categoryManagerMode, setCategoryManagerMode] = React.useState<'create' | 'edit' | 'view'>('create');
   const [editingCategoryId, setEditingCategoryId] = React.useState<string | null>(null);
   const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const handleThemeChange = () => {
+      setIsDarkMode(resolveIsDarkMode());
+    };
+
+    window.addEventListener('themeChange', handleThemeChange);
+    return () => window.removeEventListener('themeChange', handleThemeChange);
+  }, []);
 
   const resolvedCategories = React.useMemo<DisplayCategory[]>(() => {
     const map = new Map<string, DisplayCategory>();
@@ -611,21 +642,56 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     return map;
   }, [resolvedCategories]);
 
-  const categoryTabs = React.useMemo<DisplayCategory[]>(() => [
-    {
-      id: 'all',
-      name: t.allCategories,
-      emoji: '✨',
-      source: 'default',
-    },
-    {
-      id: 'uncategorized',
-      name: t.uncategorized,
-      emoji: '❔',
-      source: 'default',
-    },
-    ...resolvedCategories,
-  ], [resolvedCategories, t]);
+  const categoryCounts = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    let total = 0;
+    let uncategorized = 0;
+
+    const tally = (template: PromptTemplate) => {
+      total += 1;
+      if (template.categoryId) {
+        counts.set(template.categoryId, (counts.get(template.categoryId) ?? 0) + 1);
+      } else {
+        uncategorized += 1;
+      }
+    };
+
+    localizedDefaultTemplates.forEach(tally);
+
+    if (isPremiumUser) {
+      customTemplates.forEach(tally);
+    }
+
+    counts.set('all', total);
+    counts.set('uncategorized', uncategorized);
+
+    return counts;
+  }, [customTemplates, localizedDefaultTemplates, isPremiumUser]);
+
+  const categoryTabs = React.useMemo<DisplayCategory[]>(() => {
+    const categoriesWithCounts = resolvedCategories.map((category) => ({
+      ...category,
+      count: categoryCounts.get(category.id) ?? 0,
+    }));
+
+    return [
+      {
+        id: 'all',
+        name: t.allCategories,
+        emoji: '✨',
+        source: 'default',
+        count: categoryCounts.get('all') ?? 0,
+      },
+      {
+        id: 'uncategorized',
+        name: t.uncategorized,
+        emoji: '❔',
+        source: 'default',
+        count: categoryCounts.get('uncategorized') ?? 0,
+      },
+      ...categoriesWithCounts,
+    ];
+  }, [categoryCounts, resolvedCategories, t]);
   
   // Form state for create/edit modal
   const [formData, setFormData] = React.useState({
@@ -994,13 +1060,19 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     const templateIconNode = !template.image
       ? renderIconValue(
           template.emoji,
-          'w-12 h-12 text-3xl text-purple-200 leading-none flex items-center justify-center'
+          cn(
+            'w-12 h-12 text-3xl leading-none flex items-center justify-center',
+            isDarkMode ? 'text-purple-200' : 'text-purple-600'
+          )
         )
       : null;
 
     const categoryIconNode = renderIconValue(
       categoryInfo?.emoji,
-      'w-4 h-4 text-xs text-purple-200 flex items-center justify-center'
+      cn(
+        'w-4 h-4 text-xs flex items-center justify-center',
+        isDarkMode ? 'text-purple-200' : 'text-purple-500'
+      )
     );
 
     const activeActionsClasses = 'flex w-full items-center justify-end gap-2 pt-2';
@@ -1034,7 +1106,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               />
             ) : (
               templateIconNode || (
-                <span className="text-2xl font-semibold text-purple-200">
+                <span
+                  className={cn(
+                    'text-2xl font-semibold',
+                    isDarkMode ? 'text-purple-200' : 'text-purple-600'
+                  )}
+                >
                   {template.name.charAt(0).toUpperCase()}
                 </span>
               )
@@ -1045,7 +1122,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{template.name}</h4>
               {selectedTemplate === template.id && (
-                <span className="rounded-full border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-purple-200">
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border',
+                    isDarkMode
+                      ? 'border-purple-500/40 bg-purple-500/15 text-purple-200'
+                      : 'border-purple-300 bg-purple-100 text-purple-700'
+                  )}
+                >
                   {language === 'zh' ? '已应用' : 'Active'}
                 </span>
               )}
@@ -1142,7 +1226,17 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             placeholder={language === 'zh' ? '按名称搜索' : 'Search by name'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:flex-1"
+            className={cn(
+              'w-full sm:flex-1 transition-colors',
+              isDarkMode
+                ? 'bg-[var(--surface-primary)]/80 text-[color:var(--text-primary)] placeholder:text-[color:var(--text-tertiary)] border-[color:var(--surface-border)] focus-visible:bg-[var(--surface-primary)]'
+                : 'bg-white/95 text-slate-900 placeholder:text-slate-500 border-slate-200 focus-visible:bg-white focus-visible:shadow-[0_0_18px_rgba(168,85,247,0.12)]'
+            )}
+            style={
+              isDarkMode
+                ? { color: 'var(--text-primary)' }
+                : { color: 'var(--text-primary)' }
+            }
           />
           <div className="flex items-center gap-1">
             {isPremiumUser && (
@@ -1162,14 +1256,22 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wide text-gray-500">
+            <span
+              className="text-xs uppercase tracking-wide"
+              style={{ color: 'var(--text-tertiary)' }}
+            >
               {t.templateCategories}
             </span>
             {isPremiumUser && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2 text-xs text-gray-400 hover:text-gray-200"
+                className={cn(
+                  'h-8 px-2 text-xs transition-colors',
+                  isDarkMode
+                    ? 'text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
+                )}
                 onClick={() => openCategoryModal()}
                 type="button"
               >
@@ -1182,6 +1284,17 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           <div className="flex flex-wrap gap-2">
             {categoryTabs.map((category) => {
               const isActive = activeCategory === category.id;
+              const countValue = category.count ?? 0;
+              const countClasses = cn(
+                'ml-1 text-[11px] font-medium transition-colors',
+                isActive
+                  ? isDarkMode
+                    ? 'text-purple-100'
+                    : 'text-purple-700'
+                  : isDarkMode
+                    ? 'text-[color:var(--text-tertiary)]'
+                    : 'text-slate-500'
+              );
               return (
                 <button
                   key={category.id}
@@ -1189,13 +1302,20 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   className={cn(
                     'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition-all',
                     isActive
-                      ? 'border-purple-500 bg-purple-500/10 text-purple-200 shadow-sm'
-                      : 'border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-600'
+                      ? isDarkMode
+                        ? 'border-purple-500 bg-purple-500/10 text-purple-200 shadow-sm'
+                        : 'border-purple-300 bg-purple-100 text-purple-700 shadow-sm'
+                      : isDarkMode
+                        ? 'border-[color:var(--surface-border)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:border-purple-400/40 hover:bg-purple-500/5'
+                        : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-purple-300/60 hover:bg-purple-50'
                   )}
                   type="button"
                 >
                   {renderIconValue(category.emoji, 'w-4 h-4 text-sm leading-none flex items-center justify-center')}
-                  <span>{category.name}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <span>{category.name}</span>
+                    <span className={countClasses}>({countValue})</span>
+                  </span>
                 </button>
               );
             })}
@@ -1210,24 +1330,31 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           <div>
             <button
               onClick={() => toggleSection('my')}
-              className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-800/50 transition-colors group"
+              className={cn(
+                'w-full flex items-center justify-between p-2 rounded-lg transition-colors group',
+                isDarkMode ? 'hover:bg-white/5' : 'hover:bg-black/5'
+              )}
+              type="button"
             >
               <div className="flex items-center gap-2">
                 {expandedSections.my ? (
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                  <ChevronDown className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                  <ChevronRight className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
                 )}
-                <h3 className="text-sm font-semibold text-gray-300">My Templates</h3>
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>My Templates</h3>
               </div>
-              <span className="text-xs text-gray-500">{customTemplates.length}</span>
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{customTemplates.length}</span>
             </button>
 
             {expandedSections.my && (
               <div className="mt-2">
                 {filteredMyTemplates.length === 0 ? (
-                  <div className="text-center py-6 text-sm text-gray-500">
-                    {searchQuery ? 'No matching templates' : 'No templates yet. Create one to get started.'}
+                  <div className="text-center py-6 text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                    <p>{searchQuery ? t.noMatchingTemplates : t.noPromptTemplatesAvailable}</p>
+                    {!searchQuery && (
+                      <p style={{ color: 'var(--text-tertiary)' }}>{t.createTemplateFirstMessage}</p>
+                    )}
                   </div>
                 ) : (
                   <div className={templateListClasses}>
@@ -1238,10 +1365,15 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             )}
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed border-purple-500/40 bg-purple-500/10 p-6 text-center">
+          <div
+            className={cn(
+              'rounded-lg border border-dashed p-6 text-center transition-colors',
+              isDarkMode ? 'border-purple-500/40 bg-purple-500/10' : 'border-purple-200 bg-purple-50'
+            )}
+          >
             <p className="text-base font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>{t.premiumFeatureTitle}</p>
             <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>{t.premiumFeatureDescription}</p>
-            <Button className="btn-premium text-white" type="button">
+            <Button className={cn('btn-premium', !isDarkMode && 'shadow-[0_12px_30px_-12px_rgba(168,85,247,0.45)]')} type="button">
               {t.upgradeToUnlock}
             </Button>
           </div>
@@ -1251,24 +1383,28 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         <div>
           <button
             onClick={() => toggleSection('default')}
-            className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-800/50 transition-colors group"
+            className={cn(
+              'w-full flex items-center justify-between p-2 rounded-lg transition-colors group',
+              isDarkMode ? 'hover:bg-white/5' : 'hover:bg-black/5'
+            )}
+            type="button"
           >
             <div className="flex items-center gap-2">
               {expandedSections.default ? (
-                <ChevronDown className="h-4 w-4 text-gray-400" />
+                <ChevronDown className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
               ) : (
-                <ChevronRight className="h-4 w-4 text-gray-400" />
+                <ChevronRight className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
               )}
-              <h3 className="text-sm font-semibold text-gray-300">Default Templates</h3>
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Default Templates</h3>
             </div>
-            <span className="text-xs text-gray-500">{localizedDefaultTemplates.length}</span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{localizedDefaultTemplates.length}</span>
           </button>
 
           {expandedSections.default && (
             <div className="mt-2">
               {filteredDefaultTemplates.length === 0 ? (
-                <div className="text-center py-6 text-sm text-gray-500">
-                  No matching templates
+                <div className="text-center py-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {t.noMatchingTemplates}
                 </div>
               ) : (
                 <div className={templateListClasses}>
@@ -1296,8 +1432,15 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/70 z-50" />
           <Dialog.Content
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 border border-gray-800 rounded-lg p-6 z-50 shadow-2xl"
-            style={{ width: '90vw', maxWidth: '960px', maxHeight: '85vh' }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg p-6 z-50 shadow-2xl transition-colors"
+            style={{
+              width: '90vw',
+              maxWidth: '960px',
+              maxHeight: '85vh',
+              background: 'var(--modal-surface-background)',
+              border: '1px solid var(--modal-surface-border)',
+              color: 'var(--text-primary)'
+            }}
           >
             {(() => {
               const isViewOnly = categoryManagerMode === 'view';
@@ -1311,17 +1454,27 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 <div className="flex flex-col h-full">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <Dialog.Title className="text-xl font-semibold text-gray-100">
+                      <Dialog.Title className="text-xl font-semibold text-[color:var(--text-primary)]">
                         {modalTitle}
                       </Dialog.Title>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm mt-1 text-[color:var(--text-secondary)]">
                         {language === 'zh'
                           ? '管理模板分类、图标与名称。默认分类不可编辑。'
                           : 'Manage names and icons for your categories. Default categories are view only.'}
                       </p>
                     </div>
                     <Dialog.Close asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" type="button">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          'h-8 w-8 transition-colors',
+                          isDarkMode
+                            ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                            : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
+                        )}
+                        type="button"
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </Dialog.Close>
@@ -1332,7 +1485,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full border-dashed border-purple-500/40 text-purple-200 hover:text-purple-100"
+                        className={cn(
+                          'w-full border-dashed transition-colors',
+                          isDarkMode
+                            ? 'border-purple-500/40 text-purple-200 hover:text-purple-100'
+                            : 'border-purple-300 text-purple-600 hover:text-purple-700 bg-purple-50/70'
+                        )}
                         type="button"
                         onClick={() => {
                           resetCategoryForm();
@@ -1354,16 +1512,28 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                               className={cn(
                                 'w-full flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all text-left',
                                 isSelected
-                                  ? 'border-purple-500 bg-purple-500/10 text-purple-100'
-                                  : 'border-gray-800 text-gray-300 hover:text-gray-100 hover:border-gray-600'
+                                  ? isDarkMode
+                                    ? 'border-purple-500 bg-purple-500/10 text-purple-100'
+                                    : 'border-purple-300 bg-purple-100 text-purple-700'
+                                  : isDarkMode
+                                    ? 'border-[color:var(--surface-border)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:border-purple-400/40'
+                                    : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-purple-300/50 hover:bg-purple-50/70'
                               )}
                             >
-                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-gray-800/80 overflow-hidden">
+                              <span
+                                className={cn(
+                                  'inline-flex h-8 w-8 items-center justify-center rounded-md overflow-hidden',
+                                  isDarkMode ? 'bg-gray-800/80' : 'bg-slate-100'
+                                )}
+                              >
                                 {renderIconValue(category.emoji, 'h-5 w-5 text-base') || '✨'}
                               </span>
                               <span className="truncate">{category.name}</span>
                               {category.source === 'default' && (
-                                <span className="ml-auto text-xs uppercase tracking-wide text-gray-500">
+                                <span
+                                  className="ml-auto text-xs uppercase tracking-wide"
+                                  style={{ color: 'var(--text-tertiary)' }}
+                                >
                                   {language === 'zh' ? '默认' : 'Default'}
                                 </span>
                               )}
@@ -1375,7 +1545,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-[color:var(--text-secondary)] mb-2">
                           {t.categoryNameLabel}
                         </label>
                         <Input
@@ -1383,17 +1553,27 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                           onChange={(e) => !isViewOnly && setCategoryForm((prev) => ({ ...prev, name: e.target.value }))}
                           placeholder={language === 'zh' ? '新的分类名称' : 'New category name'}
                           disabled={isViewOnly}
+                          className={cn(
+                            !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white focus-visible:shadow-[0_0_14px_rgba(168,85,247,0.1)]'
+                          )}
                         />
                       </div>
 
                       <div className="space-y-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-14 w-14 rounded-lg border border-gray-800 bg-gray-950 flex items-center justify-center text-2xl text-purple-300 overflow-hidden">
+                          <div
+                            className={cn(
+                              'h-14 w-14 rounded-lg flex items-center justify-center text-2xl overflow-hidden border',
+                              isDarkMode
+                                ? 'border-gray-800 bg-gray-950 text-purple-300'
+                                : 'border-slate-200 bg-white text-purple-600'
+                            )}
+                          >
                             {renderIconValue(categoryForm.emoji, 'h-10 w-10 text-3xl') || '⭐'}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-300">{t.categoryEmojiLabel}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-sm font-medium text-[color:var(--text-secondary)]">{t.categoryEmojiLabel}</p>
+                            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                               {language === 'zh'
                                 ? '从下方选项卡中选择图标，或输入自定义图标。'
                                 : 'Pick an icon from the tabs below or provide your own.'}
@@ -1410,8 +1590,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                               className={cn(
                                 'px-3 py-1.5 text-xs rounded-full border transition-colors',
                                 iconPickerTab === tab.id
-                                  ? 'border-purple-500 bg-purple-500/10 text-purple-200'
-                                  : 'border-gray-800 text-gray-400 hover:text-gray-200 hover:border-gray-600',
+                                  ? isDarkMode
+                                    ? 'border-purple-500 bg-purple-500/10 text-purple-200'
+                                    : 'border-purple-300 bg-purple-100 text-purple-700'
+                                  : isDarkMode
+                                    ? 'border-[color:var(--surface-border)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:border-purple-400/40'
+                                    : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-purple-300/50 hover:bg-purple-50/70',
                                 isViewOnly && 'opacity-60 cursor-not-allowed'
                               )}
                               disabled={isViewOnly}
@@ -1428,6 +1612,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                               onChange={(e) => !isViewOnly && setCategoryForm((prev) => ({ ...prev, emoji: e.target.value }))}
                               placeholder={language === 'zh' ? '输入 emoji 或字符' : 'Type an emoji or character'}
                               disabled={isViewOnly}
+                              className={cn(
+                                !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
+                              )}
                             />
                           )}
 
@@ -1438,6 +1625,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                                 onChange={(e) => setIconSearch(e.target.value)}
                                 placeholder={language === 'zh' ? '搜索图标...' : 'Search icons...'}
                                 disabled={isViewOnly}
+                                className={cn(
+                                  !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
+                                )}
                               />
                               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                                 {filteredFontAwesomeIcons.map((option) => {
@@ -1455,8 +1645,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                                       className={cn(
                                         'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors',
                                         isActive
-                                          ? 'border-purple-500 bg-purple-500/20 text-purple-100'
-                                          : 'border-gray-800 text-gray-300 hover:text-gray-100 hover:border-gray-600',
+                                          ? isDarkMode
+                                            ? 'border-purple-500 bg-purple-500/20 text-purple-100'
+                                            : 'border-purple-300 bg-purple-100 text-purple-700'
+                                          : isDarkMode
+                                            ? 'border-[color:var(--surface-border)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:border-purple-400/40'
+                                            : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-purple-300/50 hover:bg-purple-50/70',
                                         isViewOnly && 'cursor-default opacity-50'
                                       )}
                                       disabled={isViewOnly}
@@ -1482,6 +1676,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                               }}
                               placeholder={language === 'zh' ? '粘贴图片链接' : 'Paste an image URL'}
                               disabled={isViewOnly}
+                              className={cn(
+                                !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
+                              )}
                             />
                           )}
 
@@ -1498,7 +1695,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                               <Button
                                 type="button"
                                 variant="outline"
-                                className="flex items-center gap-2 border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800"
+                                className={cn(
+                                  'flex items-center gap-2',
+                                  isDarkMode
+                                    ? 'border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800'
+                                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                                )}
                                 onClick={() => {
                                   if (isViewOnly) {
                                     return;
@@ -1510,7 +1712,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                                 <UploadCloud className="h-4 w-4" />
                                 <span>{language === 'zh' ? '上传自定义图标' : 'Upload custom icon'}</span>
                               </Button>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                                 {language === 'zh'
                                   ? '我们会将图像以 Base64 的形式保存在浏览器中。'
                                   : 'Images are stored locally as base64 data in your browser.'}
@@ -1522,7 +1724,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     </div>
                   </div>
 
-                  <div className="mt-6 flex items-center justify-between gap-3 border-t border-gray-800 pt-4">
+                  <div
+                    className="mt-6 flex items-center justify-between gap-3 pt-4 border-t"
+                    style={{ borderColor: 'var(--surface-border)' }}
+                  >
                     {categoryManagerMode === 'edit' && editingCategoryId && (
                       <Button
                         variant="ghost"
@@ -1542,6 +1747,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                           setShowCategoryModal(false);
                           resetCategoryForm();
                         }}
+                        className={cn(
+                          'transition-colors',
+                          isDarkMode
+                            ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                            : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
+                        )}
                       >
                         {t.cancel}
                       </Button>
@@ -1575,20 +1786,32 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/70 z-50" />
           <Dialog.Content 
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-900 border border-gray-800 rounded-lg p-8 z-50 overflow-y-auto shadow-2xl"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg p-8 z-50 overflow-y-auto shadow-2xl transition-colors"
             style={{ 
               width: '95vw', 
               maxWidth: '1152px', 
               height: '90vh',
-              minHeight: '600px'
+              minHeight: '600px',
+              background: 'var(--modal-surface-background)',
+              border: '1px solid var(--modal-surface-border)',
+              color: 'var(--text-primary)'
             }}
           >
             <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className="text-2xl font-semibold text-gray-100">
+              <Dialog.Title className="text-2xl font-semibold text-[color:var(--text-primary)]">
                 {editingTemplate ? t.editPromptTemplate : t.createPromptTemplate}
               </Dialog.Title>
               <Dialog.Close asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    'h-8 w-8 transition-colors',
+                    isDarkMode
+                      ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
+                  )}
+                >
                   <X className="h-5 w-5" />
                 </Button>
               </Dialog.Close>
@@ -1597,45 +1820,61 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             <div className="space-y-6">
               {/* Template Icon/Preview */}
               <div className="flex items-center gap-6">
-                <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border border-gray-800">
-                  <span className="text-4xl font-bold text-purple-400">
+                <div
+                  className={cn(
+                    'w-20 h-20 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border',
+                    isDarkMode ? 'border-gray-800' : 'border-purple-200/60'
+                  )}
+                >
+                  <span className={cn('text-4xl font-bold', isDarkMode ? 'text-purple-400' : 'text-purple-600')}>
                     {formData.name.charAt(0).toUpperCase() || '?'}
                   </span>
                 </div>
                 <div className="flex-1">
-                  <label className="block text-base font-medium text-gray-300 mb-2">{t.name}</label>
+                  <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">{t.name}</label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Anime (Copy)"
-                    className="w-full text-base py-3"
+                    className={cn(
+                      'w-full text-base py-3',
+                      !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white focus-visible:shadow-[0_0_18px_rgba(168,85,247,0.12)]'
+                    )}
                   />
                 </div>
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-base font-medium text-gray-300 mb-2">
+                <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
                   {t.descriptionOptional}
                 </label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder={t.briefDescription}
-                  className="w-full text-base py-3"
+                  className={cn(
+                    'w-full text-base py-3',
+                    !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
+                  )}
                 />
               </div>
 
               {/* Category and Emoji */}
               <div className="grid gap-6 sm:grid-cols-2">
                 <div>
-                  <label className="block text-base font-medium text-gray-300 mb-2">
+                  <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
                     {t.templateCategoryLabel}
                   </label>
                   <select
                     value={formData.categoryId}
                     onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
-                    className="w-full rounded-md border border-gray-800 bg-gray-950 px-4 py-3 text-base text-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className={cn(
+                      'w-full rounded-md px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500',
+                      isDarkMode
+                        ? 'bg-[color:var(--surface-primary)] border-[color:var(--surface-border)] text-[color:var(--text-primary)]'
+                        : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+                    )}
                   >
                     <option value="">{t.uncategorized}</option>
                     {resolvedCategories.map((category) => (
@@ -1646,7 +1885,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   </select>
                 </div>
                 <div>
-                  <label className="block text-base font-medium text-gray-300 mb-2">
+                  <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
                     {t.templateEmojiLabel}
                   </label>
                   <Input
@@ -1654,14 +1893,17 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     onChange={(e) => setFormData((prev) => ({ ...prev, emoji: e.target.value }))}
                     placeholder="🎨"
                     maxLength={8}
-                    className="w-full text-base py-3"
+                    className={cn(
+                      'w-full text-base py-3',
+                      !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
+                    )}
                   />
                 </div>
               </div>
 
               {/* Representative Image */}
               <div>
-                <label className="block text-base font-medium text-gray-300 mb-2">
+                <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
                   {t.templateImageLabel}
                 </label>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -1669,7 +1911,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     value={formData.image}
                     onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
                     placeholder={t.templateImageUrlPlaceholder}
-                    className="w-full sm:flex-1 text-base py-3"
+                    className={cn(
+                      'w-full sm:flex-1 text-base py-3',
+                      !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
+                    )}
                   />
                   <input
                     ref={fileInputRef}
@@ -1681,7 +1926,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   <Button
                     type="button"
                     variant="outline"
-                    className="flex items-center gap-2 border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800 py-3 px-4"
+                    className={cn(
+                      'flex items-center gap-2 py-3 px-4 transition-colors',
+                      isDarkMode
+                        ? 'border-[color:var(--surface-border)] bg-[color:var(--surface-secondary)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                        : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200/70'
+                    )}
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <UploadCloud className="h-5 w-5" />
@@ -1693,7 +1943,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     <img
                       src={formData.image}
                       alt="Preview"
-                      className="h-24 w-24 rounded-md border border-gray-800 object-cover"
+                      className={cn(
+                        'h-24 w-24 rounded-md object-cover transition-colors',
+                        isDarkMode ? 'border border-gray-800' : 'border border-purple-200/70'
+                      )}
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
@@ -1701,7 +1954,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-sm text-gray-400 hover:text-red-400"
+                      className={cn(
+                        'text-sm transition-colors',
+                        isDarkMode
+                          ? 'text-[color:var(--text-tertiary)] hover:text-red-300'
+                          : 'text-slate-500 hover:text-red-500'
+                      )}
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
                     >
@@ -1714,7 +1972,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               {/* Positive Prompt */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-base font-medium text-gray-300">
+                  <label className="block text-base font-medium text-[color:var(--text-secondary)]">
                     {t.positivePrompt}
                   </label>
                   <button
@@ -1724,7 +1982,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       const after = formData.positivePrompt.substring(cursorPos);
                       setFormData(prev => ({ ...prev, positivePrompt: before + '{prompt}' + after }));
                     }}
-                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                    className={cn(
+                      'text-sm transition-colors',
+                      isDarkMode ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500'
+                    )}
                   >
                     {t.insertPlaceholder}
                   </button>
@@ -1733,12 +1994,24 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   value={formData.positivePrompt}
                   onChange={(e) => setFormData(prev => ({ ...prev, positivePrompt: e.target.value }))}
                   placeholder="{prompt} anime++, bold outline, cel-shaded coloring, shounen, seinen"
-                  className="w-full min-h-[120px] text-base"
+                  className={cn(
+                    'w-full min-h-[120px] text-base transition-colors',
+                    isDarkMode
+                      ? 'bg-[color:var(--surface-primary)] border-[color:var(--surface-border)] text-[color:var(--text-primary)] focus-visible:ring-1 focus-visible:ring-purple-500/70'
+                      : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-purple-400'
+                  )}
                   data-field="positivePrompt"
                 />
-                <p className="text-sm text-gray-500 mt-2">
+                <p className={cn('text-sm mt-2', isDarkMode ? 'text-[color:var(--text-tertiary)]' : 'text-slate-600')}>
                   {t.usePlaceholder.replace('{prompt}', '')}
-                  <code className="px-2 py-1 bg-gray-800 rounded text-sm">{'{prompt}'}</code>
+                  <code
+                    className={cn(
+                      'px-2 py-1 rounded text-sm',
+                      isDarkMode ? 'bg-gray-800 text-[color:var(--text-primary)]' : 'bg-slate-200 text-slate-900'
+                    )}
+                  >
+                    {'{prompt}'}
+                  </code>
                   {t.usePlaceholder.split('{prompt}')[1]}
                 </p>
               </div>
@@ -1746,7 +2019,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               {/* Negative Prompt */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-base font-medium text-gray-300">
+                  <label className="block text-base font-medium text-[color:var(--text-secondary)]">
                     {t.negativePrompt}
                   </label>
                   <button
@@ -1756,7 +2029,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       const after = formData.negativePrompt.substring(cursorPos);
                       setFormData(prev => ({ ...prev, negativePrompt: before + '{prompt}' + after }));
                     }}
-                    className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                    className={cn(
+                      'text-sm transition-colors',
+                      isDarkMode ? 'text-cyan-400 hover:text-cyan-300' : 'text-cyan-600 hover:text-cyan-500'
+                    )}
                   >
                     {t.insertPlaceholder}
                   </button>
@@ -1765,13 +2041,25 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   value={formData.negativePrompt}
                   onChange={(e) => setFormData(prev => ({ ...prev, negativePrompt: e.target.value }))}
                   placeholder="{photo}+++, greyscale, solid black, painting"
-                  className="w-full min-h-[120px] text-base"
+                  className={cn(
+                    'w-full min-h-[120px] text-base transition-colors',
+                    isDarkMode
+                      ? 'bg-[color:var(--surface-primary)] border-[color:var(--surface-border)] text-[color:var(--text-primary)] focus-visible:ring-1 focus-visible:ring-purple-500/70'
+                      : 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-purple-400'
+                  )}
                   data-field="negativePrompt"
                 />
               </div>
 
               {/* Info Text */}
-              <div className="text-sm text-gray-500 space-y-2 bg-gray-950 border border-gray-800 rounded-lg p-4">
+              <div
+                className={cn(
+                  'text-sm space-y-2 rounded-lg p-4 transition-colors',
+                  isDarkMode
+                    ? 'bg-black/40 border border-gray-800 text-[color:var(--text-secondary)]'
+                    : 'bg-purple-50/70 border border-purple-200 text-slate-700'
+                )}
+              >
                 <p>{t.templateExplanation}</p>
                 <p>
                   {t.templateOmitPlaceholder}
@@ -1779,17 +2067,27 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               </div>
 
               {/* Save Button */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-[color:var(--surface-border)]">
                 <Button
                   variant="ghost"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-6 py-3 text-base"
+                  className={cn(
+                    'px-6 py-3 text-base transition-colors',
+                    isDarkMode
+                      ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+                  )}
                 >
                   {t.cancel}
                 </Button>
                 <Button
                   onClick={handleSaveTemplate}
-                  className="bg-purple-600 hover:bg-purple-500 px-6 py-3 text-base"
+                  className={cn(
+                    'px-6 py-3 text-base transition-colors',
+                    isDarkMode
+                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_12px_30px_-12px_rgba(168,85,247,0.45)]'
+                      : 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_14px_34px_-18px_rgba(168,85,247,0.55)]'
+                  )}
                 >
                   {t.save}
                 </Button>

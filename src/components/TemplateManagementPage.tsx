@@ -297,7 +297,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
           {t.premiumFeatureDescription}
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-          <Button className="btn-premium text-white" type="button">
+            <Button className="btn-premium" type="button">
             {t.upgradeToUnlock}
           </Button>
           <Button
@@ -425,9 +425,17 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
               isDarkMode ? "text-gray-400" : "text-gray-600"
             )}>
               {searchQuery || selectedCategoryFilter !== 'all'
-                ? (language === 'zh' ? '未找到匹配的模板' : 'No templates found')
-                : (language === 'zh' ? '还没有模板' : 'No templates yet')}
+                ? t.noMatchingTemplates
+                : t.noPromptTemplatesAvailable}
             </p>
+            {!(searchQuery || selectedCategoryFilter !== 'all') && (
+              <p className={cn(
+                'mt-2 text-sm',
+                isDarkMode ? 'text-gray-500' : 'text-gray-500'
+              )}>
+                {t.createTemplateFirstMessage}
+              </p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
