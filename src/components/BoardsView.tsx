@@ -867,7 +867,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     {board.emoji ? (
                       <span className="text-base">{board.emoji}</span>
                     ) : (
-                      <Folder className="h-4 w-4 text-gray-400" />
+                      <FolderOpen className="h-4 w-4" />
                     )}
                     <span className="text-sm font-semibold text-gray-200 truncate">
                       {board.id === 'default' ? t.myCreations : board.name}
@@ -985,7 +985,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
               className="flex w-full rounded-md p-0.5 border transition-colors"
               style={{
                 background: isDarkMode ? 'var(--surface-secondary)' : 'var(--surface-primary)',
-                borderColor: isDarkMode ? 'var(--surface-border)' : 'var(--surface-border-light)'
+                borderColor: 'var(--surface-border-light)'
               }}
             >
               <button
@@ -995,7 +995,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     ? cn(
                         'border shadow-sm',
                         isDarkMode
-                          ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/45'
+                          ? 'bg-cyan-500/20 text-cyan-200 border-[var(--surface-border-light)]'
                           : 'bg-cyan-100 text-cyan-700 border-cyan-200'
                       )
                     : cn(
@@ -1016,7 +1016,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     ? cn(
                         'border shadow-sm',
                         isDarkMode
-                          ? 'bg-cyan-500/20 text-cyan-200 border-cyan-500/45'
+                          ? 'bg-cyan-500/20 text-cyan-200 border-[var(--surface-border-light)]'
                           : 'bg-cyan-100 text-cyan-700 border-cyan-200'
                       )
                     : cn(
@@ -1048,7 +1048,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     />
                     <button
                       onClick={() => document.getElementById('asset-upload')?.click()}
-                      className="w-full flex flex-col items-center justify-center py-8 bg-gray-800/30 hover:bg-gray-800/50 rounded-lg border border-gray-700/50 border-dashed hover:border-gray-600 transition-all cursor-pointer"
+                      className={cn(
+                        "w-full flex flex-col items-center justify-center py-8 rounded-lg border border-dashed transition-all cursor-pointer",
+                        isDarkMode
+                          ? "bg-gray-800/30 hover:bg-gray-800/50 border-[var(--surface-border)] hover:border-[var(--surface-border-light)]"
+                          : "bg-gray-100 hover:bg-gray-200 border-gray-300 hover:border-gray-400"
+                      )}
                     >
                       <div className="w-12 h-12 mb-3 rounded-xl bg-gray-800 flex items-center justify-center">
                         <Upload className="h-6 w-6 text-cyan-300" />
@@ -1076,8 +1081,8 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       className={cn(
                         'relative aspect-square w-full rounded-lg overflow-hidden border-2 transition-all',
                         isDarkMode
-                          ? 'border-[color:var(--surface-border)] hover:border-cyan-500/60'
-                          : 'border-slate-200 hover:border-cyan-400'
+                          ? 'border-[color:var(--surface-border)] hover:border-[color:var(--surface-border-light)]'
+                          : 'border-slate-200 hover:border-slate-300'
                       )}
                       onContextMenu={(event) => {
                         event.preventDefault();
@@ -1305,7 +1310,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     setNewBoardName('');
                     setCreateBoardError('');
                   }}
-                  className="flex-1 border-gray-600 hover:bg-gray-800"
+                  className={cn(
+                    "flex-1",
+                    isDarkMode
+                      ? "border-[var(--surface-border)] hover:bg-[var(--surface-secondary)]"
+                      : "border-slate-300 hover:bg-slate-100"
+                  )}
                 >
                   {t.cancel}
                 </Button>
@@ -1389,7 +1399,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     setEditingBoardId(null);
                     setEditBoardError('');
                   }}
-                  className="flex-1 border-gray-600 hover:bg-gray-800"
+                  className={cn(
+                    "flex-1",
+                    isDarkMode
+                      ? "border-[var(--surface-border)] hover:bg-[var(--surface-secondary)]"
+                      : "border-slate-300 hover:bg-slate-100"
+                  )}
                 >
                   {t.cancel}
                 </Button>
@@ -1457,7 +1472,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     setShowDeleteBoardModal(false);
                     setDeletingBoardId(null);
                   }}
-                  className="flex-1 border-gray-600 hover:bg-gray-800"
+                  className={cn(
+                    "flex-1",
+                    isDarkMode
+                      ? "border-[var(--surface-border)] hover:bg-[var(--surface-secondary)]"
+                      : "border-slate-300 hover:bg-slate-100"
+                  )}
                 >
                   {t.cancel}
                 </Button>
