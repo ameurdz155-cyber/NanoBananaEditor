@@ -12,6 +12,7 @@ import { cn } from '../utils/cn';
 import { saveImageToGallery } from '../utils/fileSaver';
 import { saveImageToGalleryDB } from '../utils/galleryStorage';
 import logoHeader from '../assets/AI-POD-lite-logo.png';
+import logoHeaderLight from '../assets/AI-POD-lite-logo-light.png';
 import { createPortal } from 'react-dom';
 import { transformImageToDimensions } from '../utils/imageUtils';
 import { useAuthStore } from '../store/useAuthStore';
@@ -206,6 +207,39 @@ export const Header: React.FC = () => {
           : 'hover:bg-gray-800/80'
   );
 
+  const iterationControlWrapperClasses = cn(
+    'flex items-center space-x-0 rounded-lg overflow-hidden transition-colors group backdrop-blur-md',
+    isDarkMode
+      ? 'bg-gray-900/90 border border-gray-700/60 hover:border-purple-500/50'
+      : 'bg-white/80 border border-purple-200/60 hover:border-purple-300/70 shadow-sm'
+  );
+
+  const iterationInputClasses = cn(
+    'w-12 h-9 px-2 border-0 border-r text-center text-sm font-medium focus:outline-none focus:ring-0 transition-colors peer',
+    isDarkMode
+      ? 'bg-gray-800 border-gray-700 text-gray-100 hover:bg-gray-750'
+      : 'bg-white/60 border-purple-200/70 text-gray-700 hover:bg-white focus:border-purple-300'
+  );
+
+  const tooltipClasses = cn(
+    'absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 pointer-events-none peer-hover:opacity-100 transition-opacity duration-200 shadow-lg',
+    isDarkMode
+      ? 'bg-gray-800 border border-purple-500/50 text-gray-200'
+      : 'bg-white border border-purple-200/80 text-gray-600 backdrop-blur'
+  );
+
+  const tooltipArrowClasses = cn(
+    'absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent',
+    isDarkMode ? 'border-t-purple-500/50' : 'border-t-purple-200/70'
+  );
+
+  const themeToggleClasses = cn(
+    'p-2 rounded-lg border-2 transition-all duration-200',
+    isDarkMode
+      ? 'border-purple-500/60 bg-gray-800/50 text-yellow-400 hover:bg-gray-700/50 hover:border-purple-400/80'
+      : 'border-purple-200/80 bg-white/80 text-purple-500 hover:bg-purple-50/80 hover:border-purple-300/80 backdrop-blur'
+  );
+
   const handlePrimaryAction = useCallback(() => {
     if (isUpscaleMode) {
       window.dispatchEvent(new CustomEvent('triggerUpscaleAction'));
@@ -225,10 +259,10 @@ export const Header: React.FC = () => {
         {/* Left - Logo and Version */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
-            <img 
-              src={logoHeader} 
+            <img
+              src={isDarkMode ? logoHeader : logoHeaderLight}
               alt={t.appName}
-              className="h-10 object-contain"
+              className="h-10 object-contain transition-opacity duration-300"
             />
           </div>
           <div className="px-3 py-1 text-xs font-semibold" style={{ color: 'var(--accent-cyan)', border: 'none', background: 'transparent' }}>
@@ -236,7 +270,7 @@ export const Header: React.FC = () => {
           </div>
           
           {/* Iterations Input + Generate Button (compact group) */}
-          <div className="flex items-center space-x-0 bg-gray-900/90 border border-gray-700/60 rounded-lg overflow-hidden hover:border-purple-500/50 transition-colors group">
+          <div className={iterationControlWrapperClasses}>
             <div className="relative">
               {isUpscaleMode ? (
                 <input
@@ -252,7 +286,7 @@ export const Header: React.FC = () => {
                   }}
                   disabled={isUpscaling}
                   aria-label={scaleLabel}
-                  className="w-12 h-9 px-2 bg-gray-800 border-0 border-r border-gray-700 text-center text-sm text-gray-100 font-medium focus:outline-none focus:ring-0 hover:bg-gray-750 transition-colors peer"
+                  className={iterationInputClasses}
                 />
               ) : (
                 <input
@@ -267,15 +301,15 @@ export const Header: React.FC = () => {
                   }}
                   disabled={isGenerating || isValidating}
                   aria-label={iterationsLabel}
-                  className="w-12 h-9 px-2 bg-gray-800 border-0 border-r border-gray-700 text-center text-sm text-gray-100 font-medium focus:outline-none focus:ring-0 hover:bg-gray-750 transition-colors peer"
+                  className={iterationInputClasses}
                 />
               )}
               {/* Modern tooltip on hover */}
-              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 bg-gray-800 border border-purple-500/50 rounded text-xs text-gray-200 whitespace-nowrap opacity-0 pointer-events-none peer-hover:opacity-100 transition-opacity duration-200 shadow-lg backdrop-blur-sm">
+              <div className={tooltipClasses}>
                 <span className="font-semibold text-purple-400">{isUpscaleMode ? scaleLabel : iterationsLabel}</span>
                 <span className="text-gray-400 mx-1">·</span>
                 <span>{isUpscaleMode ? `${upscaleScale}x` : `${iterations} ${iterations === 1 ? 'image' : 'images'}`}</span>
-                <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-purple-500/50"></div>
+                <div className={tooltipArrowClasses}></div>
               </div>
             </div>
             <Button
@@ -397,7 +431,7 @@ export const Header: React.FC = () => {
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg border-2 border-purple-500/60 bg-gray-800/50 text-yellow-400 hover:bg-gray-700/50 hover:border-purple-400/80 transition-all duration-200"
+            className={themeToggleClasses}
             title={isDarkMode 
               ? (language === 'zh' ? '切换到浅色模式' : 'Switch to Light Mode')
               : (language === 'zh' ? '切换到深色模式' : 'Switch to Dark Mode')

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import type { CSSProperties } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -7,6 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import { createPortal } from 'react-dom';
+import { cn } from '../utils/cn';
 import { 
   FaFolder, FaFolderOpen, FaFile, FaFileAlt, FaFileImage, FaFilePdf, FaFileCode,
   FaHome, FaUser, FaUsers, FaCog, FaChartBar, FaChartLine, FaChartPie,
@@ -57,6 +59,51 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === 'undefined') {
+      return true;
+    }
+    const savedTheme = localStorage.getItem('app-theme');
+    if (savedTheme) {
+      return savedTheme !== 'light';
+    }
+    return document.documentElement.classList.contains('dark');
+  });
+  const emojiPickerThemeStyles = useMemo<Record<string, string>>(() => {
+    if (isDarkMode) {
+      return {
+        '--epr-bg-color': 'var(--surface-primary)',
+        '--epr-panel-bg-color': 'var(--surface-secondary)',
+        '--epr-text-color': 'var(--text-primary)',
+        '--epr-category-label-color': 'var(--text-secondary)',
+        '--epr-hover-bg-color': 'rgba(124, 58, 237, 0.16)',
+        '--epr-border-color': 'var(--surface-border)',
+        '--epr-search-border-color': 'var(--surface-border)',
+        '--epr-search-placeholder-color': 'var(--text-tertiary)',
+        '--epr-search-bg-color': 'rgba(40, 42, 60, 0.9)',
+        '--epr-highlight-color': 'var(--accent-emerald)'
+      };
+    }
+
+    return {
+      '--epr-bg-color': 'rgba(255, 255, 255, 0.98)',
+      '--epr-panel-bg-color': 'rgba(244, 246, 253, 0.96)',
+      '--epr-text-color': 'var(--text-primary)',
+      '--epr-category-label-color': 'var(--text-secondary)',
+      '--epr-hover-bg-color': 'rgba(124, 58, 237, 0.08)',
+      '--epr-border-color': 'var(--surface-border)',
+      '--epr-search-border-color': 'var(--surface-border)',
+      '--epr-search-placeholder-color': 'var(--text-tertiary)',
+      '--epr-search-bg-color': 'rgba(255, 255, 255, 0.95)',
+      '--epr-highlight-color': 'var(--accent-emerald)'
+    };
+  }, [isDarkMode]);
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    setIsDarkMode(document.documentElement.classList.contains('dark'));
+  }, [open, showEditModal]);
 
   // Load categories from localStorage
   useEffect(() => {
@@ -340,6 +387,30 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     }
   }, [showEmojiPicker]);
 
+  useEffect(() => {
+    const handleThemeChange = () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+      const savedTheme = localStorage.getItem('app-theme');
+      if (savedTheme) {
+        setIsDarkMode(savedTheme !== 'light');
+        return;
+      }
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+
+    window.addEventListener('themeChange', handleThemeChange);
+    window.addEventListener('storage', handleThemeChange);
+
+    handleThemeChange();
+
+    return () => {
+      window.removeEventListener('themeChange', handleThemeChange);
+      window.removeEventListener('storage', handleThemeChange);
+    };
+  }, []);
+
   // Handle paste for image upload
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
@@ -388,26 +459,54 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-gray-700/50 rounded-2xl w-[90vw] max-w-3xl h-[85vh] overflow-hidden z-[100] shadow-2xl">
-          
+        <Dialog.Overlay
+          className="fixed inset-0 backdrop-blur-sm z-[100]"
+          style={{
+            backgroundColor: isDarkMode ? 'rgba(4, 6, 18, 0.7)' : 'rgba(15, 23, 42, 0.22)'
+          }}
+        />
+        <Dialog.Content
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-3xl h-[85vh] overflow-hidden z-[100] rounded-2xl border shadow-2xl"
+          style={{
+            background: 'var(--modal-surface-background)',
+            borderColor: 'var(--modal-surface-border)',
+            color: 'var(--text-primary)',
+            boxShadow: 'var(--shadow-xl)'
+          }}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/50 bg-gray-800/30">
+          <div
+            className="flex items-center justify-between px-6 py-4 border-b bg-[var(--surface-secondary)]"
+            style={{ borderColor: 'var(--surface-border-light)' }}
+          >
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-lime-600/20 rounded-lg">
-                <FolderTree className="h-5 w-5 text-lime-400" />
+              <div
+                className="p-2 rounded-lg"
+                style={{
+                  background: isDarkMode ? 'rgba(124, 58, 237, 0.18)' : 'rgba(124, 58, 237, 0.08)'
+                }}
+              >
+                <FolderTree className="h-5 w-5" style={{ color: 'var(--primary-gradient-end)' }} />
               </div>
               <div>
-                <Dialog.Title className="text-lg font-bold text-gray-100">
+                <Dialog.Title
+                  className="text-lg font-semibold"
+                  style={{ color: 'var(--primary-gradient-end)' }}
+                >
                   {t.menuPromptCategories}
                 </Dialog.Title>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                   {t.manageCategories}
                 </p>
               </div>
             </div>
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-200 hover:bg-gray-800">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:bg-[var(--bg-hover)]"
+                style={{ color: 'var(--text-secondary)' }}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </Dialog.Close>
@@ -415,9 +514,11 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
 
           {/* Content */}
           <div className="flex flex-col h-[calc(100%-80px)]">
-            
             {/* Search and Add Button */}
-            <div className="px-6 py-4 border-b border-gray-700/30">
+            <div
+              className="px-6 py-4 border-b bg-[var(--surface-primary)]"
+              style={{ borderColor: 'var(--surface-border-light)' }}
+            >
               <div className="flex gap-3">
                 <Input
                   placeholder={t.searchPrompts}
@@ -427,7 +528,10 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                 />
                 <Button
                   onClick={handleOpenCreate}
-                  className="bg-lime-600 hover:bg-lime-700 text-white"
+                  className="text-white shadow-sm hover:shadow-md border-0"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end))'
+                  }}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   {t.addCategory}
@@ -438,12 +542,12 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
             {/* Categories List */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {filteredCategories.length === 0 ? (
-                <div className="text-center py-12">
-                  <FolderTree className="h-12 w-12 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-400 mb-2">
+                <div className="text-center py-12" style={{ color: 'var(--text-secondary)' }}>
+                  <FolderTree className="h-12 w-12 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
+                  <p className="mb-2" style={{ color: 'var(--text-secondary)' }}>
                     {searchQuery ? t.noPromptsFound : 'No categories yet'}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
                     {searchQuery ? t.tryDifferentSearch : 'Create your first category to organize templates'}
                   </p>
                 </div>
@@ -452,16 +556,29 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                   {filteredCategories.map((category) => (
                     <div
                       key={category.id}
-                      className="p-4 rounded-lg border bg-gray-800/40 border-gray-700/50 hover:bg-gray-800/60 transition-all"
+                      className="p-4 rounded-xl border transition-colors"
+                      style={{
+                        background: isDarkMode ? 'rgba(38, 40, 60, 0.92)' : 'rgba(250, 251, 255, 0.94)',
+                        borderColor: 'var(--surface-border)',
+                        boxShadow: isDarkMode ? 'none' : '0 12px 28px rgba(15, 23, 42, 0.08)'
+                      }}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 flex items-center justify-center text-lime-400">
+                          <div
+                            className="w-10 h-10 flex items-center justify-center rounded-lg"
+                            style={{
+                              background: isDarkMode ? 'rgba(56, 58, 78, 0.85)' : 'rgba(124, 58, 237, 0.08)',
+                              color: 'var(--accent-emerald)'
+                            }}
+                          >
                             {renderIcon(category.emoji)}
                           </div>
                           <div>
-                            <p className="text-gray-200 font-medium">{category.name}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                              {category.name}
+                            </p>
+                            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                               Created {new Date(category.createdAt).toLocaleDateString()}
                             </p>
                           </div>
@@ -471,7 +588,8 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                             onClick={() => handleOpenEdit(category)}
                             size="sm"
                             variant="ghost"
-                            className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+                            className="hover:bg-[var(--bg-hover)]"
+                            style={{ color: 'var(--accent-cyan)' }}
                           >
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -479,7 +597,8 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                             onClick={() => handleDelete(category.id)}
                             size="sm"
                             variant="ghost"
-                            className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                            className="hover:bg-[var(--bg-hover)]"
+                            style={{ color: '#ef4444' }}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -492,15 +611,19 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-700/50 bg-gray-800/30">
+            <div
+              className="px-6 py-4 border-t bg-[var(--surface-secondary)]"
+              style={{ borderColor: 'var(--surface-border-light)' }}
+            >
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-400">
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                   {filteredCategories.length} {language === 'zh' ? '个分类' : 'categories'}
                 </p>
                 <Button
                   onClick={() => onOpenChange(false)}
                   variant="ghost"
-                  className="text-gray-300 hover:text-gray-100"
+                  className="hover:bg-[var(--bg-hover)]"
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   {t.ok}
                 </Button>
@@ -515,19 +638,36 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
         if (!open) handleCancelEdit();
       }}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
-          <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-lime-500/30 rounded-2xl shadow-2xl shadow-lime-500/20 w-full max-w-md z-[101]">
+          <Dialog.Overlay
+            className="fixed inset-0 backdrop-blur-sm z-[100]"
+            style={{
+              backgroundColor: isDarkMode ? 'rgba(4, 6, 18, 0.72)' : 'rgba(15, 23, 42, 0.18)'
+            }}
+          />
+          <Dialog.Content
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-2xl border w-full max-w-md z-[101]"
+            style={{
+              background: 'var(--surface-primary)',
+              borderColor: 'var(--modal-surface-border)',
+              color: 'var(--text-primary)',
+              boxShadow: 'var(--shadow-xl)'
+            }}
+          >
             <div className="p-6">
               {/* Modal Header */}
               <div className="flex items-center justify-between mb-6">
-                <Dialog.Title className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-lime-400 to-cyan-400">
+                <Dialog.Title
+                  className="text-xl font-semibold"
+                  style={{ color: 'var(--primary-gradient-end)' }}
+                >
                   {editingId ? (language === 'zh' ? '编辑分类' : 'Edit Category') : t.addCategory}
                 </Dialog.Title>
                 <Dialog.Close asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+                    className="hover:bg-[var(--bg-hover)]"
+                    style={{ color: 'var(--text-secondary)' }}
                   >
                     <X className="h-5 w-5" />
                   </Button>
@@ -537,11 +677,17 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
               {/* Form Fields */}
               <div className="space-y-4">
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                     {t.categoryEmojiLabel}
                   </label>
                   <div className="flex gap-2">
-                    <div className="flex-1 h-16 flex items-center justify-center border border-gray-700 rounded-lg bg-gray-800/40 text-lime-400">
+                    <div
+                      className="flex-1 h-16 flex items-center justify-center border rounded-xl"
+                      style={{
+                        borderColor: 'var(--surface-border)',
+                        background: isDarkMode ? 'var(--surface-secondary)' : 'rgba(124, 58, 237, 0.06)'
+                      }}
+                    >
                       {renderIcon(formEmoji || '📁', 'text-4xl')}
                     </div>
                     <Button
@@ -568,7 +714,12 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                         }
                         setShowEmojiPicker(!showEmojiPicker);
                       }}
-                      className="bg-gray-700 hover:bg-gray-600 text-white h-16 px-4"
+                      className="h-16 px-4 border rounded-xl hover:bg-[var(--bg-hover)]"
+                      style={{
+                        background: isDarkMode ? 'var(--surface-secondary)' : 'rgba(124, 58, 237, 0.06)',
+                        borderColor: 'var(--surface-border)',
+                        color: 'var(--text-primary)'
+                      }}
                     >
                       <Smile className="h-6 w-6" />
                     </Button>
@@ -577,61 +728,86 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                   
                 {/* Emoji Picker Popup with Tabs - Using Portal */}
                 {showEmojiPicker && createPortal(
-                  <div 
+                  <div
                     ref={emojiPickerRef}
-                    className="fixed shadow-2xl rounded-lg overflow-hidden bg-gray-900 border border-gray-700"
-                    style={{ 
-                      top: `${pickerPosition.top}px`, 
-                      left: `${pickerPosition.left}px`, 
+                    className="fixed shadow-2xl rounded-lg overflow-hidden border"
+                    style={{
+                      top: `${pickerPosition.top}px`,
+                      left: `${pickerPosition.left}px`,
                       width: '380px',
-                      zIndex: 9999
+                      zIndex: 9999,
+                      background: 'var(--surface-primary)',
+                      borderColor: 'var(--surface-border)',
+                      color: 'var(--text-primary)',
+                      ...(emojiPickerThemeStyles as CSSProperties)
                     }}
                   >
                       {/* Tabs */}
-                      <div className="flex border-b border-gray-700 bg-gray-800">
+                      <div
+                        className="flex border-b bg-[var(--surface-secondary)]"
+                        style={{ borderColor: 'var(--surface-border)' }}
+                      >
                         <button
                           onClick={() => setEmojiPickerTab('emoji')}
-                          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                          className={cn(
+                            'flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 hover:bg-[var(--bg-hover)]',
                             emojiPickerTab === 'emoji'
-                              ? 'bg-gray-900 text-lime-400 border-b-2 border-lime-400'
-                              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
-                          }`}
+                              ? 'text-lime-400 border-lime-400'
+                              : 'border-transparent'
+                          )}
+                          style={{
+                            background: emojiPickerTab === 'emoji' ? 'var(--surface-primary)' : 'transparent',
+                            color: emojiPickerTab === 'emoji' ? undefined : 'var(--text-secondary)'
+                          }}
                         >
                           {language === 'zh' ? '表情' : 'Emoji'}
                         </button>
                         <button
                           onClick={() => setEmojiPickerTab('icons')}
-                          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                          className={cn(
+                            'flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 hover:bg-[var(--bg-hover)]',
                             emojiPickerTab === 'icons'
-                              ? 'bg-gray-900 text-lime-400 border-b-2 border-lime-400'
-                              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
-                          }`}
+                              ? 'text-lime-400 border-lime-400'
+                              : 'border-transparent'
+                          )}
+                          style={{
+                            background: emojiPickerTab === 'icons' ? 'var(--surface-primary)' : 'transparent',
+                            color: emojiPickerTab === 'icons' ? undefined : 'var(--text-secondary)'
+                          }}
                         >
                           {language === 'zh' ? '图标' : 'Icons'}
                         </button>
                         <button
                           onClick={() => setEmojiPickerTab('upload')}
-                          className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                          className={cn(
+                            'flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 hover:bg-[var(--bg-hover)]',
                             emojiPickerTab === 'upload'
-                              ? 'bg-gray-900 text-lime-400 border-b-2 border-lime-400'
-                              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
-                          }`}
+                              ? 'text-lime-400 border-lime-400'
+                              : 'border-transparent'
+                          )}
+                          style={{
+                            background: emojiPickerTab === 'upload' ? 'var(--surface-primary)' : 'transparent',
+                            color: emojiPickerTab === 'upload' ? undefined : 'var(--text-secondary)'
+                          }}
                         >
                           {language === 'zh' ? '上传' : 'Upload'}
                         </button>
                       </div>
 
                       {/* Tab Content */}
-                      <div className="bg-gray-900">
+                      <div className="bg-[var(--surface-primary)]">
                         {/* Emoji Tab */}
                         {emojiPickerTab === 'emoji' && (
                           <EmojiPicker
+                            key={isDarkMode ? 'emoji-dark' : 'emoji-light'}
                             onEmojiClick={handleEmojiClick}
-                            theme={Theme.DARK}
+                            theme={isDarkMode ? Theme.DARK : Theme.LIGHT}
                             width={380}
                             height={400}
                             searchPlaceHolder={language === 'zh' ? '搜索表情...' : 'Search emoji...'}
                             previewConfig={{ showPreview: false }}
+                            className={isDarkMode ? 'emoji-picker-dark' : 'emoji-picker-light'}
+                            style={emojiPickerThemeStyles as CSSProperties}
                           />
                         )}
 
@@ -651,10 +827,10 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                                   <button
                                     key={index}
                                     onClick={() => handleIconSelect(`fa:${id}`)}
-                                    className="w-12 h-12 flex items-center justify-center hover:bg-gray-800 rounded transition-colors border border-transparent hover:border-lime-400"
+                                    className="w-12 h-12 flex items-center justify-center rounded transition-colors border border-transparent hover:border-lime-400 hover:bg-[var(--bg-hover)]"
                                     title={name}
                                   >
-                                    <IconComponent className="text-xl text-gray-300" />
+                                    <IconComponent className="text-xl" style={{ color: 'var(--text-secondary)' }} />
                                   </button>
                                 ))}
                             </div>
@@ -671,19 +847,24 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                               onChange={handleImageUpload}
                               className="hidden"
                             />
-                            <div 
+                            <div
                               onClick={() => fileInputRef.current?.click()}
-                              className="border-2 border-dashed border-gray-600 rounded-lg p-8 w-full cursor-pointer hover:border-lime-400 hover:bg-gray-800/50 transition-all text-center"
+                              className="border-2 border-dashed rounded-lg p-8 w-full cursor-pointer transition-all text-center hover:border-lime-400 hover:bg-[var(--bg-hover)]"
+                              style={{
+                                borderColor: 'var(--surface-border)',
+                                color: 'var(--text-secondary)',
+                                background: 'var(--surface-secondary)'
+                              }}
                             >
-                              <div className="text-gray-400 mb-3">
+                              <div className="mb-3" style={{ color: 'var(--text-muted)' }}>
                                 <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                               </div>
-                              <p className="text-sm font-medium text-gray-300 mb-1">
+                              <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
                                 {language === 'zh' ? '上传图片' : 'Upload an image'}
                               </p>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                                 {language === 'zh' ? '或 Ctrl+V 粘贴图片或链接' : 'or Ctrl+V to paste an image or link'}
                               </p>
                             </div>
@@ -697,7 +878,8 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                               <Button
                                 onClick={() => setShowEmojiPicker(false)}
                                 variant="ghost"
-                                className="text-gray-400 hover:text-gray-200"
+                                className="hover:bg-[var(--bg-hover)]"
+                                style={{ color: 'var(--text-secondary)' }}
                               >
                                 {t.cancel}
                               </Button>
@@ -710,7 +892,7 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                     {t.categoryNameLabel}
                   </label>
                   <Input
@@ -731,14 +913,18 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                 <Button
                   onClick={handleSave}
                   disabled={!formName.trim()}
-                  className="flex-1 bg-lime-600 hover:bg-lime-700 text-white"
+                  className="flex-1 text-white shadow-md hover:shadow-lg border-0"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--primary-gradient-start), var(--accent-emerald))'
+                  }}
                 >
                   {t.save}
                 </Button>
                 <Button
                   onClick={handleCancelEdit}
                   variant="ghost"
-                  className="flex-1 text-gray-400 hover:text-gray-200"
+                  className="flex-1 hover:bg-[var(--bg-hover)]"
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   {t.cancel}
                 </Button>

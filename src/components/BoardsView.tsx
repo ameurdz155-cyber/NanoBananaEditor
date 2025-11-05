@@ -65,6 +65,21 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     isFavoriteImage,
   } = useAppStore();
 
+  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+    const savedTheme = localStorage.getItem('app-theme');
+    return savedTheme !== 'light';
+  });
+
+  React.useEffect(() => {
+    const handleThemeChange = () => {
+      const savedTheme = localStorage.getItem('app-theme');
+      setIsDarkMode(savedTheme !== 'light');
+    };
+
+    window.addEventListener('themeChange', handleThemeChange);
+    return () => window.removeEventListener('themeChange', handleThemeChange);
+  }, []);
+
   const t = getTranslation(language);
 
   // Context menu state for right-click on boards
@@ -175,6 +190,11 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       <span className="flex-1">{label}</span>
       {trailing}
     </button>
+  );
+
+  const imageOverlayClasses = cn(
+    'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none',
+    isDarkMode ? 'bg-black/60' : 'bg-white/60'
   );
 
   const handleSetCanvasImage = () => {
@@ -1009,7 +1029,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                         alt="Board item"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className={imageOverlayClasses} />
                     </button>
                     <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button

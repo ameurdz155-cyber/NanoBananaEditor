@@ -149,6 +149,53 @@ body::before {
 :root.light .border-gray-600\/40 { border-color: rgba(228, 232, 239, 0.4) !important; }
 :root.light .border-gray-600\/30 { border-color: rgba(228, 232, 239, 0.3) !important; }
 
+:root.light .emoji-picker-light,
+:root.light .emoji-picker-light .EmojiPickerReact {
+  background: rgba(255, 255, 255, 0.98) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--surface-border) !important;
+}
+
+:root.light .emoji-picker-light .EmojiPickerReact .epr-header,
+:root.light .emoji-picker-light .EmojiPickerReact .epr-body,
+:root.light .emoji-picker-light .EmojiPickerReact .epr-search-container,
+:root.light .emoji-picker-light .EmojiPickerReact .epr-main {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+:root.light .emoji-picker-light .EmojiPickerReact .epr-search-container input {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: var(--surface-border) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+
+:root.light .emoji-picker-light .EmojiPickerReact .epr-category-nav {
+  background: transparent !important;
+}
+
+:root.light .emoji-picker-light .EmojiPickerReact .epr-category-nav button {
+  color: var(--text-secondary) !important;
+  opacity: 0.7;
+}
+
+:root.light .emoji-picker-light .EmojiPickerReact .epr-category-nav button.epr-active,
+:root.light .emoji-picker-light .EmojiPickerReact .epr-category-nav button:hover {
+  background: rgba(124, 58, 237, 0.12) !important;
+  color: var(--primary-gradient-end) !important;
+  opacity: 1;
+}
+
+:root.light .emoji-picker-light .EmojiPickerReact .epr-emoji-category-label {
+  color: var(--text-secondary) !important;
+}
+
+:root.light .emoji-picker-light .EmojiPickerReact .epr-emoji:hover,
+:root.light .emoji-picker-light .EmojiPickerReact .epr-emoji:focus {
+  background: rgba(124, 58, 237, 0.12) !important;
+}
+
 :root.light .text-gray-50 { color: #141c26 !important; }
 :root.light .text-gray-100 { color: #1f2933 !important; }
 :root.light .text-gray-200 { color: #1f2933 !important; }

@@ -962,13 +962,20 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     const categoryInfo = template.categoryId ? categoryLookup.get(template.categoryId) : undefined;
     const isGridView = viewMode === 'grid';
 
+    const isSelected = selectedTemplate === template.id;
+
     const cardClasses = cn(
-      'group relative w-full cursor-pointer overflow-hidden rounded-xl border bg-gradient-to-br from-slate-950/90 via-slate-900/70 to-slate-950/90 backdrop-blur transition-all duration-300',
-      selectedTemplate === template.id
-        ? 'border-purple-500/70 shadow-[0_15px_35px_-18px_rgba(168,85,247,0.85)]'
-        : 'border-slate-800/80 hover:border-purple-500/40 hover:shadow-[0_18px_36px_-20px_rgba(168,85,247,0.7)] hover:-translate-y-0.5',
+      'group relative w-full cursor-pointer overflow-hidden rounded-xl border transition-all duration-300 backdrop-blur hover:border-purple-500/40',
+      isSelected
+        ? 'shadow-[0_15px_35px_-18px_rgba(168,85,247,0.45)]'
+        : 'hover:shadow-[0_18px_36px_-20px_rgba(168,85,247,0.35)] hover:-translate-y-0.5',
       isGridView && 'h-full'
     );
+
+    const cardStyle: React.CSSProperties = {
+      background: 'var(--surface-secondary)',
+      borderColor: isSelected ? 'rgba(168, 85, 247, 0.4)' : 'var(--surface-border)'
+    };
 
     const contentClasses = cn(
       'cursor-pointer',
@@ -976,9 +983,13 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     );
 
     const thumbnailClasses = cn(
-      'relative overflow-hidden rounded-lg border border-gray-800/80 bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center',
+      'relative overflow-hidden rounded-lg border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center',
       isGridView ? 'w-full h-32' : 'h-14 w-14 flex-shrink-0'
     );
+    
+    const thumbnailStyle = {
+      borderColor: 'var(--surface-border)'
+    };
 
     const templateIconNode = !template.image
       ? renderIconValue(
@@ -1003,7 +1014,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       : 'flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100';
 
     return (
-      <div key={template.id} className={cardClasses}>
+  <div key={template.id} className={cardClasses} style={cardStyle}>
         <div
           className={contentClasses}
           onClick={() => {
@@ -1017,7 +1028,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             }
           }}
         >
-          <div className={thumbnailClasses}>
+          <div className={thumbnailClasses} style={thumbnailStyle}>
             {template.image ? (
               <img
                 src={template.image}
@@ -1038,7 +1049,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
           <div className={cn('flex-1 min-w-0', isGridView ? 'flex flex-col gap-2' : 'space-y-1')}>
             <div className={cn('flex items-center gap-2', isGridView && 'flex-wrap')}>
-              <h4 className="text-sm font-semibold text-gray-100">{template.name}</h4>
+              <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{template.name}</h4>
               {selectedTemplate === template.id && (
                 <span className="rounded-full border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-purple-200">
                   {language === 'zh' ? '已应用' : 'Active'}
@@ -1049,27 +1060,31 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             {template.description && (
               <p
                 className={cn(
-                  'text-xs text-gray-400',
+                  'text-xs',
                   isGridView ? 'line-clamp-3' : 'line-clamp-2'
                 )}
+                style={{ color: 'var(--text-secondary)' }}
               >
                 {template.description}
               </p>
             )}
 
             {categoryInfo ? (
-              <div className="flex items-center gap-1 text-[11px] text-gray-500">
+              <div className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
                 {categoryIconNode}
                 <span>{categoryInfo.name}</span>
               </div>
             ) : !template.categoryId ? (
-              <div className="text-[11px] text-gray-600">{t.uncategorized}</div>
+              <div className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{t.uncategorized}</div>
             ) : null}
           </div>
 
           {selectedTemplate === template.id ? (
             <div className={activeActionsClasses}>
-              <div className="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-gray-500">
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-transparent"
+                style={{ color: 'var(--text-tertiary)' }}
+              >
                 <ChevronDown className="h-4 w-4" />
               </div>
             </div>
@@ -1078,7 +1093,8 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-gray-400 hover:text-gray-100 hover:bg-gray-800/80"
+                className="h-8 w-8 hover:bg-[var(--bg-hover)]"
+                style={{ color: 'var(--text-secondary)' }}
                 onClick={(e) => {
                   e.stopPropagation();
                   openDuplicateModal(template);
@@ -1092,7 +1108,8 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-gray-400 hover:text-gray-100 hover:bg-gray-800/80"
+                    className="h-8 w-8 hover:bg-[var(--bg-hover)]"
+                    style={{ color: 'var(--text-secondary)' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditModal(template);

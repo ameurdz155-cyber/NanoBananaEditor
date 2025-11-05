@@ -566,17 +566,20 @@ export const ImageCanvas: React.FC = () => {
       >
         {!image && !isGenerating && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center max-w-md px-6">
+            <div className="text-center max-w-md px-6" style={{ color: 'var(--text-secondary)' }}>
               <div className="relative inline-block mb-6">
-                <div className="absolute inset-0 gradient-glow opacity-40 blur-3xl rounded-full"></div>
-                <div className="relative w-24 h-24 gradient-primary rounded-3xl flex items-center justify-center shadow-2xl mx-auto transform hover:scale-105 transition-transform">
-                  <Sparkles className="h-14 w-14 text-white" />
+                <div className="absolute inset-0 gradient-glow opacity-40 blur-3xl rounded-full" aria-hidden="true" />
+                <div
+                  className="relative w-24 h-24 gradient-primary rounded-3xl flex items-center justify-center shadow-2xl mx-auto transform hover:scale-105 transition-transform"
+                  style={{ boxShadow: '0 20px 45px rgba(124, 58, 237, 0.25)' }}
+                >
+                  <Sparkles className="h-14 w-14" style={{ color: 'var(--text-primary)' }} />
                 </div>
               </div>
-              <h2 className="text-3xl font-bold text-gradient mb-3">
+              <h2 className="text-3xl font-bold text-gradient mb-3" style={{ color: 'var(--text-primary)' }}>
                 {t.createWithAI}
               </h2>
-              <p className="text-base leading-relaxed mb-6" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-base leading-relaxed mb-6">
                 {selectedTool === 'generate' 
                   ? t.enterPromptToGenerate
                   : t.uploadToStartEditing
@@ -585,8 +588,9 @@ export const ImageCanvas: React.FC = () => {
               <div 
                 className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg border"
                 style={{
-                  background: 'rgba(168, 85, 247, 0.08)',
-                  borderColor: 'rgba(168, 85, 247, 0.2)'
+                  background: 'rgba(168, 85, 247, 0.12)',
+                  borderColor: 'rgba(168, 85, 247, 0.28)',
+                  boxShadow: '0 10px 25px rgba(168, 85, 247, 0.12)'
                 }}
               >
                 <div className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 animate-pulse"></div>

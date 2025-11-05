@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Workflow } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { cn } from '../utils/cn';
 import { getTranslation, type Translations } from '../i18n/translations';
@@ -29,6 +29,12 @@ const navItems: Array<{
 ];
 
 export const SideNavigation: React.FC = () => {
+  // Temporary flag to hide the navigation bar entirely
+  const showNavigation = false;
+  if (!showNavigation) {
+    return null;
+  }
+
   const activePrimarySection = useAppStore((state) => state.activePrimarySection);
   const setActivePrimarySection = useAppStore((state) => state.setActivePrimarySection);
   const setSelectedTool = useAppStore((state) => state.setSelectedTool);

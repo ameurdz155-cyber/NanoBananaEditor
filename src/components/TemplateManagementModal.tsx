@@ -226,21 +226,22 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
               <div className="p-2 bg-cyan-600/20 rounded-lg">
                 <FileText className="h-5 w-5 text-cyan-400" />
               </div>
-                      <div
-                        key={tpl.id}
-                        className="p-4 rounded-lg border transition-all hover:bg-[var(--bg-hover)]"
-                        style={{
-                          background: 'var(--surface-secondary)',
-                          borderColor: 'var(--surface-border)'
-                        }}
-                      >
-                <p className="text-xs text-gray-400 mt-0.5">
+              <div>
+                <Dialog.Title className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                  {t.menuTemplateManagement}
+                </Dialog.Title>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                   {t.clickToManageTemplates}
                 </p>
               </div>
             </div>
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-200 hover:bg-gray-800">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:bg-[var(--bg-hover)]"
+                style={{ color: 'var(--text-secondary)' }}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </Dialog.Close>
@@ -439,11 +440,11 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {filteredTemplates.length === 0 ? (
                 <div className="text-center py-12">
-                  <FileText className="h-12 w-12 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-400 mb-2">
+                  <FileText className="h-12 w-12 mx-auto mb-3" style={{ color: 'var(--text-tertiary)' }} />
+                  <p className="mb-2" style={{ color: 'var(--text-secondary)' }}>
                     {searchQuery ? t.noPromptsFound : 'No templates yet'}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
                     {searchQuery ? t.tryDifferentSearch : 'Create your first template to get started'}
                   </p>
                 </div>
@@ -462,11 +463,11 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                         <div className="flex items-start space-x-3 flex-1">
                           <span className="text-2xl">{template.emoji || '✨'}</span>
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-gray-200 font-medium">{template.name}</h4>
+                            <h4 className="font-medium" style={{ color: 'var(--text-primary)' }}>{template.name}</h4>
                             {template.description && (
-                              <p className="text-sm text-gray-400 mt-1">{template.description}</p>
+                              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{template.description}</p>
                             )}
-                            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                            <div className="flex items-center gap-3 mt-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
                               <span>{getCategoryName(template.categoryId)}</span>
                               <span>•</span>
                               <span>Updated {template.updatedAt ? new Date(template.updatedAt).toLocaleDateString() : new Date(template.createdAt).toLocaleDateString()}</span>
@@ -478,7 +479,8 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                             onClick={() => setExpandedId(expandedId === template.id ? null : template.id)}
                             size="sm"
                             variant="ghost"
-                            className="text-gray-400 hover:text-gray-200"
+                            className="hover:bg-[var(--bg-hover)]"
+                            style={{ color: 'var(--text-secondary)' }}
                             title={expandedId === template.id ? t.hidePreview : t.showPreview}
                           >
                             {expandedId === template.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -514,15 +516,30 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                       </div>
                       
                       {expandedId === template.id && (
-                        <div className="mt-3 pt-3 border-t border-gray-700/50 space-y-2">
+                        <div
+                          className="mt-3 pt-3 border-t space-y-2"
+                          style={{ borderColor: 'var(--surface-border-light)' }}
+                        >
                           <div>
                             <p className="text-xs font-medium text-green-400 mb-1">{t.positive}</p>
-                            <p className="text-sm text-gray-300 bg-gray-900/50 p-2 rounded">{template.positivePrompt}</p>
+                            <p
+                              className="text-sm p-2 rounded"
+                              style={{
+                                color: 'var(--text-secondary)',
+                                background: 'var(--surface-primary)'
+                              }}
+                            >{template.positivePrompt}</p>
                           </div>
                           {template.negativePrompt && (
                             <div>
                               <p className="text-xs font-medium text-red-400 mb-1">{t.negative}</p>
-                              <p className="text-sm text-gray-300 bg-gray-900/50 p-2 rounded">{template.negativePrompt}</p>
+                              <p
+                                className="text-sm p-2 rounded"
+                                style={{
+                                  color: 'var(--text-secondary)',
+                                  background: 'var(--surface-primary)'
+                                }}
+                              >{template.negativePrompt}</p>
                             </div>
                           )}
                         </div>
@@ -542,13 +559,14 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
               }}
             >
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-400">
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                   {filteredTemplates.length} {t.templates.toLowerCase()}
                 </p>
                 <Button
                   onClick={() => onOpenChange(false)}
                   variant="ghost"
-                  className="text-gray-300 hover:text-gray-100"
+                  className="hover:bg-[var(--bg-hover)]"
+                  style={{ color: 'var(--text-primary)' }}
                 >
                   {t.ok}
                 </Button>
