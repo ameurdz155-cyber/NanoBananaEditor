@@ -3,8 +3,9 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
-import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search } from 'lucide-react';
+import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, Lock } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { getTranslation } from '../i18n/translations';
 import { cn } from '../utils/cn';
 import { getDefaultTemplates } from './TemplatesView';
@@ -18,6 +19,7 @@ interface TemplateManagementModalProps {
 export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = ({ open, onOpenChange }) => {
   const language = useAppStore((state) => state.language);
   const t = getTranslation(language);
+  const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
   
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string; emoji: string }>>([]);
@@ -65,6 +67,13 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       }
     }
   }, [open, language]);
+
+  useEffect(() => {
+    if (!isPremiumUser) {
+      setShowAddForm(false);
+      setEditingId(null);
+    }
+  }, [isPremiumUser]);
 
   // Save templates
   const saveTemplates = (temps: PromptTemplate[]) => {
@@ -219,6 +228,8 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
             borderColor: 'var(--modal-surface-border)'
           }}
         >
+          {isPremiumUser ? (
+            <>
           
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-[color:var(--surface-border-light)] bg-[var(--surface-secondary)]">
@@ -573,6 +584,28 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
               </div>
             </div>
           </div>
+          </>
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-4 px-8 text-center">
+              <div className="rounded-full bg-purple-500/15 p-4 text-purple-200">
+                <Lock className="h-8 w-8" />
+              </div>
+              <Dialog.Title className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {t.premiumFeatureTitle}
+              </Dialog.Title>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {t.premiumFeatureDescription}
+              </p>
+              <Button className="btn-premium text-white" type="button">
+                {t.upgradeToUnlock}
+              </Button>
+              <Dialog.Close asChild>
+                <Button variant="ghost" className="mt-2" type="button">
+                  {t.ok}
+                </Button>
+              </Dialog.Close>
+            </div>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

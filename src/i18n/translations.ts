@@ -397,6 +397,9 @@ export interface Translations {
   genLabel: string;
   unlimitedUploads: string;
   addAsReference: string;
+  premiumFeatureTitle: string;
+  premiumFeatureDescription: string;
+  upgradeToUnlock: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -796,6 +799,9 @@ export const translations: Record<Language, Translations> = {
     genLabel: 'Gen',
     unlimitedUploads: 'Click on any image to add to references • Unlimited uploads',
     addAsReference: 'Add as reference',
+    premiumFeatureTitle: 'Premium Feature',
+    premiumFeatureDescription: 'Custom prompt templates are available with AI POD Premium.',
+    upgradeToUnlock: 'Upgrade to unlock',
   },
   zh: {
     // Header
@@ -1193,6 +1199,9 @@ export const translations: Record<Language, Translations> = {
     genLabel: '生成',
   unlimitedUploads: '点击任意图片添加到参考 • 上传数量不限',
     addAsReference: '添加为参考',
+    premiumFeatureTitle: '高级功能',
+    premiumFeatureDescription: '自定义提示模板仅对高级会员开放。',
+    upgradeToUnlock: '升级以解锁',
   },
 };
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
@@ -13,9 +14,7 @@ import {
   Edit2,
   X,
   UploadCloud,
-  Tag,
-  LayoutGrid,
-  List
+  Tag
 } from 'lucide-react';
 import { IconType } from 'react-icons';
 import {
@@ -576,10 +575,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const [iconPickerTab, setIconPickerTab] = React.useState<'emoji' | 'fontawesome' | 'url' | 'upload'>('emoji');
   const [iconSearch, setIconSearch] = React.useState('');
   const defaultCategoryId = React.useMemo(() => DEFAULT_CATEGORY_CONFIG[0]?.id ?? '', []);
-  const [viewMode, setViewMode] = React.useState<'list' | 'grid'>('list');
   const [showCategoryModal, setShowCategoryModal] = React.useState(false);
   const [categoryManagerMode, setCategoryManagerMode] = React.useState<'create' | 'edit' | 'view'>('create');
   const [editingCategoryId, setEditingCategoryId] = React.useState<string | null>(null);
+  const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
 
   const resolvedCategories = React.useMemo<DisplayCategory[]>(() => {
     const map = new Map<string, DisplayCategory>();
@@ -701,7 +700,19 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     }
   }, [iconPickerTab]);
 
+  React.useEffect(() => {
+    if (!isPremiumUser) {
+      setShowCreateModal(false);
+      setShowCategoryModal(false);
+      setEditingTemplate(null);
+      setEditingCategoryId(null);
+    }
+  }, [isPremiumUser]);
+
   const openCategoryModal = React.useCallback((categoryId?: string) => {
+    if (!isPremiumUser) {
+      return;
+    }
     if (categoryId) {
       const resolved = resolvedCategories.find((category) => category.id === categoryId);
       if (resolved) {
@@ -726,7 +737,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     }
 
     setShowCategoryModal(true);
-  }, [resetCategoryForm, resolvedCategories]);
+  }, [isPremiumUser, resetCategoryForm, resolvedCategories]);
 
   const handleSaveCategory = () => {
     const name = categoryForm.name.trim();
@@ -819,6 +830,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const openCreateModal = () => {
+    if (!isPremiumUser) {
+      return;
+    }
     const initialCategory = activeCategory === 'all'
       ? defaultCategoryId
       : activeCategory === 'uncategorized'
@@ -954,16 +968,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
   const renderTemplateCard = (template: PromptTemplate, isCustom: boolean) => {
     const categoryInfo = template.categoryId ? categoryLookup.get(template.categoryId) : undefined;
-    const isGridView = viewMode === 'grid';
 
     const isSelected = selectedTemplate === template.id;
 
     const cardClasses = cn(
-      'group relative w-full cursor-pointer overflow-hidden rounded-xl border transition-all duration-300 backdrop-blur hover:border-purple-500/40',
+      'group relative w-full cursor-pointer overflow-hidden rounded-xl border transition-all duration-300 backdrop-blur hover:border-purple-500/40 h-full',
       isSelected
         ? 'shadow-[0_15px_35px_-18px_rgba(168,85,247,0.45)]'
-        : 'hover:shadow-[0_18px_36px_-20px_rgba(168,85,247,0.35)] hover:-translate-y-0.5',
-      isGridView && 'h-full'
+        : 'hover:shadow-[0_18px_36px_-20px_rgba(168,85,247,0.35)] hover:-translate-y-0.5'
     );
 
     const cardStyle: React.CSSProperties = {
@@ -971,16 +983,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       borderColor: isSelected ? 'rgba(168, 85, 247, 0.4)' : 'var(--surface-border)'
     };
 
-    const contentClasses = cn(
-      'cursor-pointer',
-      isGridView ? 'flex h-full flex-col gap-4 p-4' : 'flex items-center gap-4 p-4'
-    );
+    const contentClasses = 'cursor-pointer flex h-full flex-col gap-4 p-4';
 
-    const thumbnailClasses = cn(
-      'relative overflow-hidden rounded-lg border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center',
-      isGridView ? 'w-full h-32' : 'h-14 w-14 flex-shrink-0'
-    );
-    
+    const thumbnailClasses = 'relative overflow-hidden rounded-lg border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-full h-32';
+
     const thumbnailStyle = {
       borderColor: 'var(--surface-border)'
     };
@@ -988,9 +994,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     const templateIconNode = !template.image
       ? renderIconValue(
           template.emoji,
-          isGridView
-            ? 'w-12 h-12 text-3xl text-purple-200 leading-none flex items-center justify-center'
-            : 'text-2xl text-purple-200 leading-none'
+          'w-12 h-12 text-3xl text-purple-200 leading-none flex items-center justify-center'
         )
       : null;
 
@@ -999,13 +1003,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       'w-4 h-4 text-xs text-purple-200 flex items-center justify-center'
     );
 
-    const activeActionsClasses = isGridView
-      ? 'flex w-full items-center justify-end gap-2 pt-2'
-      : 'flex items-center gap-2 flex-shrink-0 self-end sm:self-auto';
+    const activeActionsClasses = 'flex w-full items-center justify-end gap-2 pt-2';
 
-    const hoverActionsClasses = isGridView
-      ? 'flex w-full items-center justify-end gap-2 pt-2 opacity-0 transition-opacity group-hover:opacity-100'
-      : 'flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100';
+    const hoverActionsClasses = 'flex w-full items-center justify-end gap-2 pt-2 opacity-0 transition-opacity group-hover:opacity-100';
 
     return (
   <div key={template.id} className={cardClasses} style={cardStyle}>
@@ -1041,8 +1041,8 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             )}
           </div>
 
-          <div className={cn('flex-1 min-w-0', isGridView ? 'flex flex-col gap-2' : 'space-y-1')}>
-            <div className={cn('flex items-center gap-2', isGridView && 'flex-wrap')}>
+          <div className="flex-1 min-w-0 flex flex-col gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{template.name}</h4>
               {selectedTemplate === template.id && (
                 <span className="rounded-full border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-purple-200">
@@ -1053,10 +1053,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
             {template.description && (
               <p
-                className={cn(
-                  'text-xs',
-                  isGridView ? 'line-clamp-3' : 'line-clamp-2'
-                )}
+                className="text-xs line-clamp-3"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 {template.description}
@@ -1129,29 +1126,11 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             </div>
           )}
         </div>
-
-        {template.image && viewMode === 'list' && (
-          <div className="pointer-events-none absolute left-full top-0 z-50 ml-3 opacity-0 transition-opacity group-hover:opacity-100">
-            <div className="rounded-lg border border-gray-700 bg-gray-900 p-2 shadow-2xl">
-              <img
-                src={template.image}
-                alt={template.name}
-                className="h-48 w-48 rounded object-cover"
-                onError={(e) => {
-                  e.currentTarget.parentElement!.style.display = 'none';
-                }}
-              />
-              <p className="mt-2 text-center text-xs text-gray-400">{template.name}</p>
-            </div>
-          </div>
-        )}
       </div>
     );
   };
 
-  const templateListClasses = viewMode === 'grid'
-    ? 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5'
-    : 'flex flex-col gap-3';
+  const templateListClasses = 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5';
 
   return (
     <div className="flex flex-col w-full h-full min-h-0">
@@ -1166,42 +1145,18 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             className="w-full sm:flex-1"
           />
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              type="button"
-              onClick={() => setViewMode('list')}
-              title={language === 'zh' ? '列表视图' : 'List view'}
-              className={cn(
-                "h-8 w-8 text-gray-400 hover:text-gray-200 hover:bg-gray-800",
-                viewMode === 'list' && "bg-purple-500/20 text-purple-200 border border-purple-500/30"
-              )}
-            >
-              <List className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              type="button"
-              onClick={() => setViewMode('grid')}
-              title={language === 'zh' ? '网格视图' : 'Grid view'}
-              className={cn(
-                "h-8 w-8 text-gray-400 hover:text-gray-200 hover:bg-gray-800",
-                viewMode === 'grid' && "bg-purple-500/20 text-purple-200 border border-purple-500/30"
-              )}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={openCreateModal}
-              title={t.createTemplate}
-              className="h-8 w-8"
-              type="button"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            {isPremiumUser && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={openCreateModal}
+                title={t.createTemplate}
+                className="h-8 w-8"
+                type="button"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -1210,16 +1165,18 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             <span className="text-xs uppercase tracking-wide text-gray-500">
               {t.templateCategories}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-xs text-gray-400 hover:text-gray-200"
-              onClick={() => openCategoryModal()}
-              type="button"
-            >
-              <Tag className="h-3 w-3" />
-              <span className="ml-1 hidden sm:inline">{t.manageCategories}</span>
-            </Button>
+            {isPremiumUser && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs text-gray-400 hover:text-gray-200"
+                onClick={() => openCategoryModal()}
+                type="button"
+              >
+                <Tag className="h-3 w-3" />
+                <span className="ml-1 hidden sm:inline">{t.manageCategories}</span>
+              </Button>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -1249,36 +1206,46 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       {/* Templates List */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-3">
         {/* My Templates Section */}
-        <div>
-          <button
-            onClick={() => toggleSection('my')}
-            className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-800/50 transition-colors group"
-          >
-            <div className="flex items-center gap-2">
-              {expandedSections.my ? (
-                <ChevronDown className="h-4 w-4 text-gray-400" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-gray-400" />
-              )}
-              <h3 className="text-sm font-semibold text-gray-300">My Templates</h3>
-            </div>
-            <span className="text-xs text-gray-500">{customTemplates.length}</span>
-          </button>
+        {isPremiumUser ? (
+          <div>
+            <button
+              onClick={() => toggleSection('my')}
+              className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-800/50 transition-colors group"
+            >
+              <div className="flex items-center gap-2">
+                {expandedSections.my ? (
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                )}
+                <h3 className="text-sm font-semibold text-gray-300">My Templates</h3>
+              </div>
+              <span className="text-xs text-gray-500">{customTemplates.length}</span>
+            </button>
 
-          {expandedSections.my && (
-            <div className="mt-2">
-              {filteredMyTemplates.length === 0 ? (
-                <div className="text-center py-6 text-sm text-gray-500">
-                  {searchQuery ? 'No matching templates' : 'No templates yet. Create one to get started.'}
-                </div>
-              ) : (
-                <div className={templateListClasses}>
-                  {filteredMyTemplates.map(template => renderTemplateCard(template, true))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            {expandedSections.my && (
+              <div className="mt-2">
+                {filteredMyTemplates.length === 0 ? (
+                  <div className="text-center py-6 text-sm text-gray-500">
+                    {searchQuery ? 'No matching templates' : 'No templates yet. Create one to get started.'}
+                  </div>
+                ) : (
+                  <div className={templateListClasses}>
+                    {filteredMyTemplates.map(template => renderTemplateCard(template, true))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-purple-500/40 bg-purple-500/10 p-6 text-center">
+            <p className="text-base font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>{t.premiumFeatureTitle}</p>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>{t.premiumFeatureDescription}</p>
+            <Button className="btn-premium text-white" type="button">
+              {t.upgradeToUnlock}
+            </Button>
+          </div>
+        )}
 
         {/* Default Templates Section */}
         <div>
@@ -1315,8 +1282,11 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
       {/* Category Management Modal */}
       <Dialog.Root
-        open={showCategoryModal}
+        open={isPremiumUser && showCategoryModal}
         onOpenChange={(open) => {
+          if (!isPremiumUser) {
+            return;
+          }
           setShowCategoryModal(open);
           if (!open) {
             resetCategoryForm();
@@ -1594,7 +1564,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       </Dialog.Root>
 
       {/* Create/Edit Template Modal */}
-      <Dialog.Root open={showCreateModal} onOpenChange={setShowCreateModal}>
+      <Dialog.Root
+        open={isPremiumUser && showCreateModal}
+        onOpenChange={(open) => {
+          if (isPremiumUser) {
+            setShowCreateModal(open);
+          }
+        }}
+      >
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/70 z-50" />
           <Dialog.Content 

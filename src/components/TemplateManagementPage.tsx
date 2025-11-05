@@ -3,8 +3,9 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
-import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, ArrowLeft, Upload } from 'lucide-react';
+import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, ArrowLeft, Upload, Lock } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { getTranslation } from '../i18n/translations';
 import { cn } from '../utils/cn';
 import { getDefaultTemplates } from './TemplatesView';
@@ -17,6 +18,7 @@ interface TemplateManagementPageProps {
 export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ onClose }) => {
   const language = useAppStore((state) => state.language);
   const t = getTranslation(language);
+  const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
   
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string; emoji: string }>>([]);
@@ -281,6 +283,35 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
     const category = categories.find(c => c.id === categoryId);
     return category ? `${getEmojiDisplay(category.emoji)} ${category.name}` : language === 'zh' ? '未分类' : 'Uncategorized';
   };
+
+  if (!isPremiumUser) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-black p-8 text-center">
+        <div className="rounded-full bg-purple-500/15 p-4 text-purple-200">
+          <Lock className="h-10 w-10" />
+        </div>
+        <h1 className="mt-6 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-cyan-300">
+          {t.premiumFeatureTitle}
+        </h1>
+        <p className="mt-3 max-w-md text-sm text-gray-400">
+          {t.premiumFeatureDescription}
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <Button className="btn-premium text-white" type="button">
+            {t.upgradeToUnlock}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            type="button"
+            className="text-gray-300 hover:text-white"
+          >
+            {language === 'zh' ? '返回' : 'Back'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn(
