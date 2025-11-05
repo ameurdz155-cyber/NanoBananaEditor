@@ -197,6 +197,51 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     isDarkMode ? 'bg-black/60' : 'bg-white/60'
   );
 
+  const cardActionButtonClasses = cn(
+    'h-6 w-6 rounded-md transition-colors flex items-center justify-center border backdrop-blur-sm',
+    isDarkMode
+      ? 'bg-black/60 border-white/10 text-gray-100 hover:bg-black/70'
+      : 'bg-white/90 border-purple-200/60 text-purple-500 hover:bg-purple-50 shadow-sm'
+  );
+
+  const cardActionDestructiveClasses = cn(
+    'h-6 w-6 rounded-md transition-colors flex items-center justify-center border backdrop-blur-sm',
+    isDarkMode
+      ? 'bg-black/60 border-red-500/40 text-white hover:bg-red-500/60'
+      : 'bg-white/90 border-red-200 text-red-500 hover:bg-red-100 shadow-sm'
+  );
+
+  const moveToBoardOverlayClasses = cn(
+    'absolute inset-0 backdrop-blur-sm flex items-center justify-center p-2 z-10 transition-colors',
+    isDarkMode ? 'bg-black/90' : 'bg-white/90'
+  );
+
+  const moveToBoardTitleClasses = cn(
+    'text-xs font-semibold',
+    isDarkMode ? 'text-gray-200' : 'text-gray-600'
+  );
+
+  const closeBoardMenuButtonClasses = cn(
+    'text-xs transition-colors',
+    isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+  );
+
+  const moveToBoardOptionClasses = (disabled: boolean) => cn(
+    'w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center justify-between',
+    disabled
+      ? isDarkMode
+        ? 'bg-white/5 text-gray-500 cursor-not-allowed'
+        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+      : isDarkMode
+        ? 'bg-white/5 text-gray-100 hover:bg-white/10'
+        : 'bg-white text-gray-700 border border-purple-100 hover:bg-purple-50 shadow-sm'
+  );
+
+  const moveOptionActiveLabel = language === 'zh' ? '移动' : 'Move';
+  const moveOptionAddedLabel = language === 'zh' ? '已添加' : 'Added';
+  const generationBadgeLabel = language === 'zh' ? '生成' : 'Generation';
+  const assetBadgeLabel = language === 'zh' ? '素材' : 'Asset';
+
   const handleSetCanvasImage = () => {
     if (!boardImageContextMenu.imageUrl) return;
     setCanvasImage(boardImageContextMenu.imageUrl);
@@ -1035,7 +1080,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 bg-black/50 hover:bg-black/70 text-gray-200"
+                        className={cardActionButtonClasses}
                         onClick={(event) => {
                           event.stopPropagation();
                           if (boards.length <= 1) return;
@@ -1048,7 +1093,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 bg-black/50 hover:bg-red-500/60 text-white"
+                        className={cardActionDestructiveClasses}
                         onClick={(event) => {
                           event.stopPropagation();
                           setActiveBoardImageMenu(null);
@@ -1063,7 +1108,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     </div>
 
                     {activeBoardImageMenu === item.imageId && (
-                      <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 z-10">
+                      <div className={moveToBoardOverlayClasses}>
                         <div
                           className="rounded-lg p-3 w-full max-h-40 overflow-y-auto border"
                           style={{
@@ -1072,13 +1117,13 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                           }}
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-semibold text-gray-300">{t.moveToBoardTitle}</span>
+                            <span className={moveToBoardTitleClasses}>{t.moveToBoardTitle}</span>
                             <button
                               onClick={(event) => {
                                 event.stopPropagation();
                                 setActiveBoardImageMenu(null);
                               }}
-                              className="text-gray-500 hover:text-gray-200"
+                              className={closeBoardMenuButtonClasses}
                             >
                               <span className="text-xs">×</span>
                             </button>
@@ -1095,22 +1140,25 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                                     setActiveBoardImageMenu(null);
                                   }}
                                   disabled={alreadyInTarget}
-                                  className={cn(
-                                    "w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center justify-between",
-                                    alreadyInTarget
-                                      ? "bg-purple-500/20 text-purple-300"
-                                      : "text-gray-300 hover:bg-gray-800"
-                                  )}
+                                  className={moveToBoardOptionClasses(alreadyInTarget)}
                                 >
                                   <span className="flex items-center space-x-1.5">
                                     {target.emoji ? (
-                                      <span>{target.emoji}</span>
+                                      <span className="text-base leading-none">{target.emoji}</span>
                                     ) : (
-                                      <Folder className="h-3 w-3 text-gray-500" />
+                                      <Folder className={cn('h-3 w-3', isDarkMode ? 'text-gray-400' : 'text-gray-500')} />
                                     )}
                                     <span className="truncate">{target.id === 'default' ? t.myCreations : target.name}</span>
                                   </span>
-                                  {alreadyInTarget && <span className="text-purple-400">✓</span>}
+                                  {alreadyInTarget ? (
+                                    <span className={cn('text-[10px] uppercase tracking-wide font-semibold', isDarkMode ? 'text-purple-300' : 'text-purple-500')}>
+                                      {moveOptionAddedLabel}
+                                    </span>
+                                  ) : (
+                                    <span className={cn('text-[10px] uppercase tracking-wide', isDarkMode ? 'text-gray-400' : 'text-gray-500')}>
+                                      {moveOptionActiveLabel}
+                                    </span>
+                                  )}
                                 </button>
                               );
                             })}
@@ -1121,17 +1169,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
 
                     {item.type === 'generation' && (
                       <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded bg-blue-600/80 text-white">
-                        Gen
-                      </div>
-                    )}
-                    {item.type === 'edit' && (
-                      <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded bg-purple-600/80 text-white">
-                        Edit
+                        {generationBadgeLabel}
                       </div>
                     )}
                     {item.type === 'asset' && (
                       <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded bg-amber-500/80 text-gray-900">
-                        Asset
+                        {assetBadgeLabel}
                       </div>
                     )}
                   </div>

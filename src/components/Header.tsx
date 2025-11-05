@@ -1,6 +1,28 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from './ui/Button';
-import { HelpCircle, Settings, ZoomIn, ZoomOut, RotateCcw, Save, Eye, EyeOff, Eraser, Menu, LogOut, BookOpen, Users, Package, Wallet, Sparkles, Loader2, FolderTree, FileText, Moon, Sun } from 'lucide-react';
+import {
+  HelpCircle,
+  Settings,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Save,
+  Eye,
+  EyeOff,
+  Eraser,
+  Menu,
+  LogOut,
+  BookOpen,
+  Users,
+  Package,
+  Wallet,
+  Sparkles,
+  Loader2,
+  FolderTree,
+  FileText,
+  Moon,
+  Sun
+} from 'lucide-react';
 import { InfoModal } from './InfoModal';
 import { SettingsModal } from './SettingsModal';
 import { SaveSuccessModal } from './SaveSuccessModal';
@@ -18,7 +40,7 @@ import { transformImageToDimensions } from '../utils/imageUtils';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const Header: React.FC = () => {
-  const { 
+  const {
     language,
     canvasImage,
     canvasZoom,
@@ -44,9 +66,10 @@ export const Header: React.FC = () => {
     activePrimarySection,
     isUpscaling,
     upscaleScale,
-    setUpscaleScale,
+    setUpscaleScale
   } = useAppStore();
   const t = getTranslation(language);
+
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
@@ -64,6 +87,7 @@ export const Header: React.FC = () => {
     const savedTheme = localStorage.getItem('app-theme');
     return savedTheme !== 'light';
   });
+  const defaultBoardName = language === 'zh' ? '画廊' : 'Gallery';
 
   const toggleTheme = () => {
     const newTheme = !isDarkMode;
@@ -71,45 +95,12 @@ export const Header: React.FC = () => {
     localStorage.setItem('app-theme', newTheme ? 'dark' : 'light');
     document.documentElement.classList.toggle('dark', newTheme);
     document.documentElement.classList.toggle('light', !newTheme);
-    // Dispatch event to notify other components
     window.dispatchEvent(new Event('themeChange'));
   };
 
-  const updateMenuPosition = () => {
-    if (!menuButtonRef.current) return;
-    const rect = menuButtonRef.current.getBoundingClientRect();
-    const width = 192; // 48 * 4 tailwind width in px
-    setMenuPosition({
-      top: rect.bottom + 8,
-      left: Math.max(16, rect.right - width),
-    });
-  };
-
-  useEffect(() => {
-    if (!showMenu) return;
-    updateMenuPosition();
-    const handleResize = () => updateMenuPosition();
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleResize, true);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleResize, true);
-    };
-  }, [showMenu]);
-  
-  // Listen for custom event to open settings
-  useEffect(() => {
-    const handleOpenSettings = () => {
-      setShowSettingsModal(true);
-    };
-    
-    window.addEventListener('openSettings', handleOpenSettings);
-    return () => window.removeEventListener('openSettings', handleOpenSettings);
-  }, []);
-
   const handleZoom = (delta: number) => {
-    const newZoom = Math.max(0.1, Math.min(3, canvasZoom + delta));
-    setCanvasZoom(newZoom);
+    const nextZoom = Math.min(3, Math.max(0.1, canvasZoom + delta));
+    setCanvasZoom(parseFloat(nextZoom.toFixed(2)));
   };
 
   const handleReset = () => {
@@ -118,70 +109,100 @@ export const Header: React.FC = () => {
   };
 
   const handleSave = useCallback(async () => {
-    if (!canvasImage) return;
-
-    const selectedBoard = boards.find(b => b.id === selectedBoardId);
-    const boardName = selectedBoard?.name || 'default';
-
-    if (!selectedBoardId) {
-      alert('Please select a gallery folder first!');
+    if (!canvasImage) {
+      window.dispatchEvent(new CustomEvent('saveStatus', { detail: { success: false, reason: 'no-image' } }));
       return;
     }
 
-    let imageForSave = canvasImage;
+    try {
+  const selectedBoard = boards.find((board) => board.id === selectedBoardId);
+  const boardName = selectedBoard?.name || defaultBoardName;
 
-    if (selectedTool === 'generate' && lastGenerationParameters) {
-      const { width, height } = lastGenerationParameters;
-      if (width > 0 && height > 0) {
-        try {
-          imageForSave = await transformImageToDimensions(canvasImage, width, height, 'cover');
-        } catch (error) {
-          console.error('Failed to normalize image dimensions before saving:', error);
-        }
+      let imageForSave = canvasImage;
+      const targetWidth = lastGenerationParameters?.width;
+      const targetHeight = lastGenerationParameters?.height;
+      if (targetWidth && targetHeight) {
+        imageForSave = await transformImageToDimensions(
+          canvasImage,
+          targetWidth,
+          targetHeight
+        );
       }
-    }
 
-    const result = await saveImageToGallery(imageForSave, boardName, undefined, savePath);
-
-    if (result.success && selectedBoardId) {
-      addImageToBoard(selectedBoardId, result.imageId);
-
-      const saved = await saveImageToGalleryDB(
-        result.imageId,
-        imageForSave,
-        selectedBoardId,
-        boardName,
-        result.path
-      );
-
-      if (saved) {
-        console.log(`✅ Image saved to "${boardName}" gallery!`);
-        setSavedGalleryName(boardName);
-        setSavedImagePath(result.path);
-        setSavedImageData(imageForSave);
-        setShowSaveSuccessModal(true);
-        window.dispatchEvent(new CustomEvent('galleryUpdated'));
-      } else {
-        console.warn('Image added to board but storage failed');
-        alert('⚠️ Image added to gallery but storage may have failed');
+      const result = await saveImageToGallery(imageForSave, boardName, undefined, savePath);
+      if (!result.success) {
+        throw new Error('save-failed');
       }
+
+      if (selectedBoardId) {
+        addImageToBoard(selectedBoardId, result.imageId);
+        await saveImageToGalleryDB(
+          result.imageId,
+          imageForSave,
+          selectedBoardId,
+          boardName,
+          result.path
+        );
+      }
+
+      setSavedGalleryName(boardName);
+      setSavedImagePath(result.path);
+      setSavedImageData(imageForSave);
+      setShowSaveSuccessModal(true);
+
+      window.dispatchEvent(new CustomEvent('galleryUpdated'));
+      window.dispatchEvent(new CustomEvent('saveStatus', { detail: { success: true } }));
+    } catch (error) {
+      console.error('Failed to save image', error);
+      window.dispatchEvent(new CustomEvent('saveStatus', { detail: { success: false } }));
+      alert(language === 'zh' ? '保存图像失败，请稍后再试。' : 'Failed to save image. Please try again.');
     }
   }, [
     addImageToBoard,
     boards,
     canvasImage,
     lastGenerationParameters,
-    saveImageToGallery,
-    saveImageToGalleryDB,
+    language,
     savePath,
     selectedBoardId,
-    selectedTool
+    defaultBoardName,
+    t
   ]);
 
+  const updateMenuPosition = useCallback(() => {
+    if (!menuButtonRef.current) return;
+    const rect = menuButtonRef.current.getBoundingClientRect();
+    const width = 208; // ~w-52 in pixels
+    setMenuPosition({
+      top: rect.bottom + 8,
+      left: Math.max(16, rect.right - width)
+    });
+  }, []);
+
   useEffect(() => {
-    const handleExternalSave = () => {
-      handleSave();
+    if (!showMenu) {
+      return;
+    }
+
+    updateMenuPosition();
+    const handleResize = () => updateMenuPosition();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleResize, true);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleResize, true);
     };
+  }, [showMenu, updateMenuPosition]);
+
+  useEffect(() => {
+    const handleOpenSettings = () => setShowSettingsModal(true);
+    window.addEventListener('openSettings', handleOpenSettings);
+    return () => window.removeEventListener('openSettings', handleOpenSettings);
+  }, []);
+
+  useEffect(() => {
+    const handleExternalSave = () => handleSave();
     window.addEventListener('triggerSaveImage', handleExternalSave);
     return () => window.removeEventListener('triggerSaveImage', handleExternalSave);
   }, [handleSave]);
@@ -191,20 +212,26 @@ export const Header: React.FC = () => {
   const iterationsLabel = t.iterations || 'Iterations';
   const startUpscalingLabel = t.startUpscaling || 'Upscale';
   const stopUpscalingLabel = t.stopUpscaling || 'Stop Upscaling';
+
   const primaryButtonVariant = isUpscaleMode
-    ? (isUpscaling ? 'default' : 'ghost')
-    : (isGenerating || isValidating ? 'default' : 'ghost');
+    ? isUpscaling
+      ? 'default'
+      : 'ghost'
+    : isGenerating || isValidating
+      ? 'default'
+      : 'ghost';
+
   const primaryButtonClassName = cn(
-    'h-9 px-4 rounded-none border-0',
+    'h-9 px-4 rounded-none border-0 transition-colors',
     isUpscaleMode
       ? isUpscaling
-        ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-500 hover:to-emerald-500 cursor-pointer'
-        : 'hover:bg-gray-800/80'
+        ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-500 hover:to-emerald-500 text-white'
+        : 'hover:bg-gray-800/80 text-gray-100'
       : isGenerating
-        ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 cursor-pointer'
+        ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
         : isValidating
-          ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-600 hover:to-blue-600 cursor-pointer'
-          : 'hover:bg-gray-800/80'
+          ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-600 hover:to-blue-600 text-white'
+          : 'hover:bg-gray-800/80 text-gray-100'
   );
 
   const iterationControlWrapperClasses = cn(
@@ -224,21 +251,53 @@ export const Header: React.FC = () => {
   const tooltipClasses = cn(
     'absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 pointer-events-none peer-hover:opacity-100 transition-opacity duration-200 shadow-lg',
     isDarkMode
-      ? 'bg-gray-800 border border-purple-500/50 text-gray-200'
+      ? 'bg-gray-800 border border-purple-500/40 text-gray-200'
       : 'bg-white border border-purple-200/80 text-gray-600 backdrop-blur'
   );
 
   const tooltipArrowClasses = cn(
     'absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent',
-    isDarkMode ? 'border-t-purple-500/50' : 'border-t-purple-200/70'
+    isDarkMode ? 'border-t-purple-500/40' : 'border-t-purple-200/70'
   );
 
   const themeToggleClasses = cn(
     'p-2 rounded-lg border-2 transition-all duration-200',
     isDarkMode
-      ? 'border-purple-500/60 bg-gray-800/50 text-yellow-400 hover:bg-gray-700/50 hover:border-purple-400/80'
-      : 'border-purple-200/80 bg-white/80 text-purple-500 hover:bg-purple-50/80 hover:border-purple-300/80 backdrop-blur'
+      ? 'border-purple-500/60 bg-gray-800/60 text-yellow-300 hover:bg-gray-700/70 hover:border-purple-400'
+      : 'border-purple-200/80 bg-white/80 text-purple-500 hover:bg-purple-50/80 hover:border-purple-300 backdrop-blur'
   );
+
+  const menuContainerClasses = cn(
+    'fixed w-52 rounded-xl border shadow-2xl overflow-hidden backdrop-blur-md transition-colors',
+    isDarkMode
+      ? 'bg-gray-900/95 border-gray-700/80 text-gray-100'
+      : 'bg-white/95 border-purple-200/80 text-gray-700'
+  );
+
+  const menuItemBaseClasses = cn(
+    'w-full text-left px-4 py-3 text-sm flex items-center space-x-2 transition-colors',
+    isDarkMode
+      ? 'hover:bg-gray-800/80 text-gray-100'
+      : 'hover:bg-purple-50/90 text-gray-700'
+  );
+
+  const menuBorderColorClass = isDarkMode ? 'border-gray-800/70' : 'border-purple-100/80';
+  const menuSeparatorClass = isDarkMode ? 'bg-gray-800/70' : 'bg-purple-100/80';
+  const menuHeaderClasses = cn(
+    'px-4 py-3 border-b',
+    isDarkMode ? 'border-gray-800/70 bg-gray-900/70' : 'border-purple-100/80 bg-white/80'
+  );
+  const menuHeaderCaptionClasses = cn(
+    'text-[10px] uppercase tracking-[0.18em] font-semibold',
+    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+  );
+  const menuHeaderNameClasses = cn(
+    'text-sm font-semibold truncate',
+    isDarkMode ? 'text-gray-100' : 'text-gray-700'
+  );
+
+  const logoutLabel = language === 'zh' ? '退出登录' : 'Log out';
+  const signedInLabel = language === 'zh' ? '当前登录' : 'Signed in as';
 
   const handlePrimaryAction = useCallback(() => {
     if (isUpscaleMode) {
@@ -255,7 +314,10 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      <header className="h-16 glass flex items-center justify-between px-6 relative z-10 border-b" style={{ borderColor: 'var(--glass-border)' }}>
+      <header
+        className="h-16 glass flex items-center justify-between px-6 relative z-10 border-b"
+        style={{ borderColor: 'var(--glass-border)' }}
+      >
         {/* Left - Logo and Version */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
@@ -265,10 +327,13 @@ export const Header: React.FC = () => {
               className="h-10 object-contain transition-opacity duration-300"
             />
           </div>
-          <div className="px-3 py-1 text-xs font-semibold" style={{ color: 'var(--accent-cyan)', border: 'none', background: 'transparent' }}>
+          <div
+            className="px-3 py-1 text-xs font-semibold"
+            style={{ color: 'var(--accent-cyan)', border: 'none', background: 'transparent' }}
+          >
             {t.versionBadge}
           </div>
-          
+
           {/* Iterations Input + Generate Button (compact group) */}
           <div className={iterationControlWrapperClasses}>
             <div className="relative">
@@ -304,12 +369,11 @@ export const Header: React.FC = () => {
                   className={iterationInputClasses}
                 />
               )}
-              {/* Modern tooltip on hover */}
               <div className={tooltipClasses}>
                 <span className="font-semibold text-purple-400">{isUpscaleMode ? scaleLabel : iterationsLabel}</span>
                 <span className="text-gray-400 mx-1">·</span>
                 <span>{isUpscaleMode ? `${upscaleScale}x` : `${iterations} ${iterations === 1 ? 'image' : 'images'}`}</span>
-                <div className={tooltipArrowClasses}></div>
+                <div className={tooltipArrowClasses} />
               </div>
             </div>
             <Button
@@ -317,7 +381,7 @@ export const Header: React.FC = () => {
               size="sm"
               onClick={handlePrimaryAction}
               className={primaryButtonClassName}
-              aria-pressed={isUpscaleMode ? isUpscaling : (isGenerating || isValidating)}
+              aria-pressed={isUpscaleMode ? isUpscaling : isGenerating || isValidating}
             >
               {isUpscaleMode ? (
                 isUpscaling ? (
@@ -359,13 +423,10 @@ export const Header: React.FC = () => {
 
         {/* Center - Canvas Controls */}
         <div className="flex items-center space-x-2">
-          {/* Zoom controls */}
           <Button variant="outline" size="sm" onClick={() => handleZoom(-0.1)}>
             <ZoomOut className="h-4 w-4" />
           </Button>
-          <span className="text-sm text-gray-400 min-w-[60px] text-center">
-            {Math.round(canvasZoom * 100)}%
-          </span>
+          <span className="text-sm text-gray-400 min-w-[60px] text-center">{Math.round(canvasZoom * 100)}%</span>
           <Button variant="outline" size="sm" onClick={() => handleZoom(0.1)}>
             <ZoomIn className="h-4 w-4" />
           </Button>
@@ -373,9 +434,8 @@ export const Header: React.FC = () => {
             <RotateCcw className="h-4 w-4" />
           </Button>
 
-          <div className="w-px h-6 bg-gray-700 mx-2"></div>
+          <div className="w-px h-6" style={{ backgroundColor: 'var(--border-muted)' }} />
 
-          {/* Brush controls (when mask mode) */}
           {selectedTool === 'mask' && (
             <>
               <div className="flex items-center space-x-2 mr-2">
@@ -385,22 +445,17 @@ export const Header: React.FC = () => {
                   min="5"
                   max="50"
                   value={brushSize}
-                  onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                  onChange={(e) => setBrushSize(parseInt(e.target.value, 10))}
                   className="w-16 h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer slider"
                 />
-                <span className="text-xs text-gray-400 w-6">{brushSize}</span>
+                <span className="text-xs text-gray-400 w-6 text-right">{brushSize}</span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearBrushStrokes}
-                disabled={brushStrokes.length === 0}
-              >
+              <Button variant="outline" size="sm" onClick={clearBrushStrokes} disabled={brushStrokes.length === 0}>
                 <Eraser className="h-4 w-4" />
               </Button>
             </>
           )}
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -410,7 +465,7 @@ export const Header: React.FC = () => {
             {showMasks ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
             <span className="hidden sm:inline ml-2">{t.masks}</span>
           </Button>
-          
+
           {canvasImage && (
             <Button variant="secondary" size="sm" onClick={handleSave}>
               <Save className="h-4 w-4 mr-2" />
@@ -419,181 +474,183 @@ export const Header: React.FC = () => {
           )}
         </div>
 
-        {/* Right - Menu and Logout */}
+        {/* Right - Theme + Menu */}
         <div className="flex items-center space-x-2">
-          {user && (
-            <div className="hidden sm:flex flex-col text-right mr-2">
-              <span className="text-xs text-gray-400">Signed in as</span>
-              <span className="text-sm font-medium text-gray-200">{user.username}</span>
-            </div>
-          )}
-          
-          {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
             className={themeToggleClasses}
-            title={isDarkMode 
-              ? (language === 'zh' ? '切换到浅色模式' : 'Switch to Light Mode')
-              : (language === 'zh' ? '切换到深色模式' : 'Switch to Dark Mode')
+            title={
+              isDarkMode
+                ? language === 'zh'
+                  ? '切换到浅色模式'
+                  : 'Switch to Light Mode'
+                : language === 'zh'
+                  ? '切换到深色模式'
+                  : 'Switch to Dark Mode'
             }
           >
             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </button>
-          
-          {/* Menu Dropdown */}
-          <div>
-            <Button 
-              ref={menuButtonRef}
-              className="glass glass-hover" 
-              variant="ghost" 
-              size="icon"
-              onClick={() => {
-                if (!showMenu) {
-                  updateMenuPosition();
-                }
-                setShowMenu(prev => !prev);
-              }}
-              title="Menu"
-            >
-              <Menu className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
-            </Button>
-          </div>
 
-          {showMenu && createPortal(
-            <>
-              <div 
-                className="fixed inset-0" 
-                style={{ zIndex: 99998 }}
-                onClick={() => setShowMenu(false)}
-              />
-              <div 
-                className="fixed w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
-                style={{
-                  zIndex: 99999,
-                  top: menuPosition.top,
-                  left: menuPosition.left,
-                }}
-              >
-                <a
-                  href="/tutorials/?utm_source=AI_POD_Lite"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
-                  onClick={() => setShowMenu(false)}
-                >
-                  <BookOpen className="h-4 w-4" />
-                  <span>{t.menuTutorials}</span>
-                </a>
-                <button
-                  className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800 flex items-center space-x-2"
-                  onClick={() => {
-                    setShowMenu(false);
-                    setShowCategoryModal(true);
-                  }}
-                >
-                  <FolderTree className="h-4 w-4" />
-                  <span>{t.menuPromptCategories}</span>
-                </button>
-                <button
-                  className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800 flex items-center space-x-2"
-                  onClick={() => {
-                    setShowMenu(false);
-                    setShowTemplateModal(true);
-                  }}
-                >
-                  <FileText className="h-4 w-4" />
-                  <span>{t.menuTemplateManagement}</span>
-                </button>
-                <a
-                  href="/community/?utm_source=AI_POD_Lite"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
-                  onClick={() => setShowMenu(false)}
-                >
-                  <Users className="h-4 w-4" />
-                  <span>{t.menuCommunity}</span>
-                </a>
-                <a
-                  href="/assets/?utm_source=AI_POD_Lite"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
-                  onClick={() => setShowMenu(false)}
-                >
-                  <Package className="h-4 w-4" />
-                  <span>{t.menuAssets}</span>
-                </a>
-                <a
-                  href="/wallet/?utm_source=AI_POD_Lite"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800"
-                  onClick={() => setShowMenu(false)}
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>{t.menuWallet}</span>
-                </a>
-                <button
-                  className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors border-b border-gray-800 flex items-center space-x-2"
-                  onClick={() => {
-                    setShowMenu(false);
-                    setShowSettingsModal(true);
-                  }}
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>{t.settings}</span>
-                </button>
-                <button
-                  className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-800 transition-colors flex items-center space-x-2"
-                  onClick={() => {
-                    setShowMenu(false);
-                    setShowInfoModal(true);
-                  }}
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  <span>{t.about}</span>
-                </button>
-              </div>
-            </>,
-            document.body
-          )}
-          
           <Button
+            ref={menuButtonRef}
             className="glass glass-hover"
             variant="ghost"
             size="icon"
-            onClick={logout}
-            title="Log out"
+            onClick={() => {
+              if (!showMenu) {
+                updateMenuPosition();
+              }
+              setShowMenu((previous) => !previous);
+            }}
+            title="Menu"
           >
-            <LogOut className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+            <Menu className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
           </Button>
+
+          {showMenu &&
+            createPortal(
+              <>
+                <div
+                  className="fixed inset-0"
+                  style={{ zIndex: 9998 }}
+                  onClick={() => setShowMenu(false)}
+                />
+                <div
+                  className={menuContainerClasses}
+                  style={{ zIndex: 9999, top: menuPosition.top, left: menuPosition.left }}
+                >
+                  {user && (
+                    <div className={menuHeaderClasses}>
+                      <span className={menuHeaderCaptionClasses}>{signedInLabel}</span>
+                      <span className={menuHeaderNameClasses}>{user.username}</span>
+                    </div>
+                  )}
+
+                  <button
+                    className={cn(menuItemBaseClasses, 'border-b', menuBorderColorClass)}
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowCategoryModal(true);
+                    }}
+                  >
+                    <FolderTree className="h-4 w-4" />
+                    <span>{t.menuPromptCategories}</span>
+                  </button>
+
+                  <button
+                    className={cn(menuItemBaseClasses, 'border-b', menuBorderColorClass)}
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowTemplateModal(true);
+                    }}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>{t.menuTemplateManagement}</span>
+                  </button>
+
+                  <a
+                    href="/tutorials/?utm_source=AI_POD_Lite"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(menuItemBaseClasses, 'border-b', menuBorderColorClass)}
+                    onClick={() => setShowMenu(false)}
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span>{t.menuTutorials}</span>
+                  </a>
+
+                  <a
+                    href="/community/?utm_source=AI_POD_Lite"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(menuItemBaseClasses, 'border-b', menuBorderColorClass)}
+                    onClick={() => setShowMenu(false)}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>{t.menuCommunity}</span>
+                  </a>
+
+                  <a
+                    href="/assets/?utm_source=AI_POD_Lite"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(menuItemBaseClasses, 'border-b', menuBorderColorClass)}
+                    onClick={() => setShowMenu(false)}
+                  >
+                    <Package className="h-4 w-4" />
+                    <span>{t.menuAssets}</span>
+                  </a>
+
+                  <a
+                    href="/wallet/?utm_source=AI_POD_Lite"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(menuItemBaseClasses, 'border-b', menuBorderColorClass)}
+                    onClick={() => setShowMenu(false)}
+                  >
+                    <Wallet className="h-4 w-4" />
+                    <span>{t.menuWallet}</span>
+                  </a>
+
+                  <button
+                    className={cn(menuItemBaseClasses, 'border-b', menuBorderColorClass)}
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowSettingsModal(true);
+                    }}
+                  >
+                    <Settings className="h-4 w-4" />
+                    <span>{t.settings}</span>
+                  </button>
+
+                  <button
+                    className={menuItemBaseClasses}
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowInfoModal(true);
+                    }}
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                    <span>{t.about}</span>
+                  </button>
+
+                  <div className={cn('h-px w-full', menuSeparatorClass)} />
+
+                  <button
+                    className={cn(
+                      menuItemBaseClasses,
+                      'text-red-400 hover:text-red-300',
+                      isDarkMode ? 'hover:bg-red-500/10' : 'hover:bg-red-50'
+                    )}
+                    onClick={() => {
+                      setShowMenu(false);
+                      logout();
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>{logoutLabel}</span>
+                  </button>
+                </div>
+              </>,
+              document.body
+            )}
         </div>
       </header>
-      
+
       <InfoModal open={showInfoModal} onOpenChange={setShowInfoModal} />
       <SettingsModal open={showSettingsModal} onOpenChange={setShowSettingsModal} />
-      <SaveSuccessModal 
-        open={showSaveSuccessModal} 
+      <SaveSuccessModal
+        open={showSaveSuccessModal}
         onOpenChange={setShowSaveSuccessModal}
         galleryName={savedGalleryName}
         savedPath={savedImagePath}
         imageData={savedImageData}
       />
-      
-      {/* Category Management Modal */}
-      {showCategoryModal && (
-        <CategoryManagementPage 
-          onClose={() => setShowCategoryModal(false)}
-        />
-      )}
-      
-      {/* Template Management Modal */}
-      {showTemplateModal && (
-        <TemplateManagementPage 
-          onClose={() => setShowTemplateModal(false)}
-        />
-      )}
+
+      {showCategoryModal && <CategoryManagementPage onClose={() => setShowCategoryModal(false)} />}
+
+      {showTemplateModal && <TemplateManagementPage onClose={() => setShowTemplateModal(false)} />}
     </>
   );
 };

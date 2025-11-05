@@ -3,7 +3,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
-import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, ArrowLeft, Upload, Moon, Sun } from 'lucide-react';
+import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, ArrowLeft, Upload } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import { cn } from '../utils/cn';
@@ -25,7 +25,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
+  const [isDarkMode] = useState(() => {
     // Get theme from localStorage or default to dark
     const savedTheme = localStorage.getItem('template-page-theme');
     return savedTheme !== 'light';
@@ -43,13 +43,6 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
   });
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  // Toggle theme
-  const toggleTheme = () => {
-    const newTheme = !isDarkMode;
-    setIsDarkMode(newTheme);
-    localStorage.setItem('template-page-theme', newTheme ? 'dark' : 'light');
-  };
 
   // Load templates and categories
   useEffect(() => {
@@ -328,21 +321,6 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                onClick={toggleTheme}
-                className={cn(
-                  "p-2.5 rounded-lg border-2 transition-all duration-200",
-                  isDarkMode 
-                    ? "border-red-500 bg-gray-800/50 text-yellow-400 hover:bg-gray-700/50 hover:border-red-400" 
-                    : "border-orange-500 bg-white text-gray-700 hover:bg-gray-50 hover:border-orange-400"
-                )}
-                title={isDarkMode 
-                  ? (language === 'zh' ? '切换到浅色模式' : 'Switch to Light Mode')
-                  : (language === 'zh' ? '切换到深色模式' : 'Switch to Dark Mode')
-                }
-              >
-                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
               <Button
                 onClick={handleOpenCreate}
                 className="bg-cyan-600 hover:bg-cyan-700 text-white"
