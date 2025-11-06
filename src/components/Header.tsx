@@ -63,6 +63,10 @@ export function Header() {
   const setIterations = useAppStore((state) => state.setIterations);
   const isValidating = useAppStore((state) => state.isValidating);
   const generationProgress = useAppStore((state) => state.generationProgress);
+  const activePrimarySection = useAppStore((state) => state.activePrimarySection);
+  const isUpscaling = useAppStore((state) => state.isUpscaling);
+  const upscaleScale = useAppStore((state) => state.upscaleScale);
+  const setUpscaleScale = useAppStore((state) => state.setUpscaleScale);
 
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -107,8 +111,20 @@ export function Header() {
   const zoomPercent = Math.round(canvasZoom * 100);
   const defaultBoardName = language === "zh" ? "画廊" : "Gallery";
   const brushStrokesCount = brushStrokes.length;
+  const isUpscaleMode = activePrimarySection === 'upscaling';
+  const IdleIcon = isUpscaleMode ? Layers : Sparkles;
+  const idleIconColor = isUpscaleMode ? 'text-teal-300' : 'text-purple-400';
 
-  const handleGenerate = () => {
+  const handlePrimaryAction = () => {
+    if (isUpscaleMode) {
+      window.dispatchEvent(
+        new CustomEvent('triggerUpscaleAction', {
+          detail: { scale: upscaleScale, source: 'header', timestamp: Date.now() }
+        })
+      );
+      return;
+    }
+
     const parsedCount = Math.max(1, Number(iterations) || 1);
     if (iterations !== parsedCount) {
       setIterations(parsedCount);
@@ -132,7 +148,13 @@ export function Header() {
     );
   };
 
-  const handleIterationsChange = (value: string) => {
+  const handlePrimarySelectChange = (value: string) => {
+    if (isUpscaleMode) {
+      const parsedScale = Math.max(2, Math.min(8, Number(value) || upscaleScale || 4));
+      setUpscaleScale(parsedScale);
+      return;
+    }
+
     const parsedCount = Math.max(1, Number(value) || 1);
     setIterations(parsedCount);
   };
@@ -242,16 +264,20 @@ export function Header() {
     return () => window.removeEventListener('triggerSaveImage', handleExternalSave);
   }, [handleSave]);
 
-  const isBusy = isGenerating || isValidating;
-  const generateLabel = isValidating
-    ? t.validating ?? 'Validating'
-    : isGenerating
-      ? t.stopGeneration ?? 'Stop'
-      : t.generate ?? 'Generate';
+  const isBusy = isUpscaleMode ? isUpscaling : (isGenerating || isValidating);
+  const primaryActionLabel = isUpscaleMode
+    ? (isUpscaling ? t.stopUpscaling ?? 'Stop Upscaling' : t.startUpscaling ?? 'Upscale')
+    : isValidating
+      ? t.validating ?? 'Validating'
+      : isGenerating
+        ? t.stopGeneration ?? 'Stop'
+        : t.generate ?? 'Generate';
 
-  const generationHint = isGenerating && generationProgress.total > 1
-    ? `${generationProgress.current}/${generationProgress.total}`
-    : null;
+  const primaryHint = isUpscaleMode
+    ? `${Math.max(2, Math.min(8, upscaleScale || 4))}x`
+    : (isGenerating && generationProgress.total > 1
+      ? `${generationProgress.current}/${generationProgress.total}`
+      : null);
 
   return (
     <>
@@ -271,40 +297,51 @@ export function Header() {
         
         <div className="w-px h-5 bg-border" />
         
-        {/* Generate Button with Integrated Select */}
+        {/* Primary action (Generate/Upscale) with integrated selector */}
         <div className="flex items-center rounded-md overflow-hidden bg-background border border-border">
           <Button 
             variant="ghost"
-            onClick={handleGenerate}
+            onClick={handlePrimaryAction}
             className="flex items-center gap-2 hover:bg-accent px-3 h-8 rounded-none border-0"
             aria-pressed={isBusy}
             type="button"
           >
             {isBusy ? (
-              <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+              <Loader2 className={`w-4 h-4 animate-spin ${isUpscaleMode ? 'text-teal-300' : 'text-purple-400'}`} />
             ) : (
-              <Sparkles className="w-4 h-4 text-purple-400" />
+              <IdleIcon className={`w-4 h-4 ${idleIconColor}`} />
             )}
             <span className="text-sm font-medium">
-              {generateLabel}
-              {generationHint ? ` · ${generationHint}` : ''}
+              {primaryActionLabel}
+              {primaryHint ? ` · ${primaryHint}` : ''}
             </span>
           </Button>
           
-          <Select value={String(Math.max(1, iterations ?? 1))} onValueChange={handleIterationsChange} disabled={isBusy}>
+          <Select
+            value={isUpscaleMode ? String(Math.max(2, Math.min(8, upscaleScale ?? 4))) : String(Math.max(1, iterations ?? 1))}
+            onValueChange={handlePrimarySelectChange}
+            disabled={isBusy}
+          >
             <SelectTrigger
-              className="w-16 h-8 px-3 py-1 bg-muted text-foreground border-none focus:ring-0 rounded-none"
-              aria-label={language === 'zh' ? '生成次数' : 'Number of images to generate'}
+              className="w-20 h-8 px-3 py-1 bg-muted text-foreground border-none focus:ring-0 rounded-none"
+              aria-label={isUpscaleMode
+                ? (language === 'zh' ? '放大倍数' : 'Upscale multiplier')
+                : (language === 'zh' ? '生成次数' : 'Number of images to generate')}
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">1</SelectItem>
-              <SelectItem value="2">2</SelectItem>
-              <SelectItem value="3">3</SelectItem>
-              <SelectItem value="4">4</SelectItem>
-              <SelectItem value="5">5</SelectItem>
-              {/* Add more options as needed, up to 10000 isn't practical; consider dynamic if needed */}
+              {isUpscaleMode
+                ? [2, 3, 4, 5, 6, 7, 8].map((scaleOption) => (
+                    <SelectItem key={scaleOption} value={String(scaleOption)}>
+                      {`${scaleOption}x`}
+                    </SelectItem>
+                  ))
+                : [1, 2, 3, 4, 5].map((count) => (
+                    <SelectItem key={count} value={String(count)}>
+                      {count}
+                    </SelectItem>
+                  ))}
             </SelectContent>
           </Select>
         </div>
@@ -395,7 +432,7 @@ export function Header() {
         <Button
           variant="ghost"
           onClick={handleSave}
-          disabled={!canvasImage || isGenerating}
+          disabled={!canvasImage || isGenerating || isUpscaling}
           className="flex items-center gap-2 hover:bg-accent rounded-lg px-3 py-2 h-9 border border-purple-500/30 disabled:opacity-50"
           title={language === 'zh' ? '保存当前画布' : 'Save current canvas'}
         >
