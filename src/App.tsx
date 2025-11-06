@@ -30,42 +30,6 @@ function AppContent() {
   const language = useAppStore((state) => state.language);
   const activePrimarySection = useAppStore((state) => state.activePrimarySection);
   
-  // Theme state
-  const [isDarkMode, setIsDarkMode] = React.useState(() => {
-    const savedTheme = localStorage.getItem('app-theme');
-    return savedTheme !== 'light';
-  });
-
-  // Listen for theme changes from Header component
-  React.useEffect(() => {
-    const handleStorageChange = () => {
-      const savedTheme = localStorage.getItem('app-theme');
-      setIsDarkMode(savedTheme !== 'light');
-    };
-
-    // Listen to storage events (for changes from other tabs)
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Custom event for same-tab changes
-    window.addEventListener('themeChange', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('themeChange', handleStorageChange);
-    };
-  }, []);
-
-  // Apply theme to document element
-  React.useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-  
   // Update page title when language changes
   React.useEffect(() => {
     const t = getTranslation(language);
@@ -160,12 +124,7 @@ function AppContent() {
 
   return (
     <div 
-      className={cn(
-        "h-screen flex flex-col font-sans relative transition-colors duration-300",
-        isDarkMode 
-          ? "bg-gray-900 text-gray-100" 
-          : "bg-gray-50 text-gray-900"
-      )}
+      className="h-screen flex flex-col font-sans relative transition-colors duration-300 bg-background text-foreground"
     >
       <Header />
       
