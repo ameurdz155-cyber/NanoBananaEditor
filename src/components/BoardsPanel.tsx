@@ -465,7 +465,7 @@ export const BoardsPanel: React.FC = () => {
                                     {boards.filter(b => b.id !== selectedBoard).map(board => {
                                       const isInBoard = board.imageIds.includes(id);
                                       return (
-                                        setCanvasImage(imageUrl, 'board');
+                                        <button
                                           key={board.id}
                                           onClick={(e) => {
                                             e.stopPropagation();
