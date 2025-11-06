@@ -2,7 +2,9 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2023"],
-    "module": "ESNext",
+  "module": "ESNext",
+  "resolveJsonModule": true,
+  "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
 
     /* Bundler mode */

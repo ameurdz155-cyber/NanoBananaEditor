@@ -69,6 +69,7 @@ export const ImageCanvas: React.FC = () => {
   const [contextMenu, setContextMenu] = useState<{ open: boolean; x: number; y: number }>({ open: false, x: 0, y: 0 });
   const [showBoardPicker, setShowBoardPicker] = useState(false);
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
+  const imageGroupRef = useRef<any>(null);
 
   const generations = useMemo(() => currentProject?.generations ?? [], [currentProject]);
   const edits = useMemo(() => currentProject?.edits ?? [], [currentProject]);
@@ -400,6 +401,34 @@ export const ImageCanvas: React.FC = () => {
       selectedTool,
     ]);
 
+  const getRelativeImagePoint = useCallback(() => {
+    if (!image) return null;
+    const stage = stageRef.current?.getStage();
+    const group = imageGroupRef.current;
+    if (!stage || !group) return null;
+
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return null;
+
+    // Convert the pointer into the image group's local coordinate system
+    const transform = group.getAbsoluteTransform().copy();
+    transform.invert();
+    const localPoint = transform.point(pointer);
+
+    const relativeX = localPoint.x + image.width / 2;
+    const relativeY = localPoint.y + image.height / 2;
+
+    return { relativeX, relativeY };
+  }, [image]);
+
+  const isWithinImageBounds = useCallback(
+    (relativeX: number, relativeY: number) => {
+      if (!image) return false;
+      return relativeX >= 0 && relativeX <= image.width && relativeY >= 0 && relativeY <= image.height;
+    },
+    [image]
+  );
+
   useLayoutEffect(() => {
   if (typeof window === 'undefined' || !contextMenu.open || !menuPanelRef.current) return;
 
@@ -485,30 +514,18 @@ export const ImageCanvas: React.FC = () => {
     };
   }, [closeContextMenu]);
 
-  const handleMouseDown = (e: any) => {
-    // Disable drawing when generating
+  const handleMouseDown = () => {
     if (selectedTool !== 'mask' || !image || isGenerating) return;
-    
-    const stage = e.target.getStage();
-    const pointer = stage.getRelativePointerPosition();
-    if (!pointer) {
+
+    const point = getRelativeImagePoint();
+    if (!point) {
+      setIsDrawing(false);
       return;
     }
 
-    const centerX = (stageSize.width / canvasZoom) / 2;
-    const centerY = (stageSize.height / canvasZoom) / 2;
-    const dx = pointer.x - centerX;
-    const dy = pointer.y - centerY;
-    const angle = (-canvasRotation * Math.PI) / 180;
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    const rotatedX = dx * cos - dy * sin;
-    const rotatedY = dx * sin + dy * cos;
-    const relativeX = rotatedX + image.width / 2;
-    const relativeY = rotatedY + image.height / 2;
-    
-    // Check if click is within image bounds
-    if (relativeX >= 0 && relativeX <= image.width && relativeY >= 0 && relativeY <= image.height) {
+    const { relativeX, relativeY } = point;
+
+    if (isWithinImageBounds(relativeX, relativeY)) {
       setIsDrawing(true);
       setCurrentStroke([relativeX, relativeY]);
     } else {
@@ -516,46 +533,37 @@ export const ImageCanvas: React.FC = () => {
     }
   };
 
-  const handleMouseMove = (e: any) => {
-    // Disable drawing when generating
+  const handleMouseMove = () => {
     if (!isDrawing || selectedTool !== 'mask' || !image || isGenerating) return;
-    
-    const stage = e.target.getStage();
-    const pointer = stage.getRelativePointerPosition();
-    if (!pointer) {
+
+    const point = getRelativeImagePoint();
+    if (!point) {
       return;
     }
 
-    const centerX = (stageSize.width / canvasZoom) / 2;
-    const centerY = (stageSize.height / canvasZoom) / 2;
-    const dx = pointer.x - centerX;
-    const dy = pointer.y - centerY;
-    const angle = (-canvasRotation * Math.PI) / 180;
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    const rotatedX = dx * cos - dy * sin;
-    const rotatedY = dx * sin + dy * cos;
-    const relativeX = rotatedX + image.width / 2;
-    const relativeY = rotatedY + image.height / 2;
-    
-    // Check if within image bounds
-    if (relativeX >= 0 && relativeX <= image.width && relativeY >= 0 && relativeY <= image.height) {
-      setCurrentStroke([...currentStroke, relativeX, relativeY]);
+    const { relativeX, relativeY } = point;
+
+    if (isWithinImageBounds(relativeX, relativeY)) {
+      setCurrentStroke((prev) => [...prev, relativeX, relativeY]);
     }
   };
 
   const handleMouseUp = () => {
-    // Disable drawing when generating
-    if (!isDrawing || currentStroke.length < 4 || isGenerating) {
+    if (!isDrawing || isGenerating) {
       setIsDrawing(false);
       setCurrentStroke([]);
       return;
     }
-    
+
     setIsDrawing(false);
+    if (currentStroke.length < 4) {
+      setCurrentStroke([]);
+      return;
+    }
+
     addBrushStroke({
       id: `stroke-${Date.now()}`,
-      points: currentStroke,
+      points: [...currentStroke],
       brushSize,
       color: '#A855F7',
     });
@@ -691,6 +699,7 @@ export const ImageCanvas: React.FC = () => {
           <Layer>
             {image && (
               <Group
+                ref={imageGroupRef}
                 x={(stageSize.width / canvasZoom) / 2}
                 y={(stageSize.height / canvasZoom) / 2}
                 rotation={canvasRotation}

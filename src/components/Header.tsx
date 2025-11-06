@@ -59,7 +59,6 @@ import { transformImageToDimensions } from "@/utils/imageUtils";
 export function Header() {
   const { theme, setTheme } = useTheme();
   const [count, setCount] = useState("2");
-  const [showSearch, setShowSearch] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -89,6 +88,8 @@ export function Header() {
   const lastGenerationParameters = useAppStore((state) => state.lastGenerationParameters);
   const isGenerating = useAppStore((state) => state.isGenerating);
   const language = useAppStore((state) => state.language);
+  const showHistory = useAppStore((state) => state.showHistory);
+  const setShowHistory = useAppStore((state) => state.setShowHistory);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
 
@@ -106,8 +107,7 @@ export function Header() {
   };
 
   const handleSearch = () => {
-    setShowSearch(!showSearch);
-    console.log('Search toggled:', !showSearch);
+    setShowHistory(!showHistory);
   };
 
   const handleSave = useCallback(async () => {
@@ -261,14 +261,7 @@ export function Header() {
 
       {/* Middle section: Control Buttons */}
       <div className="flex flex-wrap items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handleSearch}
-          className="hover:bg-accent rounded-lg w-9 h-9 border border-purple-500/30"
-        >
-          <Search className="w-4 h-4" />
-        </Button>
+       
 
         <Button
           variant="ghost"
