@@ -57,6 +57,14 @@ import { saveImageToGallery } from "@/utils/fileSaver";
 import { saveImageToGalleryDB } from "@/utils/galleryStorage";
 import { transformImageToDimensions } from "@/utils/imageUtils";
 
+const SUPPORTED_UPSCALE_SCALES = [2, 4];
+const getNormalizedUpscaleScale = (value?: number) => {
+  if (typeof value === 'number' && SUPPORTED_UPSCALE_SCALES.includes(value)) {
+    return value;
+  }
+  return SUPPORTED_UPSCALE_SCALES[SUPPORTED_UPSCALE_SCALES.length - 1];
+};
+
 export function Header() {
   const { theme, setTheme } = useTheme();
   const iterations = useAppStore((state) => state.iterations);
@@ -119,7 +127,11 @@ export function Header() {
     if (isUpscaleMode) {
       window.dispatchEvent(
         new CustomEvent('triggerUpscaleAction', {
-          detail: { scale: upscaleScale, source: 'header', timestamp: Date.now() }
+          detail: {
+            scale: getNormalizedUpscaleScale(upscaleScale),
+            source: 'header',
+            timestamp: Date.now(),
+          }
         })
       );
       return;
@@ -150,8 +162,11 @@ export function Header() {
 
   const handlePrimarySelectChange = (value: string) => {
     if (isUpscaleMode) {
-      const parsedScale = Math.max(2, Math.min(8, Number(value) || upscaleScale || 4));
-      setUpscaleScale(parsedScale);
+      const parsedScale = Number(value);
+      const normalizedScale = getNormalizedUpscaleScale(
+        Number.isNaN(parsedScale) ? undefined : parsedScale
+      );
+      setUpscaleScale(normalizedScale);
       return;
     }
 
@@ -274,7 +289,7 @@ export function Header() {
         : t.generate ?? 'Generate';
 
   const primaryHint = isUpscaleMode
-    ? `${Math.max(2, Math.min(8, upscaleScale || 4))}x`
+    ? `${getNormalizedUpscaleScale(upscaleScale)}x`
     : (isGenerating && generationProgress.total > 1
       ? `${generationProgress.current}/${generationProgress.total}`
       : null);
@@ -318,7 +333,7 @@ export function Header() {
           </Button>
           
           <Select
-            value={isUpscaleMode ? String(Math.max(2, Math.min(8, upscaleScale ?? 4))) : String(Math.max(1, iterations ?? 1))}
+            value={isUpscaleMode ? String(getNormalizedUpscaleScale(upscaleScale)) : String(Math.max(1, iterations ?? 1))}
             onValueChange={handlePrimarySelectChange}
             disabled={isBusy}
           >
@@ -332,7 +347,7 @@ export function Header() {
             </SelectTrigger>
             <SelectContent>
               {isUpscaleMode
-                ? [2, 3, 4, 5, 6, 7, 8].map((scaleOption) => (
+                ? SUPPORTED_UPSCALE_SCALES.map((scaleOption) => (
                     <SelectItem key={scaleOption} value={String(scaleOption)}>
                       {`${scaleOption}x`}
                     </SelectItem>

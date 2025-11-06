@@ -436,16 +436,21 @@ export const UpscalingPanel: React.FC = () => {
                   <span>{t.scaleLabel || 'Scale'}</span>
                   <span className="text-sm font-semibold text-gray-100">{upscaleScale}x</span>
                 </div>
-                <input
-                  type="range"
-                  min={2}
-                  max={8}
-                  step={1}
-                  value={upscaleScale}
-                  onChange={(event) => setUpscaleScale(Number(event.target.value))}
-                  className="w-full h-2 rounded-full bg-gray-800/70 accent-teal-400"
-                  disabled={isUpscaling}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  {[2, 4].map((scaleValue) => (
+                    <Button
+                      key={scaleValue}
+                      type="button"
+                      variant={upscaleScale === scaleValue ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-11 rounded-lg"
+                      onClick={() => setUpscaleScale(scaleValue)}
+                      disabled={isUpscaling}
+                    >
+                      {scaleValue}x
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               <div className="rounded-lg border border-gray-800/90 bg-gray-900/80">

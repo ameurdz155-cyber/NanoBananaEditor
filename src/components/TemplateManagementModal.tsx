@@ -36,6 +36,9 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   const language = useAppStore((state) => state.language);
   const t = getTranslation(language);
   const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
+  const user = useAuthStore((state) => state.user);
+  const isTemplateAdmin = user?.username?.toLowerCase() === 'admin';
+  const canManageTemplates = isPremiumUser || isTemplateAdmin;
   
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string; emoji: string }>>([]);
@@ -99,11 +102,11 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   }, [open, language]);
 
   useEffect(() => {
-    if (!isPremiumUser) {
+    if (!canManageTemplates) {
       setShowAddForm(false);
       setEditingId(null);
     }
-  }, [isPremiumUser]);
+  }, [canManageTemplates]);
 
   // Save templates
   const saveTemplates = (temps: PromptTemplate[]) => {
@@ -278,7 +281,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
             borderColor: 'var(--modal-surface-border)'
           }}
         >
-          {isPremiumUser ? (
+          {canManageTemplates ? (
             <>
           
           {/* Header */}

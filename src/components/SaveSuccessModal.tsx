@@ -34,6 +34,7 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    onOpenChange(false);
   };
 
   const handleOpenFolder = async () => {
