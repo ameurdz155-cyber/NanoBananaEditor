@@ -9,7 +9,7 @@ interface LoginResult {
   access_token: string;
   token_type: string;
   username: string;
-  plan?: 'free' | 'premium';
+  plan?: 'free' | 'premium' | 'admin';
 }
 
 export async function loginRequest(payload: LoginPayload): Promise<LoginResult> {
