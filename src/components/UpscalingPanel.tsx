@@ -59,8 +59,11 @@ export const UpscalingPanel: React.FC = () => {
   }, []);
 
   React.useEffect(() => {
-    if (canvasImage && canvasImageOrigin !== 'asset') {
-      setSourceImage(canvasImage);
+    if (canvasImage) {
+      const bypassOrigins: Array<typeof canvasImageOrigin> = ['history', 'asset', 'board', 'manual'];
+      if (!canvasImageOrigin || !bypassOrigins.includes(canvasImageOrigin)) {
+        setSourceImage(canvasImage);
+      }
       return;
     }
     if (!canvasImage && uploadedImages.length > 0) {

@@ -242,10 +242,13 @@ export const ImageCanvas: React.FC = () => {
 
   const handleSendToUpscale = useCallback(() => {
     if (!hasContextImage) return;
+    if (contextImageUrl) {
+      setCanvasImage(contextImageUrl, 'upscale');
+    }
     setActivePrimarySection('upscaling');
     setSelectedTool('generate');
     closeContextMenu();
-  }, [hasContextImage, setActivePrimarySection, setSelectedTool, closeContextMenu]);
+  }, [hasContextImage, contextImageUrl, setCanvasImage, setActivePrimarySection, setSelectedTool, closeContextMenu]);
 
   const handleUseAsMaskLayer = useCallback(() => {
     if (!contextImageUrl) return;
