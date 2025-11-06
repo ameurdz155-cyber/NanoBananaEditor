@@ -129,8 +129,8 @@ def _upscale_with_google_imagen(image_data: bytes, upscale_factor: int) -> Optio
         raise HTTPException(status_code=401, detail="Google Cloud authentication failed. Please check credentials.")
     
     # Validate upscale factor
-    if upscale_factor not in [2, 4]:
-        upscale_factor = 4  # Default to 4x if invalid
+    # if upscale_factor not in [2, 4]:
+    #     upscale_factor = 4  # Default to 4x if invalid
     
     # Encode image to base64
     encoded_string = base64.b64encode(image_data).decode("utf-8")
