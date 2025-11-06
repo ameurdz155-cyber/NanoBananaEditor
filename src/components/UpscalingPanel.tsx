@@ -86,15 +86,15 @@ export const UpscalingPanel: React.FC = () => {
     reader.onload = () => {
       const result = typeof reader.result === 'string' ? reader.result : '';
       if (!result) {
-        setErrorMessage('Unable to read selected file.');
+        setErrorMessage(t.upscalingReadError);
         return;
       }
-  setSourceImage(result);
+      setSourceImage(result);
       setErrorMessage(null);
-      setStatusMessage('Image loaded for upscaling.');
+      setStatusMessage(t.upscalingImageReady);
     };
     reader.onerror = () => {
-      setErrorMessage('Failed to load image. Please try a different file.');
+      setErrorMessage(t.upscalingLoadError);
     };
     reader.readAsDataURL(file);
     event.target.value = '';
@@ -107,7 +107,7 @@ export const UpscalingPanel: React.FC = () => {
     }
     const response = await fetch(image);
     if (!response.ok) {
-      throw new Error('Unable to load source image for upscaling.');
+      throw new Error(t.upscalingFetchSourceError);
     }
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
@@ -117,14 +117,14 @@ export const UpscalingPanel: React.FC = () => {
         const [, payload] = result.split('base64,');
         resolve(payload || '');
       };
-      baseReader.onerror = () => reject(new Error('Failed to process source image.'));
+      baseReader.onerror = () => reject(new Error(t.upscalingProcessSourceError));
       baseReader.readAsDataURL(blob);
     });
-  }, []);
+  }, [t]);
 
   const handleUpscaleAction = React.useCallback(async () => {
     if (isUpscaling) {
-      setStatusMessage('Stopping upscaling...');
+      setStatusMessage(t.upscalingStopping);
       setErrorMessage(null);
       requestController.current?.abort();
       requestController.current = null;
@@ -133,7 +133,7 @@ export const UpscalingPanel: React.FC = () => {
     }
 
     if (!sourceImage) {
-      setErrorMessage('Upload an image or send one from the canvas to start upscaling.');
+      setErrorMessage(t.upscalingNoImageDescription);
       setStatusMessage(null);
       return;
     }
@@ -142,12 +142,12 @@ export const UpscalingPanel: React.FC = () => {
     requestController.current = controller;
     setIsUpscaling(true);
     setErrorMessage(null);
-    setStatusMessage('Upscaling in progress...');
+    setStatusMessage(t.upscalingProcessing);
 
     try {
       const imagePayload = await toBase64Payload(sourceImage);
       if (!imagePayload) {
-        throw new Error('The selected image could not be processed.');
+        throw new Error(t.upscalingProcessSourceError);
       }
 
       const response = await upscaleImage(
@@ -245,7 +245,7 @@ export const UpscalingPanel: React.FC = () => {
 
       const generation: Generation = {
         id: generateId(),
-        prompt: 'Upscaling result',
+        prompt: t.upscalingResultTitle,
         parameters,
         sourceAssets: [sourceAsset],
         outputAssets: [outputAsset],
@@ -260,7 +260,7 @@ export const UpscalingPanel: React.FC = () => {
         const now = Date.now();
         setCurrentProject({
           id: generateId(),
-          title: 'Upscaling Session',
+          title: t.upscalingSessionTitle,
           generations: [generation],
           edits: [],
           createdAt: now,
@@ -271,13 +271,22 @@ export const UpscalingPanel: React.FC = () => {
       setCanvasImage(dataUrl);
       setSourceImage(dataUrl);
       setUpscaleScale(response.scale);
-      setStatusMessage(`Upscaling complete (${response.scale}x) with ${response.model}. Saved to history as UPSCALL.`);
+      setStatusMessage(`${t.upscalingCompleteStatus} (${response.scale}x • ${response.model})`);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        setStatusMessage('Upscaling stopped.');
+        setStatusMessage(t.upscalingStoppedStatus);
       } else {
-        const message = error instanceof Error ? error.message : 'Upscaling failed. Please try again.';
-        setErrorMessage(message);
+        const fallbackMessage = t.upscalingProcessingError;
+        if (error instanceof Error) {
+          const trimmed = error.message.trim();
+          if (trimmed && trimmed !== 'AbortError') {
+            setErrorMessage(trimmed);
+          } else {
+            setErrorMessage(fallbackMessage);
+          }
+        } else {
+          setErrorMessage(fallbackMessage);
+        }
         setStatusMessage(null);
       }
     } finally {
@@ -290,12 +299,13 @@ export const UpscalingPanel: React.FC = () => {
     sourceImage,
     toBase64Payload,
     upscaleScale,
-  selectedModel,
-  setCanvasImage,
-  addGeneration,
+    selectedModel,
+    setCanvasImage,
+    addGeneration,
     currentProject,
     setCurrentProject,
     setUpscaleScale,
+    t,
   ]);
 
   React.useEffect(() => {
@@ -318,9 +328,9 @@ export const UpscalingPanel: React.FC = () => {
           variant="ghost"
           size="icon"
           onClick={() => setShowPromptPanel(true)}
-          title="Show prompt panel"
+          title={t.showPromptPanel}
           className="h-9 w-9 rounded-full border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-          aria-label="Show prompt panel"
+          aria-label={t.showPromptPanel}
         >
           <ChevronLeft className="h-5 w-5 rotate-180" />
         </Button>
@@ -338,10 +348,10 @@ export const UpscalingPanel: React.FC = () => {
         className="absolute inset-y-0 -right-1 w-3 cursor-col-resize group z-20"
         onMouseDown={handleResizeMouseDown}
         onTouchStart={handleResizeTouchStart}
-        aria-label="Resize prompt panel"
+        aria-label={t.upscalingResizeAria}
         role="separator"
         aria-orientation="vertical"
-        title="Drag to resize"
+        title={t.upscalingDragToResize}
       >
         <div className="absolute inset-y-0 right-0 w-1 bg-gray-700/40 group-hover:bg-teal-400/70 transition-all" />
         <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -354,9 +364,9 @@ export const UpscalingPanel: React.FC = () => {
             event.stopPropagation();
             setShowPromptPanel(false);
           }}
-          title="Hide prompt panel"
+          title={t.hidePromptPanel}
           className="absolute top-6 -right-3 h-8 w-8 rounded-full border border-gray-700 bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors z-[9999] opacity-60 hover:opacity-100 pointer-events-auto shadow-lg"
-          aria-label="Hide prompt panel"
+          aria-label={t.hidePromptPanel}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -367,8 +377,8 @@ export const UpscalingPanel: React.FC = () => {
           <div className="rounded-xl border border-gray-800 bg-gray-900/70 shadow-lg shadow-teal-500/10">
             <header className="px-4 py-3 border-b border-gray-800/80 flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-wider text-teal-300">Upscale</p>
-                <h2 className="text-base font-semibold text-gray-100">Upscale Model</h2>
+                <p className="text-xs uppercase tracking-wider text-teal-300">{t.upscalingPanelTitle}</p>
+                <h2 className="text-base font-semibold text-gray-100">{t.upscalingModelTitle}</h2>
               </div>
               <Button
                 type="button"
@@ -378,7 +388,7 @@ export const UpscalingPanel: React.FC = () => {
                 onClick={handleReturnToGenerate}
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span>{language === 'zh' ? '返回生成' : 'Back to Generate'}</span>
+                <span>{t.upscalingBackToGenerate}</span>
               </Button>
             </header>
 
@@ -388,14 +398,14 @@ export const UpscalingPanel: React.FC = () => {
                   <div className="overflow-hidden rounded-lg border border-gray-800/60 bg-black/40">
                     <img
                       src={sourceImage}
-                      alt="Selected for upscaling"
+                      alt={t.upscalingSelectedAlt}
                       className="mx-auto max-h-48 w-full object-contain"
                     />
                   </div>
                 ) : (
                   <div className="text-xs text-gray-400">
-                    <p className="text-sm font-medium text-gray-100">No image selected</p>
-                    <p className="mt-1">Upload or send an image to begin upscaling.</p>
+                    <p className="text-sm font-medium text-gray-100">{t.upscalingNoImageTitle}</p>
+                    <p className="mt-1">{t.upscalingNoImageDescription}</p>
                   </div>
                 )}
 
@@ -404,12 +414,12 @@ export const UpscalingPanel: React.FC = () => {
                   variant="outline"
                   size="sm"
                   className="h-11 w-full rounded-full border border-teal-500/40 text-teal-300 hover:text-teal-200 hover:border-teal-300"
-                  aria-label={sourceImage ? 'Replace image for upscaling' : 'Upload image for upscaling'}
+                  aria-label={sourceImage ? t.upscalingReplaceAria : t.upscalingUploadAria}
                   onClick={handleUploadButtonClick}
                   disabled={isUpscaling}
                 >
                   <Upload className="mr-2 h-4 w-4" />
-                  {sourceImage ? 'Replace image' : 'Upload image'}
+                  {sourceImage ? t.replaceImage : t.uploadImage}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -421,14 +431,16 @@ export const UpscalingPanel: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400">Upscale Model</label>
+                <label className="text-xs font-medium text-gray-400">{t.upscalingModelTitle}</label>
                 <div className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-950/80 px-3 py-2 text-sm text-gray-100">
                   <span className="truncate" title={DEFAULT_UPSCALE_MODEL}>{DEFAULT_UPSCALE_MODEL_LABEL}</span>
-                  <span className="text-[10px] uppercase tracking-wide text-gray-500">locked</span>
+                  <span className="text-[10px] uppercase tracking-wide text-gray-500" title={t.upscalingModelLockedHint}>
+                    {t.upscalingModelLockedBadge}
+                  </span>
                 </div>
-                <p className="text-[11px] leading-snug text-amber-400/90">
+                {/* <p className="text-[11px] leading-snug text-amber-400/90">
                   Locked to Google Imagen 3.0 Generate 002. Upscaling uses mock processing and returns the same image.
-                </p>
+                </p> */}
               </div>
 
               <div className="space-y-2">
@@ -461,7 +473,7 @@ export const UpscalingPanel: React.FC = () => {
                 >
                   <span className="flex items-center gap-2">
                     <SlidersHorizontal className="h-4 w-4" />
-                    Advanced Options
+                    {t.upscalingAdvancedOptions}
                   </span>
                   <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
                 </button>
@@ -470,7 +482,7 @@ export const UpscalingPanel: React.FC = () => {
                   <div className="space-y-4 px-4 pb-4 pt-2">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-[11px] text-gray-400">
-                        <span>Creativity</span>
+                        <span>{t.creativity}</span>
                         <span className="text-xs text-gray-200">{creativity}</span>
                       </div>
                       <input
@@ -487,7 +499,7 @@ export const UpscalingPanel: React.FC = () => {
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-[11px] text-gray-400">
-                        <span>Structure</span>
+                        <span>{t.upscalingStructure}</span>
                         <span className="text-xs text-gray-200">{structure}</span>
                       </div>
                       <input
@@ -526,10 +538,10 @@ export const UpscalingPanel: React.FC = () => {
                   {isUpscaling ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      {t.stopUpscaling || 'Stop Upscaling'}
+                      {t.stopUpscaling}
                     </span>
                   ) : (
-                    <span>{`${t.startUpscaling || 'Upscale'} ×${upscaleScale}`}</span>
+                    <span>{`${t.startUpscaling} ×${upscaleScale}`}</span>
                   )}
                 </Button>
               </div>
