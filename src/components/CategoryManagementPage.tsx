@@ -45,7 +45,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
   const [edit, setEdit] = useState<Category | null>(null);
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('Folder');
-  const [tab, setTab] = useState<'emoji' | 'icon' | 'upload'>('emoji');
+  const [tab, setTab] = useState<'emoji' | 'icon' | 'upload'>('upload');
   const [iconQ, setIconQ] = useState('');
   const fileRef = React.useRef<HTMLInputElement>(null);
 
@@ -171,7 +171,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                     ))}
                   </div>
                 </TabsContent>
-                <TabsContent value="icon" className="bg-gray-900 rounded-b-lg border border-gray-700 p-6 text-center">
+                <TabsContent value="upload" className="bg-gray-900 rounded-b-lg border border-gray-700 p-6 text-center">
                   <input ref={fileRef} type="file" accept="image/*" onChange={onImg} className="hidden" />
                   <div onClick={() => fileRef.current?.click()} className="border-2 border-dashed border-gray-600 rounded-xl p-6 cursor-pointer hover:border-lime-500">
                     <Upload className="h-10 w-10 mx-auto mb-2 text-gray-500" />

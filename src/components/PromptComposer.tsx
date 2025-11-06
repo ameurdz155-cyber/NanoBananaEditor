@@ -7,7 +7,8 @@ import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronLeft, Chevr
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
-import { TemplatesView, getDefaultTemplates } from './TemplatesView';
+import { TemplatesView } from './TemplatesView';
+import { getDefaultTemplates } from '../lib/prompt-templates-data';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
 import { usePromptPanelResize } from './PromptComposer/usePromptPanelResize';
