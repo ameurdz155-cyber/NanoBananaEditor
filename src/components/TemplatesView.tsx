@@ -555,7 +555,14 @@ export const getDefaultTemplates = (language: string): PromptTemplate[] => {
 export const DEFAULT_TEMPLATES: PromptTemplate[] = getDefaultTemplates('en');
 
 interface TemplatesViewProps {
-  onTemplateSelect?: (templateInfo: { name: string; image?: string; emoji?: string } | null) => void;
+  onTemplateSelect?: (templateInfo: {
+    id: string;
+    name: string;
+    image?: string;
+    emoji?: string;
+    positivePrompt: string;
+    negativePrompt?: string;
+  } | null) => void;
 }
 
 export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }) => {
@@ -596,6 +603,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const [showCategoryModal, setShowCategoryModal] = React.useState(false);
   const [categoryManagerMode, setCategoryManagerMode] = React.useState<'create' | 'edit' | 'view'>('create');
   const [editingCategoryId, setEditingCategoryId] = React.useState<string | null>(null);
+  const [isDuplicationMode, setIsDuplicationMode] = React.useState(false);
   const [showPremiumAlert, setShowPremiumAlert] = React.useState(false);
   const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
 
@@ -770,6 +778,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       setShowCategoryModal(false);
       setEditingTemplate(null);
       setEditingCategoryId(null);
+      setIsDuplicationMode(false);
     }
   }, [isPremiumUser]);
 
@@ -894,6 +903,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const openCreateModal = () => {
+    setIsDuplicationMode(false);
     if (!isPremiumUser) {
       setShowPremiumAlert(true);
       return;
@@ -921,6 +931,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const openEditModal = (template: PromptTemplate) => {
+    setIsDuplicationMode(false);
     setFormData({
       name: template.name,
       positivePrompt: template.positivePrompt,
@@ -935,6 +946,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const openDuplicateModal = (template: PromptTemplate) => {
+    setIsDuplicationMode(true);
     const inferredCategory = template.categoryId
       || (activeCategory !== 'all' && activeCategory !== 'uncategorized' ? activeCategory : '');
     setFormData({
@@ -988,6 +1000,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     }
 
     setShowCreateModal(false);
+    setIsDuplicationMode(false);
   };
 
   const handleDeleteTemplate = (templateId: string) => {
@@ -1086,9 +1099,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             setSelectedTemplate(template.id);
             if (onTemplateSelect) {
               onTemplateSelect({
+                id: template.id,
                 name: template.name,
                 image: template.image,
                 emoji: template.emoji,
+                positivePrompt: template.positivePrompt,
+                negativePrompt: template.negativePrompt,
               });
             }
           }}
@@ -1765,10 +1781,16 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
       {/* Create/Edit Template Modal */}
       <Dialog.Root
-        open={isPremiumUser && showCreateModal}
+        open={showCreateModal && (isPremiumUser || isDuplicationMode)}
         onOpenChange={(open) => {
-          if (isPremiumUser) {
-            setShowCreateModal(open);
+          if (!open) {
+            setShowCreateModal(false);
+            setIsDuplicationMode(false);
+            return;
+          }
+
+          if (isPremiumUser || isDuplicationMode) {
+            setShowCreateModal(true);
           }
         }}
       >
@@ -2059,7 +2081,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               <div className="flex justify-end gap-3 pt-4 border-t border-[color:var(--surface-border)]">
                 <Button
                   variant="ghost"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setIsDuplicationMode(false);
+                  }}
                   className={cn(
                     'px-6 py-3 text-base transition-colors',
                     isDarkMode

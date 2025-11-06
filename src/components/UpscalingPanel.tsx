@@ -35,12 +35,18 @@ export const UpscalingPanel: React.FC = () => {
   const setUpscaleScale = useAppStore((state) => state.setUpscaleScale);
   const isUpscaling = useAppStore((state) => state.isUpscaling);
   const setIsUpscaling = useAppStore((state) => state.setIsUpscaling);
+  const setActivePrimarySection = useAppStore((state) => state.setActivePrimarySection);
 
   const t = React.useMemo(() => getTranslation(language), [language]);
 
   const panelRef = React.useRef<HTMLDivElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const requestController = React.useRef<AbortController | null>(null);
+  const handleReturnToGenerate = React.useCallback(() => {
+    setActivePrimarySection('generate');
+    setShowPromptPanel(true);
+  }, [setActivePrimarySection, setShowPromptPanel]);
+
 
   const { handleResizeMouseDown, handleResizeTouchStart } = usePromptPanelResize({
     setPromptPanelWidth,
@@ -359,9 +365,21 @@ export const UpscalingPanel: React.FC = () => {
       <div className="h-full overflow-y-auto sidebar-scrollbar">
         <div className="p-5 space-y-5">
           <div className="rounded-xl border border-gray-800 bg-gray-900/70 shadow-lg shadow-teal-500/10">
-            <header className="px-4 py-3 border-b border-gray-800/80">
-              <p className="text-xs uppercase tracking-wider text-teal-300">Upscale</p>
-              <h2 className="text-base font-semibold text-gray-100">Upscale Model</h2>
+            <header className="px-4 py-3 border-b border-gray-800/80 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-teal-300">Upscale</p>
+                <h2 className="text-base font-semibold text-gray-100">Upscale Model</h2>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="inline-flex items-center gap-2 rounded-full border border-gray-700/70 bg-gray-900/60 text-gray-200 hover:bg-gray-800/80 hover:text-white"
+                onClick={handleReturnToGenerate}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span>{language === 'zh' ? '返回生成' : 'Back to Generate'}</span>
+              </Button>
             </header>
 
             <div className="p-4 space-y-5">

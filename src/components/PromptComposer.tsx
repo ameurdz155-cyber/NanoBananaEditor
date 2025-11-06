@@ -18,6 +18,8 @@ import type { PromptTemplate } from '../types';
 const DEFAULT_MODEL_FAMILY = 'gemini';
 const DEFAULT_MODEL_NAME = 'models/gemini-2.5-flash-image';
 
+let hasTemplatesModalAutoOpened = false;
+
 const resolveIsDarkMode = () => {
   if (typeof window === 'undefined') {
     return false;
@@ -101,10 +103,23 @@ export const PromptComposer: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showHintsModal, setShowHintsModal] = useState(false);
-  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(() => {
+    if (!hasTemplatesModalAutoOpened) {
+      hasTemplatesModalAutoOpened = true;
+      return true;
+    }
+    return false;
+  });
   const [isImproving, setIsImproving] = useState(false);
   const [improvedPrompt, setImprovedPrompt] = useState<string | null>(null);
-  const [lastSelectedTemplate, setLastSelectedTemplate] = useState<{ name: string; image?: string; emoji?: string } | null>(null);
+  const [lastSelectedTemplate, setLastSelectedTemplate] = useState<{
+    id: string;
+    name: string;
+    image?: string;
+    emoji?: string;
+    positivePrompt: string;
+    negativePrompt?: string;
+  } | null>(null);
   const [showPromptHistory, setShowPromptHistory] = useState(false);
   const [historySearchQuery, setHistorySearchQuery] = useState('');
   const [aspectRatio, setAspectRatio] = useState<string>('1:1');
@@ -241,7 +256,8 @@ export const PromptComposer: React.FC = () => {
   };
 
   const handleViewTemplate = () => {
-    if (!currentTemplate) {
+    const templateForView = currentTemplate ?? lastSelectedTemplate;
+    if (!templateForView) {
       return;
     }
 
@@ -254,12 +270,12 @@ export const PromptComposer: React.FC = () => {
     }
 
     setSavedPromptBeforeTemplate(currentPrompt);
-    setCurrentPrompt((currentTemplate.positivePrompt || '').trim());
+    setCurrentPrompt((templateForView.positivePrompt || '').trim());
     setIsTemplatePromptActive(true);
 
-    if (currentTemplate.negativePrompt && currentTemplate.negativePrompt.trim()) {
+    if (templateForView.negativePrompt && templateForView.negativePrompt.trim()) {
       setShowNegativePrompt(true);
-      setNegativePrompt(currentTemplate.negativePrompt.trim());
+      setNegativePrompt(templateForView.negativePrompt.trim());
     } else {
       setShowNegativePrompt(false);
       setNegativePrompt('');
@@ -300,6 +316,12 @@ export const PromptComposer: React.FC = () => {
     setLastSelectedTemplate(null);
     setShowTemplatesModal(false);
   };
+
+  React.useEffect(() => {
+    if (selectedTemplate && !currentTemplate && !lastSelectedTemplate) {
+      setSelectedTemplate(null);
+    }
+  }, [selectedTemplate, currentTemplate, lastSelectedTemplate, setSelectedTemplate]);
 
   // Clean up images when switching tools
   React.useEffect(() => {
@@ -773,9 +795,13 @@ export const PromptComposer: React.FC = () => {
               onClick={() => {
                 if (!showNegativePrompt) {
                   setShowNegativePrompt(true);
-                  if (currentTemplate?.negativePrompt) {
-                    const negText = currentTemplate.negativePrompt.replace('{prompt}', '');
-                    setNegativePrompt(negText);
+                  const templateForNegative = currentTemplate ?? lastSelectedTemplate;
+                  const negativeSource = templateForNegative?.negativePrompt;
+                  if (negativeSource) {
+                    const negText = negativeSource.replace('{prompt}', '').replace('{photo}', '').trim();
+                    if (negText) {
+                      setNegativePrompt(negText);
+                    }
                   }
                 } else {
                   setShowNegativePrompt(false);
@@ -787,10 +813,10 @@ export const PromptComposer: React.FC = () => {
                 showNegativePrompt
                   ? isDarkMode
                     ? 'bg-orange-500/15 text-orange-200 shadow-[0_0_12px_rgba(251,146,60,0.35)]'
-                    : 'bg-orange-100 text-orange-600 shadow-[0_0_18px_rgba(251,146,60,0.3)] border border-orange-200/70'
+                    : 'bg-orange-100 text-orange-600 shadow-[0_0_18px_rgba(251,146,60,0.25)] border border-orange-300/60'
                   : isDarkMode
                     ? 'hover:text-gray-100 hover:bg-gray-800'
-                    : 'hover:text-slate-900 hover:bg-black/5'
+                    : 'hover:text-slate-900 hover:bg-orange-100/40'
               )}
               title={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
               aria-label={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
