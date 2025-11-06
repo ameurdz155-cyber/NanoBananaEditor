@@ -240,6 +240,13 @@ export const ImageCanvas: React.FC = () => {
     closeContextMenu();
   }, [canvasImage, closeContextMenu]);
 
+  const handleSendToUpscale = useCallback(() => {
+    if (!hasContextImage) return;
+    setActivePrimarySection('upscaling');
+    setSelectedTool('generate');
+    closeContextMenu();
+  }, [hasContextImage, setActivePrimarySection, setSelectedTool, closeContextMenu]);
+
   const handleUseAsMaskLayer = useCallback(() => {
     if (!contextImageUrl) return;
     addEditReferenceImage(contextImageUrl);
@@ -787,6 +794,12 @@ export const ImageCanvas: React.FC = () => {
                   onClick={handleRecallMetadata}
                   disabled={!canRecallMetadata}
                   trailing={<ChevronRight className="h-3 w-3 text-gray-500" />}
+                />
+                <MenuItem
+                  icon={<Sparkles className="h-4 w-4 text-pink-300" />}
+                  label={t.sendToUpscale}
+                  onClick={handleSendToUpscale}
+                  disabled={!hasContextImage}
                 />
                 <MenuItem
                   icon={<PenSquare className="h-4 w-4 text-purple-300" />}

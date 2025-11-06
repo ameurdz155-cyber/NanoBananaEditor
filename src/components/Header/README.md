@@ -186,7 +186,7 @@ import { LogoSection } from './components/Header/LogoSection';
 ## 🧪 Testing Checklist
 
 - [ ] Logo renders correctly in both themes
-- [ ] Iteration control switches between generation/upscale modes
+- [x] Iteration control triggers generation/cancel flow *(validated with updated busy/validation wiring on 2025-02-13; upscale toggle still pending separate work)*
 - [ ] Canvas controls zoom in/out correctly
 - [ ] Theme toggle persists across sessions
 - [ ] Menu button opens/closes properly

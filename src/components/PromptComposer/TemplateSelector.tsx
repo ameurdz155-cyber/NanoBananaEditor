@@ -6,7 +6,14 @@ import type { PromptTemplate } from '../TemplatesView';
 interface TemplateSelectorProps {
   selectedTemplate: string | null;
   currentTemplate: PromptTemplate | null;
-  lastSelectedTemplate: { name: string; image?: string; emoji?: string } | null;
+  lastSelectedTemplate: {
+    id: string;
+    name: string;
+    image?: string;
+    emoji?: string;
+    positivePrompt: string;
+    negativePrompt?: string;
+  } | null;
   isTemplatePromptActive: boolean;
   savedPromptBeforeTemplate: string;
   currentPrompt: string;
@@ -31,40 +38,43 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   t,
 }) => {
   // Get template display info - prefer lastSelectedTemplate, fall back to currentTemplate
+  const resolvedTemplate = React.useMemo(() => currentTemplate ?? lastSelectedTemplate ?? null, [currentTemplate, lastSelectedTemplate]);
+
   const templateInfo = React.useMemo(() => {
-    if (lastSelectedTemplate) return lastSelectedTemplate;
-    if (currentTemplate) {
-      return {
-        name: currentTemplate.name,
-        image: currentTemplate.image,
-        emoji: currentTemplate.emoji,
-      };
+    if (!resolvedTemplate) {
+      return null;
     }
-    return null;
-  }, [lastSelectedTemplate, currentTemplate]);
+    return {
+      name: resolvedTemplate.name,
+      image: resolvedTemplate.image,
+      emoji: resolvedTemplate.emoji,
+    };
+  }, [resolvedTemplate]);
+
+  const hasActiveTemplate = Boolean(selectedTemplate && resolvedTemplate);
+  const hasMissingTemplate = Boolean(selectedTemplate && !currentTemplate && !lastSelectedTemplate);
 
   const handleFlatten = () => {
-    if (!currentTemplate) return;
+    if (!resolvedTemplate) {
+      return;
+    }
 
     const basePrompt = isTemplatePromptActive ? savedPromptBeforeTemplate : currentPrompt;
 
-    const positiveWithPrompt = currentTemplate.positivePrompt.includes('{prompt}')
-      ? currentTemplate.positivePrompt.replace('{prompt}', basePrompt || '')
-      : [basePrompt, currentTemplate.positivePrompt].filter(Boolean).join(basePrompt ? '\n\n' : '');
+    const positiveSource = resolvedTemplate.positivePrompt ?? '';
+    const positiveWithPrompt = positiveSource.includes('{prompt}')
+      ? positiveSource.replace('{prompt}', basePrompt || '')
+      : [basePrompt, positiveSource].filter(Boolean).join(basePrompt ? '\n\n' : '');
 
     const cleanedPositive = positiveWithPrompt.replace('{photo}', '').trim();
 
-    let cleanedNegative = '';
-    let shouldShowNegative = false;
+    const negativeSourceRaw = resolvedTemplate.negativePrompt ?? '';
+    const negativeWithPrompt = negativeSourceRaw.includes('{prompt}')
+      ? negativeSourceRaw.replace('{prompt}', basePrompt || '')
+      : negativeSourceRaw;
 
-    if (currentTemplate.negativePrompt?.trim()) {
-      const negativeSource = currentTemplate.negativePrompt.includes('{prompt}')
-        ? currentTemplate.negativePrompt.replace('{prompt}', basePrompt || '')
-        : currentTemplate.negativePrompt;
-
-      cleanedNegative = negativeSource.replace('{photo}', '').trim();
-      shouldShowNegative = !!cleanedNegative;
-    }
+    const cleanedNegative = negativeWithPrompt.replace('{photo}', '').trim();
+    const shouldShowNegative = cleanedNegative.length > 0;
 
     onFlattenTemplate(cleanedPositive, cleanedNegative, shouldShowNegative);
   };
@@ -116,12 +126,12 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             </div>
           )}
           <span className="text-sm font-medium text-gray-100 truncate">
-            {templateInfo?.name || t.choosePromptTemplate}
+            {templateInfo?.name || (hasMissingTemplate ? t.noPromptTemplatesAvailable ?? 'Template unavailable' : t.choosePromptTemplate)}
           </span>
         </div>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {selectedTemplate && (
+          {hasActiveTemplate && (
             <>
               {/* View Icon */}
               <button
@@ -167,6 +177,12 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 <X className="h-4 w-4" />
               </button>
             </>
+          )}
+
+          {hasMissingTemplate && (
+            <span className="px-2 py-1 text-xs rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/30">
+              {t.noPromptTemplatesAvailable ?? 'Template unavailable'}
+            </span>
           )}
 
           {/* Dropdown Toggle */}

@@ -40,6 +40,7 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  Loader2,
 } from "lucide-react";
 import logoDark from "../assets/AI-POD-lite-logo.png";
 import logoLight from "../assets/AI-POD-lite-logo-light.png";
@@ -58,7 +59,15 @@ import { transformImageToDimensions } from "@/utils/imageUtils";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
-  const [count, setCount] = useState("2");
+  const iterations = useAppStore((state) => state.iterations);
+  const setIterations = useAppStore((state) => state.setIterations);
+  const isValidating = useAppStore((state) => state.isValidating);
+  const generationProgress = useAppStore((state) => state.generationProgress);
+  const activePrimarySection = useAppStore((state) => state.activePrimarySection);
+  const isUpscaling = useAppStore((state) => state.isUpscaling);
+  const upscaleScale = useAppStore((state) => state.upscaleScale);
+  const setUpscaleScale = useAppStore((state) => state.setUpscaleScale);
+
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -81,6 +90,8 @@ export function Header() {
   const brushStrokes = useAppStore((state) => state.brushStrokes);
   const clearBrushStrokes = useAppStore((state) => state.clearBrushStrokes);
   const selectedTool = useAppStore((state) => state.selectedTool);
+  const setActivePrimarySection = useAppStore((state) => state.setActivePrimarySection);
+  const setShowPromptPanel = useAppStore((state) => state.setShowPromptPanel);
   const boards = useAppStore((state) => state.boards);
   const selectedBoardId = useAppStore((state) => state.selectedBoardId);
   const addImageToBoard = useAppStore((state) => state.addImageToBoard);
@@ -100,10 +111,52 @@ export function Header() {
   const zoomPercent = Math.round(canvasZoom * 100);
   const defaultBoardName = language === "zh" ? "画廊" : "Gallery";
   const brushStrokesCount = brushStrokes.length;
+  const isUpscaleMode = activePrimarySection === 'upscaling';
+  const IdleIcon = isUpscaleMode ? Layers : Sparkles;
+  const idleIconColor = isUpscaleMode ? 'text-teal-300' : 'text-purple-400';
 
-  const handleGenerate = () => {
-    console.log('Generate clicked with count:', count);
-    // Add your generation logic here
+  const handlePrimaryAction = () => {
+    if (isUpscaleMode) {
+      window.dispatchEvent(
+        new CustomEvent('triggerUpscaleAction', {
+          detail: { scale: upscaleScale, source: 'header', timestamp: Date.now() }
+        })
+      );
+      return;
+    }
+
+    const parsedCount = Math.max(1, Number(iterations) || 1);
+    if (iterations !== parsedCount) {
+      setIterations(parsedCount);
+    }
+
+    setActivePrimarySection('generate');
+    setShowPromptPanel(true);
+    if (!showHistory) {
+      setShowHistory(true);
+    }
+
+    if (isGenerating || isValidating) {
+      window.dispatchEvent(new CustomEvent('cancelGeneration'));
+      return;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('triggerGenerate', {
+        detail: { iterations: parsedCount, source: 'header', timestamp: Date.now() }
+      })
+    );
+  };
+
+  const handlePrimarySelectChange = (value: string) => {
+    if (isUpscaleMode) {
+      const parsedScale = Math.max(2, Math.min(8, Number(value) || upscaleScale || 4));
+      setUpscaleScale(parsedScale);
+      return;
+    }
+
+    const parsedCount = Math.max(1, Number(value) || 1);
+    setIterations(parsedCount);
   };
 
   const handleSearch = () => {
@@ -211,6 +264,21 @@ export function Header() {
     return () => window.removeEventListener('triggerSaveImage', handleExternalSave);
   }, [handleSave]);
 
+  const isBusy = isUpscaleMode ? isUpscaling : (isGenerating || isValidating);
+  const primaryActionLabel = isUpscaleMode
+    ? (isUpscaling ? t.stopUpscaling ?? 'Stop Upscaling' : t.startUpscaling ?? 'Upscale')
+    : isValidating
+      ? t.validating ?? 'Validating'
+      : isGenerating
+        ? t.stopGeneration ?? 'Stop'
+        : t.generate ?? 'Generate';
+
+  const primaryHint = isUpscaleMode
+    ? `${Math.max(2, Math.min(8, upscaleScale || 4))}x`
+    : (isGenerating && generationProgress.total > 1
+      ? `${generationProgress.current}/${generationProgress.total}`
+      : null);
+
   return (
     <>
   <nav className="flex items-center justify-between px-6 py-3 bg-background text-foreground border-b border-border transition-colors">
@@ -229,31 +297,51 @@ export function Header() {
         
         <div className="w-px h-5 bg-border" />
         
-        {/* Generate Button with Integrated Select */}
+        {/* Primary action (Generate/Upscale) with integrated selector */}
         <div className="flex items-center rounded-md overflow-hidden bg-background border border-border">
           <Button 
             variant="ghost"
-            onClick={handleGenerate}
+            onClick={handlePrimaryAction}
             className="flex items-center gap-2 hover:bg-accent px-3 h-8 rounded-none border-0"
+            aria-pressed={isBusy}
+            type="button"
           >
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-medium">{t.generate ?? 'Generate'}</span>
+            {isBusy ? (
+              <Loader2 className={`w-4 h-4 animate-spin ${isUpscaleMode ? 'text-teal-300' : 'text-purple-400'}`} />
+            ) : (
+              <IdleIcon className={`w-4 h-4 ${idleIconColor}`} />
+            )}
+            <span className="text-sm font-medium">
+              {primaryActionLabel}
+              {primaryHint ? ` · ${primaryHint}` : ''}
+            </span>
           </Button>
           
-          <Select value={count} onValueChange={setCount}>
+          <Select
+            value={isUpscaleMode ? String(Math.max(2, Math.min(8, upscaleScale ?? 4))) : String(Math.max(1, iterations ?? 1))}
+            onValueChange={handlePrimarySelectChange}
+            disabled={isBusy}
+          >
             <SelectTrigger
-              className="w-16 h-8 px-3 py-1 bg-muted text-foreground border-none focus:ring-0 rounded-none"
-              aria-label={language === 'zh' ? '生成次数' : 'Number of images to generate'}
+              className="w-20 h-8 px-3 py-1 bg-muted text-foreground border-none focus:ring-0 rounded-none"
+              aria-label={isUpscaleMode
+                ? (language === 'zh' ? '放大倍数' : 'Upscale multiplier')
+                : (language === 'zh' ? '生成次数' : 'Number of images to generate')}
             >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">1</SelectItem>
-              <SelectItem value="2">2</SelectItem>
-              <SelectItem value="3">3</SelectItem>
-              <SelectItem value="4">4</SelectItem>
-              <SelectItem value="5">5</SelectItem>
-              {/* Add more options as needed, up to 10000 isn't practical; consider dynamic if needed */}
+              {isUpscaleMode
+                ? [2, 3, 4, 5, 6, 7, 8].map((scaleOption) => (
+                    <SelectItem key={scaleOption} value={String(scaleOption)}>
+                      {`${scaleOption}x`}
+                    </SelectItem>
+                  ))
+                : [1, 2, 3, 4, 5].map((count) => (
+                    <SelectItem key={count} value={String(count)}>
+                      {count}
+                    </SelectItem>
+                  ))}
             </SelectContent>
           </Select>
         </div>
@@ -344,7 +432,7 @@ export function Header() {
         <Button
           variant="ghost"
           onClick={handleSave}
-          disabled={!canvasImage || isGenerating}
+          disabled={!canvasImage || isGenerating || isUpscaling}
           className="flex items-center gap-2 hover:bg-accent rounded-lg px-3 py-2 h-9 border border-purple-500/30 disabled:opacity-50"
           title={language === 'zh' ? '保存当前画布' : 'Save current canvas'}
         >

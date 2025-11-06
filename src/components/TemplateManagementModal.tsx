@@ -8,7 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { getTranslation } from '../i18n/translations';
 import { cn } from '../utils/cn';
-import { getDefaultTemplates } from './TemplatesView';
+import { getDefaultTemplates } from '../lib/prompt-templates-data';
 import type { PromptTemplate } from '../types';
 
 interface TemplateManagementModalProps {

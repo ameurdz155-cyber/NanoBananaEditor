@@ -555,7 +555,14 @@ export const getDefaultTemplates = (language: string): PromptTemplate[] => {
 export const DEFAULT_TEMPLATES: PromptTemplate[] = getDefaultTemplates('en');
 
 interface TemplatesViewProps {
-  onTemplateSelect?: (templateInfo: { name: string; image?: string; emoji?: string } | null) => void;
+  onTemplateSelect?: (templateInfo: {
+    id: string;
+    name: string;
+    image?: string;
+    emoji?: string;
+    positivePrompt: string;
+    negativePrompt?: string;
+  } | null) => void;
 }
 
 export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }) => {
@@ -596,6 +603,8 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const [showCategoryModal, setShowCategoryModal] = React.useState(false);
   const [categoryManagerMode, setCategoryManagerMode] = React.useState<'create' | 'edit' | 'view'>('create');
   const [editingCategoryId, setEditingCategoryId] = React.useState<string | null>(null);
+  const [isDuplicationMode, setIsDuplicationMode] = React.useState(false);
+  const [showPremiumAlert, setShowPremiumAlert] = React.useState(false);
   const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
 
   React.useEffect(() => {
@@ -657,16 +666,13 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     };
 
     localizedDefaultTemplates.forEach(tally);
-
-    if (isPremiumUser) {
-      customTemplates.forEach(tally);
-    }
+    customTemplates.forEach(tally);
 
     counts.set('all', total);
     counts.set('uncategorized', uncategorized);
 
     return counts;
-  }, [customTemplates, localizedDefaultTemplates, isPremiumUser]);
+  }, [customTemplates, localizedDefaultTemplates]);
 
   const categoryTabs = React.useMemo<DisplayCategory[]>(() => {
     const categoriesWithCounts = resolvedCategories.map((category) => ({
@@ -772,6 +778,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       setShowCategoryModal(false);
       setEditingTemplate(null);
       setEditingCategoryId(null);
+      setIsDuplicationMode(false);
     }
   }, [isPremiumUser]);
 
@@ -896,7 +903,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const openCreateModal = () => {
+    setIsDuplicationMode(false);
     if (!isPremiumUser) {
+      setShowPremiumAlert(true);
       return;
     }
     const initialCategory = activeCategory === 'all'
@@ -922,6 +931,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const openEditModal = (template: PromptTemplate) => {
+    setIsDuplicationMode(false);
     setFormData({
       name: template.name,
       positivePrompt: template.positivePrompt,
@@ -936,6 +946,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   };
 
   const openDuplicateModal = (template: PromptTemplate) => {
+    setIsDuplicationMode(true);
     const inferredCategory = template.categoryId
       || (activeCategory !== 'all' && activeCategory !== 'uncategorized' ? activeCategory : '');
     setFormData({
@@ -989,6 +1000,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     }
 
     setShowCreateModal(false);
+    setIsDuplicationMode(false);
   };
 
   const handleDeleteTemplate = (templateId: string) => {
@@ -1087,9 +1099,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             setSelectedTemplate(template.id);
             if (onTemplateSelect) {
               onTemplateSelect({
+                id: template.id,
                 name: template.name,
                 image: template.image,
                 emoji: template.emoji,
+                positivePrompt: template.positivePrompt,
+                negativePrompt: template.negativePrompt,
               });
             }
           }}
@@ -1238,19 +1253,22 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 : { color: 'var(--text-primary)' }
             }
           />
-          <div className="flex items-center gap-1">
-            {isPremiumUser && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={openCreateModal}
-                title={t.createTemplate}
-                className="h-8 w-8"
-                type="button"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            )}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="default"
+              onClick={openCreateModal}
+              title={t.createTemplate}
+              className={cn(
+                'flex items-center gap-2 px-4 h-10 transition-all whitespace-nowrap',
+                isDarkMode
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                  : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg'
+              )}
+              type="button"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{t.createTemplate}</span>
+            </Button>
           </div>
         </div>
 
@@ -1326,7 +1344,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       {/* Templates List */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-3">
         {/* My Templates Section */}
-        {isPremiumUser ? (
+        {isPremiumUser && (
           <div>
             <button
               onClick={() => toggleSection('my')}
@@ -1363,19 +1381,6 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 )}
               </div>
             )}
-          </div>
-        ) : (
-          <div
-            className={cn(
-              'rounded-lg border border-dashed p-6 text-center transition-colors',
-              isDarkMode ? 'border-purple-500/40 bg-purple-500/10' : 'border-purple-200 bg-purple-50'
-            )}
-          >
-            <p className="text-base font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>{t.premiumFeatureTitle}</p>
-            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>{t.premiumFeatureDescription}</p>
-            <Button className={cn('btn-premium', !isDarkMode && 'shadow-[0_12px_30px_-12px_rgba(168,85,247,0.45)]')} type="button">
-              {t.upgradeToUnlock}
-            </Button>
           </div>
         )}
 
@@ -1776,10 +1781,16 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
       {/* Create/Edit Template Modal */}
       <Dialog.Root
-        open={isPremiumUser && showCreateModal}
+        open={showCreateModal && (isPremiumUser || isDuplicationMode)}
         onOpenChange={(open) => {
-          if (isPremiumUser) {
-            setShowCreateModal(open);
+          if (!open) {
+            setShowCreateModal(false);
+            setIsDuplicationMode(false);
+            return;
+          }
+
+          if (isPremiumUser || isDuplicationMode) {
+            setShowCreateModal(true);
           }
         }}
       >
@@ -2070,7 +2081,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               <div className="flex justify-end gap-3 pt-4 border-t border-[color:var(--surface-border)]">
                 <Button
                   variant="ghost"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setIsDuplicationMode(false);
+                  }}
                   className={cn(
                     'px-6 py-3 text-base transition-colors',
                     isDarkMode
@@ -2090,6 +2104,109 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   )}
                 >
                   {t.save}
+                </Button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Premium Alert Modal */}
+      <Dialog.Root open={showPremiumAlert} onOpenChange={setShowPremiumAlert}>
+        <Dialog.Portal>
+          <Dialog.Overlay 
+            className={cn(
+              'fixed inset-0 z-50 backdrop-blur-sm',
+              isDarkMode ? 'bg-black/70' : 'bg-black/40'
+            )} 
+          />
+          <Dialog.Content
+            className={cn(
+              'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 z-50 transition-all max-w-md w-[90vw]',
+              isDarkMode 
+                ? 'shadow-2xl' 
+                : 'shadow-[0_20px_50px_rgba(0,0,0,0.15)]'
+            )}
+            style={{
+              background: 'var(--modal-surface-background)',
+              border: '1px solid var(--modal-surface-border)',
+              color: 'var(--text-primary)'
+            }}
+          >
+            <div className="space-y-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3 flex-1">
+                  <div
+                    className={cn(
+                      'h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0',
+                      isDarkMode
+                        ? 'bg-purple-500/20 text-purple-300'
+                        : 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700'
+                    )}
+                  >
+                    <FaStar className="h-6 w-6" />
+                  </div>
+                  <Dialog.Title className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {t.premiumFeatureTitle}
+                  </Dialog.Title>
+                </div>
+                <Dialog.Close asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'h-8 w-8 flex-shrink-0 transition-colors rounded-full',
+                      isDarkMode
+                        ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                    )}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </Dialog.Close>
+              </div>
+
+              <p 
+                className={cn(
+                  'text-base leading-relaxed',
+                  isDarkMode ? '' : 'text-slate-600'
+                )}
+                style={{ color: isDarkMode ? 'var(--text-secondary)' : undefined }}
+              >
+                {t.premiumFeatureDescription}
+              </p>
+
+              <div 
+                className={cn(
+                  'flex justify-end gap-3 pt-3 border-t',
+                  isDarkMode ? 'border-gray-800' : 'border-slate-200'
+                )}
+              >
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowPremiumAlert(false)}
+                  className={cn(
+                    'px-4 transition-colors',
+                    isDarkMode
+                      ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  )}
+                >
+                  {t.cancel}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowPremiumAlert(false);
+                    // Here you could redirect to upgrade page or open upgrade modal
+                  }}
+                  className={cn(
+                    'px-6 transition-all',
+                    isDarkMode
+                      ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                      : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40'
+                  )}
+                >
+                  {t.upgradeToUnlock}
                 </Button>
               </div>
             </div>
