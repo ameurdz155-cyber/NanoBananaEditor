@@ -313,13 +313,6 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     closeBoardImageMenu();
   };
 
-  const handleSendToUpscale = () => {
-    if (!boardImageContextMenu.imageUrl) return;
-    setCanvasImage(boardImageContextMenu.imageUrl);
-    setActivePrimarySection('upscaling');
-    closeBoardImageMenu();
-  };
-
   const handleUseForPromptTemplate = () => {
     if (!promptText) {
       closeBoardImageMenu();

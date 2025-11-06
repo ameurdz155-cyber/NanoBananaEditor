@@ -57,7 +57,6 @@ export interface Translations {
   modifyExisting: string;
   clickToSelect: string;
   canvasTab: string;
-  upscalingTab: string;
   workflowsTab: string;
   
   // File upload
@@ -119,9 +118,6 @@ export interface Translations {
   validating: string;
   stopGeneration: string;
   generating: string;
-  startUpscaling: string;
-  stopUpscaling: string;
-  scaleLabel: string;
   pressCtrlEnter: string;
   waitingGeneration: string;
   thisMayTakeMoments: string;
@@ -271,7 +267,6 @@ export interface Translations {
   create: string;
   loadWorkflow: string;
   recallMetadata: string;
-  sendToUpscale: string;
   useForPromptTemplate: string;
   newCanvasFromImage: string;
   changeBoardAction: string;

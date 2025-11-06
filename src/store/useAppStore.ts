@@ -61,14 +61,10 @@ interface AppState {
   // Panel visibility
   showPromptPanel: boolean;
   promptPanelWidth: number;
-  upscaleScale: number;
-  setUpscaleScale: (scale: number) => void;
-  isUpscaling: boolean;
-  setIsUpscaling: (value: boolean) => void;
   
   // UI state
   selectedTool: 'generate' | 'edit' | 'mask';
-  activePrimarySection: 'generate' | 'canvas' | 'upscaling' | 'workflows';
+  activePrimarySection: 'generate' | 'canvas';
   
   // Language
   language: Language;
@@ -121,7 +117,7 @@ interface AppState {
   setPromptPanelWidth: (width: number) => void;
   
   setSelectedTool: (tool: 'generate' | 'edit' | 'mask') => void;
-  setActivePrimarySection: (section: 'generate' | 'canvas' | 'upscaling' | 'workflows') => void;
+  setActivePrimarySection: (section: 'generate' | 'canvas') => void;
   
   setLanguage: (language: Language) => void;
   
@@ -222,11 +218,9 @@ export const useAppStore = create<AppState>()(
       
       showPromptPanel: true,
   promptPanelWidth: 320,
-  upscaleScale: 4,
-  isUpscaling: false,
       
     selectedTool: 'generate',
-    activePrimarySection: 'upscaling',
+  activePrimarySection: 'generate',
       
       language: (typeof localStorage !== 'undefined' && localStorage.getItem('ai-pod-language') as Language) || 'zh',
       
@@ -310,7 +304,7 @@ export const useAppStore = create<AppState>()(
         return { modelFamily: family, modelName: nextName };
       }),
       setModelName: (name) => set({ modelName: name }),
-      setAvailableImagenModels: (models) => set((state) => {
+    setAvailableImagenModels: (models) => set((state) => {
         const nextModels = Array.isArray(models)
           ? Array.from(
               new Set(
@@ -356,8 +350,6 @@ export const useAppStore = create<AppState>()(
       
       setShowPromptPanel: (show) => set({ showPromptPanel: show }),
   setPromptPanelWidth: (width) => set({ promptPanelWidth: width }),
-    setUpscaleScale: (scale) => set({ upscaleScale: Math.max(2, Math.min(8, Math.round(scale))) }),
-    setIsUpscaling: (value) => set({ isUpscaling: value }),
       
       setSelectedTool: (tool) => set({ selectedTool: tool }),
   setActivePrimarySection: (section) => set({ activePrimarySection: section }),

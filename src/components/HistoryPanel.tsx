@@ -297,13 +297,6 @@ export const HistoryPanel: React.FC = () => {
     closeContextMenu();
   };
 
-  const handleSendToUpscale = () => {
-    if (!imageContextMenu.imageUrl) return;
-    setCanvasImage(imageContextMenu.imageUrl);
-    setActivePrimarySection('upscaling');
-    closeContextMenu();
-  };
-
   const handleUseForPromptTemplate = () => {
     if (!promptText) {
       closeContextMenu();

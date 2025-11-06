@@ -1,69 +1,45 @@
 import React from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 interface IterationControlProps {
-  isUpscaleMode: boolean;
-  isUpscaling: boolean;
   isGenerating: boolean;
   isValidating: boolean;
-  upscaleScale: number;
   iterations: number;
   generationProgress: { current: number; total: number };
-  scaleLabel: string;
   iterationsLabel: string;
-  startUpscalingLabel: string;
-  stopUpscalingLabel: string;
   stopGeneration: string;
   validating: string;
   generate: string;
   isDarkMode: boolean;
-  onScaleChange: (value: number) => void;
   onIterationsChange: (value: number) => void;
   onPrimaryAction: () => void;
 }
 
 export const IterationControl: React.FC<IterationControlProps> = ({
-  isUpscaleMode,
-  isUpscaling,
   isGenerating,
   isValidating,
-  upscaleScale,
   iterations,
   generationProgress,
-  scaleLabel,
   iterationsLabel,
-  startUpscalingLabel,
-  stopUpscalingLabel,
   stopGeneration,
   validating,
   generate,
   isDarkMode,
-  onScaleChange,
   onIterationsChange,
   onPrimaryAction,
 }) => {
-  const primaryButtonVariant = isUpscaleMode
-    ? isUpscaling
-      ? 'default'
-      : 'ghost'
-    : isGenerating || isValidating
-      ? 'default'
-      : 'ghost';
+  const primaryButtonVariant = isGenerating || isValidating ? 'default' : 'ghost';
 
   const primaryButtonClassName = cn(
     'h-9 px-4 rounded-none border-0 transition-colors',
-    isUpscaleMode
-      ? isUpscaling
-        ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-500 hover:to-emerald-500 text-white'
+    isGenerating
+      ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
+      : isValidating
+        ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-600 hover:to-blue-600 text-white'
         : 'hover:bg-gray-800/80 text-gray-100'
-      : isGenerating
-        ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white'
-        : isValidating
-          ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-600 hover:to-blue-600 text-white'
-          : 'hover:bg-gray-800/80 text-gray-100'
   );
 
   const iterationControlWrapperClasses = cn(
@@ -95,42 +71,24 @@ export const IterationControl: React.FC<IterationControlProps> = ({
   return (
     <div className={iterationControlWrapperClasses}>
       <div className="relative">
-        {isUpscaleMode ? (
-          <Input
-            key="upscale-input"
-            type="number"
-            min={2}
-            max={8}
-            step={1}
-            value={upscaleScale}
-            onChange={(e) => {
-              const value = parseInt(e.target.value, 10);
-              onScaleChange(Number.isNaN(value) ? 2 : value);
-            }}
-            disabled={isUpscaling}
-            aria-label={scaleLabel}
-            className={iterationInputClasses}
-          />
-        ) : (
-          <Input
-            key="iterations-input"
-            type="number"
-            min={1}
-            max={10}
-            value={iterations}
-            onChange={(e) => {
-              const value = parseInt(e.target.value, 10) || 1;
-              onIterationsChange(Math.max(1, Math.min(10, value)));
-            }}
-            disabled={isGenerating || isValidating}
-            aria-label={iterationsLabel}
-            className={iterationInputClasses}
-          />
-        )}
+        <Input
+          key="iterations-input"
+          type="number"
+          min={1}
+          max={10}
+          value={iterations}
+          onChange={(e) => {
+            const value = parseInt(e.target.value, 10) || 1;
+            onIterationsChange(Math.max(1, Math.min(10, value)));
+          }}
+          disabled={isGenerating || isValidating}
+          aria-label={iterationsLabel}
+          className={iterationInputClasses}
+        />
         <div className={tooltipClasses}>
-          <span className="font-semibold text-purple-400">{isUpscaleMode ? scaleLabel : iterationsLabel}</span>
+          <span className="font-semibold text-purple-400">{iterationsLabel}</span>
           <span className="text-gray-400 mx-1">·</span>
-          <span>{isUpscaleMode ? `${upscaleScale}x` : `${iterations} ${iterations === 1 ? 'image' : 'images'}`}</span>
+          <span>{`${iterations} ${iterations === 1 ? 'image' : 'images'}`}</span>
           <div className={tooltipArrowClasses} />
         </div>
       </div>
@@ -139,21 +97,9 @@ export const IterationControl: React.FC<IterationControlProps> = ({
         size="sm"
         onClick={onPrimaryAction}
         className={primaryButtonClassName}
-        aria-pressed={isUpscaleMode ? isUpscaling : isGenerating || isValidating}
+        aria-pressed={isGenerating || isValidating}
       >
-        {isUpscaleMode ? (
-          isUpscaling ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              <span>{stopUpscalingLabel}</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4 mr-2" />
-              <span>{`${startUpscalingLabel} ×${upscaleScale}`}</span>
-            </>
-          )
-        ) : isGenerating ? (
+        {isGenerating ? (
           <>
             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
             {generationProgress.total > 0 ? (

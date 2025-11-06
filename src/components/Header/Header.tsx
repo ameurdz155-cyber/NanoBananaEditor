@@ -36,10 +36,6 @@ export const Header: React.FC = () => {
     generationProgress,
     iterations,
     setIterations,
-    activePrimarySection,
-    isUpscaling,
-    upscaleScale,
-    setUpscaleScale,
   } = useAppStore();
 
   const user = useAuthStore((state) => state.user);
@@ -128,18 +124,12 @@ export const Header: React.FC = () => {
 
   // Primary action handler (Generate/Upscale)
   const handlePrimaryAction = useCallback(() => {
-    const isUpscaleMode = activePrimarySection === 'upscaling';
-    if (isUpscaleMode) {
-      window.dispatchEvent(new CustomEvent('triggerUpscaleAction'));
-      return;
-    }
-
     if (isGenerating || isValidating) {
       window.dispatchEvent(new CustomEvent('cancelGeneration'));
     } else {
       window.dispatchEvent(new CustomEvent('triggerGenerate'));
     }
-  }, [isGenerating, activePrimarySection, isValidating]);
+  }, [isGenerating, isValidating]);
 
   // Event listeners
   useEffect(() => {
@@ -154,11 +144,7 @@ export const Header: React.FC = () => {
     return () => window.removeEventListener('triggerSaveImage', handleExternalSave);
   }, [handleSave]);
 
-  const isUpscaleMode = activePrimarySection === 'upscaling';
-  const scaleLabel = t.scaleLabel || 'Scale';
   const iterationsLabel = t.iterations || 'Iterations';
-  const startUpscalingLabel = t.startUpscaling || 'Upscale';
-  const stopUpscalingLabel = t.stopUpscaling || 'Stop Upscaling';
 
   return (
     <>
@@ -171,22 +157,15 @@ export const Header: React.FC = () => {
           <LogoSection isDarkMode={isDarkMode} appName={t.appName} versionBadge={t.versionBadge} />
 
           <IterationControl
-            isUpscaleMode={isUpscaleMode}
-            isUpscaling={isUpscaling}
             isGenerating={isGenerating}
             isValidating={isValidating}
-            upscaleScale={upscaleScale}
             iterations={iterations}
             generationProgress={generationProgress}
-            scaleLabel={scaleLabel}
             iterationsLabel={iterationsLabel}
-            startUpscalingLabel={startUpscalingLabel}
-            stopUpscalingLabel={stopUpscalingLabel}
             stopGeneration={t.stopGeneration}
             validating={t.validating}
             generate={t.generate}
             isDarkMode={isDarkMode}
-            onScaleChange={setUpscaleScale}
             onIterationsChange={setIterations}
             onPrimaryAction={handlePrimaryAction}
           />
