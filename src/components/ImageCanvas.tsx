@@ -199,13 +199,13 @@ export const ImageCanvas: React.FC = () => {
 
   const handleSetCanvasSource = useCallback(() => {
     if (!contextImageUrl) return;
-    setCanvasImage(contextImageUrl);
+    setCanvasImage(contextImageUrl, 'manual');
     closeContextMenu();
   }, [contextImageUrl, setCanvasImage, closeContextMenu]);
 
   const handleOpenCanvasWorkspace = useCallback(() => {
     if (!contextImageUrl) return;
-    setCanvasImage(contextImageUrl);
+    setCanvasImage(contextImageUrl, 'manual');
     setActivePrimarySection('canvas');
     closeContextMenu();
   }, [contextImageUrl, setCanvasImage, setActivePrimarySection, closeContextMenu]);
@@ -217,7 +217,7 @@ export const ImageCanvas: React.FC = () => {
 
   const handleNewCanvasFromImage = useCallback(() => {
     if (!contextImageUrl) return;
-    setCanvasImage(contextImageUrl);
+    setCanvasImage(contextImageUrl, 'manual');
     setSelectedTool('edit');
     setActivePrimarySection('canvas');
     closeContextMenu();

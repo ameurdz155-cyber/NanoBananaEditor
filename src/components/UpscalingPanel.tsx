@@ -25,6 +25,7 @@ export const UpscalingPanel: React.FC = () => {
   const promptPanelWidth = useAppStore((state) => state.promptPanelWidth);
   const setPromptPanelWidth = useAppStore((state) => state.setPromptPanelWidth);
   const canvasImage = useAppStore((state) => state.canvasImage);
+  const canvasImageOrigin = useAppStore((state) => state.canvasImageOrigin);
   const uploadedImages = useAppStore((state) => state.uploadedImages);
   const setCanvasImage = useAppStore((state) => state.setCanvasImage);
   const addGeneration = useAppStore((state) => state.addGeneration);
@@ -58,14 +59,14 @@ export const UpscalingPanel: React.FC = () => {
   }, []);
 
   React.useEffect(() => {
-    if (canvasImage) {
+    if (canvasImage && canvasImageOrigin !== 'asset') {
       setSourceImage(canvasImage);
       return;
     }
-    if (uploadedImages.length > 0) {
+    if (!canvasImage && uploadedImages.length > 0) {
       setSourceImage(uploadedImages[uploadedImages.length - 1]);
     }
-  }, [canvasImage, uploadedImages]);
+  }, [canvasImage, canvasImageOrigin, uploadedImages]);
 
   React.useEffect(() => () => {
     requestController.current?.abort();
@@ -268,7 +269,7 @@ export const UpscalingPanel: React.FC = () => {
         });
       }
 
-      setCanvasImage(dataUrl);
+  setCanvasImage(dataUrl, 'upscale');
       setSourceImage(dataUrl);
       setUpscaleScale(response.scale);
       setStatusMessage(`${t.upscalingCompleteStatus} (${response.scale}x • ${response.model})`);

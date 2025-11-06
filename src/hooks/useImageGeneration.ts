@@ -146,7 +146,7 @@ export const useImageGeneration = () => {
           }
         }
 
-        setCanvasImage(outputAssets[0].url);
+  setCanvasImage(outputAssets[0].url, 'generate');
         
         // Create project if none exists
         if (!currentProject) {
@@ -375,7 +375,7 @@ export const useImageEditing = () => {
         
         // Automatically load the edited image in the canvas
         const { selectEdit, selectGeneration } = useAppStore.getState();
-        setCanvasImage(outputAssets[0].url);
+  setCanvasImage(outputAssets[0].url, 'edit');
         selectEdit(edit.id);
         selectGeneration(null);
         

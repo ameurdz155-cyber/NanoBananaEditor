@@ -244,13 +244,15 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
 
   const handleSetCanvasImage = () => {
     if (!boardImageContextMenu.imageUrl) return;
-    setCanvasImage(boardImageContextMenu.imageUrl);
+    const origin = boardImageContextMenu.type === 'asset' ? 'asset' : 'board';
+    setCanvasImage(boardImageContextMenu.imageUrl, origin);
     closeBoardImageMenu();
   };
 
   const handleOpenCanvasWorkspace = () => {
     if (!boardImageContextMenu.imageUrl) return;
-    setCanvasImage(boardImageContextMenu.imageUrl);
+    const origin = boardImageContextMenu.type === 'asset' ? 'asset' : 'board';
+    setCanvasImage(boardImageContextMenu.imageUrl, origin);
     setActivePrimarySection('canvas');
     closeBoardImageMenu();
   };
@@ -315,7 +317,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
 
   const handleSendToUpscale = () => {
     if (!boardImageContextMenu.imageUrl) return;
-    setCanvasImage(boardImageContextMenu.imageUrl);
+    setCanvasImage(boardImageContextMenu.imageUrl, 'upscale');
     setActivePrimarySection('upscaling');
     closeBoardImageMenu();
   };
@@ -332,7 +334,8 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
 
   const handleNewCanvasFromImage = () => {
     if (!boardImageContextMenu.imageUrl) return;
-    setCanvasImage(boardImageContextMenu.imageUrl);
+    const origin = boardImageContextMenu.type === 'asset' ? 'asset' : 'board';
+    setCanvasImage(boardImageContextMenu.imageUrl, origin);
     setSelectedTool('edit');
     setActivePrimarySection('canvas');
     closeBoardImageMenu();

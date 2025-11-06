@@ -1,9 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import EmojiPicker, { EmojiClickData, Theme as EmojiTheme } from 'emoji-picker-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, Lock } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import {
+  faPalette,
+  faCamera,
+  faWandMagicSparkles,
+  faFeatherPointed,
+  faRobot,
+  faMountainSun,
+  faBrush,
+} from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { getTranslation } from '../i18n/translations';
@@ -27,6 +39,18 @@ const FONT_AWESOME_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'fa:mountain-sun', label: 'Landscape' },
   { value: 'fa:brush', label: 'Brush' },
 ];
+
+const FONT_AWESOME_ICON_MAP: Record<string, IconDefinition> = {
+  'fa:palette': faPalette,
+  'fa:camera': faCamera,
+  'fa:wand-magic-sparkles': faWandMagicSparkles,
+  'fa:feather-pointed': faFeatherPointed,
+  'fa:robot': faRobot,
+  'fa:mountain-sun': faMountainSun,
+  'fa:brush': faBrush,
+};
+
+const FONT_AWESOME_DEFAULT = FONT_AWESOME_OPTIONS[0]?.value ?? 'fa:palette';
 
 const resolveIsDarkMode = () => {
   if (typeof window === 'undefined') {
@@ -57,6 +81,29 @@ const detectIconMode = (value?: string): IconMode => {
   return 'emoji';
 };
 
+const renderIconVisual = (value?: string, size: 'sm' | 'md' | 'lg' = 'md'): React.ReactNode => {
+  const iconSizeClass = size === 'lg' ? 'text-3xl' : size === 'sm' ? 'text-lg' : 'text-2xl';
+  const imageSizeClass = size === 'lg' ? 'h-12 w-12' : size === 'sm' ? 'h-6 w-6' : 'h-8 w-8';
+
+  if (!value) {
+    return <span className={iconSizeClass}>✨</span>;
+  }
+
+  if (value.startsWith('data:image')) {
+    return <img src={value} alt="" className={`${imageSizeClass} object-contain`} />;
+  }
+
+  if (value.startsWith('fa:')) {
+    const icon = FONT_AWESOME_ICON_MAP[value];
+    if (icon) {
+      return <FontAwesomeIcon icon={icon} className={iconSizeClass} />;
+    }
+    return <span className={iconSizeClass}>🏷️</span>;
+  }
+
+  return <span className={iconSizeClass}>{value}</span>;
+};
+
 export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = ({ open, onOpenChange }) => {
   const language = useAppStore((state) => state.language);
   const t = getTranslation(language);
@@ -74,6 +121,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(resolveIsDarkMode);
   const [iconMode, setIconMode] = useState<IconMode>(detectIconMode('✨'));
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -88,6 +136,9 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     () => FONT_AWESOME_OPTIONS.find((option) => option.value === formData.emoji),
     [formData.emoji]
   );
+  const emojiPickerTheme = isDarkMode ? EmojiTheme.DARK : EmojiTheme.LIGHT;
+  const fontAwesomeSelection =
+    detectIconMode(formData.emoji) === 'fontawesome' ? formData.emoji : FONT_AWESOME_DEFAULT;
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -132,10 +183,17 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   }, [open, language]);
 
   useEffect(() => {
+    if (!open) {
+      setShowEmojiPicker(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (!canManageTemplates) {
       setShowAddForm(false);
       setEditingId(null);
       setIconMode('emoji');
+      setShowEmojiPicker(false);
     }
   }, [canManageTemplates]);
 
@@ -156,17 +214,21 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       emoji: '✨',
     });
     setIconMode('emoji');
+    setShowEmojiPicker(false);
   };
 
   const handleIconModeChange = (mode: IconMode) => {
     setIconMode(mode);
+    if (mode !== 'emoji') {
+      setShowEmojiPicker(false);
+    }
     setFormData((prev) => {
       if (mode === 'emoji') {
         const nextEmoji = detectIconMode(prev.emoji) === 'emoji' && prev.emoji ? prev.emoji : '✨';
         return { ...prev, emoji: nextEmoji };
       }
       if (mode === 'fontawesome') {
-        const fallback = FONT_AWESOME_OPTIONS[0]?.value ?? 'fa:palette';
+        const fallback = FONT_AWESOME_DEFAULT;
         const nextEmoji = detectIconMode(prev.emoji) === 'fontawesome' && prev.emoji ? prev.emoji : fallback;
         return { ...prev, emoji: nextEmoji };
       }
@@ -187,6 +249,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       if (result) {
         setFormData((prev) => ({ ...prev, emoji: result }));
         setIconMode('upload');
+        setShowEmojiPicker(false);
       }
     };
     reader.readAsDataURL(file);
@@ -231,6 +294,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       emoji: template.emoji || '✨',
     });
     setIconMode(detectIconMode(template.emoji));
+    setShowEmojiPicker(false);
     setShowAddForm(true);
   };
 
@@ -264,6 +328,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     setEditingId(null);
     resetForm();
     setShowAddForm(false);
+    setShowEmojiPicker(false);
   };
 
   // Delete template
@@ -525,37 +590,83 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                       </div>
 
                       {iconMode === 'emoji' && (
-                        <Input
-                          value={formData.emoji}
-                          onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                          className={cn(
-                            'text-center text-2xl',
-                            isDarkMode
-                              ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
-                              : 'bg-white/95 text-gray-900 border-gray-300'
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <Input
+                              value={formData.emoji}
+                              onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
+                              className={cn(
+                                'text-center text-2xl',
+                                isDarkMode
+                                  ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
+                                  : 'bg-white/95 text-gray-900 border-gray-300'
+                              )}
+                              placeholder={language === 'zh' ? '例如：✨' : 'e.g. ✨'}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="whitespace-nowrap"
+                              onClick={() => setShowEmojiPicker((prev) => !prev)}
+                            >
+                              {language === 'zh' ? '选择表情' : 'Choose emoji'}
+                            </Button>
+                          </div>
+                          {showEmojiPicker && (
+                            <div
+                              className={cn(
+                                'relative rounded-xl border shadow-lg shadow-cyan-600/10',
+                                isDarkMode ? 'border-cyan-500/20 bg-gray-900/90' : 'border-cyan-200 bg-white'
+                              )}
+                            >
+                              <EmojiPicker
+                                onEmojiClick={(emojiData: EmojiClickData) => {
+                                  setFormData((prev) => ({ ...prev, emoji: emojiData.emoji }));
+                                  setShowEmojiPicker(false);
+                                }}
+                                lazyLoadEmojis
+                                skinTonesDisabled
+                                searchDisabled={false}
+                                width="100%"
+                                theme={emojiPickerTheme}
+                                previewConfig={{ showPreview: false }}
+                                style={{
+                                  background: 'transparent',
+                                  borderRadius: '12px',
+                                }}
+                              />
+                            </div>
                           )}
-                          maxLength={2}
-                          placeholder={language === 'zh' ? '例如：✨' : 'e.g. ✨'}
-                        />
+                        </div>
                       )}
 
                       {iconMode === 'fontawesome' && (
-                        <select
-                          value={detectIconMode(formData.emoji) === 'fontawesome' ? formData.emoji : FONT_AWESOME_OPTIONS[0]?.value ?? 'fa:palette'}
-                          onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                          style={{
-                            background: isDarkMode ? 'var(--surface-secondary)' : 'rgba(255,255,255,0.96)',
-                            borderColor: 'var(--surface-border)',
-                            color: 'var(--text-primary)'
-                          }}
-                        >
-                          {FONT_AWESOME_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            {FONT_AWESOME_OPTIONS.map((option) => {
+                              const icon = FONT_AWESOME_ICON_MAP[option.value];
+                              const isSelected = fontAwesomeSelection === option.value;
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  size="sm"
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  className="flex items-center justify-start gap-2"
+                                  onClick={() => setFormData({ ...formData, emoji: option.value })}
+                                >
+                                  {icon ? (
+                                    <FontAwesomeIcon icon={icon} className="text-lg" />
+                                  ) : (
+                                    <span className="text-lg">🏷️</span>
+                                  )}
+                                  <span className="text-sm">{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
 
                       {iconMode === 'upload' && (
@@ -596,15 +707,9 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                         className="mt-3 rounded-lg border py-3 text-center"
                         style={{ borderColor: 'var(--surface-border)' }}
                       >
-                        {iconMode === 'upload' && formData.emoji?.startsWith('data:image') ? (
-                          <img
-                            src={formData.emoji}
-                            alt="Icon preview"
-                            className="mx-auto h-12 w-12 object-contain"
-                          />
-                        ) : (
-                          <span className="text-2xl">{getEmojiDisplay(formData.emoji)}</span>
-                        )}
+                        <div className="flex items-center justify-center">
+                          {renderIconVisual(formData.emoji, 'lg')}
+                        </div>
                         {iconMode === 'fontawesome' && selectedFontAwesome && (
                           <p className="mt-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
                             {selectedFontAwesome.label}
@@ -771,7 +876,9 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-start space-x-3 flex-1">
-                          <span className="text-2xl">{template.emoji || '✨'}</span>
+                            <span className="flex h-10 w-10 items-center justify-center text-2xl">
+                              {renderIconVisual(template.emoji)}
+                            </span>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium" style={{ color: 'var(--text-primary)' }}>{template.name}</h4>
                             {template.description && (

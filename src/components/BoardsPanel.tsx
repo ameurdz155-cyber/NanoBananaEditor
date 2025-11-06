@@ -375,7 +375,7 @@ export const BoardsPanel: React.FC = () => {
                               alt={type === 'generation' ? 'Generation' : 'Edit'}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                               onClick={() => {
-                                setCanvasImage(imageUrl);
+                                setCanvasImage(imageUrl, 'board');
                                 if (type === 'generation') {
                                   selectGeneration(id);
                                   selectEdit(null);
@@ -396,7 +396,7 @@ export const BoardsPanel: React.FC = () => {
                                   className="bg-white/10 hover:bg-white/20"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setCanvasImage(imageUrl);
+                                    setCanvasImage(imageUrl, 'board');
                                     setShowBoardsPanel(false);
                                   }}
                                 >
@@ -465,7 +465,7 @@ export const BoardsPanel: React.FC = () => {
                                     {boards.filter(b => b.id !== selectedBoard).map(board => {
                                       const isInBoard = board.imageIds.includes(id);
                                       return (
-                                        <button
+                                        setCanvasImage(imageUrl, 'board');
                                           key={board.id}
                                           onClick={(e) => {
                                             e.stopPropagation();
@@ -541,7 +541,7 @@ export const BoardsPanel: React.FC = () => {
                               alt={type === 'generation' ? 'Generation' : 'Edit'}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                               onClick={() => {
-                                setCanvasImage(imageUrl);
+                                setCanvasImage(imageUrl, 'board');
                                 if (type === 'generation') {
                                   selectGeneration(id);
                                   selectEdit(null);

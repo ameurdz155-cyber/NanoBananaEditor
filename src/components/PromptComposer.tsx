@@ -536,13 +536,13 @@ export const PromptComposer: React.FC = () => {
             addEditReferenceImage(dataUrl);
             // Set as canvas image if none exists
             if (!canvasImage) {
-              setCanvasImage(dataUrl);
+              setCanvasImage(dataUrl, 'upload');
             }
           } else if (selectedTool === 'mask') {
             // For mask mode, set as canvas image immediately
             clearUploadedImages();
             addUploadedImage(dataUrl);
-            setCanvasImage(dataUrl);
+            setCanvasImage(dataUrl, 'upload');
           }
         };
         reader.readAsDataURL(file);

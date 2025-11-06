@@ -3,6 +3,19 @@ import { devtools, persist } from 'zustand/middleware';
 import { Project, Generation, Edit, BrushStroke, PromptTemplate, PromptCategory } from '../types';
 import { Language } from '../i18n/translations';
 
+export type CanvasImageOrigin =
+  | 'upload'
+  | 'generate'
+  | 'edit'
+  | 'history'
+  | 'asset'
+  | 'upscale'
+  | 'board'
+  | 'manual'
+  | 'workflow'
+  | 'reference'
+  | 'unknown';
+
 export interface Board {
   id: string;
   name: string;
@@ -27,6 +40,7 @@ interface AppState {
   
   // Canvas state
   canvasImage: string | null;
+  canvasImageOrigin: CanvasImageOrigin | null;
   canvasZoom: number;
   canvasPan: { x: number; y: number };
   canvasRotation: number;
@@ -80,9 +94,19 @@ interface AppState {
   setCurrentProject: (project: Project | null) => void;
   addToPromptHistory: (prompt: string) => void;
   deletePromptFromHistory: (index: number) => void;
+
+  // Auto-save setting
+  autoSaveEnabled: boolean;
+  setAutoSaveEnabled: (enabled: boolean) => void;
+
+  // Generation progress
+  generationProgress: { current: number; total: number };
+  setGenerationProgress: (progress: { current: number; total: number }) => void;
+  lastGenerationParameters: { width: number; height: number; aspectRatio?: string } | null;
+  setLastGenerationParameters: (params: { width: number; height: number; aspectRatio?: string } | null) => void;
   deleteGeneration: (generationId: string) => void;
   deleteEdit: (editId: string) => void;
-  setCanvasImage: (url: string | null) => void;
+  setCanvasImage: (url: string | null, origin?: CanvasImageOrigin) => void;
   setCanvasZoom: (zoom: number) => void;
   setCanvasPan: (pan: { x: number; y: number }) => void;
   setCanvasRotation: (rotation: number) => void;
@@ -134,16 +158,6 @@ interface AppState {
   // Save Path state (Desktop app only)
   savePath: string | null;
   setSavePath: (path: string | null) => void;
-
-  // Auto-save setting
-  autoSaveEnabled: boolean;
-  setAutoSaveEnabled: (enabled: boolean) => void;
-
-  // Generation progress
-  generationProgress: { current: number; total: number };
-  setGenerationProgress: (progress: { current: number; total: number }) => void;
-  lastGenerationParameters: { width: number; height: number; aspectRatio?: string } | null;
-  setLastGenerationParameters: (params: { width: number; height: number; aspectRatio?: string } | null) => void;
   
   // Boards actions
   setBoards: (boards: Board[]) => void;
@@ -192,7 +206,8 @@ export const useAppStore = create<AppState>()(
   customTemplates: [],
   promptCategories: [],
       
-      canvasImage: null,
+  canvasImage: null,
+  canvasImageOrigin: null,
       canvasZoom: 1,
       canvasPan: { x: 0, y: 0 },
   canvasRotation: 0,
@@ -248,7 +263,11 @@ export const useAppStore = create<AppState>()(
       
       // Actions
       setCurrentProject: (project) => set({ currentProject: project }),
-      setCanvasImage: (url) => set({ canvasImage: url }),
+      setCanvasImage: (url, origin) =>
+        set({
+          canvasImage: url,
+          canvasImageOrigin: url ? origin ?? 'unknown' : null,
+        }),
       setCanvasZoom: (zoom) => set({ canvasZoom: zoom }),
       setCanvasPan: (pan) => set({ canvasPan: pan }),
   setCanvasRotation: (rotation) => set({ canvasRotation: ((rotation % 360) + 360) % 360 }),

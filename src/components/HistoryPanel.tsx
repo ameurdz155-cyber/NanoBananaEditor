@@ -227,13 +227,13 @@ export const HistoryPanel: React.FC = () => {
 
   const handleSetCanvasImage = () => {
     if (!imageContextMenu.imageUrl) return;
-    setCanvasImage(imageContextMenu.imageUrl);
+    setCanvasImage(imageContextMenu.imageUrl, 'history');
     closeContextMenu();
   };
 
   const handleOpenCanvasWorkspace = () => {
     if (!imageContextMenu.imageUrl) return;
-    setCanvasImage(imageContextMenu.imageUrl);
+    setCanvasImage(imageContextMenu.imageUrl, 'history');
     setActivePrimarySection('canvas');
     closeContextMenu();
   };
@@ -299,7 +299,7 @@ export const HistoryPanel: React.FC = () => {
 
   const handleSendToUpscale = () => {
     if (!imageContextMenu.imageUrl) return;
-    setCanvasImage(imageContextMenu.imageUrl);
+    setCanvasImage(imageContextMenu.imageUrl, 'upscale');
     setActivePrimarySection('upscaling');
     closeContextMenu();
   };
@@ -316,7 +316,7 @@ export const HistoryPanel: React.FC = () => {
 
   const handleNewCanvasFromImage = () => {
     if (!imageContextMenu.imageUrl) return;
-    setCanvasImage(imageContextMenu.imageUrl);
+    setCanvasImage(imageContextMenu.imageUrl, 'history');
     setSelectedTool('edit');
     setActivePrimarySection('canvas');
     closeContextMenu();
@@ -590,7 +590,7 @@ export const HistoryPanel: React.FC = () => {
                         selectGeneration(generation.id);
                         selectEdit(null);
                         if (generation.outputAssets[0]) {
-                          setCanvasImage(generation.outputAssets[0].url);
+                          setCanvasImage(generation.outputAssets[0].url, 'history');
                         }
                         // Set prompt in prompt composer
                         if (generation.prompt) {
@@ -684,7 +684,7 @@ export const HistoryPanel: React.FC = () => {
                       )}
                       onClick={() => {
                         if (edit.outputAssets[0]) {
-                          setCanvasImage(edit.outputAssets[0].url);
+                          setCanvasImage(edit.outputAssets[0].url, 'history');
                           selectEdit(edit.id);
                           selectGeneration(null);
                         }
@@ -774,7 +774,8 @@ export const HistoryPanel: React.FC = () => {
           edits={edits}
           resolveImageUrl={resolveImageUrl}
           onImageSelect={(imageUrl, imageId, type) => {
-            setCanvasImage(imageUrl);
+            const origin = type === 'asset' ? 'asset' : 'history';
+            setCanvasImage(imageUrl, origin);
             if (type === 'generation') {
               selectGeneration(imageId);
               selectEdit(null);
