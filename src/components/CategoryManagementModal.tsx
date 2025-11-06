@@ -13,6 +13,8 @@ interface Category {
   createdAt: number;
 }
 
+const MAX_ICON_SIZE_BYTES = 60 * 1024; // ~60 KB base64-safe limit for localStorage
+
 interface CategoryManagementModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,6 +31,8 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
   const [formEmoji, setFormEmoji] = useState('📁');
   const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [iconError, setIconError] = useState<string | null>(null);
+  const [storageError, setStorageError] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === 'undefined') {
       return true;
@@ -73,8 +77,19 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
 
   // Save categories to localStorage
   const saveCategories = (cats: Category[]) => {
-    localStorage.setItem('promptCategories', JSON.stringify(cats));
-    setCategories(cats);
+    try {
+      localStorage.setItem('promptCategories', JSON.stringify(cats));
+      setCategories(cats);
+      setStorageError(null);
+    } catch (error) {
+      console.error('Failed to save promptCategories:', error);
+      setStorageError(
+        language === 'zh'
+          ? '存储空间已满，请删除一些分类图标或清除浏览器存储。'
+          : 'Storage is full. Remove some category icons or clear browser storage.'
+      );
+      throw error;
+    }
   };
 
   // Open modal for create
@@ -86,6 +101,8 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    setIconError(null);
+    setStorageError(null);
   };
 
   // Open modal for edit
@@ -97,32 +114,39 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    setIconError(null);
+    setStorageError(null);
   };
 
   // Save (create or update)
   const handleSave = () => {
     if (!formName.trim()) return;
     
-    if (editingId) {
-      // Update existing
-      const updated = categories.map(cat => 
-        cat.id === editingId 
-          ? { ...cat, name: formName.trim(), emoji: formEmoji }
-          : cat
-      );
-      saveCategories(updated);
-    } else {
-      // Create new
-      const newCategory: Category = {
-        id: `cat-${Date.now()}`,
-        name: formName.trim(),
-        emoji: formEmoji || '📁',
-        createdAt: Date.now(),
-      };
-      const updated = [...categories, newCategory];
-      saveCategories(updated);
+    try {
+      if (editingId) {
+        // Update existing
+        const updated = categories.map(cat => 
+          cat.id === editingId 
+            ? { ...cat, name: formName.trim(), emoji: formEmoji }
+            : cat
+        );
+        saveCategories(updated);
+      } else {
+        // Create new
+        const newCategory: Category = {
+          id: `cat-${Date.now()}`,
+          name: formName.trim(),
+          emoji: formEmoji || '📁',
+          createdAt: Date.now(),
+        };
+        const updated = [...categories, newCategory];
+        saveCategories(updated);
+      }
+    } catch (error) {
+      // Already handled inside saveCategories; keep modal open for user to adjust
+      return;
     }
-    
+
     setShowEditModal(false);
     setEditingId(null);
     setFormName('');
@@ -130,6 +154,7 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    setIconError(null);
   };
 
   // Cancel edit/create
@@ -144,15 +169,25 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
   };
 
   const processIconFile = useCallback((file: File) => {
+    if (file.size > MAX_ICON_SIZE_BYTES) {
+      setIconError(
+        language === 'zh'
+          ? `图标文件过大（最大 ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB）。`
+          : `Icon file is too large (max ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB).`
+      );
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const result = typeof event.target?.result === 'string' ? event.target.result : '';
       if (result) {
         setFormEmoji(result);
+        setIconError(null);
       }
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [language]);
 
   const handleIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -183,6 +218,7 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    setIconError(null);
   };
 
   // Font Awesome icons list using react-icons
@@ -257,6 +293,14 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
         if (items[index].type.includes('image')) {
           const blob = items[index].getAsFile();
           if (blob) {
+            if (blob.size > MAX_ICON_SIZE_BYTES) {
+              setIconError(
+                language === 'zh'
+                  ? `粘贴的图像过大（最大 ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB）。`
+                  : `Pasted image is too large (max ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB).`
+              );
+              return;
+            }
             processIconFile(blob);
             event.preventDefault();
             break;
@@ -267,7 +311,7 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
 
     document.addEventListener('paste', handlePaste);
     return () => document.removeEventListener('paste', handlePaste);
-  }, [showEditModal, processIconFile]);
+  }, [showEditModal, processIconFile, language]);
 
   // Delete category
   const handleDelete = (id: string) => {
@@ -599,6 +643,11 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
                         ? '在对话框打开时可直接使用 Ctrl+V 粘贴图片'
                         : 'You can also paste an image while this dialog is open (Ctrl+V).'}
                     </p>
+                    {iconError ? (
+                      <p className="text-xs text-center mt-2" style={{ color: '#ef4444' }}>
+                        {iconError}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -620,6 +669,13 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
               </div>
 
               {/* Action Buttons */}
+              {storageError ? (
+                <div className="mb-3 rounded-lg border px-3 py-2" style={{ borderColor: 'rgba(248, 113, 113, 0.4)', background: isDarkMode ? 'rgba(248, 113, 113, 0.08)' : 'rgba(254, 226, 226, 0.6)' }}>
+                  <p className="text-sm" style={{ color: '#ef4444' }}>
+                    {storageError}
+                  </p>
+                </div>
+              ) : null}
               <div className="flex gap-3 mt-6">
                 <Button
                   onClick={handleSave}
