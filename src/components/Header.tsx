@@ -237,7 +237,7 @@ export function Header() {
             className="flex items-center gap-2 hover:bg-accent px-3 h-8 rounded-none border-0"
           >
             <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-medium">Generate</span>
+            <span className="text-sm font-medium">{t.generate ?? 'Generate'}</span>
           </Button>
           
           <Select value={count} onValueChange={setCount}>
@@ -338,7 +338,7 @@ export function Header() {
           title={showMasks ? (language === 'zh' ? '隐藏蒙版' : 'Hide masks') : (language === 'zh' ? '显示蒙版' : 'Show masks')}
         >
           {showMasks ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-          <span className="text-sm">Masks</span>
+          <span className="text-sm">{t.masks ?? 'Masks'}</span>
         </Button>
 
         <Button
