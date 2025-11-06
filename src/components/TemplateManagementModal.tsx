@@ -4,17 +4,6 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, Lock, UploadCloud } from 'lucide-react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import {
-  faPalette,
-  faCamera,
-  faWandMagicSparkles,
-  faFeatherPointed,
-  faRobot,
-  faMountainSun,
-  faBrush,
-} from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { getTranslation } from '../i18n/translations';
@@ -27,15 +16,7 @@ interface TemplateManagementModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const FONT_AWESOME_ICON_MAP: Record<string, IconDefinition> = {
-  'fa:palette': faPalette,
-  'fa:camera': faCamera,
-  'fa:wand-magic-sparkles': faWandMagicSparkles,
-  'fa:feather-pointed': faFeatherPointed,
-  'fa:robot': faRobot,
-  'fa:mountain-sun': faMountainSun,
-  'fa:brush': faBrush,
-};
+const MAX_ICON_SIZE_BYTES = 60 * 1024; // ~60KB keeps localStorage usage modest
 
 const resolveIsDarkMode = () => {
   if (typeof window === 'undefined') {
@@ -58,18 +39,14 @@ const renderIconVisual = (value?: string, size: 'sm' | 'md' | 'lg' = 'md'): Reac
   const imageSizeClass = size === 'lg' ? 'h-12 w-12' : size === 'sm' ? 'h-6 w-6' : 'h-8 w-8';
 
   if (!value) {
-    return <span className={iconSizeClass}>✨</span>;
+    return <UploadCloud className={`${imageSizeClass} text-[var(--text-secondary)]`} />;
   }
 
   if (value.startsWith('data:image')) {
-    return <img src={value} alt="" className={`${imageSizeClass} object-contain`} />;
+    return <img src={value} alt="" className={`${imageSizeClass} object-contain rounded`} />;
   }
 
   if (value.startsWith('fa:')) {
-    const icon = FONT_AWESOME_ICON_MAP[value];
-    if (icon) {
-      return <FontAwesomeIcon icon={icon} className={iconSizeClass} />;
-    }
     return <span className={iconSizeClass}>🏷️</span>;
   }
 
@@ -100,8 +77,9 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     positivePrompt: '',
     negativePrompt: '',
     categoryId: '',
-    emoji: '✨',
+    emoji: '',
   });
+  const [iconError, setIconError] = useState<string | null>(null);
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -166,16 +144,27 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       positivePrompt: '',
       negativePrompt: '',
       categoryId: '',
-      emoji: '✨',
+      emoji: '',
     });
+    setIconError(null);
   };
 
   const processIconFile = (file: File) => {
+    if (file.size > MAX_ICON_SIZE_BYTES) {
+      setIconError(
+        language === 'zh'
+          ? `图标文件过大（最大 ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB）。`
+          : `Icon file is too large (max ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB).`
+      );
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
       const result = typeof reader.result === 'string' ? reader.result : '';
       if (result) {
         setFormData((prev) => ({ ...prev, emoji: result }));
+        setIconError(null);
       }
     };
     reader.readAsDataURL(file);
@@ -207,6 +196,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
 
   const handleClearUploadedIcon = () => {
     setFormData((prev) => ({ ...prev, emoji: '' }));
+    setIconError(null);
   };
 
   // Create new template
@@ -220,7 +210,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       positivePrompt: formData.positivePrompt.trim(),
       negativePrompt: formData.negativePrompt.trim() || undefined,
       categoryId: formData.categoryId || undefined,
-      emoji: formData.emoji || '✨',
+      emoji: formData.emoji || undefined,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -240,8 +230,9 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       positivePrompt: template.positivePrompt,
       negativePrompt: template.negativePrompt || '',
       categoryId: template.categoryId || '',
-      emoji: template.emoji || '✨',
+      emoji: template.emoji || '',
     });
+    setIconError(null);
     setShowAddForm(true);
   };
 
@@ -258,7 +249,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
             positivePrompt: formData.positivePrompt.trim(),
             negativePrompt: formData.negativePrompt.trim() || undefined,
             categoryId: formData.categoryId || undefined,
-            emoji: formData.emoji || '✨',
+            emoji: formData.emoji || undefined,
             updatedAt: Date.now(),
           }
         : tpl
@@ -310,7 +301,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     return matchesSearch && matchesCategory;
   });
 
-  // Helper to get display text for emoji (converts fa: icons to emoji or text)
+  // Helper to present category emoji in filter chips (handles legacy values)
   const getEmojiDisplay = (emoji: string) => {
     if (!emoji) return '📁';
     if (emoji.startsWith('fa:')) {
@@ -520,8 +511,8 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                           className={cn(
                             'flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-6 text-center transition-all',
                             isDarkMode
-                              ? 'border-cyan-500/30 bg-black/30 hover:border-cyan-400/70 hover:bg-black/20'
-                              : 'border-cyan-300/60 bg-white/80 hover:border-cyan-500 hover:bg-cyan-50'
+                              ? 'border-emerald-500/35 bg-[rgba(9,20,26,0.75)] hover:border-emerald-400 hover:bg-[rgba(9,28,34,0.85)]'
+                              : 'border-emerald-200 bg-white/95 hover:border-emerald-400 hover:bg-emerald-50'
                           )}
                           style={{ color: 'var(--text-secondary)' }}
                         >
@@ -542,7 +533,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                               <div
                                 className={cn(
                                   'mb-3 flex h-16 w-16 items-center justify-center rounded-full',
-                                  isDarkMode ? 'bg-cyan-500/15 text-cyan-200' : 'bg-cyan-100 text-cyan-600'
+                                  isDarkMode ? 'bg-emerald-500/15 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
                                 )}
                               >
                                 <UploadCloud className="h-7 w-7" />
@@ -559,7 +550,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                           )}
                         </label>
                         <div className="flex items-center justify-center gap-2">
-                          <Button asChild size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white">
+                          <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
                             <label htmlFor="template-icon-upload" className="cursor-pointer">
                               {language === 'zh' ? '浏览文件' : 'Browse files'}
                             </label>
@@ -570,11 +561,24 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                             </Button>
                           ) : null}
                         </div>
+                        <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
+                          {language === 'zh'
+                            ? `最大文件大小约 ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB`
+                            : `Maximum file size about ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB`}
+                        </p>
+                        {iconError ? (
+                          <p className="text-xs text-center" style={{ color: '#ef4444' }}>
+                            {iconError}
+                          </p>
+                        ) : null}
                       </div>
 
                       <div
                         className="mt-3 rounded-lg border py-3 text-center"
-                        style={{ borderColor: 'var(--surface-border)' }}
+                        style={{
+                          borderColor: 'var(--surface-border)',
+                          background: isDarkMode ? 'rgba(12, 16, 24, 0.8)' : 'rgba(240, 249, 244, 0.6)'
+                        }}
                       >
                         <div className="flex items-center justify-center">
                           {renderIconVisual(formData.emoji, 'lg')}
