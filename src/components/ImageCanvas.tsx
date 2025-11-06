@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Stage, Layer, Image as KonvaImage, Line } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Line, Group } from 'react-konva';
 import { useAppStore } from '../store/useAppStore';
 import {
   Sparkles,
@@ -27,6 +27,7 @@ export const ImageCanvas: React.FC = () => {
     setCanvasZoom,
     canvasPan,
     setCanvasPan,
+  canvasRotation,
     brushStrokes,
     addBrushStroke,
     showMasks,
@@ -488,23 +489,30 @@ export const ImageCanvas: React.FC = () => {
     // Disable drawing when generating
     if (selectedTool !== 'mask' || !image || isGenerating) return;
     
-    setIsDrawing(true);
     const stage = e.target.getStage();
-    
-    // Use Konva's getRelativePointerPosition for accurate coordinates
-    const relativePos = stage.getRelativePointerPosition();
-    
-    // Calculate image bounds on the stage
-    const imageX = (stageSize.width / canvasZoom - image.width) / 2;
-    const imageY = (stageSize.height / canvasZoom - image.height) / 2;
-    
-    // Convert to image-relative coordinates
-    const relativeX = relativePos.x - imageX;
-    const relativeY = relativePos.y - imageY;
+    const pointer = stage.getRelativePointerPosition();
+    if (!pointer) {
+      return;
+    }
+
+    const centerX = (stageSize.width / canvasZoom) / 2;
+    const centerY = (stageSize.height / canvasZoom) / 2;
+    const dx = pointer.x - centerX;
+    const dy = pointer.y - centerY;
+    const angle = (-canvasRotation * Math.PI) / 180;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const rotatedX = dx * cos - dy * sin;
+    const rotatedY = dx * sin + dy * cos;
+    const relativeX = rotatedX + image.width / 2;
+    const relativeY = rotatedY + image.height / 2;
     
     // Check if click is within image bounds
     if (relativeX >= 0 && relativeX <= image.width && relativeY >= 0 && relativeY <= image.height) {
+      setIsDrawing(true);
       setCurrentStroke([relativeX, relativeY]);
+    } else {
+      setIsDrawing(false);
     }
   };
 
@@ -513,17 +521,22 @@ export const ImageCanvas: React.FC = () => {
     if (!isDrawing || selectedTool !== 'mask' || !image || isGenerating) return;
     
     const stage = e.target.getStage();
-    
-    // Use Konva's getRelativePointerPosition for accurate coordinates
-    const relativePos = stage.getRelativePointerPosition();
-    
-    // Calculate image bounds on the stage
-    const imageX = (stageSize.width / canvasZoom - image.width) / 2;
-    const imageY = (stageSize.height / canvasZoom - image.height) / 2;
-    
-    // Convert to image-relative coordinates
-    const relativeX = relativePos.x - imageX;
-    const relativeY = relativePos.y - imageY;
+    const pointer = stage.getRelativePointerPosition();
+    if (!pointer) {
+      return;
+    }
+
+    const centerX = (stageSize.width / canvasZoom) / 2;
+    const centerY = (stageSize.height / canvasZoom) / 2;
+    const dx = pointer.x - centerX;
+    const dy = pointer.y - centerY;
+    const angle = (-canvasRotation * Math.PI) / 180;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const rotatedX = dx * cos - dy * sin;
+    const rotatedY = dx * sin + dy * cos;
+    const relativeX = rotatedX + image.width / 2;
+    const relativeY = rotatedY + image.height / 2;
     
     // Check if within image bounds
     if (relativeX >= 0 && relativeX <= image.width && relativeY >= 0 && relativeY <= image.height) {
@@ -677,44 +690,50 @@ export const ImageCanvas: React.FC = () => {
         >
           <Layer>
             {image && (
-              <KonvaImage
-                image={image}
-                x={(stageSize.width / canvasZoom - image.width) / 2}
-                y={(stageSize.height / canvasZoom - image.height) / 2}
-              />
-            )}
-            
-            {/* Brush Strokes */}
-            {showMasks && brushStrokes.map((stroke) => (
-              <Line
-                key={stroke.id}
-                points={stroke.points}
-                stroke="#A855F7"
-                strokeWidth={stroke.brushSize}
-                tension={0.5}
-                lineCap="round"
-                lineJoin="round"
-                globalCompositeOperation="source-over"
-                opacity={0.6}
-                x={(stageSize.width / canvasZoom - (image?.width || 0)) / 2}
-                y={(stageSize.height / canvasZoom - (image?.height || 0)) / 2}
-              />
-            ))}
-            
-            {/* Current stroke being drawn */}
-            {isDrawing && currentStroke.length > 2 && (
-              <Line
-                points={currentStroke}
-                stroke="#A855F7"
-                strokeWidth={brushSize}
-                tension={0.5}
-                lineCap="round"
-                lineJoin="round"
-                globalCompositeOperation="source-over"
-                opacity={0.6}
-                x={(stageSize.width / canvasZoom - (image?.width || 0)) / 2}
-                y={(stageSize.height / canvasZoom - (image?.height || 0)) / 2}
-              />
+              <Group
+                x={(stageSize.width / canvasZoom) / 2}
+                y={(stageSize.height / canvasZoom) / 2}
+                rotation={canvasRotation}
+              >
+                <KonvaImage
+                  image={image}
+                  x={-image.width / 2}
+                  y={-image.height / 2}
+                />
+
+                {/* Brush Strokes */}
+                {showMasks && brushStrokes.map((stroke) => (
+                  <Line
+                    key={stroke.id}
+                    points={stroke.points}
+                    stroke="#A855F7"
+                    strokeWidth={stroke.brushSize}
+                    tension={0.5}
+                    lineCap="round"
+                    lineJoin="round"
+                    globalCompositeOperation="source-over"
+                    opacity={0.6}
+                    x={-image.width / 2}
+                    y={-image.height / 2}
+                  />
+                ))}
+
+                {/* Current stroke being drawn */}
+                {isDrawing && currentStroke.length > 2 && (
+                  <Line
+                    points={currentStroke}
+                    stroke="#A855F7"
+                    strokeWidth={brushSize}
+                    tension={0.5}
+                    lineCap="round"
+                    lineJoin="round"
+                    globalCompositeOperation="source-over"
+                    opacity={0.6}
+                    x={-image.width / 2}
+                    y={-image.height / 2}
+                  />
+                )}
+              </Group>
             )}
           </Layer>
         </Stage>

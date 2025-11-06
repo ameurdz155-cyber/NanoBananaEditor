@@ -29,6 +29,7 @@ interface AppState {
   canvasImage: string | null;
   canvasZoom: number;
   canvasPan: { x: number; y: number };
+  canvasRotation: number;
   
   // Upload state
   uploadedImages: string[];
@@ -84,6 +85,7 @@ interface AppState {
   setCanvasImage: (url: string | null) => void;
   setCanvasZoom: (zoom: number) => void;
   setCanvasPan: (pan: { x: number; y: number }) => void;
+  setCanvasRotation: (rotation: number) => void;
   
   addUploadedImage: (url: string) => void;
   removeUploadedImage: (index: number) => void;
@@ -193,6 +195,7 @@ export const useAppStore = create<AppState>()(
       canvasImage: null,
       canvasZoom: 1,
       canvasPan: { x: 0, y: 0 },
+  canvasRotation: 0,
       
       uploadedImages: [],
       editReferenceImages: [],
@@ -248,6 +251,7 @@ export const useAppStore = create<AppState>()(
       setCanvasImage: (url) => set({ canvasImage: url }),
       setCanvasZoom: (zoom) => set({ canvasZoom: zoom }),
       setCanvasPan: (pan) => set({ canvasPan: pan }),
+  setCanvasRotation: (rotation) => set({ canvasRotation: ((rotation % 360) + 360) % 360 }),
       
       addUploadedImage: (url) => set((state) => {
         const exists = state.uploadedImages.includes(url);
@@ -456,7 +460,13 @@ export const useAppStore = create<AppState>()(
       addImageToBoard: (boardId, imageId) => set((state) => ({
         boards: state.boards.map(b =>
           b.id === boardId
-            ? { ...b, imageIds: [...new Set([...b.imageIds, imageId])], updatedAt: Date.now() }
+            ? {
+                ...b,
+                imageIds: b.imageIds.includes(imageId)
+                  ? b.imageIds
+                  : [...b.imageIds, imageId],
+                updatedAt: Date.now(),
+              }
             : b
         )
       })),
@@ -472,7 +482,13 @@ export const useAppStore = create<AppState>()(
       moveImageToBoard: (targetBoardId, imageId) => set((state) => ({
         boards: state.boards.map(b => {
           if (b.id === targetBoardId) {
-            return { ...b, imageIds: [...new Set([...b.imageIds, imageId])], updatedAt: Date.now() };
+            return {
+              ...b,
+              imageIds: b.imageIds.includes(imageId)
+                ? b.imageIds
+                : [...b.imageIds, imageId],
+              updatedAt: Date.now(),
+            };
           } else {
             return { ...b, imageIds: b.imageIds.filter(id => id !== imageId), updatedAt: Date.now() };
           }
@@ -573,6 +589,7 @@ export const useAppStore = create<AppState>()(
           selectedTool: state.selectedTool,
           activePrimarySection: state.activePrimarySection,
           selectedTemplate: state.selectedTemplate,
+          canvasRotation: state.canvasRotation,
           uploadHistory: state.uploadHistory,
           uploadedImages: state.uploadedImages,
           editReferenceImages: state.editReferenceImages,
