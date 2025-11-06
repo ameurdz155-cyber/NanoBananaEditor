@@ -1,34 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import type { CSSProperties } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { X, Plus, Edit2, Trash2, FolderTree, Smile } from 'lucide-react';
+import { X, Plus, Edit2, Trash2, FolderTree, UploadCloud } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
-import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
-import { createPortal } from 'react-dom';
-import { cn } from '../utils/cn';
-import { 
-  FaFolder, FaFolderOpen, FaFile, FaFileAlt, FaFileImage, FaFilePdf, FaFileCode,
-  FaHome, FaUser, FaUsers, FaCog, FaChartBar, FaChartLine, FaChartPie,
-  FaHeart, FaStar, FaFlag, FaBookmark, FaBell, FaEnvelope, FaInbox,
-  FaCamera, FaImage, FaPalette, FaBrush, FaPaintBrush, FaMusic, FaVideo,
-  FaShoppingCart, FaShoppingBag, FaCreditCard, FaTag, FaGift, FaStore,
-  FaBriefcase, FaBuilding, FaIndustry, FaLandmark, FaUniversity, FaHospital,
-  FaGraduationCap, FaBook, FaBookOpen, FaPen, FaPencilAlt, FaHighlighter,
-  FaPhone, FaMobile, FaTablet, FaLaptop, FaDesktop, FaKeyboard, FaMouse,
-  FaCoffee, FaUtensils, FaPizzaSlice, FaBirthdayCake, FaWineGlass, FaCocktail,
-  FaCar, FaBus, FaTrain, FaPlane, FaRocket, FaShip, FaBicycle,
-  FaMapMarkedAlt, FaMapPin, FaGlobe, FaCompass, FaMap, FaRoute,
-  FaClock, FaCalendar, FaCalendarAlt, FaCalendarCheck, FaStopwatch, FaHourglass,
-  FaLightbulb, FaBolt, FaFire, FaSnowflake, FaSun, FaMoon, FaCloudSun,
-  FaTree, FaLeaf, FaSeedling, FaMountain, FaWater, FaUmbrella,
-  FaDumbbell, FaRunning, FaSwimmer, FaBiking, FaFootballBall, FaBasketballBall,
-  FaGamepad, FaDice, FaPuzzlePiece, FaChess, FaTrophy, FaMedal, FaAward,
-  FaLock, FaUnlock, FaKey, FaUserShield, FaFingerprint,
-  FaWrench, FaTools, FaScrewdriver, FaHammer, FaCogs, FaCircle, FaSquare
-} from 'react-icons/fa';
 
 interface Category {
   id: string;
@@ -52,12 +28,6 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
   const [formName, setFormName] = useState('');
   const [formEmoji, setFormEmoji] = useState('📁');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [emojiPickerTab, setEmojiPickerTab] = useState<'emoji' | 'icons' | 'upload'>('emoji');
-  const [iconSearch, setIconSearch] = useState('');
-  const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
-  const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === 'undefined') {
@@ -69,35 +39,6 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     }
     return document.documentElement.classList.contains('dark');
   });
-  const emojiPickerThemeStyles = useMemo<Record<string, string>>(() => {
-    if (isDarkMode) {
-      return {
-        '--epr-bg-color': 'var(--surface-primary)',
-        '--epr-panel-bg-color': 'var(--surface-secondary)',
-        '--epr-text-color': 'var(--text-primary)',
-        '--epr-category-label-color': 'var(--text-secondary)',
-        '--epr-hover-bg-color': 'rgba(124, 58, 237, 0.16)',
-        '--epr-border-color': 'var(--surface-border)',
-        '--epr-search-border-color': 'var(--surface-border)',
-        '--epr-search-placeholder-color': 'var(--text-tertiary)',
-        '--epr-search-bg-color': 'rgba(40, 42, 60, 0.9)',
-        '--epr-highlight-color': 'var(--accent-emerald)'
-      };
-    }
-
-    return {
-      '--epr-bg-color': 'rgba(255, 255, 255, 0.98)',
-      '--epr-panel-bg-color': 'rgba(244, 246, 253, 0.96)',
-      '--epr-text-color': 'var(--text-primary)',
-      '--epr-category-label-color': 'var(--text-secondary)',
-      '--epr-hover-bg-color': 'rgba(124, 58, 237, 0.08)',
-      '--epr-border-color': 'var(--surface-border)',
-      '--epr-search-border-color': 'var(--surface-border)',
-      '--epr-search-placeholder-color': 'var(--text-tertiary)',
-      '--epr-search-bg-color': 'rgba(255, 255, 255, 0.95)',
-      '--epr-highlight-color': 'var(--accent-emerald)'
-    };
-  }, [isDarkMode]);
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -142,6 +83,9 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     setFormName('');
     setFormEmoji('📁');
     setShowEditModal(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // Open modal for edit
@@ -150,6 +94,9 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     setFormName(category.name);
     setFormEmoji(category.emoji);
     setShowEditModal(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // Save (create or update)
@@ -180,6 +127,9 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     setEditingId(null);
     setFormName('');
     setFormEmoji('📁');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // Cancel edit/create
@@ -188,204 +138,84 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     setEditingId(null);
     setFormName('');
     setFormEmoji('📁');
-    setShowEmojiPicker(false);
-    setEmojiPickerTab('emoji');
-    setIconSearch('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
-  // Handle emoji selection
-  const handleEmojiClick = (emojiData: EmojiClickData) => {
-    setFormEmoji(emojiData.emoji);
-    setShowEmojiPicker(false);
-  };
+  const processIconFile = useCallback((file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = typeof event.target?.result === 'string' ? event.target.result : '';
+      if (result) {
+        setFormEmoji(result);
+      }
+    };
+    reader.readAsDataURL(file);
+  }, []);
 
-  // Handle icon selection
-  const handleIconSelect = (icon: string) => {
-    setFormEmoji(icon);
-    setShowEmojiPicker(false);
-  };
-
-  // Handle image upload
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    processIconFile(file);
+    event.target.value = '';
+  };
+
+  const handleIconDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setFormEmoji(result); // Store as data URL
-        setShowEmojiPicker(false);
-      };
-      reader.readAsDataURL(file);
+      processIconFile(file);
+    }
+    event.dataTransfer.clearData();
+  };
+
+  const handleIconDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleClearUploadedIcon = () => {
+    setFormEmoji('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   // Font Awesome icons list using react-icons
-  const fontAwesomeIcons = [
-    // Files & Folders
-    { id: 'folder', name: 'Folder', icon: FaFolder },
-    { id: 'folder-open', name: 'Folder Open', icon: FaFolderOpen },
-    { id: 'file', name: 'File', icon: FaFile },
-    { id: 'file-alt', name: 'File Alt', icon: FaFileAlt },
-    { id: 'file-image', name: 'File Image', icon: FaFileImage },
-    { id: 'file-pdf', name: 'File PDF', icon: FaFilePdf },
-    { id: 'file-code', name: 'File Code', icon: FaFileCode },
-    // Home & Users
-    { id: 'home', name: 'Home', icon: FaHome },
-    { id: 'user', name: 'User', icon: FaUser },
-    { id: 'users', name: 'Users', icon: FaUsers },
-    { id: 'cog', name: 'Cog', icon: FaCog },
-    // Charts & Analytics
-    { id: 'chart-bar', name: 'Chart Bar', icon: FaChartBar },
-    { id: 'chart-line', name: 'Chart Line', icon: FaChartLine },
-    { id: 'chart-pie', name: 'Chart Pie', icon: FaChartPie },
-    // Favorites & Bookmarks
-    { id: 'heart', name: 'Heart', icon: FaHeart },
-    { id: 'star', name: 'Star', icon: FaStar },
-    { id: 'flag', name: 'Flag', icon: FaFlag },
-    { id: 'bookmark', name: 'Bookmark', icon: FaBookmark },
-    { id: 'bell', name: 'Bell', icon: FaBell },
-    { id: 'envelope', name: 'Envelope', icon: FaEnvelope },
-    { id: 'inbox', name: 'Inbox', icon: FaInbox },
-    // Creative & Media
-    { id: 'camera', name: 'Camera', icon: FaCamera },
-    { id: 'image', name: 'Image', icon: FaImage },
-    { id: 'palette', name: 'Palette', icon: FaPalette },
-    { id: 'brush', name: 'Brush', icon: FaBrush },
-    { id: 'paint-brush', name: 'Paint Brush', icon: FaPaintBrush },
-    { id: 'music', name: 'Music', icon: FaMusic },
-    { id: 'video', name: 'Video', icon: FaVideo },
-    // Shopping & Commerce
-    { id: 'shopping-cart', name: 'Shopping Cart', icon: FaShoppingCart },
-    { id: 'shopping-bag', name: 'Shopping Bag', icon: FaShoppingBag },
-    { id: 'credit-card', name: 'Credit Card', icon: FaCreditCard },
-    { id: 'tag', name: 'Tag', icon: FaTag },
-    { id: 'gift', name: 'Gift', icon: FaGift },
-    { id: 'store', name: 'Store', icon: FaStore },
-    // Business & Buildings
-    { id: 'briefcase', name: 'Briefcase', icon: FaBriefcase },
-    { id: 'building', name: 'Building', icon: FaBuilding },
-    { id: 'industry', name: 'Industry', icon: FaIndustry },
-    { id: 'landmark', name: 'Landmark', icon: FaLandmark },
-    { id: 'university', name: 'University', icon: FaUniversity },
-    { id: 'hospital', name: 'Hospital', icon: FaHospital },
-    // Education
-    { id: 'graduation-cap', name: 'Graduation Cap', icon: FaGraduationCap },
-    { id: 'book', name: 'Book', icon: FaBook },
-    { id: 'book-open', name: 'Book Open', icon: FaBookOpen },
-    { id: 'pen', name: 'Pen', icon: FaPen },
-    { id: 'pencil-alt', name: 'Pencil Alt', icon: FaPencilAlt },
-    { id: 'highlighter', name: 'Highlighter', icon: FaHighlighter },
-    // Devices & Technology
-    { id: 'phone', name: 'Phone', icon: FaPhone },
-    { id: 'mobile', name: 'Mobile', icon: FaMobile },
-    { id: 'tablet', name: 'Tablet', icon: FaTablet },
-    { id: 'laptop', name: 'Laptop', icon: FaLaptop },
-    { id: 'desktop', name: 'Desktop', icon: FaDesktop },
-    { id: 'keyboard', name: 'Keyboard', icon: FaKeyboard },
-    { id: 'mouse', name: 'Mouse', icon: FaMouse },
-    // Food & Drink
-    { id: 'coffee', name: 'Coffee', icon: FaCoffee },
-    { id: 'utensils', name: 'Utensils', icon: FaUtensils },
-    { id: 'pizza-slice', name: 'Pizza Slice', icon: FaPizzaSlice },
-    { id: 'birthday-cake', name: 'Birthday Cake', icon: FaBirthdayCake },
-    { id: 'wine-glass', name: 'Wine Glass', icon: FaWineGlass },
-    { id: 'cocktail', name: 'Cocktail', icon: FaCocktail },
-    // Transportation
-    { id: 'car', name: 'Car', icon: FaCar },
-    { id: 'bus', name: 'Bus', icon: FaBus },
-    { id: 'train', name: 'Train', icon: FaTrain },
-    { id: 'plane', name: 'Plane', icon: FaPlane },
-    { id: 'rocket', name: 'Rocket', icon: FaRocket },
-    { id: 'ship', name: 'Ship', icon: FaShip },
-    { id: 'bicycle', name: 'Bicycle', icon: FaBicycle },
-    // Maps & Location
-    { id: 'map-marked-alt', name: 'Map Marked', icon: FaMapMarkedAlt },
-    { id: 'map-pin', name: 'Map Pin', icon: FaMapPin },
-    { id: 'globe', name: 'Globe', icon: FaGlobe },
-    { id: 'compass', name: 'Compass', icon: FaCompass },
-    { id: 'map', name: 'Map', icon: FaMap },
-    { id: 'route', name: 'Route', icon: FaRoute },
-    // Time & Calendar
-    { id: 'clock', name: 'Clock', icon: FaClock },
-    { id: 'calendar', name: 'Calendar', icon: FaCalendar },
-    { id: 'calendar-alt', name: 'Calendar Alt', icon: FaCalendarAlt },
-    { id: 'calendar-check', name: 'Calendar Check', icon: FaCalendarCheck },
-    { id: 'stopwatch', name: 'Stopwatch', icon: FaStopwatch },
-    { id: 'hourglass', name: 'Hourglass', icon: FaHourglass },
-    // Weather & Nature
-    { id: 'lightbulb', name: 'Lightbulb', icon: FaLightbulb },
-    { id: 'bolt', name: 'Bolt', icon: FaBolt },
-    { id: 'fire', name: 'Fire', icon: FaFire },
-    { id: 'snowflake', name: 'Snowflake', icon: FaSnowflake },
-    { id: 'sun', name: 'Sun', icon: FaSun },
-    { id: 'moon', name: 'Moon', icon: FaMoon },
-    { id: 'cloud-sun', name: 'Cloud Sun', icon: FaCloudSun },
-    { id: 'tree', name: 'Tree', icon: FaTree },
-    { id: 'leaf', name: 'Leaf', icon: FaLeaf },
-    { id: 'seedling', name: 'Seedling', icon: FaSeedling },
-    { id: 'mountain', name: 'Mountain', icon: FaMountain },
-    { id: 'water', name: 'Water', icon: FaWater },
-    { id: 'umbrella', name: 'Umbrella', icon: FaUmbrella },
-    // Sports & Activities
-    { id: 'dumbbell', name: 'Dumbbell', icon: FaDumbbell },
-    { id: 'running', name: 'Running', icon: FaRunning },
-    { id: 'swimmer', name: 'Swimmer', icon: FaSwimmer },
-    { id: 'biking', name: 'Biking', icon: FaBiking },
-    { id: 'football-ball', name: 'Football Ball', icon: FaFootballBall },
-    { id: 'basketball-ball', name: 'Basketball Ball', icon: FaBasketballBall },
-    // Gaming & Entertainment
-    { id: 'gamepad', name: 'Gamepad', icon: FaGamepad },
-    { id: 'dice', name: 'Dice', icon: FaDice },
-    { id: 'puzzle-piece', name: 'Puzzle Piece', icon: FaPuzzlePiece },
-    { id: 'chess', name: 'Chess', icon: FaChess },
-    { id: 'trophy', name: 'Trophy', icon: FaTrophy },
-    { id: 'medal', name: 'Medal', icon: FaMedal },
-    { id: 'award', name: 'Award', icon: FaAward },
-    // Security
-    { id: 'lock', name: 'Lock', icon: FaLock },
-    { id: 'unlock', name: 'Unlock', icon: FaUnlock },
-    { id: 'key', name: 'Key', icon: FaKey },
-    { id: 'user-shield', name: 'User Shield', icon: FaUserShield },
-    { id: 'fingerprint', name: 'Fingerprint', icon: FaFingerprint },
-    // Tools & Settings
-    { id: 'wrench', name: 'Wrench', icon: FaWrench },
-    { id: 'tools', name: 'Tools', icon: FaTools },
-    { id: 'screwdriver', name: 'Screwdriver', icon: FaScrewdriver },
-    { id: 'hammer', name: 'Hammer', icon: FaHammer },
-    { id: 'cogs', name: 'Cogs', icon: FaCogs },
-    // Shapes
-    { id: 'circle', name: 'Circle', icon: FaCircle },
-    { id: 'square', name: 'Square', icon: FaSquare },
-  ];
-
-  // Helper function to render icon
   const renderIcon = (emoji: string, size: string = 'text-2xl') => {
-    if (emoji.startsWith('data:image')) {
-      return <img src={emoji} alt="Category icon" className="w-8 h-8 object-cover rounded" />;
-    } else if (emoji.startsWith('fa:')) {
-      const iconId = emoji.slice(3);
-      const iconData = fontAwesomeIcons.find(i => i.id === iconId);
-      if (iconData) {
-        const IconComponent = iconData.icon;
-        return <IconComponent className={size} />;
-      }
+    const fallback = <span className={size}>📁</span>;
+
+    if (!emoji) {
+      return fallback;
     }
+
+    const imageSizeClass = (() => {
+      if (size === 'text-4xl') {
+        return 'h-12 w-12';
+      }
+      if (size === 'text-3xl') {
+        return 'h-10 w-10';
+      }
+      if (size === 'text-lg') {
+        return 'h-6 w-6';
+      }
+      return 'h-8 w-8';
+    })();
+
+    if (emoji.startsWith('data:image')) {
+      return <img src={emoji} alt="Category icon" className={`${imageSizeClass} object-cover rounded`} />;
+    }
+
+    if (emoji.startsWith('fa:')) {
+      return <span className={size}>🏷️</span>;
+    }
+
     return <span className={size}>{emoji}</span>;
   };
-
-  // Close emoji picker when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
-        setShowEmojiPicker(false);
-      }
-    };
-
-    if (showEmojiPicker) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showEmojiPicker]);
 
   useEffect(() => {
     const handleThemeChange = () => {
@@ -411,37 +241,33 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
     };
   }, []);
 
-  // Handle paste for image upload
+  // Allow pasting images directly into the modal while editing
   useEffect(() => {
-    const handlePaste = (e: ClipboardEvent) => {
-      if (!showEmojiPicker || emojiPickerTab !== 'upload') return;
+    if (!showEditModal) {
+      return;
+    }
 
-      const items = e.clipboardData?.items;
-      if (!items) return;
+    const handlePaste = (event: ClipboardEvent) => {
+      const items = event.clipboardData?.items;
+      if (!items) {
+        return;
+      }
 
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf('image') !== -1) {
-          const blob = items[i].getAsFile();
+      for (let index = 0; index < items.length; index += 1) {
+        if (items[index].type.includes('image')) {
+          const blob = items[index].getAsFile();
           if (blob) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              const result = event.target?.result as string;
-              setFormEmoji(result);
-              setShowEmojiPicker(false);
-            };
-            reader.readAsDataURL(blob);
+            processIconFile(blob);
+            event.preventDefault();
+            break;
           }
-          e.preventDefault();
-          break;
         }
       }
     };
 
-    if (showEmojiPicker && emojiPickerTab === 'upload') {
-      document.addEventListener('paste', handlePaste);
-      return () => document.removeEventListener('paste', handlePaste);
-    }
-  }, [showEmojiPicker, emojiPickerTab]);
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [showEditModal, processIconFile]);
 
   // Delete category
   const handleDelete = (id: string) => {
@@ -676,220 +502,105 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
 
               {/* Form Fields */}
               <div className="space-y-4">
-                <div className="relative">
+                <div>
                   <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                     {t.categoryEmojiLabel}
                   </label>
-                  <div className="flex gap-2">
-                    <div
-                      className="flex-1 h-16 flex items-center justify-center border rounded-xl"
-                      style={{
-                        borderColor: 'var(--surface-border)',
-                        background: isDarkMode ? 'var(--surface-secondary)' : 'rgba(124, 58, 237, 0.06)'
-                      }}
+                  <div className="space-y-3">
+                    <input
+                      id="category-icon-upload"
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      onChange={handleIconUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="category-icon-upload"
+                      onDrop={handleIconDrop}
+                      onDragOver={handleIconDragOver}
+                      className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-6 text-center transition-all ${
+                        isDarkMode
+                          ? 'border-emerald-500/30 bg-black/40 hover:border-emerald-400/70 hover:bg-black/30'
+                          : 'border-emerald-200 bg-white/95 hover:border-emerald-400 hover:bg-emerald-50'
+                      }`}
+                      style={{ color: 'var(--text-secondary)' }}
                     >
-                      {renderIcon(formEmoji || '📁', 'text-4xl')}
+                      {formEmoji?.startsWith('data:image') ? (
+                        <>
+                          <div
+                            className="relative mb-3 flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border"
+                            style={{ borderColor: 'var(--surface-border)' }}
+                          >
+                            <img src={formEmoji} alt="Uploaded icon" className="h-full w-full object-contain" />
+                          </div>
+                          <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {language === 'zh' ? '点击或拖放以更换图标' : 'Click or drop a new icon to replace'}
+                          </p>
+                          <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                            {language === 'zh' ? '支持 PNG / JPEG / WebP / SVG' : 'Supports PNG, JPEG, WebP, or SVG'}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div
+                            className={`mb-3 flex h-16 w-16 items-center justify-center rounded-full ${
+                              isDarkMode ? 'bg-emerald-500/15 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
+                            }`}
+                          >
+                            <UploadCloud className="h-7 w-7" />
+                          </div>
+                          <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {language === 'zh' ? '点击或拖放上传图标' : 'Click or drag a file here'}
+                          </p>
+                          <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                            {language === 'zh'
+                              ? '上传 PNG / JPEG / WebP / SVG 图标（建议 64×64）'
+                              : 'Upload a PNG, JPEG, WebP, or SVG icon (64×64 recommended).'}
+                          </p>
+                        </>
+                      )}
+                    </label>
+                    <div className="flex items-center justify-center gap-2">
+                      <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <label htmlFor="category-icon-upload" className="cursor-pointer">
+                          {language === 'zh' ? '浏览文件' : 'Browse files'}
+                        </label>
+                      </Button>
+                      {formEmoji?.startsWith('data:image') ? (
+                        <Button type="button" variant="ghost" size="sm" onClick={handleClearUploadedIcon}>
+                          {language === 'zh' ? '移除图标' : 'Remove icon'}
+                        </Button>
+                      ) : null}
                     </div>
-                    <Button
-                      ref={emojiButtonRef}
-                      type="button"
-                      onClick={() => {
-                        const rect = emojiButtonRef.current?.getBoundingClientRect();
-                        if (rect) {
-                          // Calculate position to center the picker below the modal
-                          const pickerWidth = 380;
-                          const viewportWidth = window.innerWidth;
-                          const viewportHeight = window.innerHeight;
-                          
-                          // Try to position it centered, but ensure it stays within viewport
-                          let left = (viewportWidth - pickerWidth) / 2;
-                          let top = rect.bottom + 8;
-                          
-                          // If picker would go off bottom of screen, position it above
-                          if (top + 450 > viewportHeight) {
-                            top = Math.max(50, rect.top - 450 - 8);
-                          }
-                          
-                          setPickerPosition({ top, left });
-                        }
-                        setShowEmojiPicker(!showEmojiPicker);
-                      }}
-                      className="h-16 px-4 border rounded-xl hover:bg-[var(--bg-hover)]"
-                      style={{
-                        background: isDarkMode ? 'var(--surface-secondary)' : 'rgba(124, 58, 237, 0.06)',
-                        borderColor: 'var(--surface-border)',
-                        color: 'var(--text-primary)'
-                      }}
+                    <div
+                      className="flex items-center gap-3 rounded-lg border p-3"
+                      style={{ borderColor: 'var(--surface-border)', background: 'var(--surface-secondary)' }}
                     >
-                      <Smile className="h-6 w-6" />
-                    </Button>
+                      <div
+                        className="flex h-14 w-14 items-center justify-center rounded-lg border"
+                        style={{ borderColor: 'var(--surface-border)', background: 'var(--surface-primary)' }}
+                      >
+                        {renderIcon(formEmoji || '📁', 'text-3xl')}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {language === 'zh' ? '当前图标预览' : 'Current icon preview'}
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                          {language === 'zh'
+                            ? '未上传图标时将使用默认文件夹图标'
+                            : 'Default folder icon is used if no image is uploaded.'}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
+                      {language === 'zh'
+                        ? '在对话框打开时可直接使用 Ctrl+V 粘贴图片'
+                        : 'You can also paste an image while this dialog is open (Ctrl+V).'}
+                    </p>
                   </div>
                 </div>
-                  
-                {/* Emoji Picker Popup with Tabs - Using Portal */}
-                {showEmojiPicker && createPortal(
-                  <div
-                    ref={emojiPickerRef}
-                    className="fixed shadow-2xl rounded-lg overflow-hidden border"
-                    style={{
-                      top: `${pickerPosition.top}px`,
-                      left: `${pickerPosition.left}px`,
-                      width: '380px',
-                      zIndex: 9999,
-                      background: 'var(--surface-primary)',
-                      borderColor: 'var(--surface-border)',
-                      color: 'var(--text-primary)',
-                      ...(emojiPickerThemeStyles as CSSProperties)
-                    }}
-                  >
-                      {/* Tabs */}
-                      <div
-                        className="flex border-b bg-[var(--surface-secondary)]"
-                        style={{ borderColor: 'var(--surface-border)' }}
-                      >
-                        <button
-                          onClick={() => setEmojiPickerTab('emoji')}
-                          className={cn(
-                            'flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 hover:bg-[var(--bg-hover)]',
-                            emojiPickerTab === 'emoji'
-                              ? 'text-lime-400 border-lime-400'
-                              : 'border-transparent'
-                          )}
-                          style={{
-                            background: emojiPickerTab === 'emoji' ? 'var(--surface-primary)' : 'transparent',
-                            color: emojiPickerTab === 'emoji' ? undefined : 'var(--text-secondary)'
-                          }}
-                        >
-                          {language === 'zh' ? '表情' : 'Emoji'}
-                        </button>
-                        <button
-                          onClick={() => setEmojiPickerTab('icons')}
-                          className={cn(
-                            'flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 hover:bg-[var(--bg-hover)]',
-                            emojiPickerTab === 'icons'
-                              ? 'text-lime-400 border-lime-400'
-                              : 'border-transparent'
-                          )}
-                          style={{
-                            background: emojiPickerTab === 'icons' ? 'var(--surface-primary)' : 'transparent',
-                            color: emojiPickerTab === 'icons' ? undefined : 'var(--text-secondary)'
-                          }}
-                        >
-                          {language === 'zh' ? '图标' : 'Icons'}
-                        </button>
-                        <button
-                          onClick={() => setEmojiPickerTab('upload')}
-                          className={cn(
-                            'flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 hover:bg-[var(--bg-hover)]',
-                            emojiPickerTab === 'upload'
-                              ? 'text-lime-400 border-lime-400'
-                              : 'border-transparent'
-                          )}
-                          style={{
-                            background: emojiPickerTab === 'upload' ? 'var(--surface-primary)' : 'transparent',
-                            color: emojiPickerTab === 'upload' ? undefined : 'var(--text-secondary)'
-                          }}
-                        >
-                          {language === 'zh' ? '上传' : 'Upload'}
-                        </button>
-                      </div>
-
-                      {/* Tab Content */}
-                      <div className="bg-[var(--surface-primary)]">
-                        {/* Emoji Tab */}
-                        {emojiPickerTab === 'emoji' && (
-                          <EmojiPicker
-                            key={isDarkMode ? 'emoji-dark' : 'emoji-light'}
-                            onEmojiClick={handleEmojiClick}
-                            theme={isDarkMode ? Theme.DARK : Theme.LIGHT}
-                            width={380}
-                            height={400}
-                            searchPlaceHolder={language === 'zh' ? '搜索表情...' : 'Search emoji...'}
-                            previewConfig={{ showPreview: false }}
-                            className={isDarkMode ? 'emoji-picker-dark' : 'emoji-picker-light'}
-                            style={emojiPickerThemeStyles as CSSProperties}
-                          />
-                        )}
-
-                        {/* Icons Tab */}
-                        {emojiPickerTab === 'icons' && (
-                          <div className="p-4" style={{ height: '400px', overflowY: 'auto' }}>
-                            <Input
-                              placeholder={language === 'zh' ? '搜索图标...' : 'Filter icons...'}
-                              value={iconSearch}
-                              onChange={(e) => setIconSearch(e.target.value)}
-                              className="mb-3"
-                            />
-                            <div className="grid grid-cols-7 gap-2">
-                              {fontAwesomeIcons
-                                .filter(({ name, id }) => !iconSearch || name.toLowerCase().includes(iconSearch.toLowerCase()) || id.includes(iconSearch.toLowerCase()))
-                                .map(({ icon: IconComponent, name, id }, index) => (
-                                  <button
-                                    key={index}
-                                    onClick={() => handleIconSelect(`fa:${id}`)}
-                                    className="w-12 h-12 flex items-center justify-center rounded transition-colors border border-transparent hover:border-lime-400 hover:bg-[var(--bg-hover)]"
-                                    title={name}
-                                  >
-                                    <IconComponent className="text-xl" style={{ color: 'var(--text-secondary)' }} />
-                                  </button>
-                                ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Upload Tab */}
-                        {emojiPickerTab === 'upload' && (
-                          <div className="p-6 flex flex-col items-center justify-center" style={{ height: '400px' }}>
-                            <input
-                              ref={fileInputRef}
-                              type="file"
-                              accept="image/*"
-                              onChange={handleImageUpload}
-                              className="hidden"
-                            />
-                            <div
-                              onClick={() => fileInputRef.current?.click()}
-                              className="border-2 border-dashed rounded-lg p-8 w-full cursor-pointer transition-all text-center hover:border-lime-400 hover:bg-[var(--bg-hover)]"
-                              style={{
-                                borderColor: 'var(--surface-border)',
-                                color: 'var(--text-secondary)',
-                                background: 'var(--surface-secondary)'
-                              }}
-                            >
-                              <div className="mb-3" style={{ color: 'var(--text-muted)' }}>
-                                <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                              <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                                {language === 'zh' ? '上传图片' : 'Upload an image'}
-                              </p>
-                              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                {language === 'zh' ? '或 Ctrl+V 粘贴图片或链接' : 'or Ctrl+V to paste an image or link'}
-                              </p>
-                            </div>
-                            <div className="mt-4 flex gap-3">
-                              <Button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="bg-lime-600 hover:bg-lime-700 text-white"
-                              >
-                                {language === 'zh' ? '选择文件' : 'Choose File'}
-                              </Button>
-                              <Button
-                                onClick={() => setShowEmojiPicker(false)}
-                                variant="ghost"
-                                className="hover:bg-[var(--bg-hover)]"
-                                style={{ color: 'var(--text-secondary)' }}
-                              >
-                                {t.cancel}
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>,
-                  document.body
-                )}
 
                 <div>
                   <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
