@@ -795,12 +795,12 @@ export const ImageCanvas: React.FC = () => {
                   disabled={!canRecallMetadata}
                   trailing={<ChevronRight className="h-3 w-3 text-gray-500" />}
                 />
-                {/* <MenuItem
+                <MenuItem
                   icon={<Sparkles className="h-4 w-4 text-pink-300" />}
                   label={t.sendToUpscale}
                   onClick={handleSendToUpscale}
                   disabled={!hasContextImage}
-                /> */}
+                />
                 <MenuItem
                   icon={<PenSquare className="h-4 w-4 text-purple-300" />}
                   label={t.useForPromptTemplate}

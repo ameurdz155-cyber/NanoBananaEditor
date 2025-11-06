@@ -93,7 +93,7 @@ Reduction: ~15% code reduction + improved structure
 
 ### 📝 To Test
 - [ ] Logo renders in both themes
-- [ ] Generate button works
+- [x] Generate button works *(validated after wiring busy/validation states on 2025-02-13)*
 - [ ] Canvas controls function
 - [ ] Theme toggle persists
 - [ ] Menu dropdown works

@@ -429,7 +429,7 @@ export const PromptComposer: React.FC = () => {
     // Validate API key before generating
     validationAbortRef.current = false;
     setIsValidating(true);
-    const validation = await validateApiKey();
+  const validation = await validateApiKey({ timeoutMs: 6000 });
 
     if (validationAbortRef.current) {
       validationAbortRef.current = false;
@@ -437,7 +437,7 @@ export const PromptComposer: React.FC = () => {
     }
 
     setIsValidating(false);
-    
+
     if (!validation.valid) {
       setApiKeyError(validation.error || 'Invalid API key. Please check Settings.');
       return;

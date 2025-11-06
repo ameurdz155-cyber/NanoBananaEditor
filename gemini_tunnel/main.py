@@ -4,15 +4,28 @@ import os
 import requests
 from typing import Any, Dict, List, Optional
 from io import BytesIO
+import sys
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from PIL import Image
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import Flow
+try:
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import Flow
+except ImportError as e:
+    # Provide a clear, actionable message if required google packages are missing
+    missing = str(e).split("'")[-2] if "'" in str(e) else str(e)
+    print()
+    print("❌ Missing Python dependency:", missing)
+    print("To fix, install the tunnel dependencies. From the project root run:")
+    print("  python -m pip install -r gemini_tunnel/requirements.txt")
+    print("Or install just the auth package:")
+    print("  python -m pip install google-auth-oauthlib google-auth")
+    print()
+    sys.exit(1)
 
 import google.generativeai as genai
 

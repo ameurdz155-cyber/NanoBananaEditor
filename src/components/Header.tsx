@@ -40,6 +40,7 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  Loader2,
 } from "lucide-react";
 import logoDark from "../assets/AI-POD-lite-logo.png";
 import logoLight from "../assets/AI-POD-lite-logo-light.png";
@@ -58,7 +59,11 @@ import { transformImageToDimensions } from "@/utils/imageUtils";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
-  const [count, setCount] = useState("2");
+  const iterations = useAppStore((state) => state.iterations);
+  const setIterations = useAppStore((state) => state.setIterations);
+  const isValidating = useAppStore((state) => state.isValidating);
+  const generationProgress = useAppStore((state) => state.generationProgress);
+
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -81,6 +86,8 @@ export function Header() {
   const brushStrokes = useAppStore((state) => state.brushStrokes);
   const clearBrushStrokes = useAppStore((state) => state.clearBrushStrokes);
   const selectedTool = useAppStore((state) => state.selectedTool);
+  const setActivePrimarySection = useAppStore((state) => state.setActivePrimarySection);
+  const setShowPromptPanel = useAppStore((state) => state.setShowPromptPanel);
   const boards = useAppStore((state) => state.boards);
   const selectedBoardId = useAppStore((state) => state.selectedBoardId);
   const addImageToBoard = useAppStore((state) => state.addImageToBoard);
@@ -102,8 +109,32 @@ export function Header() {
   const brushStrokesCount = brushStrokes.length;
 
   const handleGenerate = () => {
-    console.log('Generate clicked with count:', count);
-    // Add your generation logic here
+    const parsedCount = Math.max(1, Number(iterations) || 1);
+    if (iterations !== parsedCount) {
+      setIterations(parsedCount);
+    }
+
+    setActivePrimarySection('generate');
+    setShowPromptPanel(true);
+    if (!showHistory) {
+      setShowHistory(true);
+    }
+
+    if (isGenerating || isValidating) {
+      window.dispatchEvent(new CustomEvent('cancelGeneration'));
+      return;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent('triggerGenerate', {
+        detail: { iterations: parsedCount, source: 'header', timestamp: Date.now() }
+      })
+    );
+  };
+
+  const handleIterationsChange = (value: string) => {
+    const parsedCount = Math.max(1, Number(value) || 1);
+    setIterations(parsedCount);
   };
 
   const handleSearch = () => {
@@ -211,6 +242,17 @@ export function Header() {
     return () => window.removeEventListener('triggerSaveImage', handleExternalSave);
   }, [handleSave]);
 
+  const isBusy = isGenerating || isValidating;
+  const generateLabel = isValidating
+    ? t.validating ?? 'Validating'
+    : isGenerating
+      ? t.stopGeneration ?? 'Stop'
+      : t.generate ?? 'Generate';
+
+  const generationHint = isGenerating && generationProgress.total > 1
+    ? `${generationProgress.current}/${generationProgress.total}`
+    : null;
+
   return (
     <>
   <nav className="flex items-center justify-between px-6 py-3 bg-background text-foreground border-b border-border transition-colors">
@@ -235,12 +277,21 @@ export function Header() {
             variant="ghost"
             onClick={handleGenerate}
             className="flex items-center gap-2 hover:bg-accent px-3 h-8 rounded-none border-0"
+            aria-pressed={isBusy}
+            type="button"
           >
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-medium">{t.generate ?? 'Generate'}</span>
+            {isBusy ? (
+              <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-purple-400" />
+            )}
+            <span className="text-sm font-medium">
+              {generateLabel}
+              {generationHint ? ` · ${generationHint}` : ''}
+            </span>
           </Button>
           
-          <Select value={count} onValueChange={setCount}>
+          <Select value={String(Math.max(1, iterations ?? 1))} onValueChange={handleIterationsChange} disabled={isBusy}>
             <SelectTrigger
               className="w-16 h-8 px-3 py-1 bg-muted text-foreground border-none focus:ring-0 rounded-none"
               aria-label={language === 'zh' ? '生成次数' : 'Number of images to generate'}

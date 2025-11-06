@@ -52,11 +52,18 @@ const handleResponse = async (response: Response) => {
   throw new Error(errorMessage);
 };
 
-export const validateApiKey = async (): Promise<{ valid: boolean; error?: string }> => {
+export const validateApiKey = async (
+  options?: { timeoutMs?: number }
+): Promise<{ valid: boolean; error?: string }> => {
+  const timeoutMs = options?.timeoutMs ?? 5000;
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
+
   try {
     const response = await fetch(joinBackendPath('/health'), {
       method: 'GET',
       headers: buildJsonHeaders(),
+      signal: controller?.signal,
     });
     if (!response.ok) {
       throw new Error('Service unavailable');
@@ -64,10 +71,19 @@ export const validateApiKey = async (): Promise<{ valid: boolean; error?: string
     return { valid: true };
   } catch (error) {
     console.error('Image backend validation failed:', error);
+    const isAbortError =
+      (error instanceof DOMException && error.name === 'AbortError') ||
+      (error as { name?: string }).name === 'AbortError';
     return {
       valid: false,
-      error: 'Unable to reach the image service. Please ensure the FastAPI backend is running.',
+      error: isAbortError
+        ? 'Validation timed out. Start the FastAPI tunnel and retry.'
+        : 'Unable to reach the image service. Please ensure the FastAPI backend is running.',
     };
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
   }
 };
 
