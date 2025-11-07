@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -69,6 +69,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(resolveIsDarkMode);
+  const wasPreviouslyOpen = useRef(open);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -137,7 +138,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   };
 
   // Reset form
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
       name: '',
       description: '',
@@ -147,7 +148,18 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       emoji: '',
     });
     setIconError(null);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!open && wasPreviouslyOpen.current) {
+      setShowAddForm(false);
+      setEditingId(null);
+      setExpandedId(null);
+      resetForm();
+    }
+
+    wasPreviouslyOpen.current = open;
+  }, [open, resetForm]);
 
   const processIconFile = (file: File) => {
     if (file.size > MAX_ICON_SIZE_BYTES) {
