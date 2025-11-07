@@ -81,6 +81,7 @@ export function Header() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
+  const [showExecuteHelpModal, setShowExecuteHelpModal] = useState(false);
   const [savedGalleryName, setSavedGalleryName] = useState("");
   const [savedImagePath, setSavedImagePath] = useState<string | undefined>();
   const [savedImageData, setSavedImageData] = useState<string | undefined>();
@@ -391,11 +392,45 @@ export function Header() {
           </Select>
         </div>
 
-        <p className="hidden md:block text-xs leading-snug text-muted-foreground max-w-xs">
-          {language === 'zh'
-            ? '“执行”会根据模式采取不同操作：在生成模式下创建新的图像，在超分辨率模式下放大当前图像。'
-            : 'Execute behaves differently per mode: in Generate it creates new images, in Upscale it enlarges the current image.'}
-        </p>
+        {!isUpscaleMode && (
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hover:bg-accent rounded-lg w-8 h-8"
+              onClick={() => setShowExecuteHelpModal(!showExecuteHelpModal)}
+              aria-label="Execute mode help"
+            >
+              <HelpCircle className="w-4 h-4 text-muted-foreground" />
+            </Button>
+            
+            {showExecuteHelpModal && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
+                  onClick={() => setShowExecuteHelpModal(false)}
+                />
+                <div className="absolute top-full left-0 mt-2 z-50 w-80 bg-gray-950 border border-gray-700 rounded-lg shadow-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                      <HelpCircle className="w-4 h-4 text-purple-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-gray-100 mb-1">
+                        {language === 'zh' ? '执行按钮说明' : 'Execute Button Info'}
+                      </h4>
+                      <p className="text-xs text-gray-400 leading-relaxed">
+                        {language === 'zh'
+                          ? '"执行"会根据模式采取不同操作：在生成模式下创建新的图像，在超分辨率模式下放大当前图像。'
+                          : 'Execute behaves differently per mode: in Generate it creates new images, in Upscale it enlarges the current image.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Middle section: Control Buttons */}
