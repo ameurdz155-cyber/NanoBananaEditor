@@ -691,6 +691,34 @@ export const ImageCanvas: React.FC = () => {
               });
             }
           }}
+          onWheel={(e) => {
+            e.evt.preventDefault();
+            if (isGenerating) return;
+
+            const scaleBy = 1.1;
+            const stage = e.target.getStage();
+            if (!stage) return;
+
+            const oldScale = canvasZoom;
+            const pointer = stage.getPointerPosition();
+            if (!pointer) return;
+
+            const mousePointTo = {
+              x: (pointer.x - canvasPan.x * canvasZoom) / oldScale,
+              y: (pointer.y - canvasPan.y * canvasZoom) / oldScale,
+            };
+
+            const newScale = e.evt.deltaY > 0 ? oldScale / scaleBy : oldScale * scaleBy;
+            const clampedScale = Math.max(0.1, Math.min(10, newScale));
+
+            const newPos = {
+              x: (pointer.x - mousePointTo.x * clampedScale) / clampedScale,
+              y: (pointer.y - mousePointTo.y * clampedScale) / clampedScale,
+            };
+
+            setCanvasZoom(clampedScale);
+            setCanvasPan(newPos);
+          }}
           onMouseDown={handleMouseDown}
           onMousemove={handleMouseMove}
           onMouseup={handleMouseUp}
