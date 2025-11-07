@@ -706,3 +706,16 @@ body::before {
     @apply border-border; }
   body {
     @apply bg-background text-foreground; } }
+
+/* Disable all animations for Radix Select dropdown but keep positioning */
+[data-radix-select-content],
+[data-radix-popper-content-wrapper] {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}
+
+[data-radix-select-viewport] {
+  transition: none !important;
+}

@@ -123,6 +123,22 @@ export function Header() {
   const IdleIcon = isUpscaleMode ? Layers : Sparkles;
   const idleIconColor = isUpscaleMode ? 'text-teal-300' : 'text-purple-400';
 
+  /**
+   * Single entry point for the main CTA.
+   *
+   * Generate flow:
+   *   1. Normalises the requested image count (clamps to >= 1).
+   *   2. Brings the generate panel into view so the user can tweak prompts.
+   *   3. Emits a `triggerGenerate` custom event; the prompt composer listens to this event and actually
+   *      invokes the image-generation service.
+   *
+   * Upscale flow:
+   *   1. Leaves layout untouched (the dedicated panel already owns its state).
+   *   2. Emits `triggerUpscaleAction` with the selected scale so the upscaling panel can call the backend.
+   *
+   * Having both paths inside a single handler ensures the header always drives the correct workflow while
+   * keeping the branching documented in one place.
+   */
   const handlePrimaryAction = () => {
     if (isUpscaleMode) {
       window.dispatchEvent(
@@ -160,6 +176,17 @@ export function Header() {
     );
   };
 
+  /**
+   * Keeps the adjacent selector in sync with the active workflow.
+   *
+   * Generate flow:
+   *   - The dropdown captures "number of images". We coerce user input to a minimum of one and store it in
+   *     the global store so the generator knows how many results to request.
+   *
+   * Upscale flow:
+   *   - The same dropdown instead represents the upscale multiplier (2x / 4x). Values are normalised with
+   *     `getNormalizedUpscaleScale` so the backend is never called with unsupported factors.
+   */
   const handlePrimarySelectChange = (value: string) => {
     if (isUpscaleMode) {
       const parsedScale = Number(value);
@@ -280,13 +307,16 @@ export function Header() {
   }, [handleSave]);
 
   const isBusy = isUpscaleMode ? isUpscaling : (isGenerating || isValidating);
-  const primaryActionLabel = isUpscaleMode
-    ? (isUpscaling ? t.stopUpscaling ?? 'Stop Upscaling' : t.startUpscaling ?? 'Upscale')
-    : isValidating
-      ? t.validating ?? 'Validating'
-      : isGenerating
-        ? t.stopGeneration ?? 'Stop'
-        : t.generate ?? 'Generate';
+  const primaryActionLabel = (() => {
+    if (isUpscaleMode && isUpscaling) {
+      return t.stopUpscaling ?? 'Stop Upscaling';
+    }
+    if (!isUpscaleMode && (isValidating || isGenerating)) {
+      if (isValidating) return t.validating ?? 'Validating';
+      if (isGenerating) return t.stopGeneration ?? 'Stop';
+    }
+    return language === 'zh' ? '执行' : 'Execute';
+  })();
 
   const primaryHint = isUpscaleMode
     ? `${getNormalizedUpscaleScale(upscaleScale)}x`
@@ -360,6 +390,12 @@ export function Header() {
             </SelectContent>
           </Select>
         </div>
+
+        <p className="hidden md:block text-xs leading-snug text-muted-foreground max-w-xs">
+          {language === 'zh'
+            ? '“执行”会根据模式采取不同操作：在生成模式下创建新的图像，在超分辨率模式下放大当前图像。'
+            : 'Execute behaves differently per mode: in Generate it creates new images, in Upscale it enlarges the current image.'}
+        </p>
       </div>
 
       {/* Middle section: Control Buttons */}

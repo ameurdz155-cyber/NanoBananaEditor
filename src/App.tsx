@@ -12,6 +12,8 @@ import { useAuthStore } from './store/useAuthStore';
 import { LoginPage } from './components/LoginPage';
 import { UpscalingPanel } from './components/UpscalingPanel';
 import { cn } from './utils/cn';
+import { Button } from './components/ui/Button';
+import { ChevronRight } from 'lucide-react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,9 +28,11 @@ function AppContent() {
   useKeyboardShortcuts();
   
   const setShowPromptPanel = useAppStore((state) => state.setShowPromptPanel);
+  const showPromptPanel = useAppStore((state) => state.showPromptPanel);
   const setShowHistory = useAppStore((state) => state.setShowHistory);
   const language = useAppStore((state) => state.language);
   const activePrimarySection = useAppStore((state) => state.activePrimarySection);
+  const t = getTranslation(language);
   
   // Update page title when language changes
   React.useEffect(() => {
@@ -136,6 +140,18 @@ function AppContent() {
           </div>
           <div className="flex-1 min-w-0 relative z-10">
             <ImageCanvas />
+            {!showPromptPanel && activePrimarySection !== 'upscaling' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowPromptPanel(true)}
+                className="absolute top-4 left-4 z-50 h-9 w-9 text-gray-400 hover:text-white transition-colors"
+                title={t.showPromptPanel}
+                aria-label={t.showPromptPanel}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            )}
           </div>
           <div className="flex-shrink-0 relative z-10">
             <HistoryPanel />
