@@ -435,19 +435,6 @@ export const UpscalingPanel: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-400">{t.upscalingModelTitle}</label>
-                <div className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-950/80 px-3 py-2 text-sm text-gray-100">
-                  <span className="truncate" title={DEFAULT_UPSCALE_MODEL}>{DEFAULT_UPSCALE_MODEL_LABEL}</span>
-                  <span className="text-[10px] uppercase tracking-wide text-gray-500" title={t.upscalingModelLockedHint}>
-                    {t.upscalingModelLockedBadge}
-                  </span>
-                </div>
-                {/* <p className="text-[11px] leading-snug text-amber-400/90">
-                  Locked to Google Imagen 3.0 Generate 002. Upscaling uses mock processing and returns the same image.
-                </p> */}
-              </div>
-
-              <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-gray-400">
                   <span>{t.scaleLabel || 'Scale'}</span>
                   <span className="text-sm font-semibold text-gray-100">{upscaleScale}x</span>
@@ -532,22 +519,6 @@ export const UpscalingPanel: React.FC = () => {
                     {errorMessage}
                   </p>
                 )}
-                <Button
-                  type="button"
-                  className="w-full justify-center bg-teal-500 text-black font-semibold hover:bg-teal-400 disabled:opacity-60"
-                  onClick={handleUpscaleAction}
-                  aria-pressed={isUpscaling}
-                  disabled={!sourceImage}
-                >
-                  {isUpscaling ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {t.stopUpscaling}
-                    </span>
-                  ) : (
-                    <span>{`${t.startUpscaling} ×${upscaleScale}`}</span>
-                  )}
-                </Button>
               </div>
             </div>
           </div>
