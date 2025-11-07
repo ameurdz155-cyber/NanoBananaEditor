@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 import os
 import requests
 from typing import Any, Dict, List, Optional
@@ -30,6 +31,10 @@ except ImportError as e:
 import google.generativeai as genai
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    logging.basicConfig(level=logging.INFO)
 
 API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
@@ -89,6 +94,82 @@ def _normalize_base64(data: str) -> bytes:
 
 def _serialize_inline_image(data: bytes, mime_type: str = "image/png") -> "ImagePayload":
     return ImagePayload(mime_type=mime_type, b64_data=base64.b64encode(data).decode("ascii"))
+
+
+def _summarize_candidate(candidate: Any) -> str:
+    """Return a compact summary of a Gemini candidate for debugging."""
+    finish_reason_value = getattr(candidate, "finish_reason", None)
+    finish_reason_map = {
+        0: "UNSPECIFIED",
+        1: "STOP",
+        2: "MAX_TOKENS",
+        3: "SAFETY",
+        4: "RECITATION",
+        5: "OTHER",
+        6: "BLOCKLIST",
+        7: "PROHIBITED_CONTENT",
+        8: "SPII",
+        9: "MALWARE",
+    }
+    finish_reason_label = finish_reason_map.get(finish_reason_value, "UNKNOWN")
+    safety_parts: List[str] = []
+
+    for rating in getattr(candidate, "safety_ratings", []) or []:
+        category = getattr(rating, "category", "unknown")
+        probability = getattr(rating, "probability", "unspecified")
+        blocked = getattr(rating, "blocked", False)
+        flag = "blocked" if blocked else "ok"
+        safety_parts.append(f"{category}={probability} ({flag})")
+
+    safety_text = ", ".join(safety_parts) if safety_parts else "none"
+    return f"finish_reason={finish_reason_value} ({finish_reason_label}), safety=[{safety_text}]"
+
+
+def _extract_candidate_text(candidate: Any, *, limit: int = 160) -> str:
+    """Return truncated textual content from a Gemini candidate for diagnostics."""
+    texts: List[str] = []
+    content = getattr(candidate, "content", None)
+    if not content:
+        return ""
+
+    for part in getattr(content, "parts", []) or []:
+        text_value = getattr(part, "text", None)
+        if not text_value:
+            continue
+        trimmed = text_value.strip().replace("\n", " ")
+        if trimmed:
+            texts.append(trimmed)
+
+    if not texts:
+        return ""
+
+    combined = " | ".join(texts)
+    if len(combined) <= limit:
+        return combined
+    return f"{combined[: limit - 3]}..."
+
+
+def _summarize_prompt_feedback(feedback: Any) -> str:
+    if not feedback:
+        return ""
+
+    reason = getattr(feedback, "block_reason", None)
+    safety = getattr(feedback, "safety_ratings", None)
+    pieces: List[str] = []
+
+    if reason:
+        pieces.append(f"block_reason={reason}")
+
+    if safety:
+        safety_parts: List[str] = []
+        for rating in safety:
+            category = getattr(rating, "category", "unknown")
+            probability = getattr(rating, "probability", "unspecified")
+            safety_parts.append(f"{category}={probability}")
+        if safety_parts:
+            pieces.append("safety=" + ", ".join(safety_parts))
+
+    return ", ".join(pieces)
 
 
 def _get_google_cloud_access_token() -> Optional[str]:
@@ -329,6 +410,82 @@ def _inpaint_with_google_imagen(
 
 def _serialize_inline_image(data: bytes, mime_type: str = "image/png") -> "ImagePayload":
     return ImagePayload(mime_type=mime_type, b64_data=base64.b64encode(data).decode("ascii"))
+
+
+def _summarize_candidate(candidate: Any) -> str:
+    """Return a compact summary of a Gemini candidate for debugging."""
+    finish_reason_value = getattr(candidate, "finish_reason", None)
+    finish_reason_map = {
+        0: "UNSPECIFIED",
+        1: "STOP",
+        2: "MAX_TOKENS",
+        3: "SAFETY",
+        4: "RECITATION",
+        5: "OTHER",
+        6: "BLOCKLIST",
+        7: "PROHIBITED_CONTENT",
+        8: "SPII",
+        9: "MALWARE",
+    }
+    finish_reason_label = finish_reason_map.get(finish_reason_value, "UNKNOWN")
+    safety_parts: List[str] = []
+
+    for rating in getattr(candidate, "safety_ratings", []) or []:
+        category = getattr(rating, "category", "unknown")
+        probability = getattr(rating, "probability", "unspecified")
+        blocked = getattr(rating, "blocked", False)
+        flag = "blocked" if blocked else "ok"
+        safety_parts.append(f"{category}={probability} ({flag})")
+
+    safety_text = ", ".join(safety_parts) if safety_parts else "none"
+    return f"finish_reason={finish_reason_value} ({finish_reason_label}), safety=[{safety_text}]"
+
+
+def _extract_candidate_text(candidate: Any, *, limit: int = 160) -> str:
+    """Return truncated textual content from a Gemini candidate for diagnostics."""
+    texts: List[str] = []
+    content = getattr(candidate, "content", None)
+    if not content:
+        return ""
+
+    for part in getattr(content, "parts", []) or []:
+        text_value = getattr(part, "text", None)
+        if not text_value:
+            continue
+        trimmed = text_value.strip().replace("\n", " ")
+        if trimmed:
+            texts.append(trimmed)
+
+    if not texts:
+        return ""
+
+    combined = " | ".join(texts)
+    if len(combined) <= limit:
+        return combined
+    return f"{combined[: limit - 3]}..."
+
+
+def _summarize_prompt_feedback(feedback: Any) -> str:
+    if not feedback:
+        return ""
+
+    reason = getattr(feedback, "block_reason", None)
+    safety = getattr(feedback, "safety_ratings", None)
+    pieces: List[str] = []
+
+    if reason:
+        pieces.append(f"block_reason={reason}")
+
+    if safety:
+        safety_parts: List[str] = []
+        for rating in safety:
+            category = getattr(rating, "category", "unknown")
+            probability = getattr(rating, "probability", "unspecified")
+            safety_parts.append(f"{category}={probability}")
+        if safety_parts:
+            pieces.append("safety=" + ", ".join(safety_parts))
+
+    return ", ".join(pieces)
 
 
 def _build_generation_parts(prompt_text: str, reference_images: Optional[List[str]] = None) -> List[Dict[str, Any]]:
@@ -642,11 +799,16 @@ async def generate_with_imagen(payload: ImagenRequest) -> GenerateResponse:
 
 @app.post("/edit/gemini", response_model=EditResponse)
 async def edit_with_gemini(payload: EditRequest) -> EditResponse:
-    model = genai.GenerativeModel(model_name=GEMINI_FLASH_MODEL)
-
+    model = genai.GenerativeModel(model_name='models/gemini-2.5-flash-image')
     instruction = payload.instruction.strip()
     if not instruction:
         raise HTTPException(status_code=400, detail="Instruction cannot be empty")
+
+    logger.info(
+        "Processing /edit/gemini request; mask_provided=%s reference_images=%d",
+        bool(payload.mask_image),
+        len(payload.reference_images or []),
+    )
 
     prompt_text = (
         "MASKED REGION EDITING - Follow these instructions precisely:\n\n"
@@ -677,6 +839,7 @@ async def edit_with_gemini(payload: EditRequest) -> EditResponse:
             }
         )
     except Exception as exc:
+        logger.warning("Invalid original image for /edit/gemini: %s", exc)
         raise HTTPException(status_code=400, detail=f"Invalid original image: {exc}") from exc
 
     if payload.mask_image:
@@ -690,6 +853,7 @@ async def edit_with_gemini(payload: EditRequest) -> EditResponse:
                 }
             )
         except Exception as exc:
+            logger.warning("Invalid mask image for /edit/gemini: %s", exc)
             raise HTTPException(status_code=400, detail=f"Invalid mask image: {exc}") from exc
 
     for ref_image in payload.reference_images or []:
@@ -703,6 +867,7 @@ async def edit_with_gemini(payload: EditRequest) -> EditResponse:
                 }
             )
         except Exception as exc:
+            logger.warning("Invalid reference image for /edit/gemini: %s", exc)
             raise HTTPException(status_code=400, detail=f"Invalid reference image: {exc}") from exc
 
     args = _build_generation_args(
@@ -711,6 +876,7 @@ async def edit_with_gemini(payload: EditRequest) -> EditResponse:
     )
 
     try:
+        logger.info("Sending edit request to Gemini model %s", GEMINI_FLASH_MODEL)
         result = model.generate_content([
             {
                 "role": "user",
@@ -718,10 +884,21 @@ async def edit_with_gemini(payload: EditRequest) -> EditResponse:
             }
         ], **args)
     except Exception as exc:  # pragma: no cover
-        raise HTTPException(status_code=502, detail=f"Gemini edit failed: {exc}") from exc
+        logger.exception("Gemini edit request failed")
+        raise HTTPException(status_code=502, detail=f"Gemini edit failed: {type(exc).__name__}: {exc}") from exc
 
     images: List[ImagePayload] = []
-    for candidate in getattr(result, "candidates", []) or []:
+    candidate_summaries: List[str] = []
+
+    for index, candidate in enumerate(getattr(result, "candidates", []) or []):
+        summary = _summarize_candidate(candidate)
+        text_snippet = _extract_candidate_text(candidate)
+        if text_snippet:
+            candidate_summaries.append(
+                f"candidate[{index}]: {summary}, text='{text_snippet}'"
+            )
+        else:
+            candidate_summaries.append(f"candidate[{index}]: {summary}")
         content = getattr(candidate, "content", None)
         if not content:
             continue
@@ -731,8 +908,40 @@ async def edit_with_gemini(payload: EditRequest) -> EditResponse:
                 raw_data = inline.data if isinstance(inline.data, bytes) else bytes(inline.data)
                 images.append(_serialize_inline_image(raw_data, getattr(inline, "mime_type", "image/png")))
 
+    prompt_feedback = _summarize_prompt_feedback(getattr(result, "prompt_feedback", None))
+
     if not images:
-        raise HTTPException(status_code=502, detail="Gemini did not return edited image content")
+        if candidate_summaries:
+            logger.warning(
+                "Gemini edit returned no image content. Candidate details: %s",
+                " | ".join(candidate_summaries),
+            )
+        else:
+            logger.warning("Gemini edit returned no image content and provided no candidates")
+
+        debug_hint = candidate_summaries[0] if candidate_summaries else "no candidate summaries"
+        if len(debug_hint) > 240:
+            debug_hint = f"{debug_hint[:237]}..."
+
+        if prompt_feedback:
+            logger.warning("Prompt feedback: %s", prompt_feedback)
+            debug_hint = f"{debug_hint}; feedback={prompt_feedback}"
+        elif "finish_reason=1" in debug_hint:
+            debug_hint = (
+                f"{debug_hint}; guidance=Model stopped without emitting an image. "
+                "Ensure the prompt explicitly requests visual output, "
+                "avoid unsupported edits, and confirm your Google AI Studio key is "
+                "enabled for image editing. Some Gemini models on AI Studio only "
+                "support fresh image generation—consider switching to an Imagen/Vertex "
+                "workflow if edits remain blocked."
+            )
+
+        raise HTTPException(
+            status_code=502,
+            detail=f"Gemini did not return edited image content ({debug_hint})",
+        )
+
+    logger.info("Gemini edit generated %d image(s)", len(images))
 
     return EditResponse(model=GEMINI_FLASH_MODEL, images=images)
 
