@@ -467,21 +467,7 @@ export const HistoryPanel: React.FC = () => {
   }, [generations, edits, galleryImages]);
 
   if (!showHistory) {
-    return (
-      <div className="w-8 bg-gray-950 border-l border-gray-800 flex flex-col items-center justify-center">
-        <button
-          onClick={() => setShowHistory(true)}
-          className="w-6 h-16 bg-gray-800 hover:bg-gray-700 rounded-l-lg border border-r-0 border-gray-700 flex items-center justify-center transition-colors group"
-          title="Show History Panel"
-        >
-          <div className="flex flex-col space-y-1">
-            <div className="w-1 h-1 bg-gray-500 group-hover:bg-gray-400 rounded-full"></div>
-            <div className="w-1 h-1 bg-gray-500 group-hover:bg-gray-400 rounded-full"></div>
-            <div className="w-1 h-1 bg-gray-500 group-hover:bg-gray-400 rounded-full"></div>
-          </div>
-        </button>
-      </div>
-    );
+    return null;
   }
 
   return (

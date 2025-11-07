@@ -13,7 +13,7 @@ import { LoginPage } from './components/LoginPage';
 import { UpscalingPanel } from './components/UpscalingPanel';
 import { cn } from './utils/cn';
 import { Button } from './components/ui/Button';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +30,7 @@ function AppContent() {
   const setShowPromptPanel = useAppStore((state) => state.setShowPromptPanel);
   const showPromptPanel = useAppStore((state) => state.showPromptPanel);
   const setShowHistory = useAppStore((state) => state.setShowHistory);
+  const showHistory = useAppStore((state) => state.showHistory);
   const language = useAppStore((state) => state.language);
   const activePrimarySection = useAppStore((state) => state.activePrimarySection);
   const t = getTranslation(language);
@@ -145,11 +146,23 @@ function AppContent() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowPromptPanel(true)}
-                className="absolute top-4 left-4 z-50 h-9 w-9 text-gray-400 hover:text-white transition-colors"
+                className="absolute top-4 left-4 z-50 h-9 w-9 rounded-full text-gray-400 hover:text-white transition-colors"
                 title={t.showPromptPanel}
                 aria-label={t.showPromptPanel}
               >
                 <ChevronRight className="h-5 w-5" />
+              </Button>
+            )}
+            {!showHistory && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowHistory(true)}
+                className="absolute top-4 right-4 z-50 h-9 w-9 rounded-full text-gray-400 hover:text-white transition-colors"
+                title="Show History Panel"
+                aria-label="Show History Panel"
+              >
+                <ChevronLeft className="h-5 w-5" />
               </Button>
             )}
           </div>
