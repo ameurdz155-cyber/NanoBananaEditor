@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { X, Plus, Edit2, Trash2, FolderTree, UploadCloud } from 'lucide-react';
+import { X, Plus, Edit2, Trash2, FolderTree, UploadCloud, Search } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 
@@ -390,21 +390,24 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
               style={{ borderColor: 'var(--surface-border-light)' }}
             >
               <div className="flex gap-3">
-                <Input
-                  placeholder={t.searchPrompts}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none z-10" style={{ color: 'var(--text-tertiary)' }} />
+                  <Input
+                    placeholder={t.searchPrompts}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-11"
+                  />
+                </div>
                 <Button
                   onClick={handleOpenCreate}
-                  className="text-white shadow-sm hover:shadow-md border-0"
+                  size="icon"
+                  className="h-11 w-11 rounded-full text-white shadow-sm hover:shadow-md border-0"
                   style={{
                     background: 'linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end))'
                   }}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t.addCategory}
+                  <Plus className="h-5 w-5" />
                 </Button>
               </div>
             </div>

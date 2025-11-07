@@ -414,7 +414,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
               <div className="flex gap-3">
                 <div className="flex-1 relative">
                   <Search
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none z-10"
                     style={{ color: 'var(--text-tertiary)' }}
                   />
                   <Input
@@ -422,7 +422,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className={cn(
-                      'pl-10',
+                      'pl-11',
                       isDarkMode
                         ? 'bg-gray-900/60 border-purple-500/20 text-gray-100 placeholder:text-gray-400 focus-visible:bg-gray-900/70 focus-visible:border-cyan-400/40'
                         : 'bg-white/95 text-gray-900 border-gray-300 placeholder:text-gray-500 focus-visible:bg-white focus-visible:border-cyan-400/40 focus-visible:shadow-[0_0_18px_rgba(6,182,212,0.16)]'
@@ -435,10 +435,10 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                     setEditingId(null);
                     resetForm();
                   }}
-                  className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                  size="icon"
+                  className="h-11 w-11 rounded-full bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm hover:shadow-md border-0"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t.createTemplate}
+                  <Plus className="h-5 w-5" />
                 </Button>
               </div>
               

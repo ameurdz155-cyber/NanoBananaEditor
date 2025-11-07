@@ -101,14 +101,29 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
               <Button onClick={onClose} variant="ghost" size="sm" className="text-gray-300"><ArrowLeft className="h-5 w-5 mr-1" />{language === 'zh' ? '返回' : 'Back'}</Button>
               <div className="flex items-center gap-2"><Folder className="h-7 w-7 text-lime-400" /><h1 className="text-2xl font-bold bg-gradient-to-r from-lime-400 to-cyan-400 bg-clip-text text-transparent">{language === 'zh' ? '提示词分类' : 'Prompt Categories'}</h1></div>
             </div>
-            <Button onClick={add} className="bg-gradient-to-r from-lime-600 to-cyan-600 hover:from-lime-700 hover:to-cyan-700"><Plus className="h-4 w-4 mr-1" />{t.addCategory}</Button>
           </div>
         </div>
 
         {/* Search */}
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="relative max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-            <Input placeholder={t.searchPrompts || 'Search...'} value={q} onChange={e => setQ(e.target.value)} className="pl-10 bg-gray-800/60 border-gray-700" />
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <Input 
+                placeholder={language === 'zh' ? '搜索...' : 'Search prompts...'} 
+                value={q} 
+                onChange={e => setQ(e.target.value)} 
+                className="pl-11 h-11 rounded-xl glass border border-purple-500/20 bg-gray-900/50 text-gray-100 placeholder:text-gray-400 focus-visible:border-purple-400/50 focus-visible:bg-gray-900/70 focus-visible:shadow-[0_0_20px_rgba(168,85,247,0.15)] transition-all duration-200"
+              />
+            </div>
+            <Button 
+              onClick={add}
+              size="icon"
+              className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md border-0"
+              style={{ background: 'linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end))' }}
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
           </div>
         </div>
 
