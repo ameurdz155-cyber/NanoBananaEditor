@@ -79,6 +79,10 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     negativePrompt: '',
     categoryId: '',
     emoji: '',
+    nameZh: '',
+    descriptionZh: '',
+    positivePromptZh: '',
+    negativePromptZh: '',
   });
   const [iconError, setIconError] = useState<string | null>(null);
   useEffect(() => {
@@ -146,6 +150,10 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       negativePrompt: '',
       categoryId: '',
       emoji: '',
+      nameZh: '',
+      descriptionZh: '',
+      positivePromptZh: '',
+      negativePromptZh: '',
     });
     setIconError(null);
   }, []);
@@ -243,6 +251,10 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       negativePrompt: template.negativePrompt || '',
       categoryId: template.categoryId || '',
       emoji: template.emoji || '',
+      nameZh: '',
+      descriptionZh: '',
+      positivePromptZh: '',
+      negativePromptZh: '',
     });
     setIconError(null);
     setShowAddForm(true);
@@ -346,6 +358,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   };
 
   return (
+    <>
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay
@@ -482,254 +495,6 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                 ))}
               </div>
             </div>
-
-            {/* Add/Edit Form */}
-            {showAddForm && (
-              <div
-                className={cn(
-                  'px-6 py-4 border-b max-h-[50vh] overflow-y-auto',
-                  isDarkMode ? 'bg-cyan-500/5 border-cyan-500/20' : 'bg-cyan-50 border-cyan-100'
-                )}
-              >
-                <h3
-                  className={cn(
-                    'text-sm font-semibold mb-4',
-                    isDarkMode ? 'text-cyan-200' : 'text-cyan-600'
-                  )}
-                >
-                  {editingId ? t.editPromptTemplate : t.createPromptTemplate}
-                </h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-[260px,1fr] gap-3">
-                    <div>
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        {t.templateEmojiLabel}
-                      </label>
-                      <div className="space-y-3">
-                        <input
-                          id="template-icon-upload"
-                          type="file"
-                          accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                          onChange={handleIconUpload}
-                          className="hidden"
-                        />
-                        <label
-                          htmlFor="template-icon-upload"
-                          onDrop={handleIconDrop}
-                          onDragOver={handleIconDragOver}
-                          className={cn(
-                            'flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-6 text-center transition-all',
-                            isDarkMode
-                              ? 'border-emerald-500/35 bg-[rgba(9,20,26,0.75)] hover:border-emerald-400 hover:bg-[rgba(9,28,34,0.85)]'
-                              : 'border-emerald-200 bg-white/95 hover:border-emerald-400 hover:bg-emerald-50'
-                          )}
-                          style={{ color: 'var(--text-secondary)' }}
-                        >
-                          {formData.emoji?.startsWith('data:image') ? (
-                            <>
-                              <div className="relative mb-3 flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border" style={{ borderColor: 'var(--surface-border)' }}>
-                                <img src={formData.emoji} alt="Uploaded icon" className="h-full w-full object-contain" />
-                              </div>
-                              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                {language === 'zh' ? '点击或拖放以更换图标' : 'Click or drop a new icon to replace'}
-                              </p>
-                              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                {language === 'zh' ? '支持 PNG / JPEG / WebP / SVG' : 'Supports PNG, JPEG, WebP, or SVG'}
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <div
-                                className={cn(
-                                  'mb-3 flex h-16 w-16 items-center justify-center rounded-full',
-                                  isDarkMode ? 'bg-emerald-500/15 text-emerald-200' : 'bg-emerald-100 text-emerald-700'
-                                )}
-                              >
-                                <UploadCloud className="h-7 w-7" />
-                              </div>
-                              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                {language === 'zh' ? '点击或拖放上传图标' : 'Click or drag a file here'}
-                              </p>
-                              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                {language === 'zh'
-                                  ? '上传 PNG / JPEG / WebP / SVG 图标（建议 64×64）'
-                                  : 'Upload a PNG, JPEG, WebP, or SVG icon (64×64 recommended).'}
-                              </p>
-                            </>
-                          )}
-                        </label>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-                            <label htmlFor="template-icon-upload" className="cursor-pointer">
-                              {language === 'zh' ? '浏览文件' : 'Browse files'}
-                            </label>
-                          </Button>
-                          {formData.emoji?.startsWith('data:image') ? (
-                            <Button type="button" variant="ghost" size="sm" onClick={handleClearUploadedIcon}>
-                              {language === 'zh' ? '移除图标' : 'Remove icon'}
-                            </Button>
-                          ) : null}
-                        </div>
-                        <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
-                          {language === 'zh'
-                            ? `最大文件大小约 ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB`
-                            : `Maximum file size about ${Math.round(MAX_ICON_SIZE_BYTES / 1024)}KB`}
-                        </p>
-                        {iconError ? (
-                          <p className="text-xs text-center" style={{ color: '#ef4444' }}>
-                            {iconError}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      <div
-                        className="mt-3 rounded-lg border py-3 text-center"
-                        style={{
-                          borderColor: 'var(--surface-border)',
-                          background: isDarkMode ? 'rgba(12, 16, 24, 0.8)' : 'rgba(240, 249, 244, 0.6)'
-                        }}
-                      >
-                        <div className="flex items-center justify-center">
-                          {renderIconVisual(formData.emoji, 'lg')}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        {t.name} *
-                      </label>
-                      <Input
-                        placeholder="e.g., Cinematic Portrait"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={cn(
-                          isDarkMode
-                            ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
-                            : 'bg-white/95 text-gray-900 border-gray-300'
-                        )}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        {t.description}
-                      </label>
-                      <Input
-                        placeholder={t.briefDescription}
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className={cn(
-                          isDarkMode
-                            ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
-                            : 'bg-white/95 text-gray-900 border-gray-300'
-                        )}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        {t.templateCategoryLabel}
-                      </label>
-                      <select
-                        value={formData.categoryId}
-                        onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                        style={{
-                          background: isDarkMode ? 'var(--surface-secondary)' : 'rgba(255,255,255,0.96)',
-                          borderColor: 'var(--surface-border)',
-                          color: 'var(--text-primary)'
-                        }}
-                      >
-                        <option value="">{t.uncategorized}</option>
-                        {categories.map(cat => (
-                          <option key={cat.id} value={cat.id}>
-                            {getEmojiDisplay(cat.emoji)} {cat.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {t.positivePrompt} *
-                    </label>
-                    <Textarea
-                      placeholder="cinematic portrait, professional lighting, {prompt}"
-                      value={formData.positivePrompt}
-                      onChange={(e) => setFormData({ ...formData, positivePrompt: e.target.value })}
-                      rows={3}
-                      className={cn(
-                        'resize-none',
-                        isDarkMode
-                          ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
-                          : 'bg-white/95 text-gray-900 border-gray-300 placeholder:text-gray-500 focus-visible:bg-white focus-visible:border-cyan-400/40'
-                      )}
-                    />
-                    <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{t.usePlaceholder}</p>
-                  </div>
-
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {t.negativePrompt}
-                    </label>
-                    <Textarea
-                      placeholder="blurry, low quality, distorted"
-                      value={formData.negativePrompt}
-                      onChange={(e) => setFormData({ ...formData, negativePrompt: e.target.value })}
-                      rows={2}
-                      className={cn(
-                        'resize-none',
-                        isDarkMode
-                          ? 'bg-gray-900/60 border-purple-500/20 text-gray-100'
-                          : 'bg-white/95 text-gray-900 border-gray-300 placeholder:text-gray-500 focus-visible:bg-white focus-visible:border-cyan-400/40'
-                      )}
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      onClick={editingId ? handleSaveEdit : handleCreate}
-                      disabled={!formData.name.trim() || !formData.positivePrompt.trim()}
-                      className="bg-cyan-600 hover:bg-cyan-700 text-white"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {editingId ? t.save : t.create}
-                    </Button>
-                    <Button
-                      onClick={handleCancelEdit}
-                      variant="ghost"
-                      className={cn(
-                        isDarkMode
-                          ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                          : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
-                      )}
-                    >
-                      {t.cancel}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Templates List */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -917,5 +682,135 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+
+    {/* Add/Edit Form Dialog */}
+    <Dialog.Root open={showAddForm} onOpenChange={(open) => !open && handleCancelEdit()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 backdrop-blur-sm z-[110]" style={{ backgroundColor: isDarkMode ? 'rgba(4, 6, 18, 0.72)' : 'rgba(15, 23, 42, 0.18)' }} />
+        <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl shadow-2xl border w-full max-w-2xl max-h-[85vh] overflow-y-auto z-[110]" style={{ background: 'var(--surface-primary)', borderColor: 'var(--modal-surface-border)', color: 'var(--text-primary)' }}>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <Dialog.Title className="text-xl font-semibold" style={{ color: 'var(--primary-gradient-end)' }}>
+                {editingId ? t.editPromptTemplate : t.createPromptTemplate}
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <Button variant="ghost" size="sm" style={{ color: 'var(--text-secondary)' }}><X className="h-5 w-5" /></Button>
+              </Dialog.Close>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    {language === 'zh' ? '英文名称 *' : 'Name (English) *'}
+                  </label>
+                  <Input placeholder="e.g., Cinematic Portrait" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    {language === 'zh' ? '中文名称 *' : 'Name (Chinese) *'}
+                  </label>
+                  <Input placeholder="例如：电影肖像" value={formData.nameZh} onChange={(e) => setFormData({ ...formData, nameZh: e.target.value })} />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                  {language === 'zh' ? '缩略图 Thumbnail' : 'Thumbnail 缩略图'}
+                </label>
+                <div className="space-y-2">
+                  <input
+                    id="thumbnail-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => setFormData({ ...formData, emoji: ev.target?.result as string });
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="thumbnail-upload"
+                    className={cn(
+                      'flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-4 text-center transition-all',
+                      isDarkMode ? 'border-cyan-500/35 bg-gray-900/60 hover:border-cyan-400' : 'border-cyan-200 bg-white/95 hover:border-cyan-400'
+                    )}
+                  >
+                    {formData.emoji?.startsWith('data:image') || formData.emoji?.startsWith('http') ? (
+                      <img src={formData.emoji} alt="Thumbnail" className="h-24 w-24 object-cover rounded-lg" />
+                    ) : (
+                      <>
+                        <UploadCloud className="h-8 w-8 mb-2" style={{ color: 'var(--text-secondary)' }} />
+                        <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                          {language === 'zh' ? '点击上传 | Click to upload' : 'Click to upload | 点击上传'}
+                        </p>
+                      </>
+                    )}
+                  </label>
+                  <Input
+                    placeholder={language === 'zh' ? '或输入图片URL | Or enter image URL' : 'Or enter image URL | 或输入图片URL'}
+                    value={formData.emoji?.startsWith('http') ? formData.emoji : ''}
+                    onChange={(e) => setFormData({ ...formData, emoji: e.target.value })}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                  {language === 'zh' ? '分类 Category' : 'Category 分类'}
+                </label>
+                <select value={formData.categoryId} onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })} className="w-full px-3 py-2 rounded-lg" style={{ background: isDarkMode ? 'var(--surface-secondary)' : 'white', borderColor: 'var(--surface-border)', color: 'var(--text-primary)' }}>
+                  <option value="">{t.uncategorized}</option>
+                  {categories.map(cat => (<option key={cat.id} value={cat.id}>{getEmojiDisplay(cat.emoji)} {cat.name}</option>))}
+                </select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    {language === 'zh' ? '英文正向提示词 *' : 'Positive Prompt (English) *'}
+                  </label>
+                  <Textarea placeholder="cinematic portrait, professional lighting, {prompt}" value={formData.positivePrompt} onChange={(e) => setFormData({ ...formData, positivePrompt: e.target.value })} rows={3} className="resize-none" />
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{t.usePlaceholder}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    {language === 'zh' ? '中文正向提示词' : 'Positive Prompt (Chinese)'}
+                  </label>
+                  <Textarea placeholder="电影肖像，专业打光，{prompt}" value={formData.positivePromptZh} onChange={(e) => setFormData({ ...formData, positivePromptZh: e.target.value })} rows={3} className="resize-none" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    {language === 'zh' ? '英文负向提示词' : 'Negative Prompt (English)'}
+                  </label>
+                  <Textarea placeholder="blurry, low quality, distorted" value={formData.negativePrompt} onChange={(e) => setFormData({ ...formData, negativePrompt: e.target.value })} rows={2} className="resize-none" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    {language === 'zh' ? '中文负向提示词' : 'Negative Prompt (Chinese)'}
+                  </label>
+                  <Textarea placeholder="模糊，低质量，扭曲" value={formData.negativePromptZh} onChange={(e) => setFormData({ ...formData, negativePromptZh: e.target.value })} rows={2} className="resize-none" />
+                </div>
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <Button onClick={editingId ? handleSaveEdit : handleCreate} disabled={!formData.name.trim() || !formData.positivePrompt.trim()} className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white">
+                  <Save className="h-4 w-4 mr-2" />
+                  {editingId ? t.save : t.create}
+                </Button>
+                <Button onClick={handleCancelEdit} variant="ghost" className="flex-1" style={{ color: 'var(--text-secondary)' }}>{t.cancel}</Button>
+              </div>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+    </>
   );
 };
