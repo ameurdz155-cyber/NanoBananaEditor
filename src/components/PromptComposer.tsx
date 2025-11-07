@@ -3,7 +3,7 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { useImageGeneration, useImageEditing } from '../hooks/useImageGeneration';
-import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus, Minus, Trash2 } from 'lucide-react';
+import { Wand2, Edit3, MousePointer, HelpCircle, ChevronDown, ChevronLeft, ChevronRight, RotateCcw, AlertCircle, Settings, FileText, Sparkles, X, Check, Upload, History, Plus, Minus, Trash2, Loader2 } from 'lucide-react';
 import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
@@ -32,6 +32,64 @@ const resolveIsDarkMode = () => {
     return true;
   }
   return document.documentElement.classList.contains('dark');
+};
+
+const IMPROVED_PROMPT_MARKERS = [
+  'improved prompt:',
+  'improved version:',
+  'enhanced prompt:',
+  'refined prompt:',
+  'suggested prompt:',
+  'optimized prompt:',
+];
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const sanitizeImprovedPrompt = (originalPrompt: string, rawImproved: string): string => {
+  if (!rawImproved) return rawImproved;
+
+  let result = rawImproved.trim();
+  if (!result) return result;
+
+  const leadingBlockMatch = /original\s+prompt:[\s\S]*?(improved\s+(prompt|version|text|description|suggestion):)/i.exec(result);
+  if (leadingBlockMatch) {
+    const { index } = leadingBlockMatch;
+    const capturedMarker = leadingBlockMatch[1];
+    if (typeof index === 'number') {
+      const sliceIndex = index + leadingBlockMatch[0].length - capturedMarker.length;
+      result = result.slice(sliceIndex).trim();
+    }
+  }
+
+  const lowerResult = result.toLowerCase();
+  const markerEntry = IMPROVED_PROMPT_MARKERS
+    .map((marker) => {
+      const idx = lowerResult.indexOf(marker);
+      return idx >= 0 ? { marker, index: idx } : null;
+    })
+    .filter((entry): entry is { marker: string; index: number } => entry !== null)
+    .sort((a, b) => a.index - b.index)[0];
+
+  if (markerEntry) {
+    result = result.slice(markerEntry.index + markerEntry.marker.length).trim();
+  }
+
+  const normalizedOriginal = originalPrompt.trim();
+  if (normalizedOriginal) {
+    const normalizedOriginalLower = normalizedOriginal.toLowerCase();
+
+    if (result.toLowerCase().startsWith(normalizedOriginalLower)) {
+      result = result.slice(normalizedOriginal.length).trim();
+    }
+
+    const labeledOriginalRegex = new RegExp(`^original\s+prompt:\s*${escapeRegExp(normalizedOriginal)}\s*`, 'i');
+    result = result.replace(labeledOriginalRegex, '').trim();
+
+    const bareOriginalRegex = new RegExp(`^${escapeRegExp(normalizedOriginal)}[\s:,-]*`, 'i');
+    result = result.replace(bareOriginalRegex, '').trim();
+  }
+
+  return result || rawImproved.trim();
 };
 
 export const PromptComposer: React.FC = () => {
@@ -379,8 +437,9 @@ export const PromptComposer: React.FC = () => {
     setApiKeyError(null);
     
     try {
-      const improved = await improvePromptText(currentPrompt, language);
-      setImprovedPrompt(improved);
+  const improved = await improvePromptText(currentPrompt, language);
+  const cleaned = sanitizeImprovedPrompt(currentPrompt, improved);
+  setImprovedPrompt(cleaned);
     } catch (error: any) {
       console.error('Failed to improve prompt:', error);
       setApiKeyError(error.message || 'Failed to improve prompt. Please try again.');
@@ -764,173 +823,196 @@ export const PromptComposer: React.FC = () => {
         
         {/* Textarea with History Button */}
   <div className="relative overflow-visible">
-          <Textarea
-            value={currentPrompt}
-            onChange={(e) => setCurrentPrompt(e.target.value)}
-            placeholder={
-              selectedTool === 'generate'
-                ? t.promptPlaceholderGenerate
-                : t.promptPlaceholderEdit
+        <div className="relative">
+        <Textarea
+          value={currentPrompt}
+          onChange={(e) => setCurrentPrompt(e.target.value)}
+          placeholder={
+          selectedTool === 'generate'
+            ? t.promptPlaceholderGenerate
+            : t.promptPlaceholderEdit
+          }
+          className="min-h-[140px] resize-y bg-gray-950 border border-gray-800/70 focus:border-purple-400/70 focus:ring-0 transition-colors pr-20 pb-12 text-[13px] leading-relaxed"
+        />
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
+          <button
+          type="button"
+          onClick={() => setShowPromptHistory(!showPromptHistory)}
+          ref={historyButtonRef}
+          className={cn(
+            "h-8 w-8 flex items-center justify-center rounded-md text-gray-400 transition-all duration-200",
+            showPromptHistory
+            ? "bg-red-500/15 text-red-200 shadow-[0_0_12px_rgba(248,113,113,0.35)]"
+            : "hover:text-gray-100 hover:bg-gray-800"
+          )}
+          title={t.promptHistory}
+          >
+          <span className="sr-only">{t.promptHistory}</span>
+          <History className="h-3.5 w-3.5" />
+          </button>
+          <button
+          type="button"
+          onClick={() => {
+            if (!showNegativePrompt) {
+            setShowNegativePrompt(true);
+            const templateForNegative = currentTemplate ?? lastSelectedTemplate;
+            const negativeSource = templateForNegative?.negativePrompt;
+            if (negativeSource) {
+              const negText = negativeSource.replace('{prompt}', '').replace('{photo}', '').trim();
+              if (negText) {
+              setNegativePrompt(negText);
+              }
             }
-            className="min-h-[140px] resize-none bg-gray-950 border border-gray-800/70 focus:border-purple-400/70 focus:ring-0 transition-colors pr-20 text-[13px] leading-relaxed"
-          />
-          <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
-            <button
-              type="button"
-              onClick={() => setShowPromptHistory(!showPromptHistory)}
-              ref={historyButtonRef}
-              className={cn(
-                "h-8 w-8 flex items-center justify-center rounded-md text-gray-400 transition-all duration-200",
-                showPromptHistory
-                  ? "bg-red-500/15 text-red-200 shadow-[0_0_12px_rgba(248,113,113,0.35)]"
-                  : "hover:text-gray-100 hover:bg-gray-800"
-              )}
-              title={t.promptHistory}
-            >
-              <span className="sr-only">{t.promptHistory}</span>
-              <History className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!showNegativePrompt) {
-                  setShowNegativePrompt(true);
-                  const templateForNegative = currentTemplate ?? lastSelectedTemplate;
-                  const negativeSource = templateForNegative?.negativePrompt;
-                  if (negativeSource) {
-                    const negText = negativeSource.replace('{prompt}', '').replace('{photo}', '').trim();
-                    if (negText) {
-                      setNegativePrompt(negText);
-                    }
-                  }
-                } else {
-                  setShowNegativePrompt(false);
-                }
-              }}
-              className={cn(
-                'h-8 w-8 flex items-center justify-center rounded-md transition-all duration-200',
-                isDarkMode ? 'text-gray-400' : 'text-slate-500',
-                showNegativePrompt
-                  ? isDarkMode
-                    ? 'bg-orange-500/15 text-orange-200 shadow-[0_0_12px_rgba(251,146,60,0.35)]'
-                    : 'bg-orange-100 text-orange-600 shadow-[0_0_18px_rgba(251,146,60,0.25)] border border-orange-300/60'
-                  : isDarkMode
-                    ? 'hover:text-gray-100 hover:bg-gray-800'
-                    : 'hover:text-slate-900 hover:bg-orange-100/40'
-              )}
-              title={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
-              aria-label={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
-            >
-              {showNegativePrompt ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-              <span className="sr-only">{t.negativePromptLabel}</span>
-            </button>
+            } else {
+            setShowNegativePrompt(false);
+            }
+          }}
+          className={cn(
+            'h-8 w-8 flex items-center justify-center rounded-md transition-all duration-200',
+            isDarkMode ? 'text-gray-400' : 'text-slate-500',
+            showNegativePrompt
+            ? isDarkMode
+              ? 'bg-orange-500/15 text-orange-200 shadow-[0_0_12px_rgba(251,146,60,0.35)]'
+              : 'bg-orange-100 text-orange-600 shadow-[0_0_18px_rgba(251,146,60,0.25)] border border-orange-300/60'
+            : isDarkMode
+              ? 'hover:text-gray-100 hover:bg-gray-800'
+              : 'hover:text-slate-900 hover:bg-orange-100/40'
+          )}
+          title={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
+          aria-label={showNegativePrompt ? t.hideNegativePrompt : t.addNegativePrompt}
+          >
+          {showNegativePrompt ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+          <span className="sr-only">{t.negativePromptLabel}</span>
+          </button>
+        </div>
+        <div className="absolute bottom-3 right-3">
+          <button
+            type="button"
+            onClick={handleImprovePrompt}
+            className={cn(
+              'h-9 w-9 flex items-center justify-center rounded-full transition-all duration-200 shadow-sm backdrop-blur-sm border',
+              isImproving
+                ? isDarkMode
+                  ? 'bg-yellow-500/20 text-yellow-200 border-yellow-400/40 shadow-[0_0_12px_rgba(234,179,8,0.35)]'
+                  : 'bg-yellow-200/60 text-yellow-700 border-yellow-400/70 shadow-[0_0_12px_rgba(202,138,4,0.25)]'
+                : isDarkMode
+                  ? 'bg-gray-950/60 text-yellow-300 border-yellow-400/40 hover:text-yellow-200 hover:bg-yellow-500/10'
+                  : 'bg-yellow-50 text-yellow-600 border-yellow-400/60 hover:text-yellow-700 hover:bg-yellow-100/70'
+            )}
+            title={isImproving ? (t.cancel || 'Cancel') : (t.improvePrompt || 'Improve Prompt')}
+            aria-label={isImproving ? (t.cancel || 'Cancel') : (t.improvePrompt || 'Improve Prompt')}
+          >
+            {isImproving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            <span className="sr-only">{isImproving ? (t.cancel || 'Cancel') : (t.improvePrompt || 'Improve Prompt')}</span>
+          </button>
+        </div>
+        </div>
+        {showPromptHistory && (
+        <div
+          ref={historyPopoverRef}
+          className={cn(
+          'rounded-xl border border-gray-800 bg-gray-950 shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-50 overflow-hidden',
+          isMobileViewport
+            ? 'fixed inset-x-5 bottom-24 max-h-[60vh] overflow-y-auto'
+            : 'absolute top-14 right-0'
+          )}
+          style={isMobileViewport ? undefined : { width: 'min(18rem, calc(100vw - 4.5rem))' }}
+        >
+          <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-gray-200">{t.promptHistory}</p>
+          <button
+            type="button"
+            onClick={() => setShowPromptHistory(false)}
+            className="h-6 w-6 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+          >
+            <span className="sr-only">Close history</span>
+            <X className="h-3.5 w-3.5" />
+          </button>
           </div>
-          {showPromptHistory && (
-            <div
-              ref={historyPopoverRef}
-              className={cn(
-                'rounded-xl border border-gray-800 bg-gray-950 shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-50 overflow-hidden',
-                isMobileViewport
-                  ? 'fixed inset-x-5 bottom-24 max-h-[60vh] overflow-y-auto'
-                  : 'absolute top-14 right-0'
-              )}
-              style={isMobileViewport ? undefined : { width: 'min(18rem, calc(100vw - 4.5rem))' }}
+          <div className="mt-3 space-y-2">
+          <div className="relative">
+            <input
+            ref={historySearchInputRef}
+            type="text"
+            placeholder={t.searchPrompts}
+            value={historySearchQuery}
+            onChange={(e) => setHistorySearchQuery(e.target.value)}
+            disabled={promptHistory.length === 0}
+            className="w-full pl-9 pr-8 py-2 bg-gray-950 border border-gray-800 rounded-lg text-sm text-gray-200 placeholder-gray-500 disabled:opacity-50 focus:outline-none focus:border-purple-500/50 focus:bg-gray-900 transition-all"
+            />
+            <svg
+            className="absolute left-2.5 top-3 h-4 w-4 text-gray-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
             >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-gray-200">{t.promptHistory}</p>
-                <button
-                  type="button"
-                  onClick={() => setShowPromptHistory(false)}
-                  className="h-6 w-6 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-800"
-                >
-                  <span className="sr-only">Close history</span>
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <div className="mt-3 space-y-2">
-                <div className="relative">
-                  <input
-                    ref={historySearchInputRef}
-                    type="text"
-                    placeholder={t.searchPrompts}
-                    value={historySearchQuery}
-                    onChange={(e) => setHistorySearchQuery(e.target.value)}
-                    disabled={promptHistory.length === 0}
-                    className="w-full pl-9 pr-8 py-2 bg-gray-950 border border-gray-800 rounded-lg text-sm text-gray-200 placeholder-gray-500 disabled:opacity-50 focus:outline-none focus:border-purple-500/50 focus:bg-gray-900 transition-all"
-                  />
-                  <svg
-                    className="absolute left-2.5 top-3 h-4 w-4 text-gray-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  {historySearchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setHistorySearchQuery('')}
-                      className="absolute right-2.5 top-2.5 text-gray-500 hover:text-gray-300"
-                    >
-                      <span className="sr-only">Clear search</span>
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleClearHistory}
-                  disabled={promptHistory.length === 0}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-800 bg-gray-950 py-2 text-xs font-semibold text-gray-300 hover:border-red-500/60 hover:text-red-300 hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Clear History
-                </button>
-              </div>
-              <div className="mt-3 border-t border-gray-800/60 pt-3 max-h-48 overflow-y-auto custom-scrollbar">
-                {promptHistory.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-gray-500">
-                    {t.noPromptHistoryRecorded}
-                  </div>
-                ) : filteredPromptHistory.length === 0 ? (
-                  <div className="py-6 text-center text-sm text-gray-500">
-                    {t.noPromptsFound ?? 'No prompts found.'}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredPromptHistory.map((prompt, index) => {
-                      const originalIndex = promptHistory.indexOf(prompt);
-                      const displayNumber = originalIndex >= 0 ? promptHistory.length - originalIndex : promptHistory.length - index;
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            {historySearchQuery && (
+            <button
+              type="button"
+              onClick={() => setHistorySearchQuery('')}
+              className="absolute right-2.5 top-2.5 text-gray-500 hover:text-gray-300"
+            >
+              <span className="sr-only">Clear search</span>
+              <X className="h-4 w-4" />
+            </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleClearHistory}
+            disabled={promptHistory.length === 0}
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-800 bg-gray-950 py-2 text-xs font-semibold text-gray-300 hover:border-red-500/60 hover:text-red-300 hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Clear History
+          </button>
+          </div>
+          <div className="mt-3 border-t border-gray-800/60 pt-3 max-h-48 overflow-y-auto custom-scrollbar">
+          {promptHistory.length === 0 ? (
+            <div className="py-6 text-center text-sm text-gray-500">
+            {t.noPromptHistoryRecorded}
+            </div>
+          ) : filteredPromptHistory.length === 0 ? (
+            <div className="py-6 text-center text-sm text-gray-500">
+            {t.noPromptsFound ?? 'No prompts found.'}
+            </div>
+          ) : (
+            <div className="space-y-2">
+            {filteredPromptHistory.map((prompt, index) => {
+              const originalIndex = promptHistory.indexOf(prompt);
+              const displayNumber = originalIndex >= 0 ? promptHistory.length - originalIndex : promptHistory.length - index;
 
-                      return (
-                        <button
-                          key={`${prompt}-${index}`}
-                          type="button"
-                          onClick={() => {
-                            setCurrentPrompt(prompt);
-                            setShowPromptHistory(false);
-                          }}
-                          className="w-full rounded-lg bg-gray-900 px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800"
-                        >
-                          <p className="text-[11px] uppercase tracking-wide text-purple-400/80 mb-1">
-                            Prompt #{displayNumber}
-                          </p>
-                          <p className="text-xs text-gray-400 leading-relaxed line-clamp-3">
-                            {prompt}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-              <div className="mt-3 border-t border-gray-800/60 pt-2 text-center text-[11px] text-gray-500">
-                <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-gray-600 mr-1">alt+up/down</kbd>
-                to switch between prompts.
-              </div>
+              return (
+              <button
+                key={`${prompt}-${index}`}
+                type="button"
+                onClick={() => {
+                setCurrentPrompt(prompt);
+                setShowPromptHistory(false);
+                }}
+                className="w-full rounded-lg bg-gray-900 px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800"
+              >
+                <p className="text-[11px] uppercase tracking-wide text-purple-400/80 mb-1">
+                Prompt #{displayNumber}
+                </p>
+                <p className="text-xs text-gray-400 leading-relaxed line-clamp-3">
+                {prompt}
+                </p>
+              </button>
+              );
+            })}
             </div>
           )}
+          </div>
+          <div className="mt-3 border-t border-gray-800/60 pt-2 text-center text-[11px] text-gray-500">
+          <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-gray-600 mr-1">alt+up/down</kbd>
+          to switch between prompts.
+          </div>
         </div>
+        )}
+      </div>
 
         {showNegativePrompt && (
           <div className="mt-3">
@@ -959,8 +1041,8 @@ export const PromptComposer: React.FC = () => {
           >
             {isImproving ? (
               <>
-                <X className="h-3 w-3 mr-2" />
-                <span>Cancel</span>
+                <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                <span>{t.cancel || 'Cancel'}</span>
               </>
             ) : (
               <>
@@ -974,43 +1056,118 @@ export const PromptComposer: React.FC = () => {
         {/* Improved Prompt Modal */}
         <Dialog.Root open={!!improvedPrompt} onOpenChange={(open) => !open && handleRejectImprovedPrompt()}>
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" />
-            <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-purple-500/30 rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto z-50 shadow-2xl">
+            <Dialog.Overlay
+              className={cn(
+                'fixed inset-0 backdrop-blur-sm z-50 transition-colors',
+                isDarkMode ? 'bg-black/50' : 'bg-black/30'
+              )}
+            />
+            <Dialog.Content
+              className={cn(
+                'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto z-50 transition-colors',
+                isDarkMode
+                  ? 'bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-purple-500/30 shadow-2xl'
+                  : 'bg-white border border-purple-200/70 shadow-xl'
+              )}
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-purple-600/20 rounded-lg">
-                    <Sparkles className="h-5 w-5 text-purple-400" />
+                  <div
+                    className={cn(
+                      'p-2 rounded-lg transition-colors',
+                      isDarkMode ? 'bg-purple-600/20' : 'bg-purple-100'
+                    )}
+                  >
+                    <Sparkles className={cn('h-5 w-5', isDarkMode ? 'text-purple-400' : 'text-purple-500')} />
                   </div>
-                  <Dialog.Title className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                  <Dialog.Title
+                    className={cn(
+                      'text-xl font-bold bg-clip-text',
+                      isDarkMode ? 'text-transparent bg-gradient-to-r from-purple-400 to-pink-400' : 'text-purple-600'
+                    )}
+                  >
                     {t.improvedPromptTitle}
                   </Dialog.Title>
                 </div>
                 <Dialog.Close asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-800">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'h-8 w-8 transition-colors',
+                      isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100 text-gray-500'
+                    )}
+                  >
                     <X className="h-5 w-5" />
                   </Button>
                 </Dialog.Close>
               </div>
-              
+
               <div className="space-y-4">
                 {/* Original Prompt */}
-                <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                  <h4 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">{t.originalPrompt}</h4>
-                  <p className="text-sm text-gray-300 leading-relaxed">{currentPrompt}</p>
+                <div
+                  className={cn(
+                    'p-4 rounded-lg border transition-colors',
+                    isDarkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-slate-50 border-slate-200'
+                  )}
+                >
+                  <h4
+                    className={cn(
+                      'text-xs font-semibold mb-2 uppercase tracking-wider',
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    )}
+                  >
+                    {t.originalPrompt}
+                  </h4>
+                  <p
+                    className={cn(
+                      'text-sm leading-relaxed',
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    )}
+                  >
+                    {currentPrompt}
+                  </p>
                 </div>
-                
+
                 {/* Improved Prompt */}
-                <div className="p-4 bg-gradient-to-br from-purple-900/30 to-pink-900/30 rounded-lg border border-purple-500/30">
-                  <h4 className="text-xs font-semibold text-purple-300 mb-2 uppercase tracking-wider">{t.improvedVersion}</h4>
+                <div
+                  className={cn(
+                    'p-4 rounded-lg border transition-colors',
+                    isDarkMode
+                      ? 'bg-gradient-to-br from-purple-900/30 to-pink-900/30 border-purple-500/30'
+                      : 'bg-gradient-to-br from-purple-100/70 via-white to-pink-100/60 border-purple-200'
+                  )}
+                >
+                  <h4
+                    className={cn(
+                      'text-xs font-semibold mb-2 uppercase tracking-wider',
+                      isDarkMode ? 'text-purple-300' : 'text-purple-600'
+                    )}
+                  >
+                    {t.improvedVersion}
+                  </h4>
                   <Textarea
                     value={improvedPrompt || ''}
                     onChange={(e) => setImprovedPrompt(e.target.value)}
-                    className="min-h-[120px] resize-none bg-gray-800/50 border-purple-500/30 focus:border-purple-500 text-gray-200 text-sm leading-relaxed"
+                    className={cn(
+                      'min-h-[120px] resize-none text-sm leading-relaxed transition-all duration-200 border focus-visible:outline-none',
+                      isDarkMode
+                        ? 'bg-gray-800/50 border-purple-500/30 text-gray-200 placeholder:text-gray-400 focus:border-purple-500 focus-visible:bg-gray-900/70 focus-visible:border-purple-400/60 focus-visible:shadow-[0_0_20px_rgba(168,85,247,0.15)] ring-offset-gray-900'
+                        : 'bg-white border-purple-300/50 text-gray-700 placeholder:text-gray-500 focus:border-purple-400 focus-visible:bg-purple-50 focus-visible:border-purple-400/70 focus-visible:shadow-[0_0_18px_rgba(168,85,247,0.15)] ring-offset-white'
+                    )}
                     placeholder="Improved prompt will appear here..."
                   />
-                  <p className="text-xs text-gray-400 mt-2">{t.canEditImproved}</p>
+                  <p
+                    className={cn(
+                      'text-xs mt-2 flex items-center gap-1.5',
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    )}
+                  >
+                    <span aria-hidden="true">✏️</span>
+                    {t.canEditImproved}
+                  </p>
                 </div>
-                
+
                 {/* Action Buttons */}
                 <div className="flex space-x-3 pt-2">
                   <Button
@@ -1025,7 +1182,10 @@ export const PromptComposer: React.FC = () => {
                     size="lg"
                     variant="outline"
                     onClick={handleRejectImprovedPrompt}
-                    className="flex-1 border-gray-600 hover:bg-gray-800"
+                    className={cn(
+                      'flex-1 transition-colors',
+                      isDarkMode ? 'border-gray-600 hover:bg-gray-800' : 'border-gray-200 text-gray-700 hover:bg-gray-100'
+                    )}
                   >
                     <X className="h-4 w-4 mr-2" />
                     {t.keepOriginal}
