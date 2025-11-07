@@ -1014,29 +1014,6 @@ export const PromptComposer: React.FC = () => {
         )}
         
 
-        {/* Improve Prompt Button */}
-        <div className="mt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleImprovePrompt}
-            disabled={!currentPrompt.trim() && !isImproving}
-            className="w-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border-purple-500/30"
-          >
-            {isImproving ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                <span>{t.cancel || 'Cancel'}</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-3 w-3 mr-2" />
-                <span>{t.improvePrompt}</span>
-              </>
-            )}
-          </Button>
-        </div>
-        
         {/* Improved Prompt Modal */}
         <Dialog.Root open={!!improvedPrompt} onOpenChange={(open) => !open && handleRejectImprovedPrompt()}>
           <Dialog.Portal>
