@@ -574,11 +574,11 @@ export const ImageCanvas: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full">
       {/* Canvas Area */}
       <div 
         id="canvas-container" 
-        className="flex-1 relative overflow-hidden"
+        className="flex-1 relative overflow-hidden w-full"
         style={{ background: 'var(--bg-elevated)' }}
         onContextMenu={(event) => {
           event.preventDefault();

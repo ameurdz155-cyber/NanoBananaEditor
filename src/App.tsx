@@ -135,11 +135,11 @@ function AppContent() {
       
       <div className="flex-1 flex overflow-hidden relative">
         <SideNavigation />
-        <div className="flex-1 flex overflow-hidden relative">
+        <div className="flex-1 flex overflow-hidden relative w-full">
           <div className="flex-shrink-0 transition-all duration-300 relative z-40">
             {activePrimarySection === 'upscaling' ? <UpscalingPanel /> : <PromptComposer />}
           </div>
-          <div className="flex-1 min-w-0 relative z-10">
+          <div className="flex-1 min-w-0 w-full relative z-10 transition-all duration-300">
             <ImageCanvas />
             {!showPromptPanel && activePrimarySection !== 'upscaling' && (
               <Button
@@ -166,7 +166,7 @@ function AppContent() {
               </Button>
             )}
           </div>
-          <div className="flex-shrink-0 relative z-10">
+          <div className="flex-shrink-0 relative z-10 transition-all duration-300">
             <HistoryPanel />
           </div>
         </div>

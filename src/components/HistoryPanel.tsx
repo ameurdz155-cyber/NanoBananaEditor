@@ -471,7 +471,7 @@ export const HistoryPanel: React.FC = () => {
   }
 
   return (
-    <div className="w-80 bg-gray-950 border-l border-gray-800 p-4 flex flex-col h-full overflow-hidden relative">
+    <div className="w-64 bg-gray-950 border-l border-gray-800 p-4 flex flex-col h-full overflow-hidden relative">
       {/* Hide Button - Positioned Outside */}
       <button
         onClick={() => setShowHistory(false)}
