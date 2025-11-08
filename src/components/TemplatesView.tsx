@@ -14,7 +14,10 @@ import {
   Edit2,
   X,
   UploadCloud,
-  Tag
+  Tag,
+  Search,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { IconType } from 'react-icons';
 import {
@@ -606,6 +609,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const [isDuplicationMode, setIsDuplicationMode] = React.useState(false);
   const [showPremiumAlert, setShowPremiumAlert] = React.useState(false);
   const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
+  const [isListening, setIsListening] = React.useState(false);
+  const [isVoiceSearchSupported, setIsVoiceSearchSupported] = React.useState(false);
+  const speechRecognitionRef = React.useRef<any>(null);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') {
@@ -781,6 +787,97 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       setIsDuplicationMode(false);
     }
   }, [isPremiumUser]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setIsVoiceSearchSupported(false);
+      speechRecognitionRef.current = null;
+      return;
+    }
+
+    setIsVoiceSearchSupported(true);
+
+    if (!speechRecognitionRef.current) {
+      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.maxAlternatives = 1;
+      speechRecognitionRef.current = recognitionInstance;
+    }
+
+    const recognition = speechRecognitionRef.current;
+    if (!recognition) {
+      return;
+    }
+
+    recognition.lang = language === 'zh' ? 'zh-CN' : 'en-US';
+    recognition.onresult = (event: any) => {
+      try {
+        const transcript = event?.results?.[0]?.[0]?.transcript;
+        if (transcript) {
+          setSearchQuery(transcript.trim());
+        }
+        recognition.stop?.();
+      } finally {
+        setIsListening(false);
+      }
+    };
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    return () => {
+      if (recognition) {
+        recognition.onresult = null;
+        recognition.onerror = null;
+        recognition.onend = null;
+      }
+    };
+  }, [language]);
+
+  React.useEffect(() => {
+    return () => {
+      if (speechRecognitionRef.current) {
+        try {
+          speechRecognitionRef.current.stop?.();
+          speechRecognitionRef.current.abort?.();
+        } catch {
+          // Some browsers throw if recognition is already stopped; safe to ignore.
+        }
+        speechRecognitionRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleVoiceSearch = React.useCallback(() => {
+    if (!isVoiceSearchSupported || !speechRecognitionRef.current) {
+      return;
+    }
+
+    const recognition = speechRecognitionRef.current;
+
+    try {
+      if (isListening) {
+        recognition.stop?.();
+        setIsListening(false);
+      } else {
+        recognition.start();
+        setIsListening(true);
+      }
+    } catch (error) {
+      console.error('Voice search activation failed', error);
+      setIsListening(false);
+    }
+  }, [isListening, isVoiceSearchSupported]);
 
   const openCategoryModal = React.useCallback((categoryId?: string) => {
     if (!isPremiumUser) {
@@ -1009,6 +1106,13 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     }
   };
 
+  const voiceSearchButtonLabel = React.useMemo(() => {
+    if (isListening) {
+      return language === 'zh' ? '停止语音搜索' : 'Stop voice search';
+    }
+    return language === 'zh' ? '使用语音搜索' : 'Search by voice';
+  }, [isListening, language]);
+
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
   const filterByCategory = React.useCallback(
@@ -1236,38 +1340,56 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       {/* Search, Actions, and Categories */}
       <div className="flex-shrink-0 mb-3 space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Input
-            type="text"
-            placeholder={language === 'zh' ? '按名称搜索' : 'Search by name'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={cn(
-              'w-full sm:flex-1 transition-colors',
-              isDarkMode
-                ? 'bg-[var(--surface-primary)]/80 text-[color:var(--text-primary)] placeholder:text-[color:var(--text-tertiary)] border-[color:var(--surface-border)] focus-visible:bg-[var(--surface-primary)]'
-                : 'bg-white/95 text-slate-900 placeholder:text-slate-500 border-slate-200 focus-visible:bg-white focus-visible:shadow-[0_0_18px_rgba(168,85,247,0.12)]'
-            )}
-            style={
-              isDarkMode
-                ? { color: 'var(--text-primary)' }
-                : { color: 'var(--text-primary)' }
-            }
-          />
+          <div className="relative w-full sm:flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors"
+              style={{ color: 'var(--text-tertiary)' }}
+            />
+            <Input
+              type="text"
+              placeholder={language === 'zh' ? '按名称搜索' : 'Search by name'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={cn(
+                'pl-10 pr-12 transition-colors rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--surface-border)] bg-[var(--surface-primary)]/90 focus-visible:bg-[var(--surface-primary)] focus-visible:shadow-[0_0_18px_rgba(168,85,247,0.12)]'
+              )}
+              style={{ color: 'var(--text-primary)' }}
+            />
+            <button
+              type="button"
+              onClick={handleVoiceSearch}
+              disabled={!isVoiceSearchSupported}
+              aria-label={voiceSearchButtonLabel}
+              title={voiceSearchButtonLabel}
+              aria-pressed={isListening}
+              className={cn(
+                'absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/70',
+                'border-[var(--surface-border)] bg-[var(--surface-secondary)]/90 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
+                isListening && 'border-purple-400/60 bg-purple-500/10 text-purple-500',
+                !isVoiceSearchSupported && 'cursor-not-allowed opacity-60'
+              )}
+            >
+              {isVoiceSearchSupported ? (
+                <Mic className={cn('h-4 w-4', isListening && 'animate-pulse')} />
+              ) : (
+                <MicOff className="h-4 w-4" />
+              )}
+            </button>
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="default"
+              size="icon"
               onClick={openCreateModal}
               title={t.createTemplate}
+              aria-label={t.createTemplate}
               className={cn(
-                'flex items-center gap-2 px-4 h-10 transition-all whitespace-nowrap',
-                isDarkMode
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                  : 'bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg'
+                'h-10 w-10 rounded-xl transition-all',
+                'bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg'
               )}
               type="button"
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t.createTemplate}</span>
             </Button>
           </div>
         </div>
@@ -1310,7 +1432,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     ? 'text-purple-100'
                     : 'text-purple-700'
                   : isDarkMode
-                    ? 'text-[color:var(--text-tertiary)]'
+                    ? 'text-[var(--text-tertiary)]'
                     : 'text-slate-500'
               );
               return (
@@ -1321,10 +1443,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition-all',
                     isActive
                       ? isDarkMode
-                        ? 'border-purple-500 bg-purple-500/10 text-purple-200 shadow-sm'
+                        ? 'border-purple-500 bg-purple-500/15 text-purple-200 shadow-sm'
                         : 'border-purple-300 bg-purple-100 text-purple-700 shadow-sm'
                       : isDarkMode
-                        ? 'border-[color:var(--surface-border)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:border-purple-400/40 hover:bg-purple-500/5'
+                        ? 'border-[var(--surface-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-purple-400/40 hover:bg-purple-500/10'
                         : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-purple-300/60 hover:bg-purple-50'
                   )}
                   type="button"
