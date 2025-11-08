@@ -6,3 +6,9 @@ google-auth-oauthlib
 google-auth
 Pillow
 requests
+
+# Database and Authentication
+tinydb
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart

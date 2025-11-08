@@ -1,0 +1,97 @@
+// Prisma schema for AI POD API
+// Database: SQLite
+
+generator client {
+  provider = "prisma-client-py"
+  interface = "asyncio"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./ai_pod.db"
+}
+
+// User model for authentication
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  username      String   @unique
+  password_hash String
+  full_name     String?
+  is_active     Boolean  @default(true)
+  is_admin      Boolean  @default(false)
+  is_superuser  Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  last_login    DateTime?
+  
+  // Relations
+  api_keys      ApiKey[]
+  sessions      Session[]
+  images        GeneratedImage[]
+  
+  @@map("users")
+}
+
+// API Keys for programmatic access
+model ApiKey {
+  id          String   @id @default(uuid())
+  user_id     String
+  key_hash    String   @unique
+  name        String
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  expires_at  DateTime?
+  last_used   DateTime?
+  
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@map("api_keys")
+}
+
+// User sessions
+model Session {
+  id            String   @id @default(uuid())
+  user_id       String
+  token_hash    String   @unique
+  ip_address    String?
+  user_agent    String?
+  created_at    DateTime @default(now())
+  expires_at    DateTime
+  last_activity DateTime @default(now())
+  
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+// Generated images tracking
+model GeneratedImage {
+  id            String   @id @default(uuid())
+  user_id       String
+  prompt        String
+  model_used    String
+  image_url     String?
+  thumbnail_url String?
+  parameters    String   // JSON string
+  status        String   @default("pending") // pending, completed, failed
+  error_message String?
+  created_at    DateTime @default(now())
+  
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@map("generated_images")
+}
+
+// Audit log for admin actions
+model AuditLog {
+  id          String   @id @default(uuid())
+  user_id     String?
+  action      String
+  resource    String?
+  details     String?  // JSON string
+  ip_address  String?
+  created_at  DateTime @default(now())
+  
+  @@map("audit_logs")
+}
