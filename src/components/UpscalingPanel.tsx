@@ -323,23 +323,7 @@ export const UpscalingPanel: React.FC = () => {
   }, [handleUpscaleAction]);
 
   if (!showPromptPanel) {
-    return (
-      <div
-        className="relative h-full flex-shrink-0 bg-gray-950 border-r border-gray-800 flex items-center justify-center"
-        style={{ width: '48px' }}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowPromptPanel(true)}
-          title={t.showPromptPanel}
-          className="h-9 w-9 rounded-full border border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-          aria-label={t.showPromptPanel}
-        >
-          <ChevronLeft className="h-5 w-5 rotate-180" />
-        </Button>
-      </div>
-    );
+    return null;
   }
 
   return (

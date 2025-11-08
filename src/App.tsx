@@ -141,12 +141,12 @@ function AppContent() {
           </div>
           <div className="flex-1 min-w-0 w-full relative z-10 transition-all duration-300">
             <ImageCanvas />
-            {!showPromptPanel && activePrimarySection !== 'upscaling' && (
+            {!showPromptPanel && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowPromptPanel(true)}
-                className="absolute top-4 left-4 z-50 h-9 w-9 rounded-full text-gray-400 hover:text-white transition-colors"
+                className="absolute top-6 left-6 z-50 h-8 w-8 rounded-full border border-gray-700 bg-gray-800/90 text-gray-200 hover:bg-gray-700 hover:text-white transition-colors shadow-lg"
                 title={t.showPromptPanel}
                 aria-label={t.showPromptPanel}
               >

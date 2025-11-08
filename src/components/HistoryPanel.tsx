@@ -7,7 +7,8 @@ import {
   Folder,
   Download,
   Trash2,
-  PlusCircle
+  PlusCircle,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { ImagePreviewModal } from './ImagePreviewModal';
@@ -633,18 +634,19 @@ export const HistoryPanel: React.FC = () => {
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
                       </div>
 
-                      {generation.tags?.includes('upscall') && (
-                        <div className="absolute top-2 left-2 bg-teal-400/90 text-[10px] font-semibold tracking-wider uppercase px-2 py-1 rounded-md text-black border border-teal-300/70 shadow-sm">
-                          Upscall
-                        </div>
-                      )}
-                      
                       {/* Overlay on hover */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       
-                      {/* Generation Label */}
-                      <div className="absolute top-2 left-2 bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md border border-gray-700 font-medium">
-                        #{genIndex + 1}
+                      {/* Generation Label & Upscale Indicator */}
+                      <div className="absolute top-2 left-2 flex items-center gap-2">
+                        <div className="bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md border border-gray-700 font-medium">
+                          #{genIndex + 1}
+                        </div>
+                        {generation.tags?.includes('upscall') && (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-400/90 border border-teal-300/70 shadow-sm">
+                            <Sparkles className="h-3 w-3 text-black" />
+                          </div>
+                        )}
                       </div>
                       
                       {/* Timestamp */}
