@@ -101,7 +101,7 @@
   "startUpscaling": "开始超分辨率",
   "stopUpscaling": "停止超分辨率",
   "scaleLabel": "放大倍率",
-  "upscalingPanelTitle": "超分辨率",
+  "upscalingPanelTitle": "无损放大",
   "upscalingModelTitle": "选择超分辨率模型",
   "upscalingBackToGenerate": "返回生成",
   "upscalingSelectedAlt": "已选源图像",

@@ -46,6 +46,62 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   selectedTool,
   t,
 }) => {
+  const [historyPopoverPosition, setHistoryPopoverPosition] = React.useState({ top: 0, left: 0 });
+
+  React.useEffect(() => {
+    if (!showPromptHistory) {
+      return;
+    }
+
+    const updatePosition = () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      const buttonRect = historyButtonRef.current?.getBoundingClientRect();
+      const popoverWidth = historyPopoverRef.current?.offsetWidth ?? 320;
+      const popoverHeight = historyPopoverRef.current?.offsetHeight ?? 0;
+      const margin = 12;
+
+      if (!buttonRect) {
+        setHistoryPopoverPosition({ top: margin, left: window.innerWidth - popoverWidth - margin });
+        return;
+      }
+
+      let top = buttonRect.bottom + 8;
+      let left = buttonRect.right - popoverWidth;
+      const maxLeft = window.innerWidth - popoverWidth - margin;
+      const fitsBelow = top + popoverHeight + margin <= window.innerHeight;
+
+      if (!fitsBelow) {
+        top = buttonRect.top - popoverHeight - 8;
+      }
+
+      if (left < margin) {
+        left = margin;
+      }
+
+      if (left > maxLeft) {
+        left = maxLeft;
+      }
+
+      if (top < margin) {
+        top = margin;
+      }
+
+      setHistoryPopoverPosition({ top, left });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [showPromptHistory, historyButtonRef, historyPopoverRef]);
+
   return (
     <div className="bg-[#1a1c24] rounded-xl p-4 border border-gray-800/80 hover:border-gray-700 transition-all flex-shrink-0 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.8)]">
       <div className="flex items-center justify-between mb-3">
@@ -104,7 +160,8 @@ export const PromptInput: React.FC<PromptInputProps> = ({
         {showPromptHistory && (
           <div
             ref={historyPopoverRef}
-            className="absolute top-14 right-0 w-72 rounded-xl border border-gray-800 bg-[#1b1d26] shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-50"
+            className="fixed w-80 rounded-xl border border-gray-800 bg-[#1b1d26] shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-[9999]"
+            style={{ top: `${historyPopoverPosition.top}px`, left: `${historyPopoverPosition.left}px` }}
           >
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-200">{t.promptHistory}</p>
@@ -157,7 +214,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
                 Clear History
               </button>
             </div>
-            <div className="mt-3 border-t border-gray-800/60 pt-3 max-h-48 overflow-y-auto custom-scrollbar">
+            <div className="mt-3 border-t border-gray-800/60 pt-3 max-h-96 overflow-y-auto sidebar-scrollbar">
               {promptHistory.length === 0 ? (
                 <div className="py-6 text-center text-sm text-gray-500">{t.noPromptHistoryRecorded}</div>
               ) : filteredPromptHistory.length === 0 ? (

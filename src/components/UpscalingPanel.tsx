@@ -380,10 +380,12 @@ export const UpscalingPanel: React.FC = () => {
         <div className="p-5 space-y-5">
           <div className="rounded-xl border border-gray-800 bg-gray-900/70 shadow-lg shadow-teal-500/10">
             <header className="px-4 py-3 border-b border-gray-800/80 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-teal-300">{t.upscalingPanelTitle}</p>
-                <h2 className="text-base font-semibold text-gray-100">{t.upscalingModelTitle}</h2>
-              </div>
+
+
+            <div>
+              <p className="text-sm uppercase tracking-wider text-teal-300 font-medium">{t.upscalingPanelTitle}</p>
+            </div>
+
               <Button
                 type="button"
                 variant="outline"

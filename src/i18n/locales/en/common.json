@@ -101,7 +101,7 @@
   "startUpscaling": "Upscale",
   "stopUpscaling": "Stop Upscaling",
   "scaleLabel": "Scale",
-  "upscalingPanelTitle": "Upscaling",
+  "upscalingPanelTitle": "Upscale without Quality Loss",
   "upscalingModelTitle": "Choose your upscaling model",
   "upscalingBackToGenerate": "Return to Generate",
   "upscalingSelectedAlt": "Selected source image",
