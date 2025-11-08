@@ -486,10 +486,7 @@ export const HistoryPanel: React.FC = () => {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-            <History className="h-4 w-4 text-white" />
-          </div>
+        <div className="flex items-center ml-6">
           <div>
             <h3 className="text-sm font-semibold text-gray-200">{t.myCreations}</h3>
             <p className="text-xs text-gray-500">{generations.length + edits.length} {t.items}</p>
