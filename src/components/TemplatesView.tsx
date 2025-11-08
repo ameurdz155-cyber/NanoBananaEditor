@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useTemplateStore } from '../store/useTemplateStore';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
@@ -569,24 +570,54 @@ interface TemplatesViewProps {
 }
 
 export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }) => {
-  const { 
-    selectedTemplate, 
-    setSelectedTemplate, 
+  const {
+    selectedTemplate,
+    setSelectedTemplate,
     language,
     customTemplates,
-    addCustomTemplate,
-    updateCustomTemplate,
-    deleteCustomTemplate,
     promptCategories,
     addPromptCategory,
     updatePromptCategory,
-    deletePromptCategory
+    deletePromptCategory,
   } = useAppStore();
+  const {
+    templates,
+    fetchTemplates,
+    createTemplate: createTemplateFromStore,
+    updateTemplate: updateTemplateFromStore,
+    deleteTemplate: deleteTemplateFromStore,
+    loading,
+    error: templateError,
+  } = useTemplateStore((state) => ({
+    templates: state.templates,
+    fetchTemplates: state.fetchTemplates,
+    createTemplate: state.createTemplate,
+    updateTemplate: state.updateTemplate,
+    deleteTemplate: state.deleteTemplate,
+    loading: state.loading,
+    error: state.error,
+  }));
   const t = getTranslation(language);
   const [isDarkMode, setIsDarkMode] = React.useState(resolveIsDarkMode);
+  const [isSavingTemplate, setIsSavingTemplate] = React.useState(false);
+  const [deletingTemplateId, setDeletingTemplateId] = React.useState<string | null>(null);
+  const hasFetchedTemplatesRef = React.useRef(false);
+  const templatesLoading = loading?.templates ?? false;
+
+  const defaultTemplatesFromStore = React.useMemo<PromptTemplate[]>(() => {
+    if (templates.length > 0) {
+      return templates.filter((template) => template.isDefault);
+    }
+    return getDefaultTemplates(language);
+  }, [templates, language]);
+
+  const customTemplatesFromStore = React.useMemo<PromptTemplate[]>(() => {
+    if (templates.length > 0) {
+      return templates.filter((template) => !template.isDefault);
+    }
+    return customTemplates;
+  }, [templates, customTemplates]);
   
-  // Get localized default templates
-  const localizedDefaultTemplates = React.useMemo(() => getDefaultTemplates(language), [language]);
   
   const [searchQuery, setSearchQuery] = React.useState('');
   const [expandedSections, setExpandedSections] = React.useState<Record<string, boolean>>({
@@ -625,6 +656,16 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     window.addEventListener('themeChange', handleThemeChange);
     return () => window.removeEventListener('themeChange', handleThemeChange);
   }, []);
+
+  React.useEffect(() => {
+    if (hasFetchedTemplatesRef.current) {
+      return;
+    }
+    hasFetchedTemplatesRef.current = true;
+    fetchTemplates().catch((error) => {
+      console.error('Failed to fetch templates', error);
+    });
+  }, [fetchTemplates]);
 
   const resolvedCategories = React.useMemo<DisplayCategory[]>(() => {
     const map = new Map<string, DisplayCategory>();
@@ -671,14 +712,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       }
     };
 
-    localizedDefaultTemplates.forEach(tally);
-    customTemplates.forEach(tally);
+    defaultTemplatesFromStore.forEach(tally);
+    customTemplatesFromStore.forEach(tally);
 
     counts.set('all', total);
     counts.set('uncategorized', uncategorized);
 
     return counts;
-  }, [customTemplates, localizedDefaultTemplates]);
+  }, [customTemplatesFromStore, defaultTemplatesFromStore]);
 
   const categoryTabs = React.useMemo<DisplayCategory[]>(() => {
     const categoriesWithCounts = resolvedCategories.map((category) => ({
@@ -1059,7 +1100,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     setShowCreateModal(true);
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     if (!formData.name.trim() || !formData.positivePrompt.trim()) {
       alert(language === 'zh' ? '请输入名称和正面提示词' : 'Please enter a name and positive prompt');
       return;
@@ -1068,41 +1109,57 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     const emoji = formData.emoji.trim();
     const categoryId = formData.categoryId.trim();
     const image = formData.image.trim();
+    const payload = {
+      name: formData.name.trim(),
+      positivePrompt: formData.positivePrompt.trim(),
+      negativePrompt: formData.negativePrompt.trim() || undefined,
+      description: formData.description.trim() || undefined,
+      image: image || undefined,
+      emoji: emoji || undefined,
+      categoryId: categoryId || undefined,
+    };
 
-    if (editingTemplate) {
-      // Update existing template
-      updateCustomTemplate(editingTemplate.id, {
-        name: formData.name.trim(),
-        positivePrompt: formData.positivePrompt.trim(),
-        negativePrompt: formData.negativePrompt.trim(),
-        description: formData.description.trim(),
-        image: image || undefined,
-        emoji: emoji || undefined,
-        categoryId: categoryId || undefined,
-      });
-    } else {
-      // Create new template
-      const newTemplate: PromptTemplate = {
-        id: `custom-${Date.now()}`,
-        name: formData.name.trim(),
-        positivePrompt: formData.positivePrompt.trim(),
-        negativePrompt: formData.negativePrompt.trim(),
-        description: formData.description.trim(),
-        image: image || undefined,
-        emoji: emoji || undefined,
-        categoryId: categoryId || undefined,
-        createdAt: Date.now(),
-      };
-      addCustomTemplate(newTemplate);
+    setIsSavingTemplate(true);
+    try {
+      if (editingTemplate) {
+        await updateTemplateFromStore(editingTemplate.id, payload);
+      } else {
+        await createTemplateFromStore(payload);
+      }
+      setShowCreateModal(false);
+      setIsDuplicationMode(false);
+      setEditingTemplate(null);
+    } catch (error) {
+      console.error('Failed to save template', error);
+      const message = language === 'zh'
+        ? '保存模板失败，请稍后重试。'
+        : 'Failed to save template. Please try again.';
+      alert(message);
+    } finally {
+      setIsSavingTemplate(false);
     }
-
-    setShowCreateModal(false);
-    setIsDuplicationMode(false);
   };
 
-  const handleDeleteTemplate = (templateId: string) => {
-    if (confirm('Are you sure you want to delete this template?')) {
-      deleteCustomTemplate(templateId);
+  const handleDeleteTemplate = async (templateId: string) => {
+    const confirmMessage = language === 'zh'
+      ? '确定要删除这个模板吗？'
+      : 'Are you sure you want to delete this template?';
+
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    setDeletingTemplateId(templateId);
+    try {
+      await deleteTemplateFromStore(templateId);
+    } catch (error) {
+      console.error('Failed to delete template', error);
+      const message = language === 'zh'
+        ? '删除模板失败，请稍后重试。'
+        : 'Failed to delete template. Please try again.';
+      alert(message);
+    } finally {
+      setDeletingTemplateId(null);
     }
   };
 
@@ -1130,22 +1187,22 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
   const filteredMyTemplates = React.useMemo(
     () =>
-      customTemplates
+      customTemplatesFromStore
         .filter(filterByCategory)
         .filter((template) =>
           !normalizedQuery || template.name.toLowerCase().includes(normalizedQuery)
         ),
-    [customTemplates, filterByCategory, normalizedQuery]
+    [customTemplatesFromStore, filterByCategory, normalizedQuery]
   );
 
   const filteredDefaultTemplates = React.useMemo(
     () =>
-      localizedDefaultTemplates
+      defaultTemplatesFromStore
         .filter(filterByCategory)
         .filter((template) =>
           !normalizedQuery || template.name.toLowerCase().includes(normalizedQuery)
         ),
-    [localizedDefaultTemplates, filterByCategory, normalizedQuery]
+    [defaultTemplatesFromStore, filterByCategory, normalizedQuery]
   );
 
   const renderTemplateCard = (template: PromptTemplate, isCustom: boolean) => {
@@ -1321,6 +1378,8 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       handleDeleteTemplate(template.id);
                     }}
                     title={t.deleteTemplate}
+                    disabled={deletingTemplateId === template.id}
+                    aria-busy={deletingTemplateId === template.id}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -1394,6 +1453,22 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           </div>
         </div>
 
+        {templateError && (
+          <div
+            role="alert"
+            className={cn(
+              'rounded-lg border px-3 py-2 text-sm',
+              isDarkMode
+                ? 'border-red-500/40 bg-red-500/10 text-red-200'
+                : 'border-red-200 bg-red-50 text-red-700'
+            )}
+          >
+            {language === 'zh'
+              ? `加载模板时出错：${templateError}`
+              : `Error while loading templates: ${templateError}`}
+          </div>
+        )}
+
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span
@@ -1465,6 +1540,36 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
       {/* Templates List */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-3">
+        {templatesLoading && (
+          <div
+            className={cn(
+              'rounded-lg border px-3 py-2 text-sm flex items-center justify-between gap-2',
+              isDarkMode
+                ? 'border-purple-500/30 bg-purple-500/5 text-purple-100'
+                : 'border-purple-200 bg-purple-50 text-purple-700'
+            )}
+          >
+            <span>
+              {language === 'zh' ? '正在加载模板…' : 'Loading templates…'}
+            </span>
+            <span className="animate-spin" aria-hidden>
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" role="presentation">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray="60"
+                  strokeDashoffset="20"
+                  stroke={isDarkMode ? 'rgba(196,181,253,0.7)' : '#8b5cf6'}
+                  fill="none"
+                />
+              </svg>
+            </span>
+          </div>
+        )}
+
         {/* My Templates Section */}
         {isPremiumUser && (
           <div>
@@ -1484,7 +1589,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 )}
                 <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>My Templates</h3>
               </div>
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{customTemplates.length}</span>
+              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{customTemplatesFromStore.length}</span>
             </button>
 
             {expandedSections.my && (
@@ -1524,7 +1629,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               )}
               <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Default Templates</h3>
             </div>
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{localizedDefaultTemplates.length}</span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{defaultTemplatesFromStore.length}</span>
           </button>
 
           {expandedSections.default && (
@@ -2224,8 +2329,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_12px_30px_-12px_rgba(168,85,247,0.45)]'
                       : 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_14px_34px_-18px_rgba(168,85,247,0.55)]'
                   )}
+                  disabled={isSavingTemplate}
+                  aria-busy={isSavingTemplate}
                 >
-                  {t.save}
+                  {isSavingTemplate ? (language === 'zh' ? '保存中...' : 'Saving...') : t.save}
                 </Button>
               </div>
             </div>

@@ -11,7 +11,7 @@
       "is_superuser": true,
       "created_at": "2025-11-08T20:28:58.888043",
       "updated_at": "2025-11-08T20:28:58.888043",
-      "last_login": "2025-11-08T22:47:08.146265"
+      "last_login": "2025-11-08T23:40:23.374565"
     },
     "2": {
       "id": "9d6bfe43-3e27-4aa6-9e14-50ca3e988ea6",
@@ -120,6 +120,86 @@
       "expires_at": "2025-11-15T22:47:08.149742",
       "created_at": "2025-11-08T22:47:08.149751",
       "last_activity": "2025-11-08T22:47:08.149753"
+    },
+    "9": {
+      "id": "086a6976-2f53-48a5-85a5-5272b75fa754",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "crhez07QnPL9tZ4v95VVI2AOtJW35X2nnxvf4mtel2I",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:29:32.461449",
+      "created_at": "2025-11-08T23:29:32.461463",
+      "last_activity": "2025-11-08T23:29:32.461468"
+    },
+    "10": {
+      "id": "8aa354f1-9f73-4094-bdfc-44ba0b3f2616",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "YrKFhET6Oi9NxayIyOfzu5S-UBI6HV-4cjdl1iHlsFY",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:32:22.328249",
+      "created_at": "2025-11-08T23:32:22.328284",
+      "last_activity": "2025-11-08T23:32:22.328290"
+    },
+    "11": {
+      "id": "5ca97bb6-2cfc-432d-90b6-0eec618c66ed",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "NM8jh4L31PdVugmmbbaYKvWgRiNfAxQWBkC9FU899KA",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:37:39.589866",
+      "created_at": "2025-11-08T23:37:39.589885",
+      "last_activity": "2025-11-08T23:37:39.589892"
+    },
+    "12": {
+      "id": "46979421-9b99-4158-b5ff-2aff698e95ae",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "-M_TBc_xF-ZlwydFLRIM1Gb_jP3klnMJYkeGrf2Y0ak",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:37:49.286999",
+      "created_at": "2025-11-08T23:37:49.287012",
+      "last_activity": "2025-11-08T23:37:49.287018"
+    },
+    "13": {
+      "id": "86d55f21-6b76-44c8-9e2f-ebd0a8a4a16c",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "i331jLUN3NNXIt33X9yakhWvMyN1YBAuWXNm0FCoWRE",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:38:08.135797",
+      "created_at": "2025-11-08T23:38:08.135818",
+      "last_activity": "2025-11-08T23:38:08.135825"
+    },
+    "14": {
+      "id": "37a21ce1-fbec-405e-a277-19cbf2d7fe6f",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "1ZKXjoFeAITJjwSkTPgKdXTOxpJRjuj9T4q5BxewXuU",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:38:09.829007",
+      "created_at": "2025-11-08T23:38:09.829040",
+      "last_activity": "2025-11-08T23:38:09.829047"
+    },
+    "15": {
+      "id": "4c79327c-9509-40df-93d0-4e1d65e7e22c",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "GkZZ7brKBlxluok89dUDi03EdfK0MPwzJs_ZnCpopnQ",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:39:23.456717",
+      "created_at": "2025-11-08T23:39:23.456728",
+      "last_activity": "2025-11-08T23:39:23.456732"
+    },
+    "16": {
+      "id": "ee847068-e650-426e-9648-ee6013ee2c78",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "TixVZ5XRA5hTgwkLmmK_upi6Pf1KLWK1EMAumyYSjuA",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:40:23.396552",
+      "created_at": "2025-11-08T23:40:23.396565",
+      "last_activity": "2025-11-08T23:40:23.396571"
     }
   },
   "audit_logs": {
@@ -212,6 +292,78 @@
       "details": null,
       "ip_address": "127.0.0.1",
       "created_at": "2025-11-08T22:47:08.151727"
+    },
+    "11": {
+      "id": "f0d878f0-836b-4e35-92b7-2afac078456f",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:29:32.464253"
+    },
+    "12": {
+      "id": "ea013342-e1ec-4ce4-8f2d-eaa90f09d691",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:32:22.331879"
+    },
+    "13": {
+      "id": "cc039c1d-7277-4491-b370-f43fb41c1333",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:37:39.593466"
+    },
+    "14": {
+      "id": "155464da-7d9e-44e8-b1b6-4aaebe52c5c7",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:37:49.290485"
+    },
+    "15": {
+      "id": "9d9d27b7-8651-4956-85b8-5edabe8f14b1",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:38:08.141829"
+    },
+    "16": {
+      "id": "9fbb3b96-74d5-48ec-be90-790837779495",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:38:09.832497"
+    },
+    "17": {
+      "id": "bd475adc-bf9a-4e7f-a862-07976ffd9658",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:39:23.459427"
+    },
+    "18": {
+      "id": "16a7857b-ee17-4cbe-bc02-d79273c417fe",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:40:23.402560"
     }
   },
   "categories": {
@@ -257,6 +409,86 @@
       "isDefault": true,
       "createdAt": 1762631237367,
       "updatedAt": 1762631237367,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "5": {
+      "id": "cat-a0d52995181a",
+      "name": "Portraits",
+      "description": null,
+      "emoji": "\ud83d\udcc1",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762633772640,
+      "updatedAt": 1762633772640,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "6": {
+      "id": "cat-708b59235dd4",
+      "name": "Favorites",
+      "description": null,
+      "emoji": "\ud83d\udcc1",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762633772656,
+      "updatedAt": 1762633772656,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    }
+  },
+  "templates": {
+    "1": {
+      "id": "tpl-2fcbd00d0d63",
+      "name": "Cinematic Portrait",
+      "description": "Moody studio portrait with dramatic lighting and shallow depth of field.",
+      "positivePrompt": "cinematic portrait of a [subject], dramatic rim lighting, 85mm lens, f/1.4, ultrarealistic skin texture, cinematic color grading, volumetric fog, soft shadows, professional photography",
+      "negativePrompt": "low resolution, oversaturated, underexposed, overexposed, duplicated features, blurry, cartoon, painting",
+      "categoryId": "cat-a0d52995181a",
+      "emoji": "\ud83c\udfac",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762633772643,
+      "updatedAt": 1762633772643,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "2": {
+      "id": "tpl-cb640cc4587f",
+      "name": "Product Hero",
+      "description": "Clean hero shot on colored backdrop for product campaigns.",
+      "positivePrompt": "studio photography of [product], soft diffused lighting, colored backdrop, reflective surface, high contrast, commercial advertising style, 8k, ultra sharp focus",
+      "negativePrompt": "harsh shadows, fingerprints, dust, low resolution, motion blur, people, hands",
+      "categoryId": "cat-648473deb843",
+      "emoji": "\ud83d\udecd\ufe0f",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762633772647,
+      "updatedAt": 1762633772647,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "3": {
+      "id": "tpl-432b70aeb67a",
+      "name": "Epic Landscape",
+      "description": "Sweeping golden hour landscape with atmospheric depth.",
+      "positivePrompt": "epic landscape of [environment], golden hour sunlight, volumetric clouds, dramatic sky, wide angle, high detail, atmospheric perspective, 16k",
+      "negativePrompt": "haze, washed out colors, low detail, people, buildings, artifacts",
+      "categoryId": "cat-753a76a77f33",
+      "emoji": "\ud83c\udf05",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762633772652,
+      "updatedAt": 1762633772652,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "4": {
+      "id": "tpl-d2610d6d49da",
+      "name": "Social Media Quote",
+      "description": "Bold typographic template for inspirational quotes.",
+      "positivePrompt": "minimalist square graphic, bold typography, inspirational quote, gradient background, modern design, high contrast, clean layout, social media ready",
+      "negativePrompt": "cluttered, dated design, low contrast, noisy background",
+      "categoryId": "cat-708b59235dd4",
+      "emoji": "\ud83d\udcdd",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762633772659,
+      "updatedAt": 1762633772659,
       "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
     }
   }

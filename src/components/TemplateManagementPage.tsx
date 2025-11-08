@@ -1,835 +1,635 @@
-import React, { useState, useEffect } from 'react';
-import * as Dialog from '@radix-ui/react-dialog';
+"use client";
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import {
+	Copy,
+	Edit2,
+	Eye,
+	EyeOff,
+	Loader2,
+	Mic,
+	MicOff,
+	Plus,
+	RefreshCw,
+	Search,
+	Trash2,
+} from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
-import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, ArrowLeft, Upload, Lock } from 'lucide-react';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from './ui/dialog';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useTemplateStore, Template } from '../store/useTemplateStore';
 import { getTranslation } from '../i18n/translations';
 import { cn } from '../utils/cn';
-import { getDefaultTemplates } from './TemplatesView';
-import type { PromptTemplate } from '../types';
+import * as categoryService from '../services/categoryService';
 
 interface TemplateManagementPageProps {
-  onClose: () => void;
+	onClose: () => void;
 }
 
+type TemplateFormState = {
+	name: string;
+	description: string;
+	positivePrompt: string;
+	negativePrompt: string;
+	categoryId: string;
+	emoji: string;
+	image: string;
+};
+
+type SpeechRecognitionConstructor = new () => SpeechRecognition;
+
 export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ onClose }) => {
-  const language = useAppStore((state) => state.language);
-  const t = getTranslation(language);
-  const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
-  
-  const [templates, setTemplates] = useState<PromptTemplate[]>([]);
-  const [categories, setCategories] = useState<Array<{ id: string; name: string; emoji: string }>>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [isDarkMode] = useState(() => {
-    // Get theme from localStorage or default to dark
-    const savedTheme = localStorage.getItem('template-page-theme');
-    return savedTheme !== 'light';
-  });
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    positivePrompt: '',
-    negativePrompt: '',
-    categoryId: '',
-    emoji: '✨',
-    image: '',
-  });
+	const { language, promptCategories, setPromptCategories } = useAppStore((state) => ({
+		language: state.language,
+		promptCategories: state.promptCategories,
+		setPromptCategories: state.setPromptCategories,
+	}));
+	const { isAuthenticated, isPremiumUser } = useAuthStore((state) => ({
+		isAuthenticated: state.isAuthenticated,
+		isPremiumUser: state.isPremiumUser,
+	}));
+	const {
+		templates,
+		loading,
+		fetchTemplates,
+		refreshTemplates,
+		createTemplate,
+		updateTemplate,
+		deleteTemplate,
+	} = useTemplateStore((state) => ({
+		templates: state.templates,
+		loading: state.loading,
+		fetchTemplates: state.fetchTemplates,
+		refreshTemplates: state.refreshTemplates,
+		createTemplate: state.createTemplate,
+		updateTemplate: state.updateTemplate,
+		deleteTemplate: state.deleteTemplate,
+	}));
+	const t = getTranslation(language);
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+	const [searchTerm, setSearchTerm] = useState('');
+	const [selectedCategory, setSelectedCategory] = useState<'all' | 'uncategorized' | string>('all');
+	const [previewId, setPreviewId] = useState<string | null>(null);
+	const [isFormOpen, setFormOpen] = useState(false);
+	const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+	const [formState, setFormState] = useState<TemplateFormState>({
+		name: '',
+		description: '',
+			positivePrompt: '',
+		negativePrompt: '',
+		categoryId: '',
+		emoji: '',
+		image: '',
+	});
+	const [isListening, setListening] = useState(false);
+	const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  // Load templates and categories
-  useEffect(() => {
-    const storedTemplates = localStorage.getItem('promptTemplates');
-    const storedCategories = localStorage.getItem('promptCategories');
-    
-    if (storedTemplates) {
-      try {
-        setTemplates(JSON.parse(storedTemplates));
-      } catch (e) {
-        console.error('Failed to load templates:', e);
-      }
-    } else {
-      // Initialize with default templates
-      const defaultTemplates = getDefaultTemplates(language);
-      setTemplates(defaultTemplates);
-      localStorage.setItem('promptTemplates', JSON.stringify(defaultTemplates));
-    }
-    
-    if (storedCategories) {
-      try {
-        setCategories(JSON.parse(storedCategories));
-      } catch (e) {
-        console.error('Failed to load categories:', e);
-      }
-    }
-  }, [language]);
+	useEffect(() => {
+		if (!isAuthenticated) {
+			return;
+		}
 
-  // Save templates
-  const saveTemplates = (temps: PromptTemplate[]) => {
-    try {
-      const jsonString = JSON.stringify(temps);
-      localStorage.setItem('promptTemplates', jsonString);
-      setTemplates(temps);
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        alert(
-          language === 'zh' 
-            ? '存储空间不足！请删除一些模板或使用较小的图片。'
-            : 'Storage quota exceeded! Please delete some templates or use smaller images.'
-        );
-        console.error('LocalStorage quota exceeded. Current size:', new Blob([JSON.stringify(temps)]).size, 'bytes');
-      } else {
-        alert(
-          language === 'zh'
-            ? '保存失败：' + (error as Error).message
-            : 'Save failed: ' + (error as Error).message
-        );
-      }
-      throw error;
-    }
-  };
+		fetchTemplates().catch((error) => {
+			console.error('Failed to fetch templates:', error);
+		});
+	}, [isAuthenticated, fetchTemplates]);
 
-  // Reset form
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      positivePrompt: '',
-      negativePrompt: '',
-      categoryId: '',
-      emoji: '✨',
-      image: '',
-    });
-  };
+	useEffect(() => {
+		if (!isAuthenticated) {
+			return;
+		}
 
-  // Open modal for create
-  const handleOpenCreate = () => {
-    setEditingId(null);
-    resetForm();
-    setShowEditModal(true);
-  };
+		if (promptCategories.length === 0) {
+			categoryService
+				.fetchCategories()
+				.then((categories) => setPromptCategories(categories))
+				.catch((error) => {
+					console.error('Failed to fetch categories:', error);
+				});
+		}
+	}, [isAuthenticated, promptCategories.length, setPromptCategories]);
 
-  // Open modal for edit
-  const handleOpenEdit = (template: PromptTemplate) => {
-    setEditingId(template.id);
-    setFormData({
-      name: template.name,
-      description: template.description || '',
-      positivePrompt: template.positivePrompt,
-      negativePrompt: template.negativePrompt || '',
-      categoryId: template.categoryId || '',
-      emoji: template.emoji || '✨',
-      image: template.image || '',
-    });
-    setShowEditModal(true);
-  };
+	useEffect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
 
-  // Handle image upload with compression
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Check file size (limit to 2MB before compression)
-      if (file.size > 2 * 1024 * 1024) {
-        alert(language === 'zh' ? '图片太大，请选择小于2MB的图片' : 'Image too large, please select an image smaller than 2MB');
-        return;
-      }
+		const browserWindow = window as typeof window & {
+			SpeechRecognition?: SpeechRecognitionConstructor;
+			webkitSpeechRecognition?: SpeechRecognitionConstructor;
+		};
+		const RecognitionCtor = browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition;
+		if (!RecognitionCtor) {
+			recognitionRef.current = null;
+			return;
+		}
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          // Create canvas for compression
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          // Calculate new dimensions (max 800px width/height)
-          let width = img.width;
-          let height = img.height;
-          const maxSize = 800;
-          
-          if (width > maxSize || height > maxSize) {
-            if (width > height) {
-              height = (height / width) * maxSize;
-              width = maxSize;
-            } else {
-              width = (width / height) * maxSize;
-              height = maxSize;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          // Draw and compress
-          ctx?.drawImage(img, 0, 0, width, height);
-          
-          // Convert to base64 with quality reduction
-          const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
-          setFormData({ ...formData, image: compressedImage });
-        };
-        img.src = e.target?.result as string;
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+		const recognition = new RecognitionCtor();
+		recognition.interimResults = false;
+		recognition.maxAlternatives = 1;
+		recognition.lang = language === 'zh' ? 'zh-CN' : 'en-US';
+		recognition.onresult = (event) => {
+			const transcript = event.results?.[0]?.[0]?.transcript;
+			if (transcript) {
+				setSearchTerm(transcript);
+			}
+			setListening(false);
+		};
+		recognition.onerror = (event) => {
+			setListening(false);
+			if (event.error !== 'no-speech') {
+				console.error('Speech recognition error:', event.error);
+			}
+		};
+		recognition.onend = () => setListening(false);
 
-  // Save (create or update)
-  const handleSave = () => {
-    if (!formData.name.trim() || !formData.positivePrompt.trim()) return;
-    
-    try {
-      if (editingId) {
-        // Update existing
-        const updated = templates.map(tpl =>
-          tpl.id === editingId
-            ? {
-                ...tpl,
-                name: formData.name.trim(),
-                description: formData.description.trim() || undefined,
-                positivePrompt: formData.positivePrompt.trim(),
-                negativePrompt: formData.negativePrompt.trim() || undefined,
-                categoryId: formData.categoryId || undefined,
-                emoji: formData.emoji || '✨',
-                image: formData.image || undefined,
-                updatedAt: Date.now(),
-              }
-            : tpl
-        );
-        saveTemplates(updated);
-      } else {
-        // Create new
-        const newTemplate: PromptTemplate = {
-          id: `tpl-${Date.now()}`,
-          name: formData.name.trim(),
-          description: formData.description.trim() || undefined,
-          positivePrompt: formData.positivePrompt.trim(),
-          negativePrompt: formData.negativePrompt.trim() || undefined,
-          categoryId: formData.categoryId || undefined,
-          emoji: formData.emoji || '✨',
-          image: formData.image || undefined,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        };
-        saveTemplates([...templates, newTemplate]);
-      }
-      
-      handleCancelEdit();
-    } catch (error) {
-      // Error already handled in saveTemplates, just prevent closing modal
-      console.error('Failed to save template:', error);
-    }
-  };
+		recognitionRef.current = recognition;
 
-  // Cancel edit/create
-  const handleCancelEdit = () => {
-    setShowEditModal(false);
-    setEditingId(null);
-    resetForm();
-  };
+		return () => {
+			recognition.stop();
+		};
+	}, [language]);
 
-  // Delete template
-  const handleDelete = (id: string) => {
-    if (window.confirm(language === 'zh' ? '确定要删除这个模板吗？' : 'Are you sure you want to delete this template?')) {
-      saveTemplates(templates.filter(tpl => tpl.id !== id));
-    }
-  };
+	const filteredTemplates = useMemo(() => {
+		return templates.filter((template) => {
+			const matchesSearch =
+				searchTerm.trim().length === 0 ||
+				template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			template.positivePrompt.toLowerCase().includes(searchTerm.toLowerCase());
+			if (!matchesSearch) {
+				return false;
+			}
 
-  // Duplicate template
-  const handleDuplicate = (template: PromptTemplate) => {
-    const duplicated: PromptTemplate = {
-      ...template,
-      id: `tpl-${Date.now()}`,
-      name: `${template.name} (Copy)`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-    saveTemplates([...templates, duplicated]);
-  };
+			if (selectedCategory === 'all') {
+				return true;
+			}
 
-  // Filter templates
-  const filteredTemplates = templates.filter(tpl => {
-    const matchesSearch = tpl.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         tpl.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategoryFilter === 'all' || tpl.categoryId === selectedCategoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+			if (selectedCategory === 'uncategorized') {
+				return !template.categoryId;
+			}
 
-  // Helper to get display text for emoji (converts fa: icons to emoji or text)
-  const getEmojiDisplay = (emoji: string) => {
-    if (!emoji) return '📁';
-    if (emoji.startsWith('fa:')) {
-      // For Font Awesome icons in select options, show a placeholder emoji
-      return '🏷️';
-    }
-    if (emoji.startsWith('data:image')) {
-      // For uploaded images, show a placeholder
-      return '🖼️';
-    }
-    return emoji;
-  };
+			return template.categoryId === selectedCategory;
+		});
+	}, [templates, searchTerm, selectedCategory]);
 
-  // Get category name
-  const getCategoryName = (categoryId?: string) => {
-    if (!categoryId) return language === 'zh' ? '未分类' : 'Uncategorized';
-    const category = categories.find(c => c.id === categoryId);
-    return category ? `${getEmojiDisplay(category.emoji)} ${category.name}` : language === 'zh' ? '未分类' : 'Uncategorized';
-  };
+	const resetForm = () => {
+		setFormState({
+			name: '',
+			description: '',
+				positivePrompt: '',
+			negativePrompt: '',
+			categoryId: '',
+			emoji: '',
+			image: '',
+		});
+	};
 
-  if (!isPremiumUser) {
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-black p-8 text-center">
-        <div className="rounded-full bg-purple-500/15 p-4 text-purple-200">
-          <Lock className="h-10 w-10" />
-        </div>
-        <h1 className="mt-6 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-cyan-300">
-          {t.premiumFeatureTitle}
-        </h1>
-        <p className="mt-3 max-w-md text-sm text-gray-400">
-          {t.premiumFeatureDescription}
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Button className="btn-premium" type="button">
-            {t.upgradeToUnlock}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            type="button"
-            className="text-gray-300 hover:text-white"
-          >
-            {language === 'zh' ? '返回' : 'Back'}
-          </Button>
-        </div>
-      </div>
-    );
-  }
+	const openCreateForm = () => {
+		setEditingTemplate(null);
+		resetForm();
+		setFormOpen(true);
+	};
 
-  return (
-    <div className={cn(
-      "fixed inset-0 z-50 overflow-y-auto transition-colors duration-300",
-      isDarkMode 
-        ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" 
-        : "bg-gradient-to-br from-gray-50 via-white to-gray-100"
-    )}>
-      {/* Header */}
-      <div className={cn(
-        "sticky top-0 z-10 backdrop-blur-sm border-b transition-colors duration-300",
-        isDarkMode 
-          ? "bg-gray-900/95 border-gray-700/50" 
-          : "bg-white/95 border-gray-200/50"
-      )}>
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={onClose}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "transition-colors",
-                  isDarkMode 
-                    ? "text-gray-400 hover:text-gray-200" 
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                {language === 'zh' ? '返回' : 'Back'}
-              </Button>
-              <div className="flex items-center gap-3">
-                <FileText className="h-6 w-6 text-cyan-400" />
-                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-lime-400">
-                  {language === 'zh' ? '模板管理' : 'Template Management'}
-                </h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={handleOpenCreate}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {language === 'zh' ? '新建模板' : 'New Template'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+	const openEditForm = (template: Template) => {
+		setEditingTemplate(template);
+		setFormState({
+			name: template.name,
+			description: template.description ?? '',
+			positivePrompt: template.positivePrompt,
+			negativePrompt: template.negativePrompt ?? '',
+			categoryId: template.categoryId ?? '',
+			emoji: template.emoji ?? '',
+			image: template.image ?? '',
+		});
+		setFormOpen(true);
+	};
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Filters */}
-        <div className="mb-6 flex gap-4">
-          <div className="flex-1 relative">
-            <Search className={cn(
-              "absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5",
-              isDarkMode ? "text-gray-400" : "text-gray-500"
-            )} />
-            <Input
-              placeholder={language === 'zh' ? '搜索模板...' : 'Search templates...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={cn(
-                "pl-10 transition-colors",
-                isDarkMode 
-                  ? "bg-gray-800 border-gray-700 text-gray-100" 
-                  : "bg-white border-gray-200 text-gray-900"
-              )}
-            />
-          </div>
-          <div className="w-64">
-            <select
-              value={selectedCategoryFilter}
-              onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-              className={cn(
-                "w-full px-4 py-2.5 backdrop-blur-sm border rounded-xl font-medium shadow-sm hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200 cursor-pointer appearance-none bg-no-repeat bg-right pr-10",
-                isDarkMode
-                  ? "bg-gray-800/80 border-gray-700/60 text-gray-100"
-                  : "bg-white border-gray-300 text-gray-900"
-              )}
-              style={{
-                backgroundImage: `url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='${isDarkMode ? '%2394a3b8' : '%236b7280'}' d='M11.293 4.293L7 8.586 2.707 4.293A1 1 0 001.293 5.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E\")`,
-                backgroundPosition: 'right 0.875rem center',
-                backgroundSize: '1.125rem'
-              }}
-            >
-              <option value="all" className={isDarkMode ? "bg-gray-900 text-gray-100 py-2" : "bg-white text-gray-900 py-2"}>
-                {language === 'zh' ? '所有分类' : 'All Categories'}
-              </option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id} className={isDarkMode ? "bg-gray-900 text-gray-100 py-2" : "bg-white text-gray-900 py-2"}>
-                  {getEmojiDisplay(cat.emoji)} {cat.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+	const handleFormCancel = () => {
+		setFormOpen(false);
+		setEditingTemplate(null);
+		resetForm();
+	};
 
-        {/* Templates Grid */}
-        {filteredTemplates.length === 0 ? (
-          <div className="text-center py-16">
-            <FileText className={cn(
-              "h-16 w-16 mx-auto mb-4",
-              isDarkMode ? "text-gray-600" : "text-gray-400"
-            )} />
-            <p className={cn(
-              "text-lg",
-              isDarkMode ? "text-gray-400" : "text-gray-600"
-            )}>
-              {searchQuery || selectedCategoryFilter !== 'all'
-                ? t.noMatchingTemplates
-                : t.noPromptTemplatesAvailable}
-            </p>
-            {!(searchQuery || selectedCategoryFilter !== 'all') && (
-              <p className={cn(
-                'mt-2 text-sm',
-                isDarkMode ? 'text-gray-500' : 'text-gray-500'
-              )}>
-                {t.createTemplateFirstMessage}
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTemplates.map((template) => (
-              <div
-                key={template.id}
-                className={cn(
-                  "p-5 rounded-lg border transition-all",
-                  isDarkMode
-                    ? "bg-gray-800/40 border-gray-700/50 hover:bg-gray-800/60 hover:border-cyan-400/30"
-                    : "bg-white border-gray-200 hover:bg-gray-50 hover:border-cyan-400/40 shadow-sm hover:shadow-md"
-                )}
-              >
-                {/* Preview Image */}
-                {template.image && (
-                  <div className={cn(
-                    "mb-4 rounded-lg overflow-hidden",
-                    isDarkMode ? "bg-gray-900/50" : "bg-gray-100"
-                  )}>
-                    <img 
-                      src={template.image} 
-                      alt={template.name}
-                      className="w-full h-48 object-contain"
-                    />
-                  </div>
-                )}
+	const handleFormSubmit = async () => {
+			if (!formState.name.trim() || !formState.positivePrompt.trim()) {
+			return;
+		}
 
-                {/* Template Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{template.emoji || '✨'}</span>
-                    <div>
-                      <h3 className={cn(
-                        "text-lg font-medium",
-                        isDarkMode ? "text-gray-200" : "text-gray-800"
-                      )}>{template.name}</h3>
-                      <p className={cn(
-                        "text-xs",
-                        isDarkMode ? "text-gray-500" : "text-gray-600"
-                      )}>
-                        {getCategoryName(template.categoryId)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleOpenEdit(template)}
-                      size="sm"
-                      variant="ghost"
-                      className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      onClick={() => handleDuplicate(template)}
-                      size="sm"
-                      variant="ghost"
-                      className="text-lime-400 hover:text-lime-300 hover:bg-lime-400/10"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      onClick={() => handleDelete(template.id)}
-                      size="sm"
-                      variant="ghost"
-                      className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+		try {
+			if (editingTemplate) {
+				await updateTemplate(editingTemplate.id, {
+					name: formState.name.trim(),
+						positivePrompt: formState.positivePrompt.trim(),
+					negativePrompt: formState.negativePrompt.trim() || undefined,
+					categoryId: formState.categoryId || undefined,
+					description: formState.description.trim() || undefined,
+					emoji: formState.emoji || undefined,
+					image: formState.image || undefined,
+				});
+			} else {
+				await createTemplate({
+					name: formState.name.trim(),
+							positivePrompt: formState.positivePrompt.trim(),
+					negativePrompt: formState.negativePrompt.trim() || undefined,
+					categoryId: formState.categoryId || undefined,
+					description: formState.description.trim() || undefined,
+					emoji: formState.emoji || undefined,
+					image: formState.image || undefined,
+				});
+			}
+			setFormOpen(false);
+			setEditingTemplate(null);
+			resetForm();
+		} catch (error) {
+			console.error('Failed to save template:', error);
+			alert(
+				language === 'zh'
+					? '无法保存模板，请稍后重试。'
+					: 'Unable to save template. Please try again later.'
+			);
+		}
+	};
 
-                {/* Description */}
-                {template.description && (
-                  <p className={cn(
-                    "text-sm mb-3",
-                    isDarkMode ? "text-gray-400" : "text-gray-600"
-                  )}>{template.description}</p>
-                )}
+	const handleDelete = async (template: Template) => {
+		if (template.isDefault) {
+			return;
+		}
 
-                {/* Prompts Preview */}
-                <div className="space-y-2">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={cn(
-                        "text-xs font-medium",
-                        isDarkMode ? "text-gray-500" : "text-gray-600"
-                      )}>
-                        {language === 'zh' ? '正向提示词' : 'Positive Prompt'}
-                      </span>
-                      <Button
-                        onClick={() => setExpandedId(expandedId === template.id ? null : template.id)}
-                        size="sm"
-                        variant="ghost"
-                        className={cn(
-                          "h-6 px-2",
-                          isDarkMode 
-                            ? "text-gray-400 hover:text-gray-200" 
-                            : "text-gray-600 hover:text-gray-900"
-                        )}
-                      >
-                        {expandedId === template.id ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                      </Button>
-                    </div>
-                    <p className={cn(
-                      "text-sm p-2 rounded",
-                      isDarkMode 
-                        ? "text-gray-300 bg-gray-900/50" 
-                        : "text-gray-700 bg-gray-100",
-                      expandedId !== template.id && "line-clamp-2"
-                    )}>
-                      {template.positivePrompt}
-                    </p>
-                  </div>
+		const confirmed = window.confirm(
+			language === 'zh'
+				? '确定要删除此模板吗？'
+				: 'Are you sure you want to delete this template?'
+		);
 
-                  {template.negativePrompt && (
-                    <div>
-                      <span className={cn(
-                        "text-xs font-medium block mb-1",
-                        isDarkMode ? "text-gray-500" : "text-gray-600"
-                      )}>
-                        {language === 'zh' ? '负向提示词' : 'Negative Prompt'}
-                      </span>
-                      <p className={cn(
-                        "text-sm p-2 rounded",
-                        isDarkMode 
-                          ? "text-gray-300 bg-gray-900/50" 
-                          : "text-gray-700 bg-gray-100",
-                        expandedId !== template.id && "line-clamp-1"
-                      )}>
-                        {template.negativePrompt}
-                      </p>
-                    </div>
-                  )}
-                </div>
+		if (!confirmed) {
+			return;
+		}
 
-                {/* Footer */}
-                <div className={cn(
-                  "mt-3 text-xs",
-                  isDarkMode ? "text-gray-500" : "text-gray-600"
-                )}>
-                  {language === 'zh' ? '更新于' : 'Updated'} {new Date(template.updatedAt || template.createdAt).toLocaleDateString()}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+		try {
+			await deleteTemplate(template.id);
+		} catch (error) {
+			console.error('Failed to delete template:', error);
+			alert(
+				language === 'zh'
+					? '删除模板失败，请稍后重试。'
+					: 'Unable to delete template. Please try again later.'
+			);
+		}
+	};
 
-      {/* Edit/Create Modal */}
-      {showEditModal && (
-        <Dialog.Root open={showEditModal} onOpenChange={setShowEditModal}>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]" />
-            <Dialog.Content className={cn(
-              "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto z-[101]",
-              isDarkMode
-                ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-cyan-500/30 shadow-cyan-500/20"
-                : "bg-gradient-to-br from-white via-gray-50 to-white border-cyan-400/40 shadow-cyan-400/10"
-            )}>
-              <div className="p-6">
-                {/* Modal Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <Dialog.Title className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-lime-400">
-                    {editingId ? (language === 'zh' ? '编辑模板' : 'Edit Template') : (language === 'zh' ? '新建模板' : 'New Template')}
-                  </Dialog.Title>
-                  <Dialog.Close asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        isDarkMode
-                          ? "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                      )}
-                    >
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </Dialog.Close>
-                </div>
+	const handleDuplicate = async (template: Template) => {
+		try {
+			await createTemplate({
+				name: `${template.name} (Copy)`,
+						positivePrompt: template.positivePrompt,
+				negativePrompt: template.negativePrompt,
+				categoryId: template.categoryId,
+				description: template.description,
+				emoji: template.emoji,
+				image: template.image,
+			});
+		} catch (error) {
+			console.error('Failed to duplicate template:', error);
+			alert(
+				language === 'zh'
+					? '复制模板失败。'
+					: 'Unable to duplicate template.'
+			);
+		}
+	};
 
-                {/* Form */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={cn(
-                        "block text-sm font-medium mb-2",
-                        isDarkMode ? "text-gray-300" : "text-gray-700"
-                      )}>
-                        {language === 'zh' ? '模板名称' : 'Template Name'}
-                      </label>
-                      <Input
-                        placeholder={language === 'zh' ? '输入模板名称' : 'Enter template name'}
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={cn(
-                          isDarkMode
-                            ? "bg-gray-800 border-gray-700 text-gray-100"
-                            : "bg-white border-gray-300 text-gray-900"
-                        )}
-                      />
-                    </div>
+	const togglePreview = (id: string) => {
+		setPreviewId((prev) => (prev === id ? null : id));
+	};
 
-                    <div>
-                      <label className={cn(
-                        "block text-sm font-medium mb-2",
-                        isDarkMode ? "text-gray-300" : "text-gray-700"
-                      )}>
-                        {language === 'zh' ? '分类' : 'Category'}
-                      </label>
-                      <select
-                        value={formData.categoryId}
-                        onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                        className={cn(
-                          "w-full px-4 py-2.5 backdrop-blur-sm border rounded-lg font-medium shadow-sm hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-500/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all duration-200 cursor-pointer appearance-none bg-no-repeat bg-right pr-10",
-                          isDarkMode
-                            ? "bg-gray-800/60 border-gray-600/50 text-gray-100"
-                            : "bg-white border-gray-300 text-gray-900"
-                        )}
-                        style={{
-                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='${isDarkMode ? '%2394a3b8' : '%236b7280'}' d='M11.293 4.293L7 8.586 2.707 4.293A1 1 0 001.293 5.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E")`,
-                          backgroundPosition: 'right 0.875rem center',
-                          backgroundSize: '1.125rem'
-                        }}
-                      >
-                        <option value="" className={cn(
-                          "py-2",
-                          isDarkMode ? "bg-gray-900 text-gray-400" : "bg-white text-gray-500"
-                        )}>
-                          {language === 'zh' ? '无分类' : 'No Category'}
-                        </option>
-                        {categories.map(cat => (
-                          <option key={cat.id} value={cat.id} className={cn(
-                            "py-2",
-                            isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"
-                          )}>
-                            {getEmojiDisplay(cat.emoji)} {cat.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+	const toggleVoiceSearch = () => {
+		const recognition = recognitionRef.current;
+		if (!recognition) {
+			alert(
+				language === 'zh'
+					? '当前浏览器不支持语音搜索。'
+					: 'Voice search is not supported in this browser.'
+			);
+			return;
+		}
 
-                  <div>
-                    <label className={cn(
-                      "block text-sm font-medium mb-2",
-                      isDarkMode ? "text-gray-300" : "text-gray-700"
-                    )}>
-                      {language === 'zh' ? '描述' : 'Description'}
-                    </label>
-                    <Input
-                      placeholder={language === 'zh' ? '简短描述（可选）' : 'Brief description (optional)'}
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className={cn(
-                        isDarkMode
-                          ? "bg-gray-800 border-gray-700 text-gray-100"
-                          : "bg-white border-gray-300 text-gray-900"
-                      )}
-                    />
-                  </div>
+		if (isListening) {
+			recognition.stop();
+			return;
+		}
 
-                  {/* Representative Image Upload */}
-                  <div>
-                    <label className={cn(
-                      "block text-sm font-medium mb-2",
-                      isDarkMode ? "text-gray-300" : "text-gray-700"
-                    )}>
-                      {language === 'zh' ? '代表图片' : 'Representative Image'}
-                    </label>
-                    <div className="space-y-3">
-                      {formData.image && (
-                        <div className="relative inline-block">
-                          <img
-                            src={formData.image}
-                            alt="Preview"
-                            className={cn(
-                              "w-full h-40 object-cover rounded-lg border-2",
-                              isDarkMode ? "border-gray-700" : "border-gray-300"
-                            )}
-                          />
-                          <button
-                            onClick={() => {
-                              setFormData({ ...formData, image: '' });
-                              if (fileInputRef.current) {
-                                fileInputRef.current.value = '';
-                              }
-                            }}
-                            className="absolute top-2 right-2 p-1.5 bg-red-600/90 hover:bg-red-700 rounded-lg transition-colors"
-                            type="button"
-                          >
-                            <X className="h-4 w-4 text-white" />
-                          </button>
-                        </div>
-                      )}
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          variant="outline"
-                          className={cn(
-                            isDarkMode
-                              ? "border-gray-700 text-gray-300 hover:bg-gray-800/50"
-                              : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                          )}
-                        >
-                          <Upload className="h-4 w-4 mr-2" />
-                          {formData.image 
-                            ? (language === 'zh' ? '更换图片' : 'Change Image')
-                            : (language === 'zh' ? '上传图片' : 'Upload Image')
-                          }
-                        </Button>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                        />
-                      </div>
-                    </div>
-                  </div>
+		try {
+			recognition.lang = language === 'zh' ? 'zh-CN' : 'en-US';
+			recognition.start();
+			setListening(true);
+		} catch (error) {
+			console.error('Unable to start speech recognition', error);
+			setListening(false);
+		}
+	};
 
-                  <div>
-                    <label className={cn(
-                      "block text-sm font-medium mb-2",
-                      isDarkMode ? "text-gray-300" : "text-gray-700"
-                    )}>
-                      {language === 'zh' ? '正向提示词' : 'Positive Prompt'} *
-                    </label>
-                    <Textarea
-                      placeholder={language === 'zh' ? '输入正向提示词...' : 'Enter positive prompt...'}
-                      value={formData.positivePrompt}
-                      onChange={(e) => setFormData({ ...formData, positivePrompt: e.target.value })}
-                      rows={5}
-                      className={cn(
-                        "resize-none",
-                        isDarkMode
-                          ? "bg-gray-800 border-gray-700 text-gray-100"
-                          : "bg-white border-gray-300 text-gray-900"
-                      )}
-                    />
-                  </div>
+	if (!isPremiumUser) {
+		return (
+			<div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
+				<h2 className="text-2xl font-semibold text-white">{t.premiumFeatureTitle}</h2>
+				<p className="max-w-md text-sm text-gray-300">{t.premiumFeatureDescription}</p>
+				<Button onClick={onClose} variant="ghost">
+					{language === 'zh' ? '返回' : 'Back'}
+				</Button>
+			</div>
+		);
+	}
 
-                  <div>
-                    <label className={cn(
-                      "block text-sm font-medium mb-2",
-                      isDarkMode ? "text-gray-300" : "text-gray-700"
-                    )}>
-                      {language === 'zh' ? '负向提示词' : 'Negative Prompt'}
-                    </label>
-                    <Textarea
-                      placeholder={language === 'zh' ? '输入负向提示词（可选）...' : 'Enter negative prompt (optional)...'}
-                      value={formData.negativePrompt}
-                      onChange={(e) => setFormData({ ...formData, negativePrompt: e.target.value })}
-                      rows={3}
-                      className={cn(
-                        "resize-none",
-                        isDarkMode
-                          ? "bg-gray-800 border-gray-700 text-gray-100"
-                          : "bg-white border-gray-300 text-gray-900"
-                      )}
-                    />
-                  </div>
-                </div>
+	return (
+		<div className="flex h-full flex-col bg-[var(--surface-primary)] text-[var(--text-primary)]">
+			<header className="flex items-center justify-between border-b border-[var(--surface-border-light)] px-6 py-4">
+				<div>
+					<h1 className="text-xl font-semibold">{language === 'zh' ? '模板管理' : 'Template Management'}</h1>
+					<p className="text-sm text-[var(--text-secondary)]">
+						{language === 'zh'
+							? '创建、分类并维护您的提示模板。'
+							: 'Create, categorize, and maintain your prompt templates.'}
+					</p>
+				</div>
+				<div className="flex items-center gap-3">
+					<Button
+						variant="ghost"
+						onClick={() => refreshTemplates()}
+						disabled={loading.templates}
+					>
+						{loading.templates ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+						<span>{language === 'zh' ? '刷新' : 'Refresh'}</span>
+					</Button>
+					<Button onClick={openCreateForm}>
+						<Plus className="h-4 w-4" />
+						<span>{language === 'zh' ? '新增模板' : 'New Template'}</span>
+					</Button>
+					<Button variant="ghost" onClick={onClose}>
+						{language === 'zh' ? '返回' : 'Close'}
+					</Button>
+				</div>
+			</header>
 
-                {/* Action Buttons */}
-                <div className="flex gap-3 mt-6">
-                  <Button
-                    onClick={handleSave}
-                    disabled={!formData.name.trim() || !formData.positivePrompt.trim()}
-                    className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {t.save}
-                  </Button>
-                  <Button
-                    onClick={handleCancelEdit}
-                    variant="ghost"
-                    className={cn(
-                      "flex-1",
-                      isDarkMode
-                        ? "text-gray-400 hover:text-gray-200"
-                        : "text-gray-600 hover:text-gray-900"
-                    )}
-                  >
-                    {t.cancel}
-                  </Button>
-                </div>
-              </div>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
-      )}
-    </div>
-  );
+			<section className="grid gap-4 border-b border-[var(--surface-border-light)] px-6 py-4 md:grid-cols-[1fr_auto] md:items-center">
+				<div className="relative flex items-center">
+					<Search className="pointer-events-none absolute left-3 h-4 w-4 text-[var(--text-tertiary)]" />
+					<Input
+						value={searchTerm}
+						onChange={(event) => setSearchTerm(event.target.value)}
+						placeholder={language === 'zh' ? '搜索模板...' : 'Search templates...'}
+						className="pl-9"
+					/>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="ml-2"
+						onClick={toggleVoiceSearch}
+					>
+						{isListening ? <MicOff className="h-4 w-4 text-red-400" /> : <Mic className="h-4 w-4" />}
+					</Button>
+				</div>
+				<div className="flex flex-wrap items-center gap-2">
+					<Button
+						variant={selectedCategory === 'all' ? 'default' : 'ghost'}
+						size="sm"
+						onClick={() => setSelectedCategory('all')}
+					>
+						{t.allCategories}
+					</Button>
+					<Button
+						variant={selectedCategory === 'uncategorized' ? 'default' : 'ghost'}
+						size="sm"
+						onClick={() => setSelectedCategory('uncategorized')}
+					>
+						{t.uncategorized}
+					</Button>
+					{promptCategories.map((category) => (
+						<Button
+							key={category.id}
+							variant={selectedCategory === category.id ? 'default' : 'ghost'}
+							size="sm"
+							onClick={() => setSelectedCategory(category.id)}
+						>
+							<span className="mr-1">{category.emoji || '📁'}</span>
+							{category.name}
+						</Button>
+					))}
+				</div>
+			</section>
+
+			<main className="flex-1 overflow-y-auto px-6 py-4">
+				{loading.templates ? (
+					<div className="flex h-full items-center justify-center text-sm text-[var(--text-secondary)]">
+						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+						{language === 'zh' ? '正在加载模板' : 'Loading templates'}
+					</div>
+				) : filteredTemplates.length === 0 ? (
+					<div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-[var(--text-secondary)]">
+						<EyeOff className="h-6 w-6" />
+						<p>
+							{searchTerm ? t.noMatchingTemplates : t.noPromptTemplatesAvailable}
+						</p>
+					</div>
+				) : (
+					<div className="grid gap-4">
+						{filteredTemplates.map((template) => {
+							const category = template.categoryId
+								? promptCategories.find((cat) => cat.id === template.categoryId)
+								: undefined;
+
+							return (
+								<article
+									key={template.id}
+									className="space-y-3 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-secondary)] p-4 shadow-sm"
+								>
+									<header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+										<div>
+											<h2 className="text-lg font-semibold">{template.name}</h2>
+											{template.description && (
+												<p className="text-sm text-[var(--text-secondary)]">{template.description}</p>
+											)}
+											<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
+												<span>
+													{language === 'zh' ? '更新' : 'Updated'}{' '}
+													{formatDistanceToNow(new Date(template.updatedAt ?? template.createdAt), {
+														addSuffix: true,
+													})}
+												</span>
+												{category && (
+													<span>· {category.emoji ? `${category.emoji} ` : ''}{category.name}</span>
+												)}
+												{template.source === 'default' && (
+													<span className="rounded-full bg-[var(--surface-border-light)] px-2 py-0.5">
+														{language === 'zh' ? '默认' : 'Default'}
+													</span>
+												)}
+											</div>
+										</div>
+										<div className="flex items-center gap-2">
+											<Button variant="ghost" size="icon" onClick={() => togglePreview(template.id)}>
+												{previewId === template.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+											</Button>
+											<Button variant="ghost" size="icon" onClick={() => handleDuplicate(template)}>
+												<Copy className="h-4 w-4" />
+											</Button>
+											<Button variant="ghost" size="icon" onClick={() => openEditForm(template)}>
+												<Edit2 className="h-4 w-4" />
+											</Button>
+											<Button
+												variant="ghost"
+												size="icon"
+												onClick={() => handleDelete(template)}
+												disabled={template.isDefault}
+												className={cn(template.isDefault && 'cursor-not-allowed opacity-50')}
+												title={template.isDefault
+													? language === 'zh'
+														? '默认模板无法删除'
+														: 'Default templates cannot be deleted'
+													: undefined}
+											>
+												<Trash2 className="h-4 w-4 text-red-400" />
+											</Button>
+										</div>
+									</header>
+									{previewId === template.id && (
+										<div className="space-y-3 rounded-lg border border-[var(--surface-border-light)] bg-[var(--surface-primary)] p-3 text-sm">
+											<section>
+												<h3 className="font-medium text-green-400">{language === 'zh' ? '正向提示词' : 'Positive prompt'}</h3>
+												<p className="mt-1 whitespace-pre-wrap text-[var(--text-secondary)]">{template.positivePrompt}</p>
+											</section>
+											{template.negativePrompt && (
+												<section>
+													<h3 className="font-medium text-red-400">{language === 'zh' ? '负向提示词' : 'Negative prompt'}</h3>
+													<p className="mt-1 whitespace-pre-wrap text-[var(--text-secondary)]">{template.negativePrompt}</p>
+												</section>
+											)}
+										</div>
+									)}
+								</article>
+							);
+						})}
+					</div>
+				)}
+			</main>
+
+			<Dialog open={isFormOpen} onOpenChange={(open) => (open ? setFormOpen(true) : handleFormCancel())}>
+				<DialogContent className="max-w-2xl space-y-6">
+					<DialogHeader>
+						<DialogTitle>
+							{editingTemplate
+								? language === 'zh'
+									? '编辑模板'
+									: 'Edit template'
+								: language === 'zh'
+									? '创建模板'
+									: 'Create template'}
+						</DialogTitle>
+						<DialogDescription>
+							{language === 'zh'
+								? '填写模板详情以便快速复用常用提示。'
+								: 'Fill in the template details so you can quickly reuse your favourite prompts.'}
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="grid gap-4">
+						<div className="grid gap-2">
+							<label className="text-sm font-medium">{language === 'zh' ? '名称' : 'Name'}</label>
+							<Input
+								value={formState.name}
+								onChange={(event) => setFormState((prev) => ({ ...prev, name: event.target.value }))}
+								placeholder={language === 'zh' ? '模板名称' : 'Template name'}
+							/>
+						</div>
+						<div className="grid gap-2">
+							<label className="text-sm font-medium">{language === 'zh' ? '描述' : 'Description'}</label>
+							<Textarea
+								value={formState.description}
+								onChange={(event) => setFormState((prev) => ({ ...prev, description: event.target.value }))}
+								placeholder={language === 'zh' ? '可选：对模板进行简短说明' : 'Optional: add a short description'}
+								rows={2}
+							/>
+						</div>
+						<div className="grid gap-2">
+							<label className="text-sm font-medium">{language === 'zh' ? '正向提示词' : 'Positive prompt'}</label>
+							<Textarea
+								value={formState.positivePrompt}
+								onChange={(event) => setFormState((prev) => ({ ...prev, positivePrompt: event.target.value }))}
+								placeholder="{prompt}"
+								rows={4}
+							/>
+						</div>
+						<div className="grid gap-2">
+							<label className="text-sm font-medium">{language === 'zh' ? '负向提示词' : 'Negative prompt'}</label>
+							<Textarea
+								value={formState.negativePrompt}
+								onChange={(event) => setFormState((prev) => ({ ...prev, negativePrompt: event.target.value }))}
+								placeholder={language === 'zh' ? '可选：不希望出现的元素' : 'Optional: things to avoid'}
+								rows={3}
+							/>
+						</div>
+						<div className="grid gap-2">
+							<label className="text-sm font-medium">{language === 'zh' ? '分类' : 'Category'}</label>
+							<select
+								value={formState.categoryId}
+								onChange={(event) => setFormState((prev) => ({ ...prev, categoryId: event.target.value }))}
+								className="rounded-md border border-[var(--surface-border)] bg-transparent px-3 py-2 text-sm"
+							>
+								<option value="">{t.uncategorized}</option>
+								{promptCategories.map((category) => (
+									<option key={category.id} value={category.id}>
+										{category.emoji ? `${category.emoji} ` : ''}{category.name}
+									</option>
+								))}
+							</select>
+						</div>
+						<div className="grid gap-2 md:grid-cols-2">
+							<div className="grid gap-2">
+								<label className="text-sm font-medium">{language === 'zh' ? '图标表情' : 'Emoji'}</label>
+								<Input
+									value={formState.emoji}
+									onChange={(event) => setFormState((prev) => ({ ...prev, emoji: event.target.value }))}
+									placeholder="✨"
+								/>
+							</div>
+							<div className="grid gap-2">
+								<label className="text-sm font-medium">{language === 'zh' ? '预览图 URL' : 'Image URL'}</label>
+								<Input
+									value={formState.image}
+									onChange={(event) => setFormState((prev) => ({ ...prev, image: event.target.value }))}
+									placeholder="https://example.com/preview.jpg"
+								/>
+							</div>
+						</div>
+					</div>
+
+					<DialogFooter>
+						<Button variant="ghost" onClick={handleFormCancel}>
+							{language === 'zh' ? '取消' : 'Cancel'}
+						</Button>
+						<Button onClick={handleFormSubmit} disabled={!formState.name.trim() || !formState.positivePrompt.trim()}>
+							{editingTemplate
+								? language === 'zh'
+									? '保存'
+									: 'Save'
+								: language === 'zh'
+									? '创建'
+									: 'Create'}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</div>
+	);
 };

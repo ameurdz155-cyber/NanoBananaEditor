@@ -8,7 +8,7 @@ import { PromptHints } from './PromptHints';
 import { cn } from '../utils/cn';
 import { validateApiKey, improvePromptText } from '../services/geminiService';
 import { TemplatesView } from './TemplatesView';
-import { getDefaultTemplates } from '../lib/prompt-templates-data';
+import { useTemplateStore } from '../store/useTemplateStore';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
 import { usePromptPanelResize } from './PromptComposer/usePromptPanelResize';
@@ -129,7 +129,6 @@ export const PromptComposer: React.FC = () => {
     currentProject,
     selectedTemplate,
     setSelectedTemplate,
-    customTemplates,
     setGenerationProgress,
     setLastGenerationParameters,
     modelFamily,
@@ -146,9 +145,31 @@ export const PromptComposer: React.FC = () => {
   const { edit, cancelEdit } = useImageEditing();
 
   // Get all templates (default + custom)
-  const allTemplates = React.useMemo<PromptTemplate[]>(() => {
-    return [...getDefaultTemplates(language), ...customTemplates];
-  }, [language, customTemplates]);
+  const {
+    templates: backendTemplates,
+    fetchTemplates,
+    isTemplatesLoading,
+  } = useTemplateStore((state) => ({
+    templates: state.templates,
+    fetchTemplates: state.fetchTemplates,
+    isTemplatesLoading: state.loading.templates,
+  }));
+
+  const hasRequestedTemplatesRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (backendTemplates.length > 0 || isTemplatesLoading || hasRequestedTemplatesRef.current) {
+      return;
+    }
+
+    hasRequestedTemplatesRef.current = true;
+    fetchTemplates().catch((error) => {
+      console.error('Failed to load templates for composer:', error);
+      // Allow future retries if a different component triggers another fetch.
+    });
+  }, [backendTemplates.length, fetchTemplates, isTemplatesLoading]);
+
+  const allTemplates = React.useMemo<PromptTemplate[]>(() => backendTemplates, [backendTemplates]);
 
   // Find the currently selected template
   const currentTemplate = React.useMemo<PromptTemplate | null>(() => {
