@@ -63,9 +63,9 @@ app.add_middleware(
 )
 
 # Register routers
-app.include_router(auth_router, tags=["Legacy Auth"])
-app.include_router(auth_db_router, tags=["Authentication"])
-app.include_router(admin_router, tags=["Admin"])
+app.include_router(auth_router, prefix="/api/v1/auth/legacy", tags=["Legacy Auth"])
+app.include_router(auth_db_router, prefix="/api/v1", tags=["Authentication"])
+app.include_router(admin_router, prefix="/api/v1", tags=["Admin"])
 app.include_router(generation_router, tags=["Image Generation"])
 app.include_router(editing_router, tags=["Image Editing"])
 app.include_router(upscale_router, tags=["Image Enhancement"])

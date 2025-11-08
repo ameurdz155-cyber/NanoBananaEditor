@@ -5,16 +5,35 @@ interface LoginPayload {
   password: string;
 }
 
+interface RegisterPayload {
+  email: string;
+  username: string;
+  password: string;
+  full_name?: string;
+}
+
+interface UserResponse {
+  id: string;
+  email: string;
+  username: string;
+  full_name?: string;
+  is_active: boolean;
+  is_admin: boolean;
+  is_superuser: boolean;
+  created_at: string;
+  last_login?: string;
+}
+
 interface LoginResult {
   access_token: string;
+  refresh_token: string;
   token_type: string;
-  username: string;
-  plan?: 'free' | 'premium';
+  expires_in: number;
+  user: UserResponse;
 }
 
 export async function loginRequest(payload: LoginPayload): Promise<LoginResult> {
-  // Don't send x-api-key header for login - use username/password only
-  const response = await fetch(joinBackendPath('/auth/login'), {
+  const response = await fetch(joinBackendPath('/api/v1/auth/login'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -37,4 +56,30 @@ export async function loginRequest(payload: LoginPayload): Promise<LoginResult> 
 
   const data = await response.json();
   return data as LoginResult;
+}
+
+export async function registerRequest(payload: RegisterPayload): Promise<UserResponse> {
+  const response = await fetch(joinBackendPath('/api/v1/auth/register'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let message = 'Unable to register. Please try again.';
+    try {
+      const errorBody = await response.json();
+      if (typeof errorBody?.detail === 'string') {
+        message = errorBody.detail;
+      }
+    } catch {
+      // ignore JSON parse errors
+    }
+    throw new Error(message);
+  }
+
+  const data = await response.json();
+  return data as UserResponse;
 }

@@ -3,7 +3,11 @@ import { Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import logoIcon from '../assets/AI-POD-Lite-icon.png';
 
-export const LoginPage: React.FC = () => {
+interface LoginPageProps {
+  onRegisterClick?: () => void;
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({ onRegisterClick }) => {
   const login = useAuthStore((state) => state.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -105,9 +109,22 @@ export const LoginPage: React.FC = () => {
               </button>
             </form>
 
-            <p className="text-center text-[10px] text-gray-400 mt-4">
-              Use the default credentials <span className="font-semibold text-gray-700">admin / admin</span> to explore locally.
-            </p>
+            <div className="mt-4 space-y-2">
+              <p className="text-center text-[10px] text-gray-400">
+                Default: <span className="font-semibold text-gray-700">admin / admin123</span>
+              </p>
+              {onRegisterClick && (
+                <p className="text-center text-xs text-gray-600">
+                  Don't have an account?{' '}
+                  <button
+                    onClick={onRegisterClick}
+                    className="text-[#facc15] hover:text-[#f5ff3a] font-semibold transition"
+                  >
+                    Sign up
+                  </button>
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

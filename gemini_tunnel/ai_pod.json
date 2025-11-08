@@ -11,7 +11,71 @@
       "is_superuser": true,
       "created_at": "2025-11-08T20:28:58.888043",
       "updated_at": "2025-11-08T20:28:58.888043",
+      "last_login": "2025-11-08T21:22:10.425965"
+    },
+    "2": {
+      "id": "9d6bfe43-3e27-4aa6-9e14-50ca3e988ea6",
+      "email": "test@example.com",
+      "username": "testuser",
+      "password_hash": "$2b$12$1Xo6.IT37TwpNYRvn6HuretogdILY1spCopFhReL7SrYrwLq7odMC",
+      "full_name": "Test User",
+      "is_active": true,
+      "is_admin": false,
+      "is_superuser": false,
+      "created_at": "2025-11-08T21:20:37.804797",
+      "updated_at": "2025-11-08T21:20:37.804797",
       "last_login": null
+    }
+  },
+  "sessions": {
+    "1": {
+      "id": "b918f5c4-8844-4acc-b73a-7ed6815e5e67",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "-N8kswjuu1pntNq-lCsi-nsv9PdzbPejP4Ma-AelbSg",
+      "ip_address": "127.0.0.1",
+      "user_agent": "python-requests/2.32.5",
+      "expires_at": "2025-11-15T21:20:37.406115",
+      "created_at": "2025-11-08T21:20:37.406129",
+      "last_activity": "2025-11-08T21:20:37.406134"
+    },
+    "2": {
+      "id": "9639acae-72ef-4fe0-9841-04555d97e335",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "lFvU6yYoCyQ4NaeiJSHYIHkhzS0-QHWPhbx-xJfg7WA",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T21:22:10.447069",
+      "created_at": "2025-11-08T21:22:10.447080",
+      "last_activity": "2025-11-08T21:22:10.447086"
+    }
+  },
+  "audit_logs": {
+    "1": {
+      "id": "ab7a92d4-6703-444b-bb84-94685aa2dff8",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T21:20:37.408384"
+    },
+    "2": {
+      "id": "9cada92f-c812-46c4-9e51-9a998a73f75d",
+      "user_id": "9d6bfe43-3e27-4aa6-9e14-50ca3e988ea6",
+      "action": "user_registered",
+      "resource": null,
+      "details": "{\"email\": \"test@example.com\", \"username\": \"testuser\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T21:20:37.825570"
+    },
+    "3": {
+      "id": "7e368a5d-8a8b-4d08-8eb0-8ebc37f910aa",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T21:22:10.448968"
     }
   }
 }

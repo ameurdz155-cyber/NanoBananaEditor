@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Header } from './components/Header';
 import { PromptComposer } from './components/PromptComposer';
@@ -10,6 +10,7 @@ import { getTranslation } from './i18n/translations';
 import { SideNavigation } from './components/SideNavigation';
 import { useAuthStore } from './store/useAuthStore';
 import { LoginPage } from './components/LoginPage';
+import { RegistrationPage } from './components/RegistrationPage';
 import { UpscalingPanel } from './components/UpscalingPanel';
 import { cn } from './utils/cn';
 import { Button } from './components/ui/Button';
@@ -178,9 +179,17 @@ function AppContent() {
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [showRegistration, setShowRegistration] = useState(false);
+  
   return (
     <QueryClientProvider client={queryClient}>
-      {isAuthenticated ? <AppContent /> : <LoginPage />}
+      {isAuthenticated ? (
+        <AppContent />
+      ) : showRegistration ? (
+        <RegistrationPage onBackToLogin={() => setShowRegistration(false)} />
+      ) : (
+        <LoginPage onRegisterClick={() => setShowRegistration(true)} />
+      )}
     </QueryClientProvider>
   );
 }
