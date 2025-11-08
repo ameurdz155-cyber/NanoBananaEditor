@@ -79,10 +79,6 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
     negativePrompt: '',
     categoryId: '',
     emoji: '',
-    nameZh: '',
-    descriptionZh: '',
-    positivePromptZh: '',
-    negativePromptZh: '',
   });
   const [iconError, setIconError] = useState<string | null>(null);
   useEffect(() => {
@@ -150,10 +146,6 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       negativePrompt: '',
       categoryId: '',
       emoji: '',
-      nameZh: '',
-      descriptionZh: '',
-      positivePromptZh: '',
-      negativePromptZh: '',
     });
     setIconError(null);
   }, []);
@@ -251,10 +243,6 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
       negativePrompt: template.negativePrompt || '',
       categoryId: template.categoryId || '',
       emoji: template.emoji || '',
-      nameZh: '',
-      descriptionZh: '',
-      positivePromptZh: '',
-      negativePromptZh: '',
     });
     setIconError(null);
     setShowAddForm(true);
@@ -698,19 +686,15 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
               </Dialog.Close>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                    {language === 'zh' ? '英文名称 *' : 'Name (English) *'}
-                  </label>
-                  <Input placeholder="e.g., Cinematic Portrait" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                    {language === 'zh' ? '中文名称 *' : 'Name (Chinese) *'}
-                  </label>
-                  <Input placeholder="例如：电影肖像" value={formData.nameZh} onChange={(e) => setFormData({ ...formData, nameZh: e.target.value })} />
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                  {language === 'zh' ? '名称 *' : 'Name *'}
+                </label>
+                <Input
+                  placeholder={language === 'zh' ? '例如：电影肖像' : 'e.g., Cinematic Portrait'}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
               </div>
               
               <div>
@@ -768,35 +752,31 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                 </select>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                    {language === 'zh' ? '英文正向提示词 *' : 'Positive Prompt (English) *'}
-                  </label>
-                  <Textarea placeholder="cinematic portrait, professional lighting, {prompt}" value={formData.positivePrompt} onChange={(e) => setFormData({ ...formData, positivePrompt: e.target.value })} rows={3} className="resize-none" />
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{t.usePlaceholder}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                    {language === 'zh' ? '中文正向提示词' : 'Positive Prompt (Chinese)'}
-                  </label>
-                  <Textarea placeholder="电影肖像，专业打光，{prompt}" value={formData.positivePromptZh} onChange={(e) => setFormData({ ...formData, positivePromptZh: e.target.value })} rows={3} className="resize-none" />
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                  {language === 'zh' ? '正向提示词 *' : 'Positive Prompt *'}
+                </label>
+                <Textarea
+                  placeholder={language === 'zh' ? '电影肖像，专业打光，{prompt}' : 'cinematic portrait, professional lighting, {prompt}'}
+                  value={formData.positivePrompt}
+                  onChange={(e) => setFormData({ ...formData, positivePrompt: e.target.value })}
+                  rows={3}
+                  className="resize-none"
+                />
+                <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{t.usePlaceholder}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                    {language === 'zh' ? '英文负向提示词' : 'Negative Prompt (English)'}
-                  </label>
-                  <Textarea placeholder="blurry, low quality, distorted" value={formData.negativePrompt} onChange={(e) => setFormData({ ...formData, negativePrompt: e.target.value })} rows={2} className="resize-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                    {language === 'zh' ? '中文负向提示词' : 'Negative Prompt (Chinese)'}
-                  </label>
-                  <Textarea placeholder="模糊，低质量，扭曲" value={formData.negativePromptZh} onChange={(e) => setFormData({ ...formData, negativePromptZh: e.target.value })} rows={2} className="resize-none" />
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                  {language === 'zh' ? '负向提示词' : 'Negative Prompt'}
+                </label>
+                <Textarea
+                  placeholder={language === 'zh' ? '模糊，低质量，扭曲' : 'blurry, low quality, distorted'}
+                  value={formData.negativePrompt}
+                  onChange={(e) => setFormData({ ...formData, negativePrompt: e.target.value })}
+                  rows={2}
+                  className="resize-none"
+                />
               </div>
               
               <div className="flex gap-3 pt-2">
