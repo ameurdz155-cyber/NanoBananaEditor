@@ -216,6 +216,7 @@ export const PromptComposer: React.FC = () => {
   const historyPopoverRef = useRef<HTMLDivElement | null>(null);
   const historyButtonRef = useRef<HTMLButtonElement | null>(null);
   const historySearchInputRef = useRef<HTMLInputElement | null>(null);
+  const [historyPopoverPosition, setHistoryPopoverPosition] = React.useState({ top: 80, left: 16 });
   const validationAbortRef = useRef(false);
 
   // Use the panel resize hook
@@ -256,6 +257,70 @@ export const PromptComposer: React.FC = () => {
       mediaQuery.removeEventListener('change', handleChange);
     };
   }, []);
+
+  React.useEffect(() => {
+    if (!showPromptHistory || isMobileViewport) {
+      return;
+    }
+
+    const updatePosition = () => {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      const buttonRect = historyButtonRef.current?.getBoundingClientRect();
+      const popoverWidth = historyPopoverRef.current?.offsetWidth ?? 320;
+      const popoverHeight = historyPopoverRef.current?.offsetHeight ?? 360;
+      const margin = 16;
+      const topMargin = 80;
+
+      if (!buttonRect) {
+        setHistoryPopoverPosition({
+          top: topMargin,
+          left: Math.max(margin, window.innerWidth - popoverWidth - margin),
+        });
+        return;
+      }
+
+      let top = buttonRect.bottom + 8;
+      let left = buttonRect.right - popoverWidth;
+
+      const fitsBelow = top + popoverHeight + margin <= window.innerHeight;
+      const fitsAbove = buttonRect.top - popoverHeight - 8 >= topMargin;
+
+      if (!fitsBelow && fitsAbove) {
+        top = buttonRect.top - popoverHeight - 8;
+      } else if (!fitsBelow && !fitsAbove) {
+        top = Math.max(topMargin, Math.min(buttonRect.bottom + 8, window.innerHeight - popoverHeight - margin));
+      }
+
+      const maxLeft = window.innerWidth - popoverWidth - margin;
+      if (left < margin) {
+        left = margin;
+      }
+      if (left > maxLeft) {
+        left = maxLeft;
+      }
+
+      if (top < topMargin) {
+        top = topMargin;
+      }
+
+      setHistoryPopoverPosition({ top, left });
+    };
+
+    updatePosition();
+    const timer = window.setTimeout(updatePosition, 100);
+
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [showPromptHistory, isMobileViewport, filteredPromptHistory.length, historySearchQuery, promptPanelWidth]);
 
   // Update width/height when aspect ratio changes
   const handleAspectRatioChange = (newRatio: string) => {
@@ -895,12 +960,19 @@ export const PromptComposer: React.FC = () => {
         <div
           ref={historyPopoverRef}
           className={cn(
-          'rounded-xl border border-gray-800 bg-gray-950 shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-50 overflow-hidden',
-          isMobileViewport
-            ? 'fixed inset-x-5 bottom-24 max-h-[60vh] overflow-y-auto'
-            : 'absolute top-14 right-0'
+            'rounded-xl border border-gray-800 bg-gray-950 shadow-[0_20px_45px_-24px_rgba(0,0,0,0.85)] p-4 z-50 flex flex-col',
+            isMobileViewport
+              ? 'fixed inset-x-5 bottom-24 max-h-[60vh] overflow-y-auto'
+              : 'fixed w-80 max-h-[85vh]'
           )}
-          style={isMobileViewport ? undefined : { width: 'min(18rem, calc(100vw - 4.5rem))' }}
+          style={
+            isMobileViewport
+              ? undefined
+              : {
+                  top: `${historyPopoverPosition.top}px`,
+                  left: `${historyPopoverPosition.left}px`,
+                }
+          }
         >
           <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-gray-200">{t.promptHistory}</p>
@@ -950,10 +1022,15 @@ export const PromptComposer: React.FC = () => {
             className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-800 bg-gray-950 py-2 text-xs font-semibold text-gray-300 hover:border-red-500/60 hover:text-red-300 hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            Clear History
+            {t.clearHistory}
           </button>
           </div>
-          <div className="mt-3 border-t border-gray-800/60 pt-3 max-h-48 overflow-y-auto custom-scrollbar">
+          <div
+            className={cn(
+              'mt-3 border-t border-gray-800/60 pt-3 overflow-y-auto sidebar-scrollbar',
+              isMobileViewport ? 'max-h-48' : 'flex-1'
+            )}
+          >
           {promptHistory.length === 0 ? (
             <div className="py-6 text-center text-sm text-gray-500">
             {t.noPromptHistoryRecorded}
@@ -979,7 +1056,7 @@ export const PromptComposer: React.FC = () => {
                 className="w-full rounded-lg bg-gray-900 px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800"
               >
                 <p className="text-[11px] uppercase tracking-wide text-purple-400/80 mb-1">
-                Prompt #{displayNumber}
+                {t.promptNumber}{displayNumber}
                 </p>
                 <p className="text-xs text-gray-400 leading-relaxed line-clamp-3">
                 {prompt}
@@ -992,7 +1069,7 @@ export const PromptComposer: React.FC = () => {
           </div>
           <div className="mt-3 border-t border-gray-800/60 pt-2 text-center text-[11px] text-gray-500">
           <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-gray-600 mr-1">alt+up/down</kbd>
-          to switch between prompts.
+          {t.switchBetweenPrompts}
           </div>
         </div>
         )}

@@ -323,6 +323,8 @@
   "promptHistory": "提示词历史",
   "prompts": "条提示词",
   "searchPrompts": "搜索提示词...",
+  "clearHistory": "清空历史",
+  "promptNumber": "提示词 #",
   "noPromptHistoryRecorded": "暂无提示词历史",
   "promptsWillAppearHere": "生成图像后，您的提示词将显示在这里",
   "noPromptsFound": "未找到提示词",
@@ -332,6 +334,8 @@
   "deletePrompt": "删除提示词",
   "clickPromptToReuse": "点击提示词以重复使用",
   "escToClose": "关闭",
+  "switchBetweenPrompts": "切换提示词。",
+  
   "viewTemplatePrompt": "查看模板提示词",
   "hideTemplatePromptButton": "隐藏模板提示词",
   "flattenTemplateButton": "将选定的模板合并到当前提示词",

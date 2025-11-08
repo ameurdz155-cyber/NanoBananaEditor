@@ -376,6 +376,8 @@ export interface Translations {
   promptHistory: string;
   prompts: string;
   searchPrompts: string;
+  clearHistory: string;
+  promptNumber: string;
   noPromptHistoryRecorded: string;
   promptsWillAppearHere: string;
   noPromptsFound: string;
@@ -385,6 +387,7 @@ export interface Translations {
   deletePrompt: string;
   clickPromptToReuse: string;
   escToClose: string;
+  switchBetweenPrompts: string;
   
   // Additional UI strings
   viewTemplatePrompt: string;
