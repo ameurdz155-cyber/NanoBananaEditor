@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  ArrowLeft, Plus, Edit2, Trash2, Folder, Search, Upload,
+  ArrowLeft, Plus, Edit2, Trash2, Folder, Search, Upload, Mic, MicOff,
 } from 'lucide-react';
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -18,6 +18,7 @@ import {
   faCoffee, faCar, faClock, faLightbulb, faTrophy, faLock,
   faCircle, faSquare,
 } from '@fortawesome/free-solid-svg-icons';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 
@@ -47,7 +48,72 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
   const [emoji, setEmoji] = useState('Folder');
   const [tab, setTab] = useState<'emoji' | 'icon' | 'upload'>('upload');
   const [iconQ, setIconQ] = useState('');
+  const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceLang, setVoiceLang] = useState<'en-US' | 'zh-CN'>(() => (language === 'zh' ? 'zh-CN' : 'en-US'));
+  const voiceLangWasManuallyChanged = React.useRef(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const recognitionRef = React.useRef<any>(null);
+
+  // Initialize browser speech recognition once the component mounts.
+  useEffect(() => {
+    const SpeechRecognitionCtor = typeof window !== 'undefined'
+      ? ((window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition
+        || (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).webkitSpeechRecognition)
+      : undefined;
+
+    if (!SpeechRecognitionCtor) {
+      setVoiceSupported(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.lang = voiceLang;
+    recognition.onresult = event => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0]?.transcript ?? '')
+        .join(' ')
+        .trim();
+      if (transcript) {
+        setQ(transcript);
+        searchInputRef.current?.focus();
+      }
+    };
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+
+    recognitionRef.current = recognition;
+    setVoiceSupported(true);
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+          recognitionRef.current.abort?.();
+        } catch (error) {
+          console.warn('Failed to stop speech recognition', error);
+        }
+      }
+      recognitionRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (recognitionRef.current) recognitionRef.current.lang = voiceLang;
+  }, [voiceLang]);
+
+  useEffect(() => {
+    const defaultVoiceLang = language === 'zh' ? 'zh-CN' : 'en-US';
+    if (!voiceLangWasManuallyChanged.current) {
+      setVoiceLang(defaultVoiceLang);
+    } else if (voiceLang === defaultVoiceLang) {
+      voiceLangWasManuallyChanged.current = false;
+    }
+  }, [language, voiceLang]);
 
   useEffect(() => {
     const s = localStorage.getItem('promptCategories');
@@ -91,6 +157,48 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
     }
   };
 
+  const startVoiceSearch = () => {
+    if (!voiceSupported) return;
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    try {
+      recognition.lang = voiceLang;
+      recognition.start();
+      setListening(true);
+    } catch (error) {
+      console.error('Unable to start speech recognition', error);
+      setListening(false);
+    }
+  };
+
+  const stopVoiceSearch = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    try {
+      recognition.stop();
+      recognition.abort?.();
+    } catch (error) {
+      console.warn('Unable to stop speech recognition', error);
+    } finally {
+      setListening(false);
+    }
+  };
+
+  const toggleVoiceSearch = () => {
+    if (!voiceSupported) return;
+    if (listening) stopVoiceSearch();
+    else startVoiceSearch();
+  };
+
+  const handleVoiceLangChange = (value: string) => {
+    if (value !== 'en-US' && value !== 'zh-CN') return;
+    const defaultVoiceLang = language === 'zh' ? 'zh-CN' : 'en-US';
+    voiceLangWasManuallyChanged.current = value !== defaultVoiceLang;
+    setVoiceLang(value);
+  };
+
+  const voiceLangLabel = voiceLang === 'zh-CN' ? '中文' : 'English';
+
   return (
     <>
       <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 overflow-y-auto">
@@ -106,20 +214,43 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
 
         {/* Search */}
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-              <Input 
-                placeholder={language === 'zh' ? '搜索...' : 'Search prompts...'} 
-                value={q} 
-                onChange={e => setQ(e.target.value)} 
+          <div className="flex gap-3 items-stretch">
+            <div className="relative flex-1 flex items-center">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-10">
+                <Search className="h-5 w-5 text-gray-500" />
+              </div>
+              <Input
+                ref={searchInputRef}
+                placeholder={language === 'zh' ? '搜索...' : 'Search prompts...'}
+                value={q}
+                onChange={e => setQ(e.target.value)}
                 className="pl-11 h-11 rounded-xl glass border border-purple-500/20 bg-gray-900/50 text-gray-100 placeholder:text-gray-400 focus-visible:border-purple-400/50 focus-visible:bg-gray-900/70 focus-visible:shadow-[0_0_20px_rgba(168,85,247,0.15)] transition-all duration-200"
               />
             </div>
+            <Select value={voiceLang} onValueChange={handleVoiceLangChange}>
+              <SelectTrigger className="h-11 w-auto min-w-[110px] bg-gray-900/80 border border-gray-700 text-xs text-gray-200 rounded-xl px-3">
+                <SelectValue>{voiceLangLabel}</SelectValue>
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900 text-gray-100 border border-gray-700">
+                <SelectItem value="en-US">English</SelectItem>
+                <SelectItem value="zh-CN">中文</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              onClick={toggleVoiceSearch}
+              disabled={!voiceSupported}
+              className={`h-11 w-11 rounded-full border border-gray-700 bg-gray-900/80 flex-shrink-0 transition-colors ${listening && voiceSupported ? 'border-lime-500 text-lime-400 shadow-[0_0_12px_rgba(132,204,22,0.35)]' : 'text-gray-300 hover:border-gray-500 hover:text-white'} ${!voiceSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={voiceSupported ? (listening ? (language === 'zh' ? '停止语音搜索' : 'Stop voice search') : (language === 'zh' ? '开始语音搜索' : 'Start voice search')) : (language === 'zh' ? '浏览器不支持语音搜索' : 'Voice search not supported')}
+            >
+              {listening && voiceSupported ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+            </Button>
             <Button 
               onClick={add}
               size="icon"
-              className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md border-0"
+              className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md border-0 flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end))' }}
             >
               <Plus className="h-5 w-5" />

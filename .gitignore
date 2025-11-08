@@ -29,3 +29,6 @@ gemini_tunnel/.env
 gemini_tunnel/credentials.json
 gemini_tunnel/test.json
 
+# Test directories
+test_py/
+

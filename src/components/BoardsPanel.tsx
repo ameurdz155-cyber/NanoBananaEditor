@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Button } from './ui/Button';
 import {
@@ -14,6 +14,8 @@ import {
   ChevronDown,
   Settings,
   Upload,
+  Mic,
+  MicOff,
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { saveImageWithDialog } from '../utils/fileSaver';
@@ -39,6 +41,13 @@ export const BoardsPanel: React.FC = () => {
   const [imagesExpanded, setImagesExpanded] = useState(true);
   const [currentTab, setCurrentTab] = useState<'images' | 'videos' | 'assets'>('images');
   const [showAddToBoard, setShowAddToBoard] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const language = useAppStore(s => s.language);
+  const [voiceLang, setVoiceLang] = useState<'en-US' | 'zh-CN'>(() => (language === 'zh' ? 'zh-CN' : 'en-US'));
+  const voiceLangWasManuallyChanged = React.useRef(false);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const recognitionRef = React.useRef<any>(null);
 
   const generations = currentProject?.generations || [];
   const edits = currentProject?.edits || [];
@@ -47,6 +56,106 @@ export const BoardsPanel: React.FC = () => {
     ...generations.map(g => ({ type: 'generation' as const, item: g, id: g.id, timestamp: g.timestamp })),
     ...edits.map(e => ({ type: 'edit' as const, item: e, id: e.id, timestamp: e.timestamp }))
   ].sort((a, b) => b.timestamp - a.timestamp);
+
+  useEffect(() => {
+    const SpeechRecognitionCtor = typeof window !== 'undefined'
+      ? ((window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition
+        || (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).webkitSpeechRecognition)
+      : undefined;
+
+    if (!SpeechRecognitionCtor) {
+      setVoiceSupported(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.lang = voiceLang;
+    recognition.onresult = event => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0]?.transcript ?? '')
+        .join(' ')
+        .trim();
+      if (transcript) {
+        setSearchQuery(transcript);
+        searchInputRef.current?.focus();
+      }
+    };
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+
+    recognitionRef.current = recognition;
+    setVoiceSupported(true);
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+          recognitionRef.current.abort?.();
+        } catch (error) {
+          console.warn('Failed to stop speech recognition', error);
+        }
+      }
+      recognitionRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (recognitionRef.current) recognitionRef.current.lang = voiceLang;
+  }, [voiceLang]);
+
+  useEffect(() => {
+    const defaultVoiceLang = language === 'zh' ? 'zh-CN' : 'en-US';
+    if (!voiceLangWasManuallyChanged.current) {
+      setVoiceLang(defaultVoiceLang);
+    } else if (voiceLang === defaultVoiceLang) {
+      voiceLangWasManuallyChanged.current = false;
+    }
+  }, [language, voiceLang]);
+
+  const startVoiceSearch = () => {
+    if (!voiceSupported) return;
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    try {
+      recognition.lang = voiceLang;
+      recognition.start();
+      setListening(true);
+    } catch (error) {
+      console.error('Unable to start speech recognition', error);
+      setListening(false);
+    }
+  };
+
+  const stopVoiceSearch = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    try {
+      recognition.stop();
+      recognition.abort?.();
+    } catch (error) {
+      console.warn('Unable to stop speech recognition', error);
+    } finally {
+      setListening(false);
+    }
+  };
+
+  const toggleVoiceSearch = () => {
+    if (!voiceSupported) return;
+    if (listening) stopVoiceSearch();
+    else startVoiceSearch();
+  };
+
+  const handleVoiceLangChange = (value: string) => {
+    if (value !== 'en-US' && value !== 'zh-CN') return;
+    const defaultVoiceLang = language === 'zh' ? 'zh-CN' : 'en-US';
+    voiceLangWasManuallyChanged.current = value !== defaultVoiceLang;
+    setVoiceLang(value);
+  };
+
+  const voiceLangLabel = voiceLang === 'zh-CN' ? '中文' : 'English';
 
   const handleCreateBoard = () => {
     const name = prompt('Enter board name:');

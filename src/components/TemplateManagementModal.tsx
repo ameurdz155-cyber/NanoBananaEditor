@@ -3,7 +3,9 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
-import { X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, Lock, UploadCloud } from 'lucide-react';
+import {
+  X, Plus, Edit2, Trash2, Save, FileText, Eye, EyeOff, Copy, Search, Lock, UploadCloud, Mic, MicOff
+} from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { getTranslation } from '../i18n/translations';
@@ -70,6 +72,12 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(resolveIsDarkMode);
   const wasPreviouslyOpen = useRef(open);
+  const [listening, setListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceLang, setVoiceLang] = useState<'en-US' | 'zh-CN'>(() => (language === 'zh' ? 'zh-CN' : 'en-US'));
+  const voiceLangWasManuallyChanged = React.useRef(false);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  const recognitionRef = React.useRef<any>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -160,6 +168,111 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
 
     wasPreviouslyOpen.current = open;
   }, [open, resetForm]);
+
+  useEffect(() => {
+    const SpeechRecognitionCtor = typeof window !== 'undefined'
+      ? ((window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition
+        || (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).webkitSpeechRecognition)
+      : undefined;
+
+    if (!SpeechRecognitionCtor) {
+      setVoiceSupported(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.lang = voiceLang;
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        setSearchQuery(transcript);
+        searchInputRef.current?.focus();
+      }
+      setListening(false);
+    };
+    recognition.onerror = (event: any) => {
+      // Only log errors that aren't "no-speech" (user didn't speak in time)
+      if (event.error !== 'no-speech') {
+        console.error('Speech recognition error:', event.error);
+      }
+      setListening(false);
+    };
+    recognition.onend = () => setListening(false);
+
+    recognitionRef.current = recognition;
+    setVoiceSupported(true);
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+          recognitionRef.current.abort?.();
+        } catch (error) {
+          console.warn('Failed to stop speech recognition', error);
+        }
+      }
+      recognitionRef.current = null;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (recognitionRef.current) recognitionRef.current.lang = voiceLang;
+  }, [voiceLang]);
+
+  useEffect(() => {
+    const defaultVoiceLang = language === 'zh' ? 'zh-CN' : 'en-US';
+    if (!voiceLangWasManuallyChanged.current) {
+      setVoiceLang(defaultVoiceLang);
+    } else if (voiceLang === defaultVoiceLang) {
+      voiceLangWasManuallyChanged.current = false;
+    }
+  }, [language, voiceLang]);
+
+  const startVoiceSearch = () => {
+    if (!voiceSupported) return;
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    try {
+      recognition.lang = voiceLang;
+      recognition.start();
+      setListening(true);
+    } catch (error) {
+      console.error('Unable to start speech recognition', error);
+      setListening(false);
+    }
+  };
+
+  const stopVoiceSearch = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    try {
+      recognition.stop();
+      recognition.abort?.();
+    } catch (error) {
+      console.warn('Unable to stop speech recognition', error);
+    } finally {
+      setListening(false);
+    }
+  };
+
+  const toggleVoiceSearch = () => {
+    if (!voiceSupported) return;
+    if (listening) stopVoiceSearch();
+    else startVoiceSearch();
+  };
+
+  const handleVoiceLangChange = (value: string) => {
+    if (value !== 'en-US' && value !== 'zh-CN') return;
+    const defaultVoiceLang = language === 'zh' ? 'zh-CN' : 'en-US';
+    voiceLangWasManuallyChanged.current = value !== defaultVoiceLang;
+    setVoiceLang(value);
+  };
+
+  const voiceLangLabel = voiceLang === 'zh-CN' ? '中文' : 'English';
 
   const processIconFile = (file: File) => {
     if (file.size > MAX_ICON_SIZE_BYTES) {
@@ -414,21 +527,54 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
             <div className="px-6 py-4 border-b border-[color:var(--surface-border-light)] bg-[var(--surface-primary)] space-y-3">
               <div className="flex gap-3">
                 <div className="flex-1 relative">
-                  <Search
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none z-10"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  />
-                  <Input
-                    placeholder={t.searchPrompts}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                  <div
                     className={cn(
-                      'pl-11',
+                      'relative flex h-11 items-center rounded-full border px-3 transition-colors',
                       isDarkMode
-                        ? 'bg-gray-900/60 border-purple-500/20 text-gray-100 placeholder:text-gray-400 focus-visible:bg-gray-900/70 focus-visible:border-cyan-400/40'
-                        : 'bg-white/95 text-gray-900 border-gray-300 placeholder:text-gray-500 focus-visible:bg-white focus-visible:border-cyan-400/40 focus-visible:shadow-[0_0_18px_rgba(6,182,212,0.16)]'
+                        ? 'bg-gray-900/70 border-gray-700 hover:border-gray-500 focus-within:border-cyan-400'
+                        : 'bg-white border-gray-200 hover:border-gray-400 focus-within:border-sky-500'
                     )}
-                  />
+                  >
+                    <div className="pr-3 text-gray-400">
+                      <Search className="h-[18px] w-[18px]" />
+                    </div>
+                    <Input
+                      ref={searchInputRef}
+                      placeholder={t.searchPrompts}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className={cn(
+                        'flex-1 h-full border-0 bg-transparent px-0 text-sm focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0',
+                        isDarkMode
+                          ? 'text-gray-100 placeholder:text-gray-500'
+                          : 'text-gray-900 placeholder:text-gray-500'
+                      )}
+                    />
+                    <div className="flex items-center pr-1 gap-1">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        onClick={toggleVoiceSearch}
+                        disabled={!voiceSupported}
+                        className={cn(
+                          'h-9 w-9 rounded-full flex-shrink-0 transition-colors',
+                          listening && voiceSupported
+                            ? 'text-rose-400 bg-rose-500/10'
+                            : isDarkMode
+                              ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/60'
+                              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100',
+                          !voiceSupported && 'opacity-30 cursor-not-allowed'
+                        )}
+                        title={voiceSupported ? (listening ? (language === 'zh' ? '停止语音搜索' : 'Stop voice search') : (language === 'zh' ? '开始语音搜索' : 'Start voice search')) : (language === 'zh' ? '浏览器不支持语音搜索' : 'Voice search not supported')}
+                      >
+                        <svg className="h-5 w-5" focusable="false" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                          <path fill="currentColor" d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
+                        </svg>
+                      </Button>
+                    </div>
+                  </div>
                 </div>
                 <Button
                   onClick={() => {
@@ -612,22 +758,10 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
                 background: 'var(--surface-secondary)'
               }}
             >
-              <div className="flex justify-between items-center">
+              <div className="flex items-center">
                 <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                   {filteredTemplates.length} {t.templates.toLowerCase()}
                 </p>
-                <Button
-                  onClick={() => onOpenChange(false)}
-                  variant="ghost"
-                  className={cn(
-                    'transition-colors',
-                    isDarkMode
-                      ? 'text-[color:var(--text-primary)] hover:bg-white/5'
-                      : 'text-[color:var(--text-primary)] hover:bg-black/5'
-                  )}
-                >
-                  {t.ok}
-                </Button>
               </div>
             </div>
           </div>
@@ -651,20 +785,6 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
               <Button className="btn-premium" type="button">
                 {t.upgradeToUnlock}
               </Button>
-              <Dialog.Close asChild>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    'mt-2 transition-colors',
-                    isDarkMode
-                      ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
-                  )}
-                  type="button"
-                >
-                  {t.ok}
-                </Button>
-              </Dialog.Close>
             </div>
           )}
         </Dialog.Content>
