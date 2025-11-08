@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Label } from './ui/label';
+import { Card } from './ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import {
-  ArrowLeft, Plus, Edit2, Trash2, Folder, Search, Upload, Mic, MicOff,
+  ArrowLeft, Plus, Edit2, Trash2, Folder, Search, Upload, Mic, MicOff, Loader2,
 } from 'lucide-react';
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -21,8 +21,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
-
-interface Category { id: string; name: string; emoji: string; createdAt: number; }
+import { PromptCategory } from '../types';
+import * as categoryService from '../services/categoryService';
 
 const faIcons = [
   { icon: faFolder, name: 'folder' }, { icon: faFolderOpen, name: 'folder-open' },
@@ -38,14 +38,23 @@ const faIcons = [
 ];
 
 export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  console.log('[CategoryManagementPage] Component rendered');
+  
   const language = useAppStore(s => s.language);
   const t = getTranslation(language);
-  const [cats, setCats] = useState<Category[]>([]);
+  
+  // Use Zustand store for categories
+  const cats = useAppStore(s => s.promptCategories);
+  const setPromptCategories = useAppStore(s => s.setPromptCategories);
+  const addPromptCategory = useAppStore(s => s.addPromptCategory);
+  const updatePromptCategory = useAppStore(s => s.updatePromptCategory);
+  const deletePromptCategory = useAppStore(s => s.deletePromptCategory);
+  
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
-  const [edit, setEdit] = useState<Category | null>(null);
+  const [edit, setEdit] = useState<PromptCategory | null>(null);
   const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState('Folder');
+  const [emoji, setEmoji] = useState('📁');
   const [tab, setTab] = useState<'emoji' | 'icon' | 'upload'>('upload');
   const [iconQ, setIconQ] = useState('');
   const [listening, setListening] = useState(false);
@@ -55,6 +64,9 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
   const fileRef = React.useRef<HTMLInputElement>(null);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const recognitionRef = React.useRef<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize browser speech recognition once the component mounts.
   useEffect(() => {
@@ -115,33 +127,111 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
     }
   }, [language, voiceLang]);
 
+  // Load categories from backend on mount
   useEffect(() => {
-    const s = localStorage.getItem('promptCategories');
-    if (s) setCats(JSON.parse(s));
-    else {
-      const d: Category[] = [
-        { id: 'p', name: language === 'zh' ? '肖像' : 'Portrait', emoji: 'Person', createdAt: Date.now() },
-        { id: 'l', name: language === 'zh' ? '风景' : 'Landscape', emoji: 'Landscape', createdAt: Date.now() },
-        { id: 'r', name: language === 'zh' ? '产品' : 'Product', emoji: 'Package', createdAt: Date.now() },
-        { id: 'a', name: language === 'zh' ? '艺术风格' : 'Art Style', emoji: 'Paintbrush', createdAt: Date.now() },
-        { id: 'c', name: language === 'zh' ? '概念设计' : 'Concept Design', emoji: 'Galaxy', createdAt: Date.now() },
-        { id: 'h', name: language === 'zh' ? '摄影' : 'Photography', emoji: 'Camera', createdAt: Date.now() },
-        { id: 'b', name: language === 'zh' ? '建筑设计' : 'Architecture', emoji: 'Building', createdAt: Date.now() },
-      ];
-      setCats(d); localStorage.setItem('promptCategories', JSON.stringify(d));
-    }
-  }, [language]);
+    console.log('[CategoryManagement] useEffect triggered');
+    
+    const loadCategories = async () => {
+      console.log('[CategoryManagement] Loading categories from backend...');
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('access_token');
+      console.log('[CategoryManagement] Auth token exists:', !!token);
+      console.log('[CategoryManagement] Token value:', token ? `${token.substring(0, 20)}...` : 'null');
+      
+      if (!token) {
+        console.warn('[CategoryManagement] No auth token found - user needs to login');
+        setError(language === 'zh' ? '请先登录以管理分类' : 'Please login to manage categories');
+        setIsLoading(false);
+        return;
+      }
+      
+      setIsLoading(true);
+      setError(null);
+      try {
+        console.log('[CategoryManagement] Calling categoryService.fetchCategories()...');
+        const categories = await categoryService.fetchCategories();
+        console.log('[CategoryManagement] Loaded categories:', categories);
+        setPromptCategories(categories);
+      } catch (err) {
+        console.error('[CategoryManagement] Failed to load categories:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load categories';
+        setError(errorMessage);
+        
+        // If 403, it means authentication failed
+        if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
+          setError(language === 'zh' ? '认证失败，请重新登录' : 'Authentication failed, please login again');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadCategories();
+  }, [setPromptCategories, language]);
 
-  const save = (list: Category[]) => { localStorage.setItem('promptCategories', JSON.stringify(list)); setCats(list); };
-  const add = () => { setEdit(null); setName(''); setEmoji('Folder'); setOpen(true); };
-  const editCat = (c: Category) => { setEdit(c); setName(c.name); setEmoji(c.emoji); setOpen(true); };
-  const submit = () => {
-    if (!name.trim()) return;
-    if (edit) save(cats.map(c => c.id === edit.id ? { ...c, name, emoji } : c));
-    else save([...cats, { id: Date.now().toString(), name, emoji, createdAt: Date.now() }]);
-    setOpen(false);
+  const add = () => { 
+    setEdit(null); 
+    setName(''); 
+    setEmoji('📁'); 
+    setOpen(true); 
   };
-  const del = (id: string) => confirm(language === 'zh' ? '删除？' : 'Delete?') && save(cats.filter(c => c.id !== id));
+  
+  const editCat = (c: PromptCategory) => { 
+    setEdit(c); 
+    setName(c.name); 
+    setEmoji(c.emoji || '📁'); 
+    setOpen(true); 
+  };
+  
+  const submit = async () => {
+    if (!name.trim() || isSaving) return;
+    
+    setIsSaving(true);
+    setError(null);
+    
+    try {
+      if (edit) {
+        // Update existing category on backend
+        const updated = await categoryService.updateCategory(edit.id, { 
+          name: name.trim(), 
+          emoji 
+        });
+        updatePromptCategory(edit.id, updated);
+      } else {
+        // Create new category on backend
+        const newCategory = await categoryService.createCategory({
+          name: name.trim(),
+          emoji,
+        });
+        addPromptCategory(newCategory);
+      }
+      
+      setOpen(false);
+      setName('');
+      setEmoji('📁');
+    } catch (err) {
+      console.error('Failed to save category:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save category');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  const del = async (id: string) => {
+    if (!confirm(language === 'zh' ? '确定删除此分类？' : 'Delete this category?')) {
+      return;
+    }
+    
+    setError(null);
+    try {
+      await categoryService.deleteCategory(id);
+      deletePromptCategory(id);
+    } catch (err) {
+      console.error('Failed to delete category:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete category');
+    }
+  };
 
   const filtered = cats.filter(c => c.name.toLowerCase().includes(q.toLowerCase()));
   const filteredIcons = faIcons.filter(i => i.name.includes(iconQ.toLowerCase()));
@@ -201,9 +291,9 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
 
   return (
     <>
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 overflow-y-auto">
+      <div className="h-full w-full bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900/95 backdrop-blur-xl border-b border-lime-500/20">
+        <div className="sticky top-0 bg-gray-900/95 backdrop-blur-xl border-b border-lime-500/20 z-10">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button onClick={onClose} variant="ghost" size="sm" className="text-gray-300"><ArrowLeft className="h-5 w-5 mr-1" />{language === 'zh' ? '返回' : 'Back'}</Button>
@@ -258,19 +348,35 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
           </div>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="max-w-7xl mx-auto px-6 pb-4">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
+              {error}
+            </div>
+          </div>
+        )}
+
         {/* Grid */}
         <div className="max-w-7xl mx-auto px-4 pb-8">
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-20">
+              <Loader2 className="h-12 w-12 text-lime-400 mx-auto mb-4 animate-spin" />
+              <p className="text-gray-400">{language === 'zh' ? '加载中...' : 'Loading...'}</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-20"><Folder className="h-20 w-20 text-gray-700 mx-auto mb-4 opacity-50" /><p className="text-gray-400">{q ? (language === 'zh' ? '未找到' : 'No results') : (language === 'zh' ? '暂无' : 'None yet')}</p></div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {filtered.map(c => (
+              {filtered.map(c => {
+                const displayEmoji = c.emoji || c.image || '📁';
+                return (
                 <Card key={c.id} className="group p-5 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-lime-500/50 transition-all">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      {c.emoji.startsWith('data:') ? <img src={c.emoji} className="w-12 h-12 rounded-lg object-cover ring-2 ring-lime-500/30" /> :
-                       c.emoji.startsWith('fa-') ? <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-lime-600/20 to-cyan-600/20 flex items-center justify-center ring-2 ring-lime-500/30"><FontAwesomeIcon icon={faIcons.find(i => `fa-${i.name}` === c.emoji)?.icon || faFolder} className="text-2xl text-lime-400" /></div> :
-                       <div className="text-4xl">{c.emoji}</div>}
+                      {displayEmoji.startsWith('data:') ? <img src={displayEmoji} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-lime-500/30" /> :
+                       displayEmoji.startsWith('fa-') ? <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-lime-600/20 to-cyan-600/20 flex items-center justify-center ring-2 ring-lime-500/30"><FontAwesomeIcon icon={faIcons.find(i => `fa-${i.name}` === displayEmoji)?.icon || faFolder} className="text-2xl text-lime-400" /></div> :
+                       <div className="text-4xl">{displayEmoji}</div>}
                       <div><h3 className="font-semibold text-white">{c.name}</h3><p className="text-xs text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</p></div>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -279,7 +385,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                     </div>
                   </div>
                 </Card>
-              ))}
+              )})}
             </div>
           )}
         </div>
@@ -328,10 +434,40 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
             </div>
 
             {/* Name */}
-            <div><Label>Name</Label><Input placeholder="Category name" value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && name.trim() && submit()} autoFocus /></div>
+            <div><Label>Name</Label><Input placeholder="Category name" value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && name.trim() && !isSaving && submit()} autoFocus /></div>
+
+            {/* Error Display */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
 
             {/* Buttons */}
-            <div className="flex gap-2"><Button onClick={submit} disabled={!name.trim()} className="flex-1 bg-gradient-to-r from-lime-600 to-cyan-600">{t.save || 'Save'}</Button><Button onClick={() => setOpen(false)} variant="outline" className="flex-1">{t.cancel || 'Cancel'}</Button></div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={submit} 
+                disabled={!name.trim() || isSaving} 
+                className="flex-1 bg-gradient-to-r from-lime-600 to-cyan-600"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {language === 'zh' ? '保存中...' : 'Saving...'}
+                  </>
+                ) : (
+                  t.save || 'Save'
+                )}
+              </Button>
+              <Button 
+                onClick={() => { setOpen(false); setError(null); }} 
+                variant="outline" 
+                className="flex-1"
+                disabled={isSaving}
+              >
+                {t.cancel || 'Cancel'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

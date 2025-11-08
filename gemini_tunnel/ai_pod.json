@@ -11,7 +11,7 @@
       "is_superuser": true,
       "created_at": "2025-11-08T20:28:58.888043",
       "updated_at": "2025-11-08T20:28:58.888043",
-      "last_login": "2025-11-08T21:35:50.553077"
+      "last_login": "2025-11-08T22:47:08.146265"
     },
     "2": {
       "id": "9d6bfe43-3e27-4aa6-9e14-50ca3e988ea6",
@@ -80,6 +80,46 @@
       "expires_at": "2025-11-15T21:37:12.245538",
       "created_at": "2025-11-08T21:37:12.245565",
       "last_activity": "2025-11-08T21:37:12.245571"
+    },
+    "5": {
+      "id": "69ed5a41-f95a-4925-880f-1b2a196f8721",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "AkobjpTWK2FhbAA6R_w2CkhI_I4aS76TnKnblux6eAM",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T22:25:47.927611",
+      "created_at": "2025-11-08T22:25:47.927620",
+      "last_activity": "2025-11-08T22:25:47.927623"
+    },
+    "6": {
+      "id": "0db30076-ab42-4140-8c7c-39cb603f3867",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "RaeUdI4wurZEK3oPNdPtP3pcB3ubrZjGe56pwm1sTRE",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T22:26:26.391384",
+      "created_at": "2025-11-08T22:26:26.391431",
+      "last_activity": "2025-11-08T22:26:26.391441"
+    },
+    "7": {
+      "id": "cf5ceaa0-9433-44e4-9856-d00d63135c6b",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "S2Cxsnj19AK8FjvQ6p7irstHzM9FP3de87_xXRINiEQ",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T22:28:51.440863",
+      "created_at": "2025-11-08T22:28:51.440877",
+      "last_activity": "2025-11-08T22:28:51.440881"
+    },
+    "8": {
+      "id": "1cefce7f-1c3d-42bb-aa25-be27a0dfcf40",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "kx-xHglGb1x_bmYSK1eiEOzxGNRT5wQim8W_jdWA-fY",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T22:47:08.149742",
+      "created_at": "2025-11-08T22:47:08.149751",
+      "last_activity": "2025-11-08T22:47:08.149753"
     }
   },
   "audit_logs": {
@@ -136,6 +176,88 @@
       "details": null,
       "ip_address": "127.0.0.1",
       "created_at": "2025-11-08T21:37:12.248080"
+    },
+    "7": {
+      "id": "6dcf876b-2efe-417f-a298-622e13137c1c",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T22:25:47.930252"
+    },
+    "8": {
+      "id": "40705e27-d9db-43e4-afc0-62c933e8ac2a",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T22:26:26.393335"
+    },
+    "9": {
+      "id": "68109b8b-3fbc-43e8-aa1a-614c6c9ead03",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T22:28:51.442766"
+    },
+    "10": {
+      "id": "d4ed6612-878b-405d-919e-dcca197807cb",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T22:47:08.151727"
+    }
+  },
+  "categories": {
+    "1": {
+      "id": "cat-48255bf68e1c",
+      "name": "jjjj",
+      "description": "Go-to prompts and inspiration you reach for often.",
+      "emoji": "\u2b50",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762631237367,
+      "updatedAt": 1762631383077,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "2": {
+      "id": "cat-d7418f469439",
+      "name": "tt",
+      "description": "Portrait photography, character studies, and close-ups.",
+      "emoji": "\ud83e\uddd1",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762631237367,
+      "updatedAt": 1762631399408,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "3": {
+      "id": "cat-753a76a77f33",
+      "name": "Landscapes",
+      "description": "Outdoor scenery, nature shots, and wide vistas.",
+      "emoji": "\ud83c\udf04",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762631237367,
+      "updatedAt": 1762631237367,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "4": {
+      "id": "cat-648473deb843",
+      "name": "Products",
+      "description": "Product renders, mockups, and marketing visuals.",
+      "emoji": "\ud83d\udce6",
+      "image": null,
+      "isDefault": true,
+      "createdAt": 1762631237367,
+      "updatedAt": 1762631237367,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
     }
   }
 }

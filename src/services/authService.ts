@@ -83,3 +83,29 @@ export async function registerRequest(payload: RegisterPayload): Promise<UserRes
   const data = await response.json();
   return data as UserResponse;
 }
+
+export async function fetchCurrentUser(token: string): Promise<UserResponse> {
+  const response = await fetch(joinBackendPath('/api/v1/auth/me'), {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    let message = 'Authentication required.';
+    try {
+      const errorBody = await response.json();
+      if (typeof errorBody?.detail === 'string') {
+        message = errorBody.detail;
+      }
+    } catch {
+      // ignore JSON parse errors
+    }
+    throw new Error(message);
+  }
+
+  const data = await response.json();
+  return data as UserResponse;
+}

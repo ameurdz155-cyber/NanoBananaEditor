@@ -179,11 +179,44 @@ function AppContent() {
 
 function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const token = useAuthStore((state) => state.token);
+  const verifyAuth = useAuthStore((state) => state.verifyAuth);
   const [showRegistration, setShowRegistration] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  React.useEffect(() => {
+    let isActive = true;
+
+    const checkAuth = async () => {
+      try {
+        await verifyAuth();
+      } finally {
+        if (isActive) {
+          setIsCheckingAuth(false);
+        }
+      }
+    };
+
+    checkAuth();
+
+    return () => {
+      isActive = false;
+    };
+  }, [verifyAuth]);
+
+  React.useEffect(() => {
+    if (isAuthenticated && token) {
+      setShowRegistration(false);
+    }
+  }, [isAuthenticated, token]);
   
   return (
     <QueryClientProvider client={queryClient}>
-      {isAuthenticated ? (
+      {isCheckingAuth ? (
+        <div className="flex h-screen items-center justify-center bg-background text-muted-foreground">
+          Loading account...
+        </div>
+      ) : isAuthenticated ? (
         <AppContent />
       ) : showRegistration ? (
         <RegistrationPage onBackToLogin={() => setShowRegistration(false)} />
