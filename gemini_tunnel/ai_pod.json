@@ -11,7 +11,7 @@
       "is_superuser": true,
       "created_at": "2025-11-08T20:28:58.888043",
       "updated_at": "2025-11-08T20:28:58.888043",
-      "last_login": "2025-11-09T05:59:23.673136"
+      "last_login": "2025-11-09T06:07:41.504446"
     },
     "2": {
       "id": "9d6bfe43-3e27-4aa6-9e14-50ca3e988ea6",
@@ -253,6 +253,16 @@
       "expires_at": "2025-11-16T05:59:23.675555",
       "created_at": "2025-11-09T05:59:23.675565",
       "last_activity": "2025-11-09T05:59:23.675569"
+    },
+    "21": {
+      "id": "04227d80-bd29-4789-866e-def64a80c931",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "lgOEZKorUFIPJUc0hhGtgxPzsYdEPMsHpRcUU0zwFZ4",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-16T06:07:41.507125",
+      "created_at": "2025-11-09T06:07:41.507133",
+      "last_activity": "2025-11-09T06:07:41.507135"
     }
   },
   "audit_logs": {
@@ -462,6 +472,15 @@
       "details": null,
       "ip_address": "127.0.0.1",
       "created_at": "2025-11-09T05:59:23.677741"
+    },
+    "24": {
+      "id": "5d8b5ece-1874-4f36-8a07-2aea50445d3c",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-09T06:07:41.509158"
     }
   },
   "categories": {
@@ -529,6 +548,17 @@
       "isDefault": true,
       "createdAt": 1762633772656,
       "updatedAt": 1762633772656,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "7": {
+      "id": "cat-b85aff1e2d0b",
+      "name": "jjj",
+      "description": null,
+      "emoji": "\ud83d\udcc1",
+      "image": null,
+      "isDefault": false,
+      "createdAt": 1762659171786,
+      "updatedAt": 1762659171786,
       "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
     }
   },
@@ -601,6 +631,20 @@
       "isDefault": false,
       "createdAt": 1762635047688,
       "updatedAt": 1762635075206,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "7": {
+      "id": "tpl-acbdecb0933a",
+      "name": "Epic Landscape (Copy) (Copy)",
+      "description": "Sweeping golden hour landscape with atmospheric depth.",
+      "positivePrompt": "epic landscape of [environment], golden hour sunlight, volumetric clouds, dramatic sky, wide angle, high detail, atmospheric perspective, 16k",
+      "negativePrompt": "haze, washed out colors, low detail, people, buildings, artifacts",
+      "categoryId": "cat-753a76a77f33",
+      "emoji": "\ud83c\udf05",
+      "image": null,
+      "isDefault": false,
+      "createdAt": 1762658079102,
+      "updatedAt": 1762658079102,
       "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
     }
   }

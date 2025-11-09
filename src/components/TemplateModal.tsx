@@ -68,18 +68,18 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/70 z-50" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg p-8 z-50 overflow-y-auto shadow-2xl transition-colors"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg z-50 shadow-2xl transition-colors flex flex-col"
           style={{
             width: '95vw',
-            maxWidth: '1152px',
-            height: '90vh',
-            minHeight: '600px',
+            maxWidth: '768px',
+            maxHeight: '90vh',
             background: 'var(--modal-surface-background)',
             border: '1px solid var(--modal-surface-border)',
             color: 'var(--text-primary)'
           }}
         >
-          <div className="flex items-center justify-between mb-6">
+          {/* Header - Sticky */}
+          <div className="flex items-center justify-between p-6 pb-4 border-b border-[color:var(--surface-border)]">
             <Dialog.Title className="text-2xl font-semibold text-[color:var(--text-primary)]">
               {editingTemplate ? t.editPromptTemplate : t.createPromptTemplate}
             </Dialog.Title>
@@ -99,7 +99,8 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
             </Dialog.Close>
           </div>
 
-          <div className="space-y-6">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Template Icon/Preview */}
             <div className="flex items-center gap-6">
               <div
@@ -142,84 +143,56 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
               />
             </div>
 
-            {/* Category and Emoji */}
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div>
-                <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
-                  {t.templateCategoryLabel}
-                </label>
-                <select
-                  value={formData.categoryId}
-                  onChange={(e) => onFormDataChange({ ...formData, categoryId: e.target.value })}
-                  className={cn(
-                    'w-full rounded-md px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500',
-                    isDarkMode
-                      ? 'bg-[color:var(--surface-primary)] border-[color:var(--surface-border)] text-[color:var(--text-primary)]'
-                      : 'bg-white border-slate-200 text-slate-900 shadow-sm'
-                  )}
-                >
-                  <option value="">{t.uncategorized}</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.emoji ? `${category.emoji} ` : ''}{category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
-                  {t.templateEmojiLabel}
-                </label>
-                <Input
-                  value={formData.emoji}
-                  onChange={(e) => onFormDataChange({ ...formData, emoji: e.target.value })}
-                  placeholder="🎨"
-                  maxLength={8}
-                  className={cn(
-                    'w-full text-base py-3',
-                    !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Representative Image */}
+            {/* Category */}
             <div>
               <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
-                {t.templateImageLabel}
+                {t.templateCategoryLabel}
               </label>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Input
-                  value={formData.image}
-                  onChange={(e) => onFormDataChange({ ...formData, image: e.target.value })}
-                  placeholder={t.templateImageUrlPlaceholder}
-                  className={cn(
-                    'w-full sm:flex-1 text-base py-3',
-                    !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
-                  )}
-                />
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={onImageUpload}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={cn(
-                    'flex items-center gap-2 py-3 px-4 transition-colors',
-                    isDarkMode
-                      ? 'border-[color:var(--surface-border)] bg-[color:var(--surface-secondary)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                      : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200/70'
-                  )}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <UploadCloud className="h-5 w-5" />
-                  <span>{t.templateImageUpload}</span>
-                </Button>
-              </div>
+              <select
+                value={formData.categoryId}
+                onChange={(e) => onFormDataChange({ ...formData, categoryId: e.target.value })}
+                className={cn(
+                  'w-full rounded-md px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500',
+                  isDarkMode
+                    ? 'bg-[color:var(--surface-primary)] border-[color:var(--surface-border)] text-[color:var(--text-primary)]'
+                    : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+                )}
+              >
+                <option value="">{t.uncategorized}</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.emoji ? `${category.emoji} ` : ''}{category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Image Upload */}
+            <div>
+              <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
+                {t.templateImageLabel || 'Template Image'}
+              </label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={onImageUpload}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className={cn(
+                  'w-full flex items-center justify-center gap-2 py-3 px-4 transition-colors',
+                  isDarkMode
+                    ? 'border-[color:var(--surface-border)] bg-[color:var(--surface-secondary)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                    : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200/70'
+                )}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <UploadCloud className="h-5 w-5" />
+                <span>{t.templateImageUpload || 'Upload Image'}</span>
+              </Button>
               {formData.image && (
                 <div className="mt-3 flex items-center gap-4">
                   <img
@@ -245,7 +218,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                     type="button"
                     onClick={() => onFormDataChange({ ...formData, image: '' })}
                   >
-                    {t.templateImageClear}
+                    {t.templateImageClear || 'Clear'}
                   </Button>
                 </div>
               )}
@@ -337,33 +310,33 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                 {t.templateOmitPlaceholder}
               </p>
             </div>
+          </div>
 
-            {/* Save Button */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-[color:var(--surface-border)]">
-              <Button
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-                className={cn(
-                  'px-6 py-3 text-base transition-colors',
-                  isDarkMode
-                    ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
-                )}
-              >
-                {t.cancel}
-              </Button>
-              <Button
-                onClick={onSave}
-                className={cn(
-                  'px-6 py-3 text-base transition-colors',
-                  isDarkMode
-                    ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_12px_30px_-12px_rgba(168,85,247,0.45)]'
-                    : 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_14px_34px_-18px_rgba(168,85,247,0.55)]'
-                )}
-              >
-                {t.save}
-              </Button>
-            </div>
+          {/* Footer - Sticky */}
+          <div className="flex justify-end gap-3 p-6 pt-4 border-t border-[color:var(--surface-border)] bg-[var(--modal-surface-background)]">
+            <Button
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              className={cn(
+                'px-6 py-3 text-base transition-colors',
+                isDarkMode
+                  ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
+              )}
+            >
+              {t.cancel}
+            </Button>
+            <Button
+              onClick={onSave}
+              className={cn(
+                'px-6 py-3 text-base transition-colors',
+                isDarkMode
+                  ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_12px_30px_-12px_rgba(168,85,247,0.45)]'
+                  : 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_14px_34px_-18px_rgba(168,85,247,0.55)]'
+              )}
+            >
+              {t.save}
+            </Button>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
