@@ -4,21 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Label } from './ui/label';
 import { Card } from './ui/card';
 import {
-  ArrowLeft, Plus, Edit2, Trash2, Folder, Search, Upload, Mic, MicOff, Loader2,
+  ArrowLeft, Edit2, Trash2, Folder, Upload, Loader2,
 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faFolder,
 } from '@fortawesome/free-solid-svg-icons';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import { PromptCategory } from '../types';
 import * as categoryService from '../services/categoryService';
 import { cn } from '../utils/cn';
+import { CategoryManagementToolbar, VoiceLanguageOption } from './CategoryManagementToolbar';
 
 export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   console.log('[CategoryManagementPage] Component rendered');
@@ -310,12 +309,25 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
   };
 
   const voiceLangLabel = voiceLang === 'zh-CN' ? '中文' : 'English';
+  const voiceLanguageOptions = React.useMemo<VoiceLanguageOption[]>(() => [
+    { value: 'en-US', label: language === 'zh' ? '英语' : 'English' },
+    { value: 'zh-CN', label: language === 'zh' ? '中文' : '中文' },
+  ], [language]);
+
+  const voiceButtonTitle = voiceSupported
+    ? (listening
+      ? (language === 'zh' ? '停止语音搜索' : 'Stop voice search')
+      : (language === 'zh' ? '开始语音搜索' : 'Start voice search'))
+    : (language === 'zh' ? '浏览器不支持语音搜索' : 'Voice search not supported');
+
+  const addButtonAriaLabel = language === 'zh' ? '新增分类' : 'Add category';
+  const searchPlaceholder = language === 'zh' ? '搜索...' : 'Search prompts...';
 
   return (
     <>
       <div className="h-full w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900/95 backdrop-blur-xl border-b border-vis-border z-10">
+  <div className="sticky top-0 bg-gray-900 backdrop-blur-xl border-b border-vis-border z-30">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button onClick={onClose} variant="ghost" size="sm" className="text-vis-text-secondary hover:text-vis-teal-300"><ArrowLeft className="h-5 w-5 mr-1" />{language === 'zh' ? '返回' : 'Back'}</Button>
@@ -325,49 +337,22 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
         </div>
 
         {/* Search */}
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex gap-3 items-stretch">
-            <div className="relative flex-1 flex items-center">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-10">
-                <Search className="h-5 w-5 text-vis-text-muted" />
-              </div>
-              <Input
-                ref={searchInputRef}
-                placeholder={language === 'zh' ? '搜索...' : 'Search prompts...'}
-                value={q}
-                onChange={e => setQ(e.target.value)}
-                className="pl-11 h-11 rounded-xl border border-vis-border bg-gray-900/50 text-vis-text-primary placeholder:text-vis-text-muted focus-visible:border-vis-teal-400 focus-visible:bg-gray-900/70 focus-visible:ring-2 focus-visible:ring-vis-teal-500/30 transition-all duration-200"
-              />
-            </div>
-            <Select value={voiceLang} onValueChange={handleVoiceLangChange}>
-              <SelectTrigger className="h-11 w-auto min-w-[110px] bg-gray-900/80 border border-vis-border text-xs text-vis-text-primary rounded-xl px-3">
-                <SelectValue>{voiceLangLabel}</SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-gray-900/95 text-vis-text-primary border border-vis-border-light">
-                <SelectItem value="en-US">English</SelectItem>
-                <SelectItem value="zh-CN">中文</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              onClick={toggleVoiceSearch}
-              disabled={!voiceSupported}
-              className={`h-11 w-11 rounded-full border flex-shrink-0 transition-all duration-200 ${listening && voiceSupported ? 'border-vis-teal-400 text-vis-teal-400 bg-vis-teal-500/10 shadow-vis-glow-teal' : 'border-vis-border bg-gray-900/80 text-vis-text-secondary hover:border-vis-border-light hover:text-vis-text-primary'} ${!voiceSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title={voiceSupported ? (listening ? (language === 'zh' ? '停止语音搜索' : 'Stop voice search') : (language === 'zh' ? '开始语音搜索' : 'Start voice search')) : (language === 'zh' ? '浏览器不支持语音搜索' : 'Voice search not supported')}
-            >
-              {listening && voiceSupported ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-            </Button>
-            <Button 
-              onClick={add}
-              size="icon"
-              className="h-11 w-11 rounded-full bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan border-0 flex-shrink-0 transition-all duration-200"
-            >
-              <Plus className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+        <CategoryManagementToolbar
+          searchValue={q}
+          onSearchChange={value => setQ(value)}
+          searchPlaceholder={searchPlaceholder}
+          searchInputRef={searchInputRef}
+          voiceLang={voiceLang}
+          onVoiceLangChange={handleVoiceLangChange}
+          voiceLangLabel={voiceLangLabel}
+          voiceLanguageOptions={voiceLanguageOptions}
+          voiceSupported={voiceSupported}
+          listening={listening}
+          voiceButtonTitle={voiceButtonTitle}
+          addButtonAriaLabel={addButtonAriaLabel}
+          onToggleVoiceSearch={toggleVoiceSearch}
+          onAddCategory={add}
+        />
 
         {/* Error Display */}
         {error && (
@@ -388,21 +373,24 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
           ) : filtered.length === 0 ? (
             <div className="text-center py-20"><Folder className="h-20 w-20 text-vis-text-muted mx-auto mb-4 opacity-50" /><p className="text-vis-text-secondary">{q ? (language === 'zh' ? '未找到' : 'No results') : (language === 'zh' ? '暂无' : 'None yet')}</p></div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="flex flex-col gap-3">
               {filtered.map(c => {
                 const displayEmoji = c.emoji || c.image || '📁';
                 return (
-                <Card key={c.id} className="group p-5 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-vis-border hover:border-vis-teal-400 hover:shadow-vis-glow-teal transition-all duration-200">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
+                <Card key={c.id} className="group p-4 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-vis-border hover:border-vis-teal-400 hover:shadow-vis-glow-teal transition-all duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
                       {displayEmoji.startsWith('data:') ? (
-                        <img src={displayEmoji} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-vis-teal-400/30" />
+                        <img src={displayEmoji} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-vis-teal-400/30 flex-shrink-0" />
                       ) : (
-                        <div className="text-4xl">{displayEmoji}</div>
+                        <div className="text-3xl flex-shrink-0">{displayEmoji}</div>
                       )}
-                      <div><h3 className="font-semibold text-vis-text-primary">{c.name}</h3><p className="text-xs text-vis-text-muted">{new Date(c.createdAt).toLocaleDateString()}</p></div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-vis-text-primary truncate">{c.name}</h3>
+                        <p className="text-xs text-vis-text-muted">{new Date(c.createdAt).toLocaleDateString()}</p>
+                      </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-4">
                       <Button size="icon" variant="ghost" onClick={() => editCat(c)} className="h-8 w-8 text-vis-cyan-400 hover:text-vis-cyan-300 hover:bg-vis-cyan-500/10"><Edit2 className="h-4 w-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => del(c.id)} className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button>
                     </div>

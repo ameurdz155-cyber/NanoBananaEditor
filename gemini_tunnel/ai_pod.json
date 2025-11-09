@@ -11,7 +11,7 @@
       "is_superuser": true,
       "created_at": "2025-11-08T20:28:58.888043",
       "updated_at": "2025-11-08T20:28:58.888043",
-      "last_login": "2025-11-09T20:26:22.798558"
+      "last_login": "2025-11-09T21:27:14.409140"
     },
     "2": {
       "id": "9d6bfe43-3e27-4aa6-9e14-50ca3e988ea6",
@@ -463,6 +463,26 @@
       "expires_at": "2025-11-16T20:26:22.998743",
       "created_at": "2025-11-09T20:26:22.998756",
       "last_activity": "2025-11-09T20:26:22.998761"
+    },
+    "42": {
+      "id": "66594f24-347a-49b4-b7ab-9c66e891636f",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "MZk8X1Pt790GzxfIRirgwffuasVRZOn014FS3DMRArk",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-16T21:20:18.225784",
+      "created_at": "2025-11-09T21:20:18.225808",
+      "last_activity": "2025-11-09T21:20:18.225815"
+    },
+    "43": {
+      "id": "00aa7b83-d801-4ba8-a4e9-2f547b574ad8",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "yCWAsBo0yty3RbaK3I7krelV6nC153nijTuetUg1wwc",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-16T21:27:14.612097",
+      "created_at": "2025-11-09T21:27:14.612109",
+      "last_activity": "2025-11-09T21:27:14.612114"
     }
   },
   "audit_logs": {
@@ -861,6 +881,24 @@
       "details": null,
       "ip_address": "127.0.0.1",
       "created_at": "2025-11-09T20:26:23.214902"
+    },
+    "45": {
+      "id": "0ba84567-ec9c-439e-91ff-0e4f87442eda",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-09T21:20:18.424814"
+    },
+    "46": {
+      "id": "f1f442ae-9420-4c95-b202-06c4545f78b0",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-09T21:27:14.794151"
     }
   },
   "categories": {

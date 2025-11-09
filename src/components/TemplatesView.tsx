@@ -1397,11 +1397,18 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             <Button
               variant="default"
               size="icon"
-              onClick={openCreateModal}
-              title={t.createTemplate}
-              aria-label={t.createTemplate}
+              onClick={() => {
+                if (!isPremiumUser) {
+                  setShowPremiumAlert(true);
+                  return;
+                }
+                openCreateModal();
+              }}
+              title={isPremiumUser ? t.createTemplate : t.premiumFeatureTitle}
+              aria-label={isPremiumUser ? t.createTemplate : t.premiumFeatureTitle}
               className="h-10 w-10 rounded-xl bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all"
               type="button"
+              aria-disabled={!isPremiumUser}
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -1424,7 +1431,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             <span className="text-xs uppercase tracking-wide text-vis-text-muted">
               {t.templateCategories}
             </span>
-            {isPremiumUser && (
+            {/* {isPremiumUser && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -1435,7 +1442,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 <Tag className="h-3 w-3" />
                 <span className="ml-1 hidden sm:inline">{t.manageCategories}</span>
               </Button>
-            )}
+            )} */}
           </div>
 
           <div className="flex flex-wrap gap-2">
