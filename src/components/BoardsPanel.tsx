@@ -203,10 +203,10 @@ export const BoardsPanel: React.FC = () => {
       <div className="fixed top-20 left-4 z-40">
         <Button
           onClick={() => setShowBoardsPanel(true)}
-          className="bg-gray-900/90 backdrop-blur-sm hover:bg-gray-800 border border-gray-700 shadow-lg"
+          className="bg-gray-900/90 backdrop-blur-sm hover:bg-gray-800/90 border border-vis-border hover:border-vis-teal-500/50 shadow-vis-glow-teal transition-all duration-200"
         >
-          <Layers className="h-4 w-4 mr-2" />
-          Boards
+          <Layers className="h-4 w-4 mr-2 text-vis-teal-400" />
+          <span className="text-vis-text-primary">Boards</span>
         </Button>
       </div>
     );
@@ -216,32 +216,32 @@ export const BoardsPanel: React.FC = () => {
     <div className="fixed inset-0 z-50 flex">
       {/* Overlay */}
       <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={() => setShowBoardsPanel(false)}
       />
       
       {/* Main Panel */}
-      <div className="relative w-full max-w-7xl mx-auto my-8 bg-gray-950 flex flex-col overflow-hidden shadow-2xl rounded-2xl border border-gray-800">
+      <div className="relative w-full max-w-7xl mx-auto my-8 bg-vis-panel flex flex-col overflow-hidden shadow-vis-glow-teal rounded-2xl border border-vis-border-light">
         {/* Content Area - Split View */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Top Section - Boards List */}
-          <div className="flex-shrink-0 border-b border-gray-800">
+          <div className="flex-shrink-0 border-b border-vis-border">
             {/* Boards Header */}
-            <div className="bg-gray-900/50 border-b border-gray-800">
+            <div className="bg-gray-900/70 border-b border-vis-border">
               <button
                 onClick={() => setBoardsExpanded(!boardsExpanded)}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-900/70 transition-colors"
+                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-900/90 transition-all duration-200"
               >
                 <div className="flex items-center space-x-3">
                   {boardsExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-gray-400" />
+                    <ChevronUp className="h-5 w-5 text-vis-teal-400" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                    <ChevronDown className="h-5 w-5 text-vis-teal-400" />
                   )}
-                  <span className="text-base font-bold text-gray-200">Boards</span>
+                  <span className="text-base font-bold text-vis-teal-300">Boards</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-400">{currentProject?.title || 'My Project'}</span>
+                  <span className="text-sm text-vis-text-secondary">{currentProject?.title || 'My Project'}</span>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -249,9 +249,9 @@ export const BoardsPanel: React.FC = () => {
                       e.stopPropagation();
                       // Settings action
                     }}
-                    className="h-8 w-8 hover:bg-gray-800"
+                    className="h-8 w-8 hover:bg-gray-800/50 text-vis-text-secondary hover:text-vis-teal-300 transition-colors"
                   >
-                    <Settings className="h-4 w-4 text-gray-400" />
+                    <Settings className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -260,9 +260,9 @@ export const BoardsPanel: React.FC = () => {
                       e.stopPropagation();
                       setSearchQuery('');
                     }}
-                    className="h-8 w-8 hover:bg-gray-800"
+                    className="h-8 w-8 hover:bg-gray-800/50 text-vis-text-secondary hover:text-vis-teal-300 transition-colors"
                   >
-                    <Search className="h-4 w-4 text-gray-400" />
+                    <Search className="h-4 w-4" />
                   </Button>
                 </div>
               </button>
@@ -270,18 +270,18 @@ export const BoardsPanel: React.FC = () => {
 
             {/* Boards Content - Collapsible */}
             {boardsExpanded && (
-              <div className="bg-gray-950">
-                <div className="border-b border-gray-800 px-6 py-3">
+              <div className="bg-gray-950/50">
+                <div className="border-b border-vis-border px-6 py-3">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Boards</h3>
+                    <h3 className="text-xs font-semibold text-vis-text-secondary uppercase tracking-wider">Boards</h3>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={handleCreateBoard}
-                      className="h-6 w-6 hover:bg-gray-800"
+                      className="h-6 w-6 hover:bg-gray-800/50 text-vis-text-secondary hover:text-vis-teal-300 transition-colors"
                       title="Add Board"
                     >
-                      <Plus className="h-4 w-4 text-gray-400" />
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -297,10 +297,10 @@ export const BoardsPanel: React.FC = () => {
                         <div
                           key={board.id}
                           className={cn(
-                            "group relative w-full px-3 py-2.5 cursor-pointer transition-all border-l-4 rounded bg-[var(--surface-secondary)] hover:bg-[var(--bg-hover)]",
+                            "group relative w-full px-3 py-2.5 cursor-pointer transition-all duration-200 border-l-4 rounded bg-gray-800/30 hover:bg-gray-800/50",
                             isSelected
-                              ? "bg-[rgba(124,58,237,0.12)] border-[rgba(124,58,237,0.45)] shadow-sm"
-                              : "border-transparent hover:border-[rgba(124,58,237,0.25)]"
+                              ? "bg-gradient-to-r from-vis-teal-500/10 to-vis-cyan-500/10 border-vis-teal-400 shadow-vis-glow-teal"
+                              : "border-transparent hover:border-vis-teal-500/30"
                           )}
                           onClick={() => setSelectedBoard(isSelected ? null : board.id)}
                         >
@@ -309,8 +309,8 @@ export const BoardsPanel: React.FC = () => {
                               {board.emoji ? (
                                 <span className="text-xl flex-shrink-0">{board.emoji}</span>
                               ) : (
-                                <div className="w-10 h-10 rounded flex-shrink-0 bg-gray-800 flex items-center justify-center">
-                                  <Folder className="h-5 w-5 text-gray-500" />
+                                <div className="w-10 h-10 rounded flex-shrink-0 bg-gray-800/50 flex items-center justify-center border border-vis-border">
+                                  <Folder className="h-5 w-5 text-vis-text-muted" />
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
@@ -318,14 +318,14 @@ export const BoardsPanel: React.FC = () => {
                                   className={cn(
                                     "text-sm font-semibold truncate",
                                     isSelected
-                                      ? 'text-[var(--text-primary)]'
-                                      : 'text-[var(--text-secondary)]'
+                                      ? 'text-vis-teal-300'
+                                      : 'text-vis-text-primary'
                                   )}
                                 >
                                   {board.name}
                                 </div>
                                 {board.id === 'default' && (
-                                  <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded text-[10px] font-semibold">
+                                  <span className="inline-block mt-0.5 px-1.5 py-0.5 bg-vis-cyan-500/20 text-vis-cyan-400 rounded text-[10px] font-semibold border border-vis-cyan-500/30">
                                     AUTO
                                   </span>
                                 )}
@@ -333,12 +333,12 @@ export const BoardsPanel: React.FC = () => {
                             </div>
                             
                             {/* Counts */}
-                            <div className="flex items-center space-x-1 text-xs text-gray-500 ml-2">
-                              <span className={cn(isSelected && "text-gray-400")}>{boardImages.length}</span>
+                            <div className="flex items-center space-x-1 text-xs text-vis-text-muted ml-2">
+                              <span className={cn(isSelected && "text-vis-text-secondary")}>{boardImages.length}</span>
                               <span>|</span>
-                              <span className={cn(isSelected && "text-gray-400")}>0</span>
+                              <span className={cn(isSelected && "text-vis-text-secondary")}>0</span>
                               <span>|</span>
-                              <span className={cn(isSelected && "text-gray-400")}>0</span>
+                              <span className={cn(isSelected && "text-vis-text-secondary")}>0</span>
                             </div>
                           </div>
                         </div>
@@ -353,35 +353,35 @@ export const BoardsPanel: React.FC = () => {
           {/* Bottom Section - Images Gallery */}
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Gallery Header */}
-            <div className="flex-shrink-0 bg-gray-900/50 border-b border-gray-800">
+            <div className="flex-shrink-0 bg-gray-900/70 border-b border-vis-border">
               <button
                 onClick={() => setImagesExpanded(!imagesExpanded)}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-900/70 transition-colors"
+                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-900/90 transition-all duration-200"
               >
                 <div className="flex items-center space-x-3">
                   {imagesExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-gray-400" />
+                    <ChevronUp className="h-5 w-5 text-vis-cyan-400" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                    <ChevronDown className="h-5 w-5 text-vis-cyan-400" />
                   )}
-                  <span className="text-base font-bold text-gray-200">
+                  <span className="text-base font-bold text-vis-cyan-300">
                     {selectedBoard ? boards.find(b => b.id === selectedBoard)?.name : 'Uncategorized'}
                   </span>
                 </div>
                 
                 <div className="flex items-center space-x-3">
                   {/* Tabs */}
-                  <div className="flex bg-gray-800 rounded-lg overflow-hidden">
+                  <div className="flex bg-gray-800/50 rounded-lg overflow-hidden border border-vis-border">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setCurrentTab('images');
                       }}
                       className={cn(
-                        "px-3 py-1.5 text-xs font-semibold transition-colors",
+                        "px-3 py-1.5 text-xs font-semibold transition-all duration-200",
                         currentTab === 'images'
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-400 hover:text-gray-200"
+                          ? "bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 text-white shadow-vis-glow-teal"
+                          : "text-vis-text-secondary hover:text-vis-teal-300"
                       )}
                     >
                       Generated Images
@@ -392,10 +392,10 @@ export const BoardsPanel: React.FC = () => {
                         setCurrentTab('videos');
                       }}
                       className={cn(
-                        "px-3 py-1.5 text-xs font-semibold transition-colors",
+                        "px-3 py-1.5 text-xs font-semibold transition-all duration-200",
                         currentTab === 'videos'
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-400 hover:text-gray-200"
+                          ? "bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 text-white shadow-vis-glow-teal"
+                          : "text-vis-text-secondary hover:text-vis-teal-300"
                       )}
                     >
                       Videos
@@ -406,10 +406,10 @@ export const BoardsPanel: React.FC = () => {
                         setCurrentTab('assets');
                       }}
                       className={cn(
-                        "px-3 py-1.5 text-xs font-semibold transition-colors",
+                        "px-3 py-1.5 text-xs font-semibold transition-all duration-200",
                         currentTab === 'assets'
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-400 hover:text-gray-200"
+                          ? "bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 text-white shadow-vis-glow-teal"
+                          : "text-vis-text-secondary hover:text-vis-teal-300"
                       )}
                     >
                       Assets
@@ -423,10 +423,10 @@ export const BoardsPanel: React.FC = () => {
                     onClick={(e) => {
                       e.stopPropagation();
                     }}
-                    className="h-8 w-8 hover:bg-gray-800"
+                    className="h-8 w-8 hover:bg-gray-800/50 text-vis-text-secondary hover:text-vis-cyan-300 transition-colors"
                     title="Upload Image(s)"
                   >
-                    <Upload className="h-4 w-4 text-gray-400" />
+                    <Upload className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -434,9 +434,9 @@ export const BoardsPanel: React.FC = () => {
                     onClick={(e) => {
                       e.stopPropagation();
                     }}
-                    className="h-8 w-8 hover:bg-gray-800"
+                    className="h-8 w-8 hover:bg-gray-800/50 text-vis-text-secondary hover:text-vis-cyan-300 transition-colors"
                   >
-                    <Settings className="h-4 w-4 text-gray-400" />
+                    <Settings className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -445,9 +445,9 @@ export const BoardsPanel: React.FC = () => {
                       e.stopPropagation();
                       setSearchQuery('');
                     }}
-                    className="h-8 w-8 hover:bg-gray-800"
+                    className="h-8 w-8 hover:bg-gray-800/50 text-vis-text-secondary hover:text-vis-cyan-300 transition-colors"
                   >
-                    <Search className="h-4 w-4 text-gray-400" />
+                    <Search className="h-4 w-4" />
                   </Button>
                 </div>
               </button>
@@ -455,17 +455,17 @@ export const BoardsPanel: React.FC = () => {
 
             {/* Gallery Content */}
             {imagesExpanded && (
-              <div className="flex-1 overflow-y-auto bg-gray-950 p-6">
+              <div className="flex-1 overflow-y-auto bg-gray-950/50 p-6">
             {selectedBoard ? (
               <>
 
                 {getCurrentBoardImages().length === 0 ? (
                   <div className="text-center py-20">
-                    <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                      <Layers className="h-10 w-10 text-gray-500" />
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-vis-teal-500/10 to-vis-cyan-500/10 flex items-center justify-center border border-vis-border shadow-vis-glow-teal">
+                      <Layers className="h-10 w-10 text-vis-teal-400" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-400 mb-2">No images in this board</h3>
-                    <p className="text-sm text-gray-600">Start adding images to organize your work</p>
+                    <h3 className="text-lg font-medium text-vis-text-primary mb-2">No images in this board</h3>
+                    <p className="text-sm text-vis-text-muted">Start adding images to organize your work</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
@@ -478,7 +478,7 @@ export const BoardsPanel: React.FC = () => {
 
                       return (
                         <div key={id} className="group relative">
-                          <div className="aspect-square rounded-lg overflow-hidden border-2 border-gray-800 hover:border-purple-500 bg-gray-900 relative transition-all cursor-pointer">
+                          <div className="aspect-square rounded-lg overflow-hidden border-2 border-vis-border hover:border-vis-teal-400 bg-gray-900/50 relative transition-all duration-200 cursor-pointer shadow-lg hover:shadow-vis-glow-teal">
                             <img
                               src={imageUrl}
                               alt={type === 'generation' ? 'Generation' : 'Edit'}
@@ -502,7 +502,7 @@ export const BoardsPanel: React.FC = () => {
                                 <Button 
                                   size="sm" 
                                   variant="ghost" 
-                                  className="bg-white/10 hover:bg-white/20"
+                                  className="bg-gray-900/70 hover:bg-vis-teal-500/50 border border-vis-border hover:border-vis-teal-400/50 text-vis-text-primary hover:text-white transition-all duration-200"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setCanvasImage(imageUrl, 'board');
@@ -514,7 +514,7 @@ export const BoardsPanel: React.FC = () => {
                                 <Button 
                                   size="sm" 
                                   variant="ghost" 
-                                  className="bg-white/10 hover:bg-white/20"
+                                  className="bg-gray-900/70 hover:bg-vis-teal-500/50 border border-vis-border hover:border-vis-teal-400/50 text-vis-text-primary hover:text-white transition-all duration-200"
                                   onClick={async (e) => {
                                     e.stopPropagation();
                                     const targetWidth = type === 'generation'
@@ -531,7 +531,7 @@ export const BoardsPanel: React.FC = () => {
                                 <Button 
                                   size="sm" 
                                   variant="ghost" 
-                                  className="bg-white/10 hover:bg-white/20"
+                                  className="bg-gray-900/70 hover:bg-vis-cyan-500/50 border border-vis-border hover:border-vis-cyan-400/50 text-vis-text-primary hover:text-white transition-all duration-200"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setShowAddToBoard(id);
@@ -543,7 +543,7 @@ export const BoardsPanel: React.FC = () => {
                                 <Button 
                                   size="sm" 
                                   variant="ghost" 
-                                  className="bg-white/10 hover:bg-white/20"
+                                  className="bg-gray-900/70 hover:bg-red-500/50 border border-vis-border hover:border-red-400/50 text-vis-text-primary hover:text-white transition-all duration-200"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     removeImageFromBoard(selectedBoard, id);
@@ -557,15 +557,15 @@ export const BoardsPanel: React.FC = () => {
                             {/* Add to Board Menu for current board view */}
                             {showAddToBoard === id && (
                               <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 z-10">
-                                <div className="bg-gray-900 rounded-lg p-3 w-full max-h-[200px] overflow-y-auto">
+                                <div className="bg-gray-900/95 rounded-lg p-3 w-full max-h-[200px] overflow-y-auto border border-vis-border-light shadow-vis-glow-teal">
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-semibold text-gray-300">Move to Board</span>
+                                    <span className="text-xs font-semibold text-vis-teal-300">Move to Board</span>
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setShowAddToBoard(null);
                                       }}
-                                      className="text-gray-400 hover:text-gray-200"
+                                      className="text-vis-text-secondary hover:text-vis-teal-300 transition-colors"
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
@@ -583,21 +583,21 @@ export const BoardsPanel: React.FC = () => {
                                             setShowAddToBoard(null);
                                           }}
                                           className={cn(
-                                            "w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center justify-between",
+                                            "w-full text-left px-2 py-1.5 rounded text-xs transition-all duration-200 flex items-center justify-between",
                                             isInBoard 
-                                              ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30" 
-                                              : "text-gray-300 hover:bg-gray-800"
+                                              ? "bg-vis-teal-500/20 text-vis-teal-300 hover:bg-vis-teal-500/30 border border-vis-teal-500/30" 
+                                              : "text-vis-text-primary hover:bg-gray-800/50 border border-transparent"
                                           )}
                                         >
                                           <span className="flex items-center space-x-1.5">
                                             {board.emoji ? (
                                               <span>{board.emoji}</span>
                                             ) : (
-                                              <Folder className="h-3 w-3 text-gray-500" />
+                                              <Folder className="h-3 w-3 text-vis-text-muted" />
                                             )}
                                             <span className="truncate">{board.name}</span>
                                           </span>
-                                          {isInBoard && <span className="text-purple-400">✓</span>}
+                                          {isInBoard && <span className="text-vis-teal-400">✓</span>}
                                         </button>
                                       );
                                     })}
@@ -608,10 +608,10 @@ export const BoardsPanel: React.FC = () => {
 
                             {/* Type Badge */}
                             <div className={cn(
-                              "absolute top-2 left-2 text-xs px-2 py-1 rounded font-medium",
+                              "absolute top-2 left-2 text-xs px-2 py-1 rounded-md font-medium border backdrop-blur-sm",
                               type === 'generation' 
-                                ? "bg-blue-600/80 text-white" 
-                                : "bg-purple-600/80 text-white"
+                                ? "bg-vis-teal-500/80 text-white border-vis-teal-400/50 shadow-vis-glow-teal" 
+                                : "bg-vis-purple-500/80 text-white border-vis-purple-400/50"
                             )}>
                               {type === 'generation' ? 'Gen' : 'Edit'}
                             </div>
@@ -627,11 +627,11 @@ export const BoardsPanel: React.FC = () => {
 
                 {allImages.length === 0 ? (
                   <div className="text-center py-20">
-                    <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                    <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-vis-teal-500/10 to-vis-cyan-500/10 flex items-center justify-center border border-vis-border shadow-vis-glow-teal">
                       <div className="text-4xl">🎨</div>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-400 mb-2">No images yet</h3>
-                    <p className="text-sm text-gray-600">Start creating to see your work here</p>
+                    <h3 className="text-lg font-medium text-vis-text-primary mb-2">No images yet</h3>
+                    <p className="text-sm text-vis-text-muted">Start creating to see your work here</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
@@ -644,7 +644,7 @@ export const BoardsPanel: React.FC = () => {
 
                       return (
                         <div key={id} className="group relative">
-                          <div className="aspect-square rounded-lg overflow-hidden border border-gray-800 hover:border-purple-500 bg-gray-900 relative transition-all cursor-pointer">
+                          <div className="aspect-square rounded-lg overflow-hidden border border-vis-border hover:border-vis-teal-400 bg-gray-900/50 relative transition-all duration-200 cursor-pointer shadow-lg hover:shadow-vis-glow-teal">
                             <img
                               src={imageUrl}
                               alt={type === 'generation' ? 'Generation' : 'Edit'}
@@ -668,7 +668,7 @@ export const BoardsPanel: React.FC = () => {
                                 <Button 
                                   size="sm" 
                                   variant="ghost" 
-                                  className="h-7 w-7 bg-black/50 hover:bg-black/70 p-0"
+                                  className="h-7 w-7 bg-black/50 hover:bg-vis-teal-500/50 p-0 text-vis-text-primary hover:text-white transition-colors border border-transparent hover:border-vis-teal-400/50"
                                   onClick={async (e) => {
                                     e.stopPropagation();
                                     const targetWidth = type === 'generation'
@@ -685,7 +685,7 @@ export const BoardsPanel: React.FC = () => {
                                 <Button 
                                   size="sm" 
                                   variant="ghost" 
-                                  className="h-7 w-7 bg-black/50 hover:bg-black/70 p-0"
+                                  className="h-7 w-7 bg-black/50 hover:bg-vis-teal-500/50 p-0 text-vis-text-primary hover:text-white transition-colors border border-transparent hover:border-vis-teal-400/50"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setShowAddToBoard(id);
@@ -699,15 +699,15 @@ export const BoardsPanel: React.FC = () => {
                             {/* Add to Board Menu */}
                             {showAddToBoard === id && (
                               <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 z-10">
-                                <div className="bg-gray-900 rounded-lg p-3 w-full max-h-[200px] overflow-y-auto">
+                                <div className="bg-gray-900/95 rounded-lg p-3 w-full max-h-[200px] overflow-y-auto border border-vis-border-light shadow-vis-glow-teal">
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-semibold text-gray-300">Add to Board</span>
+                                    <span className="text-xs font-semibold text-vis-teal-300">Add to Board</span>
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setShowAddToBoard(null);
                                       }}
-                                      className="text-gray-400 hover:text-gray-200"
+                                      className="text-vis-text-secondary hover:text-vis-teal-300 transition-colors"
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
@@ -728,21 +728,21 @@ export const BoardsPanel: React.FC = () => {
                                           setShowAddToBoard(null);
                                         }}
                                           className={cn(
-                                            "w-full text-left px-2 py-1.5 rounded text-xs transition-colors flex items-center justify-between",
+                                            "w-full text-left px-2 py-1.5 rounded text-xs transition-all duration-200 flex items-center justify-between",
                                             isInBoard 
-                                              ? "bg-purple-500/20 text-purple-300 hover:bg-purple-500/30" 
-                                              : "text-gray-300 hover:bg-gray-800"
+                                              ? "bg-vis-teal-500/20 text-vis-teal-300 hover:bg-vis-teal-500/30 border border-vis-teal-500/30" 
+                                              : "text-vis-text-primary hover:bg-gray-800/50 border border-transparent"
                                           )}
                                         >
                                           <span className="flex items-center space-x-1.5">
                                             {board.emoji ? (
                                               <span>{board.emoji}</span>
                                             ) : (
-                                              <Folder className="h-3 w-3 text-gray-500" />
+                                              <Folder className="h-3 w-3 text-vis-text-muted" />
                                             )}
                                             <span className="truncate">{board.name}</span>
                                           </span>
-                                          {isInBoard && <span className="text-purple-400">✓</span>}
+                                          {isInBoard && <span className="text-vis-teal-400">✓</span>}
                                         </button>
                                       );
                                     })}
@@ -752,7 +752,7 @@ export const BoardsPanel: React.FC = () => {
                             )}
 
                             {/* Type Badge */}
-                            <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded-md bg-gray-900/90 backdrop-blur-sm text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded-md bg-gray-900/90 backdrop-blur-sm text-vis-text-primary opacity-0 group-hover:opacity-100 transition-opacity border border-vis-border">
                               {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>

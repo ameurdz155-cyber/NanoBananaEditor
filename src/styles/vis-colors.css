@@ -1,0 +1,378 @@
+/**
+ * VIS (Visual Identity System) Brand Color System
+ * Based on the Upscale Panel Design
+ * 
+ * Design Language: Dark theme with cyan/teal accent colors
+ * Primary Accent: Teal/Cyan (#14b8a6, #06b6d4)
+ * Secondary Accent: Purple (#a855f7, #7c3aed)
+ * Background: Dark grays with subtle gradients
+ */
+
+:root,
+:root.dark {
+  /* ===================================
+   * PRIMARY BRAND COLORS - TEAL/CYAN
+   * ================================ */
+  
+  /* Main Teal/Cyan Palette - Primary Brand Identity */
+  --vis-teal-50: #f0fdfa;
+  --vis-teal-100: #ccfbf1;
+  --vis-teal-200: #99f6e4;
+  --vis-teal-300: #5eead4;
+  --vis-teal-400: #2dd4bf;
+  --vis-teal-500: #14b8a6;
+  --vis-teal-600: #0d9488;
+  --vis-teal-700: #0f766e;
+  --vis-teal-800: #115e59;
+  --vis-teal-900: #134e4a;
+  --vis-teal-950: #042f2e;
+
+  /* Cyan Palette - Complementary */
+  --vis-cyan-50: #ecfeff;
+  --vis-cyan-100: #cffafe;
+  --vis-cyan-200: #a5f3fc;
+  --vis-cyan-300: #67e8f9;
+  --vis-cyan-400: #22d3ee;
+  --vis-cyan-500: #06b6d4;
+  --vis-cyan-600: #0891b2;
+  --vis-cyan-700: #0e7490;
+  --vis-cyan-800: #155e75;
+  --vis-cyan-900: #164e63;
+  --vis-cyan-950: #083344;
+
+  /* ===================================
+   * SECONDARY BRAND COLORS - PURPLE
+   * ================================ */
+  
+  --vis-purple-50: #faf5ff;
+  --vis-purple-100: #f3e8ff;
+  --vis-purple-200: #e9d5ff;
+  --vis-purple-300: #d8b4fe;
+  --vis-purple-400: #c084fc;
+  --vis-purple-500: #a855f7;
+  --vis-purple-600: #9333ea;
+  --vis-purple-700: #7e22ce;
+  --vis-purple-800: #6b21a8;
+  --vis-purple-900: #581c87;
+  --vis-purple-950: #3b0764;
+
+  /* ===================================
+   * DARK BACKGROUND SYSTEM
+   * ================================ */
+  
+  /* Base Backgrounds - Ultra Dark */
+  --vis-bg-app: #0a0a0f;           /* Main app background */
+  --vis-bg-primary: #0e0e14;       /* Primary surface */
+  --vis-bg-secondary: #13131a;     /* Secondary surface */
+  --vis-bg-tertiary: #1a1a24;      /* Tertiary surface */
+  --vis-bg-elevated: #1f1f2e;      /* Elevated panels */
+  --vis-bg-hover: #252538;         /* Hover states */
+  
+  /* Panel & Card Backgrounds */
+  --vis-panel-bg: rgba(17, 17, 26, 0.7);
+  --vis-panel-bg-solid: #11111a;
+  --vis-card-bg: rgba(26, 26, 36, 0.6);
+  --vis-card-bg-solid: #1a1a24;
+  
+  /* ===================================
+   * BORDER SYSTEM
+   * ================================ */
+  
+  --vis-border-default: rgba(75, 85, 99, 0.3);     /* #4b5563 at 30% */
+  --vis-border-subtle: rgba(75, 85, 99, 0.2);      /* Lighter borders */
+  --vis-border-strong: rgba(75, 85, 99, 0.5);      /* Stronger borders */
+  
+  /* Teal Accent Borders */
+  --vis-border-teal: rgba(20, 184, 166, 0.4);      /* Teal primary */
+  --vis-border-teal-light: rgba(20, 184, 166, 0.25);
+  --vis-border-teal-strong: rgba(20, 184, 166, 0.6);
+  --vis-border-teal-hover: rgba(20, 184, 166, 0.7);
+  
+  /* Purple Accent Borders */
+  --vis-border-purple: rgba(168, 85, 247, 0.4);
+  --vis-border-purple-light: rgba(168, 85, 247, 0.25);
+  --vis-border-purple-strong: rgba(168, 85, 247, 0.6);
+
+  /* ===================================
+   * TEXT COLORS
+   * ================================ */
+  
+  --vis-text-primary: #f8fafc;        /* Main text - near white */
+  --vis-text-secondary: #cbd5e1;      /* Secondary text */
+  --vis-text-tertiary: #94a3b8;       /* Tertiary text */
+  --vis-text-muted: #64748b;          /* Muted text */
+  --vis-text-disabled: #475569;       /* Disabled text */
+  
+  /* Accent Text Colors */
+  --vis-text-teal: #5eead4;           /* Teal text */
+  --vis-text-teal-bright: #2dd4bf;    /* Brighter teal */
+  --vis-text-cyan: #22d3ee;           /* Cyan text */
+  --vis-text-purple: #c084fc;         /* Purple text */
+  
+  /* ===================================
+   * SEMANTIC COLORS
+   * ================================ */
+  
+  /* Success - Green/Teal */
+  --vis-success-bg: rgba(20, 184, 166, 0.1);
+  --vis-success-border: rgba(20, 184, 166, 0.3);
+  --vis-success-text: #5eead4;
+  --vis-success-solid: #14b8a6;
+  
+  /* Error - Red */
+  --vis-error-bg: rgba(239, 68, 68, 0.1);
+  --vis-error-border: rgba(239, 68, 68, 0.3);
+  --vis-error-text: #fca5a5;
+  --vis-error-solid: #ef4444;
+  
+  /* Warning - Amber */
+  --vis-warning-bg: rgba(245, 158, 11, 0.1);
+  --vis-warning-border: rgba(245, 158, 11, 0.3);
+  --vis-warning-text: #fcd34d;
+  --vis-warning-solid: #f59e0b;
+  
+  /* Info - Blue */
+  --vis-info-bg: rgba(59, 130, 246, 0.1);
+  --vis-info-border: rgba(59, 130, 246, 0.3);
+  --vis-info-text: #93c5fd;
+  --vis-info-solid: #3b82f6;
+
+  /* ===================================
+   * INTERACTIVE STATES
+   * ================================ */
+  
+  /* Button States */
+  --vis-button-teal-bg: #14b8a6;
+  --vis-button-teal-hover: #0d9488;
+  --vis-button-teal-active: #0f766e;
+  --vis-button-teal-disabled: rgba(20, 184, 166, 0.3);
+  
+  --vis-button-purple-bg: #a855f7;
+  --vis-button-purple-hover: #9333ea;
+  --vis-button-purple-active: #7e22ce;
+  
+  /* Ghost Button States */
+  --vis-button-ghost-bg: rgba(248, 250, 252, 0.05);
+  --vis-button-ghost-hover: rgba(248, 250, 252, 0.1);
+  --vis-button-ghost-active: rgba(248, 250, 252, 0.15);
+  
+  /* Outline Button States */
+  --vis-button-outline-border: rgba(20, 184, 166, 0.4);
+  --vis-button-outline-hover: rgba(20, 184, 166, 0.1);
+  --vis-button-outline-active: rgba(20, 184, 166, 0.2);
+
+  /* ===================================
+   * SHADOWS & GLOWS
+   * ================================ */
+  
+  --vis-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --vis-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --vis-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+  --vis-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.25);
+  
+  /* Teal Glow Effects */
+  --vis-glow-teal-sm: 0 0 10px rgba(20, 184, 166, 0.3);
+  --vis-glow-teal-md: 0 0 20px rgba(20, 184, 166, 0.4);
+  --vis-glow-teal-lg: 0 0 30px rgba(20, 184, 166, 0.5);
+  
+  /* Purple Glow Effects */
+  --vis-glow-purple-sm: 0 0 10px rgba(168, 85, 247, 0.3);
+  --vis-glow-purple-md: 0 0 20px rgba(168, 85, 247, 0.4);
+  --vis-glow-purple-lg: 0 0 30px rgba(168, 85, 247, 0.5);
+
+  /* Combined Shadow + Glow */
+  --vis-shadow-glow-teal: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(20, 184, 166, 0.2);
+  --vis-shadow-glow-purple: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(168, 85, 247, 0.2);
+
+  /* ===================================
+   * GRADIENTS
+   * ================================ */
+  
+  /* Primary Gradients - Teal/Cyan */
+  --vis-gradient-teal-horizontal: linear-gradient(90deg, #14b8a6 0%, #06b6d4 100%);
+  --vis-gradient-teal-vertical: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
+  --vis-gradient-teal-diagonal: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+  
+  /* Secondary Gradients - Purple */
+  --vis-gradient-purple-horizontal: linear-gradient(90deg, #a855f7 0%, #7c3aed 100%);
+  --vis-gradient-purple-vertical: linear-gradient(180deg, #a855f7 0%, #9333ea 100%);
+  
+  /* Combined Gradients - Teal + Purple */
+  --vis-gradient-brand: linear-gradient(135deg, #14b8a6 0%, #a855f7 100%);
+  --vis-gradient-brand-reverse: linear-gradient(135deg, #a855f7 0%, #14b8a6 100%);
+  
+  /* Background Gradients */
+  --vis-gradient-bg-panel: linear-gradient(180deg, rgba(26, 26, 36, 0.8) 0%, rgba(17, 17, 26, 0.6) 100%);
+  --vis-gradient-bg-card: linear-gradient(135deg, rgba(31, 31, 46, 0.6) 0%, rgba(26, 26, 36, 0.4) 100%);
+  
+  /* Mesh Gradient (Ambient Background) */
+  --vis-gradient-mesh: 
+    radial-gradient(at 40% 20%, rgba(20, 184, 166, 0.15) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(168, 85, 247, 0.08) 0px, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(20, 184, 166, 0.12) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+
+  /* ===================================
+   * UTILITY COLORS
+   * ================================ */
+  
+  /* Overlay & Backdrop */
+  --vis-overlay-light: rgba(0, 0, 0, 0.4);
+  --vis-overlay-medium: rgba(0, 0, 0, 0.6);
+  --vis-overlay-heavy: rgba(0, 0, 0, 0.8);
+  --vis-backdrop-blur: rgba(10, 10, 15, 0.8);
+  
+  /* Dividers */
+  --vis-divider-light: rgba(75, 85, 99, 0.15);
+  --vis-divider-medium: rgba(75, 85, 99, 0.25);
+  --vis-divider-strong: rgba(75, 85, 99, 0.4);
+  
+  /* Focus Ring */
+  --vis-focus-ring: 0 0 0 3px rgba(20, 184, 166, 0.4);
+  --vis-focus-ring-purple: 0 0 0 3px rgba(168, 85, 247, 0.4);
+}
+
+/* ===================================
+ * LIGHT MODE OVERRIDES
+ * ================================ */
+
+:root.light {
+  /* Primary Brand Colors remain the same */
+  /* Teal/Cyan and Purple palettes stay consistent */
+  
+  /* Background System - Light Mode */
+  --vis-bg-app: #f8fafc;
+  --vis-bg-primary: #ffffff;
+  --vis-bg-secondary: #f1f5f9;
+  --vis-bg-tertiary: #e2e8f0;
+  --vis-bg-elevated: #ffffff;
+  --vis-bg-hover: #f1f5f9;
+  
+  --vis-panel-bg: rgba(255, 255, 255, 0.95);
+  --vis-panel-bg-solid: #ffffff;
+  --vis-card-bg: rgba(248, 250, 252, 0.8);
+  --vis-card-bg-solid: #f8fafc;
+  
+  /* Border System - Light Mode */
+  --vis-border-default: rgba(148, 163, 184, 0.3);
+  --vis-border-subtle: rgba(148, 163, 184, 0.2);
+  --vis-border-strong: rgba(148, 163, 184, 0.5);
+  
+  --vis-border-teal: rgba(13, 148, 136, 0.4);
+  --vis-border-teal-light: rgba(13, 148, 136, 0.25);
+  --vis-border-teal-strong: rgba(13, 148, 136, 0.6);
+  --vis-border-teal-hover: rgba(13, 148, 136, 0.7);
+  
+  --vis-border-purple: rgba(147, 51, 234, 0.4);
+  --vis-border-purple-light: rgba(147, 51, 234, 0.25);
+  --vis-border-purple-strong: rgba(147, 51, 234, 0.6);
+  
+  /* Text Colors - Light Mode */
+  --vis-text-primary: #0f172a;
+  --vis-text-secondary: #334155;
+  --vis-text-tertiary: #64748b;
+  --vis-text-muted: #94a3b8;
+  --vis-text-disabled: #cbd5e1;
+  
+  --vis-text-teal: #0d9488;
+  --vis-text-teal-bright: #14b8a6;
+  --vis-text-cyan: #0891b2;
+  --vis-text-purple: #9333ea;
+  
+  /* Semantic Colors - Light Mode */
+  --vis-success-bg: rgba(13, 148, 136, 0.1);
+  --vis-success-border: rgba(13, 148, 136, 0.3);
+  --vis-success-text: #0f766e;
+  --vis-success-solid: #14b8a6;
+  
+  --vis-error-bg: rgba(220, 38, 38, 0.1);
+  --vis-error-border: rgba(220, 38, 38, 0.3);
+  --vis-error-text: #dc2626;
+  --vis-error-solid: #ef4444;
+  
+  --vis-warning-bg: rgba(217, 119, 6, 0.1);
+  --vis-warning-border: rgba(217, 119, 6, 0.3);
+  --vis-warning-text: #d97706;
+  --vis-warning-solid: #f59e0b;
+  
+  --vis-info-bg: rgba(37, 99, 235, 0.1);
+  --vis-info-border: rgba(37, 99, 235, 0.3);
+  --vis-info-text: #2563eb;
+  --vis-info-solid: #3b82f6;
+  
+  /* Interactive States - Light Mode */
+  --vis-button-teal-bg: #14b8a6;
+  --vis-button-teal-hover: #0d9488;
+  --vis-button-teal-active: #0f766e;
+  
+  --vis-button-ghost-bg: rgba(15, 23, 42, 0.05);
+  --vis-button-ghost-hover: rgba(15, 23, 42, 0.1);
+  --vis-button-ghost-active: rgba(15, 23, 42, 0.15);
+  
+  --vis-button-outline-hover: rgba(13, 148, 136, 0.1);
+  --vis-button-outline-active: rgba(13, 148, 136, 0.15);
+  
+  /* Shadows - Light Mode (softer) */
+  --vis-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --vis-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.08);
+  --vis-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --vis-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.12);
+  
+  --vis-glow-teal-sm: 0 0 10px rgba(20, 184, 166, 0.2);
+  --vis-glow-teal-md: 0 0 20px rgba(20, 184, 166, 0.25);
+  --vis-glow-teal-lg: 0 0 30px rgba(20, 184, 166, 0.3);
+  
+  --vis-shadow-glow-teal: 0 4px 12px rgba(0, 0, 0, 0.08), 0 0 20px rgba(20, 184, 166, 0.15);
+  --vis-shadow-glow-purple: 0 4px 12px rgba(0, 0, 0, 0.08), 0 0 20px rgba(168, 85, 247, 0.15);
+  
+  /* Mesh Gradient - Light Mode (very subtle) */
+  --vis-gradient-mesh: 
+    radial-gradient(at 40% 20%, rgba(20, 184, 166, 0.04) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, rgba(6, 182, 212, 0.03) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, rgba(168, 85, 247, 0.03) 0px, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(20, 184, 166, 0.04) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(6, 182, 212, 0.03) 0px, transparent 50%);
+  
+  /* Overlay - Light Mode */
+  --vis-overlay-light: rgba(255, 255, 255, 0.4);
+  --vis-overlay-medium: rgba(255, 255, 255, 0.6);
+  --vis-overlay-heavy: rgba(255, 255, 255, 0.8);
+  --vis-backdrop-blur: rgba(248, 250, 252, 0.9);
+  
+  /* Dividers - Light Mode */
+  --vis-divider-light: rgba(148, 163, 184, 0.15);
+  --vis-divider-medium: rgba(148, 163, 184, 0.25);
+  --vis-divider-strong: rgba(148, 163, 184, 0.4);
+}
+
+/* ===================================
+ * UTILITY CLASSES
+ * ================================ */
+
+/* Background Utilities */
+.vis-bg-app { background-color: var(--vis-bg-app); }
+.vis-bg-primary { background-color: var(--vis-bg-primary); }
+.vis-bg-secondary { background-color: var(--vis-bg-secondary); }
+.vis-bg-panel { background: var(--vis-panel-bg); }
+.vis-bg-card { background: var(--vis-card-bg); }
+
+/* Border Utilities */
+.vis-border { border-color: var(--vis-border-default); }
+.vis-border-teal { border-color: var(--vis-border-teal); }
+.vis-border-purple { border-color: var(--vis-border-purple); }
+
+/* Text Utilities */
+.vis-text-primary { color: var(--vis-text-primary); }
+.vis-text-teal { color: var(--vis-text-teal); }
+.vis-text-cyan { color: var(--vis-text-cyan); }
+.vis-text-purple { color: var(--vis-text-purple); }
+
+/* Gradient Utilities */
+.vis-gradient-teal { background: var(--vis-gradient-teal-diagonal); }
+.vis-gradient-purple { background: var(--vis-gradient-purple-horizontal); }
+.vis-gradient-brand { background: var(--vis-gradient-brand); }
+
+/* Shadow Utilities */
+.vis-shadow-glow-teal { box-shadow: var(--vis-shadow-glow-teal); }
+.vis-shadow-glow-purple { box-shadow: var(--vis-shadow-glow-purple); }

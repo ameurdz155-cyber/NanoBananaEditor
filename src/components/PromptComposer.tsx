@@ -725,7 +725,7 @@ export const PromptComposer: React.FC = () => {
     <>
       <div
       ref={panelRef}
-  className="relative h-full flex-shrink-0 bg-gray-950 border-r border-gray-800 overflow-visible"
+  className="relative h-full flex-shrink-0 bg-vis-panel border-r border-vis-border overflow-visible"
       style={{ width: `${Math.round(promptPanelWidth)}px` }}
     >
       <div
@@ -749,7 +749,7 @@ export const PromptComposer: React.FC = () => {
             setShowPromptPanel(false);
           }}
           title={t.hidePromptPanel}
-          className="absolute top-6 -right-3 h-8 w-8 rounded-full border border-gray-700 bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors z-[9999] opacity-60 hover:opacity-100 pointer-events-auto shadow-lg"
+          className="absolute top-6 -right-3 h-8 w-8 rounded-full border border-vis-border bg-gray-900/70 text-vis-text-secondary hover:bg-gray-800/90 hover:text-vis-teal-300 transition-all duration-200 z-[9999] opacity-60 hover:opacity-100 pointer-events-auto shadow-vis-glow-teal"
           aria-label={t.hidePromptPanel}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -757,18 +757,18 @@ export const PromptComposer: React.FC = () => {
       </div>
       <div className="h-full overflow-visible">
         <div className="h-full p-6 flex flex-col space-y-6 overflow-y-auto sidebar-scrollbar">
-          <div className="bg-gray-900/30 rounded-xl p-4 border border-gray-800 flex-shrink-0">
+          <div className="bg-gray-900/70 rounded-xl p-4 border border-vis-border-light flex-shrink-0 shadow-vis-glow-teal">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-semibold text-gray-200">{t.selectMode}</h3>
-                <p className="text-xs text-gray-500 mt-0.5">{t.chooseHowToCreate}</p>
+                <h3 className="text-sm font-semibold text-vis-teal-300">{t.selectMode}</h3>
+                <p className="text-xs text-vis-text-secondary mt-0.5">{t.chooseHowToCreate}</p>
               </div>
               <div className="flex items-center space-x-1">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowHintsModal(true)}
-                  className="h-7 w-7 hover:bg-gray-800"
+                  className="h-7 w-7 hover:bg-gray-800/50 text-vis-text-secondary hover:text-vis-teal-300 transition-colors"
                   title={t.promptTips}
                 >
                   <HelpCircle className="h-4 w-4" />
@@ -783,20 +783,20 @@ export const PromptComposer: React.FC = () => {
                   className={cn(
                     'flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200 group relative overflow-hidden',
                     selectedTool === tool.id
-                      ? 'bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500 shadow-lg shadow-purple-500/20'
-                      : 'bg-gray-800/50 border-gray-700 hover:bg-gray-800 hover:border-gray-600'
+                      ? 'bg-gradient-to-br from-vis-teal-500/20 to-vis-cyan-500/20 border-vis-teal-400 shadow-vis-glow-teal'
+                      : 'bg-gray-800/50 border-vis-border hover:bg-gray-800/70 hover:border-vis-border-light'
                   )}
                 >
                   {selectedTool === tool.id && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 animate-pulse" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-vis-teal-500/10 to-vis-cyan-500/10 animate-pulse" />
                   )}
                   <tool.icon className={cn(
                     "h-5 w-5 mb-2 relative z-10 transition-colors",
-                    selectedTool === tool.id ? 'text-purple-400' : 'text-gray-400 group-hover:text-gray-300'
+                    selectedTool === tool.id ? 'text-vis-teal-300' : 'text-vis-text-secondary group-hover:text-vis-teal-400'
                   )} />
                   <span className={cn(
                     "text-xs font-semibold relative z-10 transition-colors",
-                    selectedTool === tool.id ? 'text-purple-300' : 'text-gray-400 group-hover:text-gray-300'
+                    selectedTool === tool.id ? 'text-vis-teal-200' : 'text-vis-text-secondary group-hover:text-vis-text-primary'
                   )}>{tool.label}</span>
                 </button>
               ))}
@@ -819,15 +819,15 @@ export const PromptComposer: React.FC = () => {
           />
 
           {/* Prompt Input - Enhanced Card Design */}
-          <div className="bg-gray-950 rounded-xl p-4 border border-gray-800/80 hover:border-gray-700 transition-all flex-shrink-0 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.8)]">
+          <div className="bg-gray-900/70 rounded-xl p-4 border border-vis-border-light hover:border-vis-teal-500/50 transition-all duration-200 flex-shrink-0 shadow-vis-glow-teal">
         <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-semibold text-gray-200 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 mr-2"></span>
+          <label className="text-sm font-semibold text-vis-teal-300 flex items-center">
+            <span className="w-2 h-2 rounded-full bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400 mr-2"></span>
             {selectedTool === 'generate' ? t.generateFromText : t.editInstructions}
           </label>
           <button 
             onClick={() => setShowHintsModal(true)}
-            className="text-gray-400 hover:text-gray-300 transition-colors"
+            className="text-vis-text-secondary hover:text-vis-teal-300 transition-colors"
             title={t.promptTips}
           >
             <HelpCircle className="h-4 w-4" />
@@ -835,17 +835,17 @@ export const PromptComposer: React.FC = () => {
         </div>
         
         {/* Mode-specific help text */}
-  <div className="mb-3 p-3 bg-gray-900 border border-gray-800/80 rounded-lg">
+  <div className="mb-3 p-3 bg-gray-800/50 border border-vis-border rounded-lg">
           {selectedTool === 'generate' && (
             <div className="space-y-1.5">
-              <p className="text-xs text-cyan-400 font-medium flex items-center">
+              <p className="text-xs text-vis-cyan-300 font-medium flex items-center">
                 <Sparkles className="h-3 w-3 mr-1.5" />
                 {t.generateModeTitle}
               </p>
-              <p className="text-xs text-gray-400 leading-relaxed">
+              <p className="text-xs text-vis-text-secondary leading-relaxed">
                 {t.generateModeDescription}
               </p>
-              <p className="text-xs text-purple-400 italic">
+              <p className="text-xs text-vis-purple-300 italic">
                 {t.generateModeTip}
               </p>
             </div>
@@ -853,11 +853,11 @@ export const PromptComposer: React.FC = () => {
           
           {selectedTool === 'edit' && (
             <div className="space-y-1.5">
-              <p className="text-xs text-cyan-400 font-medium flex items-center">
+              <p className="text-xs text-vis-cyan-300 font-medium flex items-center">
                 <Edit3 className="h-3 w-3 mr-1.5" />
                 {t.editModeTitle}
               </p>
-              <p className="text-xs text-gray-400 leading-relaxed">
+              <p className="text-xs text-vis-text-secondary leading-relaxed">
                 {t.editModeDescription}
               </p>
             </div>
@@ -865,11 +865,11 @@ export const PromptComposer: React.FC = () => {
           
           {selectedTool === 'mask' && (
             <div className="space-y-1.5">
-              <p className="text-xs text-cyan-400 font-medium flex items-center">
+              <p className="text-xs text-vis-cyan-300 font-medium flex items-center">
                 <MousePointer className="h-3 w-3 mr-1.5" />
                 {t.selectModeTitle}
               </p>
-              <p className="text-xs text-gray-400 leading-relaxed">
+              <p className="text-xs text-vis-text-secondary leading-relaxed">
                 {t.selectModeDescription}
               </p>
               <p className="text-xs text-orange-400">
@@ -879,7 +879,7 @@ export const PromptComposer: React.FC = () => {
           )}
         </div>
         
-  <p className="text-xs text-gray-400/90 mb-3">
+  <p className="text-xs text-vis-text-secondary mb-3">
           {selectedTool === 'generate' 
             ? t.enterPromptAndInvoke
             : t.describeChanges}
@@ -896,7 +896,7 @@ export const PromptComposer: React.FC = () => {
             ? t.promptPlaceholderGenerate
             : t.promptPlaceholderEdit
           }
-          className="min-h-[140px] resize-y bg-gray-950 border border-gray-800/70 focus:border-purple-400/70 focus:ring-0 transition-colors pr-20 pb-12 text-[13px] leading-relaxed"
+          className="min-h-[140px] resize-y bg-gray-950/90 border border-vis-border focus:border-vis-teal-400/70 focus:ring-1 focus:ring-vis-teal-400/30 transition-all duration-200 pr-20 pb-12 text-[13px] leading-relaxed text-vis-text-primary placeholder:text-vis-text-muted"
         />
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
           <button
@@ -904,10 +904,10 @@ export const PromptComposer: React.FC = () => {
           onClick={() => setShowPromptHistory(!showPromptHistory)}
           ref={historyButtonRef}
           className={cn(
-            "h-8 w-8 flex items-center justify-center rounded-md text-gray-400 transition-all duration-200",
+            "h-8 w-8 flex items-center justify-center rounded-md text-vis-text-secondary transition-all duration-200",
             showPromptHistory
             ? "bg-red-500/15 text-red-200 shadow-[0_0_12px_rgba(248,113,113,0.35)]"
-            : "hover:text-gray-100 hover:bg-gray-800"
+            : "hover:text-vis-teal-300 hover:bg-gray-800/50"
           )}
           title={t.promptHistory}
           >
@@ -990,11 +990,11 @@ export const PromptComposer: React.FC = () => {
           }
         >
           <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-gray-200">{t.promptHistory}</p>
+          <p className="text-sm font-semibold text-vis-teal-300">{t.promptHistory}</p>
           <button
             type="button"
             onClick={() => setShowPromptHistory(false)}
-            className="h-6 w-6 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+            className="h-6 w-6 flex items-center justify-center rounded-md text-vis-text-secondary hover:text-vis-teal-300 hover:bg-gray-800/50 transition-colors"
           >
             <span className="sr-only">Close history</span>
             <X className="h-3.5 w-3.5" />
@@ -1009,7 +1009,7 @@ export const PromptComposer: React.FC = () => {
             value={historySearchQuery}
             onChange={(e) => setHistorySearchQuery(e.target.value)}
             disabled={promptHistory.length === 0}
-            className="w-full pl-9 pr-8 py-2 bg-gray-950 border border-gray-800 rounded-lg text-sm text-gray-200 placeholder-gray-500 disabled:opacity-50 focus:outline-none focus:border-purple-500/50 focus:bg-gray-900 transition-all"
+            className="w-full pl-9 pr-8 py-2 bg-gray-950/90 border border-vis-border rounded-lg text-sm text-vis-text-primary placeholder-vis-text-muted disabled:opacity-50 focus:outline-none focus:border-vis-teal-400/70 focus:ring-1 focus:ring-vis-teal-400/30 focus:bg-gray-900/90 transition-all"
             />
             <svg
             className="absolute left-2.5 top-3 h-4 w-4 text-gray-500"
@@ -1034,7 +1034,7 @@ export const PromptComposer: React.FC = () => {
             type="button"
             onClick={handleClearHistory}
             disabled={promptHistory.length === 0}
-            className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-800 bg-gray-950 py-2 text-xs font-semibold text-gray-300 hover:border-red-500/60 hover:text-red-300 hover:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 rounded-lg border border-vis-border bg-gray-950/90 py-2 text-xs font-semibold text-vis-text-primary hover:border-red-500/60 hover:text-red-300 hover:bg-gray-900/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <Trash2 className="h-3.5 w-3.5" />
             {t.clearHistory}
@@ -1042,16 +1042,16 @@ export const PromptComposer: React.FC = () => {
           </div>
           <div
             className={cn(
-              'mt-3 border-t border-gray-800/60 pt-3 overflow-y-auto sidebar-scrollbar',
+              'mt-3 border-t border-vis-border pt-3 overflow-y-auto sidebar-scrollbar',
               isMobileViewport ? 'max-h-48' : 'flex-1'
             )}
           >
           {promptHistory.length === 0 ? (
-            <div className="py-6 text-center text-sm text-gray-500">
+            <div className="py-6 text-center text-sm text-vis-text-muted">
             {t.noPromptHistoryRecorded}
             </div>
           ) : filteredPromptHistory.length === 0 ? (
-            <div className="py-6 text-center text-sm text-gray-500">
+            <div className="py-6 text-center text-sm text-vis-text-muted">
             {t.noPromptsFound ?? 'No prompts found.'}
             </div>
           ) : (
@@ -1068,12 +1068,12 @@ export const PromptComposer: React.FC = () => {
                 setCurrentPrompt(prompt);
                 setShowPromptHistory(false);
                 }}
-                className="w-full rounded-lg bg-gray-900 px-3 py-2 text-left text-sm text-gray-200 hover:bg-gray-800"
+                className="w-full rounded-lg bg-gray-800/50 px-3 py-2 text-left text-sm text-vis-text-primary hover:bg-gray-800/70 hover:border-vis-teal-500/30 border border-transparent transition-all"
               >
-                <p className="text-[11px] uppercase tracking-wide text-purple-400/80 mb-1">
+                <p className="text-[11px] uppercase tracking-wide text-vis-teal-400 mb-1">
                 {t.promptNumber}{displayNumber}
                 </p>
-                <p className="text-xs text-gray-400 leading-relaxed line-clamp-3">
+                <p className="text-xs text-vis-text-secondary leading-relaxed line-clamp-3">
                 {prompt}
                 </p>
               </button>
@@ -1082,8 +1082,8 @@ export const PromptComposer: React.FC = () => {
             </div>
           )}
           </div>
-          <div className="mt-3 border-t border-gray-800/60 pt-2 text-center text-[11px] text-gray-500">
-          <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-gray-600 mr-1">alt+up/down</kbd>
+          <div className="mt-3 border-t border-vis-border pt-2 text-center text-[11px] text-vis-text-muted">
+          <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-vis-border mr-1 text-vis-text-secondary">alt+up/down</kbd>
           {t.switchBetweenPrompts}
           </div>
         </div>
@@ -1092,7 +1092,7 @@ export const PromptComposer: React.FC = () => {
 
         {showNegativePrompt && (
           <div className="mt-3">
-            <label className="text-xs font-semibold text-gray-300 mb-1 flex items-center">
+            <label className="text-xs font-semibold text-orange-400 mb-1 flex items-center">
               <span className="w-2 h-2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 mr-2"></span>
               {t.negativePromptLabel}
             </label>
@@ -1100,7 +1100,7 @@ export const PromptComposer: React.FC = () => {
               value={negativePrompt}
               onChange={(e) => setNegativePrompt(e.target.value)}
               placeholder={t.enterNegativePrompt}
-              className="min-h-[100px] resize-none bg-gray-950 border border-gray-800/70 focus:border-orange-400/70 transition-colors text-[13px] leading-relaxed"
+              className="min-h-[100px] resize-none bg-gray-950/90 border border-vis-border focus:border-orange-400/70 focus:ring-1 focus:ring-orange-400/30 transition-all duration-200 text-[13px] leading-relaxed text-vis-text-primary placeholder:text-vis-text-muted"
             />
           </div>
         )}
@@ -1254,27 +1254,27 @@ export const PromptComposer: React.FC = () => {
           <div className="flex items-center space-x-2">
             {currentPrompt.length < 20 ? (
               <>
-                <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
                 <span className="text-red-400">{t.needsMoreDetail}</span>
               </>
             ) : currentPrompt.length < 50 ? (
               <>
-                <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                <div className="h-2 w-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]" />
                 <span className="text-yellow-400">{t.goodPrompt}</span>
               </>
             ) : (
               <>
-                <div className="h-2 w-2 rounded-full bg-green-500" />
-                <span className="text-green-400">{t.excellentPrompt}</span>
+                <div className="h-2 w-2 rounded-full bg-vis-teal-400 shadow-[0_0_8px_rgba(20,184,166,0.6)]" />
+                <span className="text-vis-teal-400">{t.excellentPrompt}</span>
               </>
             )}
           </div>
-          <span className="text-gray-500">{currentPrompt.length} {t.characters}</span>
+          <span className="text-vis-text-muted">{currentPrompt.length} {t.characters}</span>
         </div>
       </div>
 
       {/* Reference Images Upload */}
-      <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-800 hover:border-gray-700 transition-all flex-shrink-0">
+      <div className="bg-gray-900/70 rounded-xl p-4 border border-vis-border-light hover:border-vis-cyan-500/50 transition-all duration-200 flex-shrink-0 shadow-vis-glow-cyan">
         <input
           type="file"
           id="reference-image-upload"
@@ -1290,7 +1290,7 @@ export const PromptComposer: React.FC = () => {
             {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
               <div 
                 key={index} 
-                className="relative group w-14 h-14 rounded-lg border-2 border-gray-700 hover:border-red-500 overflow-hidden bg-gray-800 flex-shrink-0 transition-all"
+                className="relative group w-14 h-14 rounded-lg border-2 border-vis-border hover:border-red-500 overflow-hidden bg-gray-800/50 flex-shrink-0 transition-all"
               >
                 <img
                   src={image}
@@ -1309,7 +1309,7 @@ export const PromptComposer: React.FC = () => {
             {/* Add more button */}
             <button
               onClick={() => document.getElementById('reference-image-upload')?.click()}
-              className="w-14 h-14 rounded-lg border-2 border-dashed border-gray-700 hover:border-gray-600 bg-gray-800/50 hover:bg-gray-800 flex items-center justify-center transition-all text-gray-500 hover:text-gray-300"
+              className="w-14 h-14 rounded-lg border-2 border-dashed border-vis-border hover:border-vis-cyan-400 bg-gray-800/30 hover:bg-gray-800/50 flex items-center justify-center transition-all text-vis-text-secondary hover:text-vis-cyan-300"
               title="Add more images"
             >
               <Plus className="h-5 w-5" />
@@ -1319,13 +1319,13 @@ export const PromptComposer: React.FC = () => {
 
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-semibold text-gray-200 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 mr-2"></span>
+          <label className="text-sm font-semibold text-vis-cyan-300 flex items-center">
+            <span className="w-2 h-2 rounded-full bg-gradient-to-r from-vis-cyan-400 to-vis-teal-400 mr-2"></span>
             {selectedTool === 'generate' ? t.addReferenceImages : selectedTool === 'edit' ? t.styleReferences : t.uploadImage}
           </label>
           <button
             onClick={() => setShowReferenceModal(true)}
-            className="text-xs text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1 transition-colors"
+            className="text-xs text-vis-cyan-400 hover:text-vis-cyan-300 font-medium flex items-center gap-1 transition-colors"
           >
             <History className="h-3 w-3" />
             {t.referenceLibrary}
@@ -1333,17 +1333,17 @@ export const PromptComposer: React.FC = () => {
         </div>
         
         {selectedTool === 'mask' && (
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-vis-text-secondary mb-3">
             {t.uploadImageForMaskPainting}
           </p>
         )}
         {selectedTool === 'edit' && (
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-vis-text-secondary mb-3">
             {canvasImage ? t.uploadImageOptionalEdit : t.uploadImageToEdit}
           </p>
         )}
         {selectedTool === 'generate' && (
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-vis-text-secondary mb-3">
             {t.uploadImageToGuideStyle}
           </p>
         )}
@@ -1353,21 +1353,21 @@ export const PromptComposer: React.FC = () => {
           (selectedTool === 'edit' && editReferenceImages.length === 0)) && (
           <button
             onClick={() => document.getElementById('reference-image-upload')?.click()}
-            className="w-full py-6 flex flex-col items-center justify-center bg-gray-800/30 hover:bg-gray-800/50 rounded-lg border border-gray-700/50 border-dashed hover:border-gray-600 transition-all cursor-pointer"
+            className="w-full py-6 flex flex-col items-center justify-center bg-gray-800/30 hover:bg-gray-800/50 rounded-lg border border-vis-border border-dashed hover:border-vis-cyan-400/50 transition-all duration-200 cursor-pointer group"
           >
-            <Upload className="h-5 w-5 text-gray-400 mb-2" />
-            <div className="text-xs text-gray-500">{t.uploadImages}</div>
+            <Upload className="h-5 w-5 text-vis-text-secondary group-hover:text-vis-cyan-400 mb-2 transition-colors" />
+            <div className="text-xs text-vis-text-secondary group-hover:text-vis-cyan-300 transition-colors">{t.uploadImages}</div>
           </button>
         )}
 
         {/* Upload History - Show previously uploaded images */}
         {uploadHistory.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-700/40">
+          <div className="mt-4 pt-4 border-t border-vis-border">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-gray-400 tracking-wide">
+              <label className="text-xs font-semibold text-vis-text-secondary tracking-wide">
                 {t.previousUploads}
               </label>
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-vis-text-muted">
                 {t.clickToAdd}
               </span>
             </div>
@@ -1389,7 +1389,7 @@ export const PromptComposer: React.FC = () => {
                         addEditReferenceImage(image);
                       }
                     }}
-                    className="relative w-14 h-14 rounded-lg border-2 border-gray-700 hover:border-cyan-500 overflow-hidden bg-gray-800 flex-shrink-0 transition-all"
+                    className="relative w-14 h-14 rounded-lg border-2 border-vis-border hover:border-vis-cyan-400 overflow-hidden bg-gray-800/50 flex-shrink-0 transition-all group"
                     title={t.clickToAddToReferences}
                   >
                     <img
@@ -1397,7 +1397,7 @@ export const PromptComposer: React.FC = () => {
                       alt={`History ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-cyan-500/0 hover:bg-cyan-500/20 transition-all" />
+                    <div className="absolute inset-0 bg-vis-cyan-500/0 group-hover:bg-vis-cyan-500/20 transition-all" />
                   </button>
                 ))}
             </div>
@@ -1408,10 +1408,10 @@ export const PromptComposer: React.FC = () => {
 
       {/* API Key Error Message */}
       {apiKeyError && (
-        <div className={`glass rounded-xl p-4 mb-4 ${
+        <div className={`rounded-xl p-4 mb-4 border backdrop-blur-sm ${
           apiKeyError === 'PLACEHOLDER_WARNING' 
-            ? 'border border-yellow-500/30 bg-yellow-900/20' 
-            : 'border border-red-500/30 bg-red-900/20'
+            ? 'border-yellow-500/30 bg-yellow-900/20' 
+            : 'border-red-500/30 bg-red-900/20'
         }`}>
           <div className="flex items-start space-x-3">
             <AlertCircle className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
@@ -1436,7 +1436,7 @@ export const PromptComposer: React.FC = () => {
                       const event = new CustomEvent('openSettings');
                       window.dispatchEvent(event);
                     }}
-                    className="mt-2 flex items-center text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                    className="mt-2 flex items-center text-xs text-vis-teal-400 hover:text-vis-teal-300 transition-colors"
                   >
                     <Settings className="h-3 w-3 mr-1" />
                     Open Settings to configure API key
@@ -1456,9 +1456,9 @@ export const PromptComposer: React.FC = () => {
       {selectedTool === 'generate' && (
         <div
           className={cn(
-            'mt-3 p-4 rounded-xl border space-y-4 transition-colors',
+            'mt-3 p-4 rounded-xl border space-y-4 transition-colors shadow-vis-glow-teal',
             isDarkMode
-              ? 'bg-gradient-to-br from-gray-900/40 to-gray-800/40 border-gray-700/40 backdrop-blur-sm'
+              ? 'bg-gray-900/70 border-vis-border-light backdrop-blur-sm'
               : 'border-gray-200'
           )}
         >
@@ -1467,7 +1467,7 @@ export const PromptComposer: React.FC = () => {
             <label
               className={cn(
                 'text-xs font-semibold mb-2 block tracking-wide transition-colors',
-                isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                isDarkMode ? 'text-vis-teal-300' : 'text-gray-700'
               )}
             >
               {t.aspectRatioLabel}
@@ -1476,9 +1476,9 @@ export const PromptComposer: React.FC = () => {
               value={aspectRatio}
               onChange={(e) => handleAspectRatioChange(e.target.value)}
               className={cn(
-                'w-full h-10 px-3 border rounded-lg text-sm font-medium cursor-pointer transition-all shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none',
+                'w-full h-10 px-3 border rounded-lg text-sm font-medium cursor-pointer transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none',
                 isDarkMode
-                  ? 'bg-gray-900/90 border-gray-700/60 text-gray-100 hover:border-gray-600/80'
+                  ? 'bg-gray-900/90 border-vis-border text-vis-text-primary hover:border-vis-border-light'
                   : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white'
               )}
             >
@@ -1499,14 +1499,14 @@ export const PromptComposer: React.FC = () => {
           <div
             className={cn(
               'rounded-lg p-3 border transition-colors',
-              isDarkMode ? 'bg-gray-800/30 border-gray-700/20' : 'border-gray-200'
+              isDarkMode ? 'bg-gray-800/30 border-vis-border' : 'border-gray-200'
             )}
           >
             <div className="flex items-center justify-between mb-2">
               <label
                 className={cn(
                   'text-xs font-semibold tracking-wide transition-colors',
-                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                  isDarkMode ? 'text-vis-cyan-300' : 'text-gray-700'
                 )}
               >
                 {t.width}
@@ -1516,9 +1516,9 @@ export const PromptComposer: React.FC = () => {
                 value={imageWidth}
                 onChange={(e) => handleWidthChange(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
                 className={cn(
-                  'w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none',
+                  'w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none',
                   isDarkMode
-                    ? 'bg-gray-900/90 border-gray-700/60 text-gray-100 hover:border-gray-600'
+                    ? 'bg-gray-900/90 border-vis-border text-vis-text-primary hover:border-vis-border-light'
                     : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white'
                 )}
                 min="64"
@@ -1543,14 +1543,14 @@ export const PromptComposer: React.FC = () => {
           <div
             className={cn(
               'rounded-lg p-3 border transition-colors',
-              isDarkMode ? 'bg-gray-800/30 border-gray-700/20' : 'border-gray-200'
+              isDarkMode ? 'bg-gray-800/30 border-vis-border' : 'border-gray-200'
             )}
           >
             <div className="flex items-center justify-between mb-2">
               <label
                 className={cn(
                   'text-xs font-semibold tracking-wide transition-colors',
-                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                  isDarkMode ? 'text-vis-cyan-300' : 'text-gray-700'
                 )}
               >
                 {t.height}
@@ -1560,9 +1560,9 @@ export const PromptComposer: React.FC = () => {
                 value={imageHeight}
                 onChange={(e) => handleHeightChange(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
                 className={cn(
-                  'w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none',
+                  'w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none',
                   isDarkMode
-                    ? 'bg-gray-900/90 border-gray-700/60 text-gray-100 hover:border-gray-600'
+                    ? 'bg-gray-900/90 border-vis-border text-vis-text-primary hover:border-vis-border-light'
                     : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white'
                 )}
                 min="64"
@@ -1587,19 +1587,19 @@ export const PromptComposer: React.FC = () => {
           <div
             className={cn(
               'pt-3 border-t transition-colors',
-              isDarkMode ? 'border-gray-700/40' : 'border-gray-200'
+              isDarkMode ? 'border-vis-border' : 'border-gray-200'
             )}
           >
             <div
               className={cn(
                 'rounded-lg p-3 border space-y-3 transition-colors',
-                isDarkMode ? 'bg-gray-800/30 border-gray-700/20' : 'border-gray-200'
+                isDarkMode ? 'bg-gray-800/30 border-vis-border' : 'border-gray-200'
               )}
             >
               <label
                 className={cn(
                   'text-xs font-semibold block tracking-wide transition-colors',
-                  isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                  isDarkMode ? 'text-vis-purple-300' : 'text-gray-700'
                 )}
               >
                 {t.seed}
@@ -1611,9 +1611,9 @@ export const PromptComposer: React.FC = () => {
                 placeholder="0"
                 disabled={randomSeed}
                 className={cn(
-                  'w-full h-10 px-3 border rounded-lg text-sm font-medium transition-all shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-500/30 focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed',
+                  'w-full h-10 px-3 border rounded-lg text-sm font-medium transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed',
                   isDarkMode
-                    ? 'bg-gray-900/90 border-gray-700/60 text-gray-100 hover:border-gray-600'
+                    ? 'bg-gray-900/90 border-vis-border text-vis-text-primary hover:border-vis-border-light'
                     : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white disabled:bg-slate-200'
                 )}
               />
@@ -1627,8 +1627,8 @@ export const PromptComposer: React.FC = () => {
                   className={cn(
                     "flex-1 h-10 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm font-medium text-sm",
                     randomSeed
-                      ? "bg-gradient-to-br from-cyan-500 to-cyan-600 text-white"
-                      : "bg-gray-900/90 border border-gray-700/60 text-gray-400 hover:text-gray-200 hover:border-gray-600"
+                      ? "bg-gradient-to-br from-vis-cyan-400 to-vis-teal-500 text-white shadow-vis-glow-cyan"
+                      : "bg-gray-900/90 border border-vis-border text-vis-text-secondary hover:text-vis-teal-300 hover:border-vis-border-light"
                   )}
                 >
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 256 256">
@@ -1643,7 +1643,7 @@ export const PromptComposer: React.FC = () => {
                     setSeed(Math.floor(Math.random() * 4294967295));
                   }}
                   disabled={randomSeed}
-                  className="flex-1 h-10 flex items-center justify-center gap-2 bg-gray-900/90 border border-gray-700/60 rounded-lg text-sm text-gray-300 font-medium hover:text-gray-100 hover:border-gray-600 hover:bg-gray-800/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
+                  className="flex-1 h-10 flex items-center justify-center gap-2 bg-gray-900/90 border border-vis-border rounded-lg text-sm text-vis-text-primary font-medium hover:text-vis-teal-300 hover:border-vis-border-light hover:bg-gray-800/90 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
                 >
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 256 256">
                     <path d="M240.49,175.51a12,12,0,0,1,0,17l-24,24a12,12,0,0,1-17-17L203,196h-2.09a76.17,76.17,0,0,1-61.85-31.83L97.38,105.78A52.1,52.1,0,0,0,55.06,84H32a12,12,0,0,1,0-24H55.06a76.17,76.17,0,0,1,61.85,31.83l41.71,58.39A52.1,52.1,0,0,0,200.94,172H203l-3.52-3.51a12,12,0,0,1,17-17Zm-95.62-72.62a12,12,0,0,0,16.93-1.13A52,52,0,0,1,200.94,84H203l-3.52,3.51a12,12,0,0,0,17,17l24-24a12,12,0,0,0,0-17l-24-24a12,12,0,0,0-17,17L203,60h-2.09a76,76,0,0,0-57.2,26A12,12,0,0,0,144.87,102.89Zm-33.74,50.22a12,12,0,0,0-16.93,1.13A52,52,0,0,1,55.06,172H32a12,12,0,0,0,0,24H55.06a76,76,0,0,0,57.2-26A12,12,0,0,0,111.13,153.11Z"/>
@@ -1660,7 +1660,7 @@ export const PromptComposer: React.FC = () => {
       <div>
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center text-sm text-gray-400 hover:text-gray-300 transition-colors duration-200"
+          className="flex items-center text-sm text-vis-text-secondary hover:text-vis-teal-300 transition-colors duration-200"
         >
           {showAdvanced ? <ChevronDown className="h-4 w-4 mr-1" /> : <ChevronRight className="h-4 w-4 mr-1" />}
           {showAdvanced ? t.hideAdvancedControls : t.showAdvancedControls}
@@ -1668,15 +1668,15 @@ export const PromptComposer: React.FC = () => {
         
         <button
           onClick={() => setShowClearConfirm(!showClearConfirm)}
-          className="flex items-center text-sm text-gray-400 hover:text-red-400 transition-colors duration-200 mt-2"
+          className="flex items-center text-sm text-vis-text-secondary hover:text-red-400 transition-colors duration-200 mt-2"
         >
           <RotateCcw className="h-4 w-4 mr-2" />
           {t.clearSession}
         </button>
         
         {showClearConfirm && (
-          <div className="mt-3 p-3 bg-gray-800 rounded-lg border border-gray-700">
-            <p className="text-xs text-gray-300 mb-3">
+          <div className="mt-3 p-3 bg-gray-800/50 rounded-lg border border-vis-border">
+            <p className="text-xs text-vis-text-primary mb-3">
               {t.clearSessionConfirm}
             </p>
             <div className="flex space-x-2">
@@ -1692,7 +1692,7 @@ export const PromptComposer: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowClearConfirm(false)}
-                className="flex-1"
+                className="flex-1 border-vis-border hover:border-vis-teal-400 text-vis-text-primary hover:text-vis-teal-300"
               >
                 {t.cancel}
               </Button>
@@ -1704,7 +1704,7 @@ export const PromptComposer: React.FC = () => {
           <div className="mt-4 space-y-4">
             {/* Temperature */}
             <div>
-              <label className="text-xs text-gray-400 mb-2 block">
+              <label className="text-xs text-vis-text-secondary mb-2 block">
                 {t.creativity} ({temperature})
               </label>
               <input
@@ -1714,7 +1714,7 @@ export const PromptComposer: React.FC = () => {
                 step="0.1"
                 value={temperature}
                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer slider"
+                className="w-full h-2 bg-gray-800/50 rounded-lg appearance-none cursor-pointer slider"
               />
             </div>
           </div>
@@ -1722,9 +1722,9 @@ export const PromptComposer: React.FC = () => {
       </div>
 
       {/* Keyboard Shortcuts */}
-      <div className="pt-4 border-t border-gray-800 flex-shrink-0">
-        <h4 className="text-xs font-medium text-gray-400 mb-2">{t.shortcuts}</h4>
-        <div className="space-y-1 text-xs text-gray-500">
+      <div className="pt-4 border-t border-vis-border flex-shrink-0">
+        <h4 className="text-xs font-medium text-vis-text-secondary mb-2">{t.shortcuts}</h4>
+        <div className="space-y-1 text-xs text-vis-text-muted">
           <div className="flex justify-between">
             <span>{t.saveImage}</span>
             <span>Ctrl + S</span>
@@ -1760,19 +1760,19 @@ export const PromptComposer: React.FC = () => {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/65 backdrop-blur-md z-50" />
         <Dialog.Content
-          className="fixed top-1/2 left-1/2 z-50 w-[min(95vw,80rem)] h-[90vh] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-gray-800 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-900 p-8 shadow-2xl focus:outline-none flex flex-col overflow-hidden"
+          className="fixed top-1/2 left-1/2 z-50 w-[min(95vw,80rem)] h-[90vh] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-vis-border-light bg-gradient-to-br from-gray-950 via-gray-900 to-gray-900 p-8 shadow-vis-glow-teal focus:outline-none flex flex-col overflow-hidden"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-600/20 text-purple-300">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-vis-teal-600/20 text-vis-teal-300">
                 <FileText className="h-4 w-4" />
               </div>
-              <Dialog.Title className="text-lg font-semibold text-gray-100">
+              <Dialog.Title className="text-lg font-semibold text-vis-teal-200">
                 {t.templates}
               </Dialog.Title>
             </div>
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-200 hover:bg-gray-800">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-vis-text-secondary hover:text-vis-teal-300 hover:bg-gray-800/50">
                 <X className="h-4 w-4" />
               </Button>
             </Dialog.Close>
@@ -1802,9 +1802,9 @@ export const PromptComposer: React.FC = () => {
         />
         <Dialog.Content
           className={cn(
-            'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden z-50 shadow-2xl border transition-colors',
+            'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden z-50 shadow-vis-glow-cyan border transition-colors',
             isDarkMode
-              ? 'bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-gray-700/50'
+              ? 'bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-vis-border-light'
               : 'bg-white border-gray-200'
           )}
         >
@@ -1812,21 +1812,21 @@ export const PromptComposer: React.FC = () => {
           <div
             className={cn(
               'flex items-center justify-between px-6 py-4 border-b transition-colors',
-              isDarkMode ? 'border-gray-700/50 bg-gray-800/30' : 'border-gray-200 bg-white'
+              isDarkMode ? 'border-vis-border bg-gray-800/30' : 'border-gray-200 bg-white'
             )}
           >
             <div className="flex items-center space-x-3">
               <div
                 className={cn(
                   'p-2 rounded-lg transition-colors',
-                  isDarkMode ? 'bg-cyan-600/20' : 'bg-cyan-100'
+                  isDarkMode ? 'bg-vis-cyan-600/20' : 'bg-cyan-100'
                 )}
               >
-                <History className={cn('h-5 w-5', isDarkMode ? 'text-cyan-400' : 'text-cyan-600')} />
+                <History className={cn('h-5 w-5', isDarkMode ? 'text-vis-cyan-400' : 'text-cyan-600')} />
               </div>
               <div>
                 <Dialog.Title
-                  className={cn('text-lg font-bold transition-colors', isDarkMode ? 'text-gray-100' : 'text-gray-800')}
+                  className={cn('text-lg font-bold transition-colors', isDarkMode ? 'text-vis-cyan-200' : 'text-gray-800')}
                 >
                   {t.referenceImagesTitle}
                 </Dialog.Title>
@@ -1841,7 +1841,7 @@ export const PromptComposer: React.FC = () => {
                 size="icon"
                 className={cn(
                   'h-8 w-8 transition-colors',
-                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100 text-gray-500'
+                  isDarkMode ? 'hover:bg-gray-700 text-vis-text-secondary hover:text-vis-cyan-300' : 'hover:bg-gray-100 text-gray-500'
                 )}
               >
                 <X className="h-5 w-5" />
@@ -1861,7 +1861,7 @@ export const PromptComposer: React.FC = () => {
                 <h3
                   className={cn(
                     'text-sm font-semibold mb-3 flex items-center transition-colors',
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    isDarkMode ? 'text-vis-teal-300' : 'text-gray-700'
                   )}
                 >
                   <Check className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-green-400' : 'text-green-600')} />
@@ -1881,7 +1881,7 @@ export const PromptComposer: React.FC = () => {
                         className={cn(
                           'w-24 h-24 rounded-lg border-2 overflow-hidden transition-colors',
                           isDarkMode
-                            ? 'border-green-500/50 bg-gray-800'
+                            ? 'border-green-500/50 bg-gray-800/50'
                             : 'border-green-400/40 bg-slate-100'
                         )}
                       >
@@ -1911,10 +1911,10 @@ export const PromptComposer: React.FC = () => {
               <h3
                 className={cn(
                   'text-sm font-semibold mb-3 flex items-center transition-colors',
-                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  isDarkMode ? 'text-vis-cyan-300' : 'text-gray-700'
                 )}
               >
-                <Upload className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-purple-400' : 'text-purple-500')} />
+                <Upload className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-vis-cyan-400' : 'text-purple-500')} />
                 {t.uploadNewImage}
               </h3>
               <input
@@ -1927,14 +1927,14 @@ export const PromptComposer: React.FC = () => {
               <button
                 onClick={() => document.getElementById('reference-modal-upload')?.click()}
                 className={cn(
-                  'w-full py-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all',
+                  'w-full py-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all group',
                   isDarkMode
-                    ? 'bg-gray-800/50 hover:bg-gray-800 border-gray-700 hover:border-cyan-500'
+                    ? 'bg-gray-800/50 hover:bg-gray-800/70 border-vis-border hover:border-vis-cyan-400'
                     : 'bg-slate-100 hover:bg-slate-200 border-slate-300 hover:border-cyan-400'
                 )}
               >
-                <Plus className={cn('h-6 w-6 mb-2', isDarkMode ? 'text-gray-400' : 'text-gray-500')} />
-                <span className={cn('text-sm', isDarkMode ? 'text-gray-400' : 'text-gray-600')}>
+                <Plus className={cn('h-6 w-6 mb-2 transition-colors', isDarkMode ? 'text-vis-text-secondary group-hover:text-vis-cyan-400' : 'text-gray-500')} />
+                <span className={cn('text-sm transition-colors', isDarkMode ? 'text-vis-text-secondary group-hover:text-vis-cyan-300' : 'text-gray-600')}>
                   {t.clickToUploadImage}
                 </span>
               </button>
@@ -1946,10 +1946,10 @@ export const PromptComposer: React.FC = () => {
                 <h3
                   className={cn(
                     'text-sm font-semibold mb-3 flex items-center transition-colors',
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    isDarkMode ? 'text-vis-teal-300' : 'text-gray-700'
                   )}
                 >
-                  <Sparkles className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
+                  <Sparkles className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-vis-teal-400' : 'text-blue-500')} />
                   {t.recentWork}
                 </h3>
                 <div className="grid grid-cols-4 gap-3 max-h-80 overflow-y-auto custom-scrollbar">
@@ -1970,7 +1970,7 @@ export const PromptComposer: React.FC = () => {
                           className={cn(
                             'relative group aspect-square rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105',
                             isDarkMode
-                              ? 'border-gray-700 hover:border-blue-500'
+                              ? 'border-vis-border hover:border-vis-teal-400'
                               : 'border-slate-200 hover:border-blue-500 shadow-sm'
                           )}
                         >
@@ -1980,7 +1980,7 @@ export const PromptComposer: React.FC = () => {
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          <div className="absolute bottom-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                          <div className="absolute bottom-1 left-1 bg-vis-teal-500 text-white text-xs px-1.5 py-0.5 rounded font-medium shadow-vis-glow-teal">
                             {t.genLabel}
                           </div>
                           <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1997,7 +1997,7 @@ export const PromptComposer: React.FC = () => {
             {uploadHistory.length > 0 && (
               <div>
                 <h3
-                  className={cn('text-sm font-semibold mb-3 transition-colors', isDarkMode ? 'text-gray-300' : 'text-gray-700')}
+                  className={cn('text-sm font-semibold mb-3 transition-colors', isDarkMode ? 'text-vis-cyan-300' : 'text-gray-700')}
                 >
                   {`${t.previousUploads} (${uploadHistory.length})`}
                 </h3>
@@ -2020,7 +2020,7 @@ export const PromptComposer: React.FC = () => {
                         className={cn(
                           'relative aspect-square rounded-lg border-2 overflow-hidden transition-all group',
                           isDarkMode
-                            ? 'border-gray-700 hover:border-cyan-500 bg-gray-800'
+                            ? 'border-vis-border hover:border-vis-cyan-400 bg-gray-800/50'
                             : 'border-slate-200 hover:border-cyan-500 bg-slate-100'
                         )}
                       >
@@ -2029,7 +2029,7 @@ export const PromptComposer: React.FC = () => {
                           alt={`History ${index + 1}`}
                           className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-cyan-500/0 group-hover:bg-cyan-500/20 transition-all flex items-center justify-center">
+                        <div className="absolute inset-0 bg-vis-cyan-500/0 group-hover:bg-vis-cyan-500/20 transition-all flex items-center justify-center">
                           <Plus className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                         </div>
                       </button>
@@ -2039,7 +2039,7 @@ export const PromptComposer: React.FC = () => {
                   const currentImages = selectedTool === 'generate' ? uploadedImages : editReferenceImages;
                   return !currentImages.includes(img);
                 }).length === 0 && (
-                  <p className={cn('text-sm text-center py-6', isDarkMode ? 'text-gray-500' : 'text-gray-600')}>
+                  <p className={cn('text-sm text-center py-6', isDarkMode ? 'text-vis-text-muted' : 'text-gray-600')}>
                     {t.allImagesAdded}
                   </p>
                 )}
@@ -2051,15 +2051,15 @@ export const PromptComposer: React.FC = () => {
                 <div
                   className={cn(
                     'w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center text-3xl transition-colors',
-                    isDarkMode ? 'bg-gray-800 text-white' : 'bg-slate-100 text-gray-600'
+                    isDarkMode ? 'bg-gray-800/50 text-white' : 'bg-slate-100 text-gray-600'
                   )}
                 >
                   📁
                 </div>
-                <p className={cn('text-sm', isDarkMode ? 'text-gray-400' : 'text-gray-600')}>
+                <p className={cn('text-sm', isDarkMode ? 'text-vis-text-secondary' : 'text-gray-600')}>
                   {t.noUploadHistoryYet}
                 </p>
-                <p className={cn('text-xs mt-1', isDarkMode ? 'text-gray-600' : 'text-gray-500')}>
+                <p className={cn('text-xs mt-1', isDarkMode ? 'text-vis-text-muted' : 'text-gray-500')}>
                   {t.uploadImageToSeeHistory}
                 </p>
               </div>
@@ -2070,10 +2070,10 @@ export const PromptComposer: React.FC = () => {
           <div
             className={cn(
               'px-6 py-3 border-t transition-colors',
-              isDarkMode ? 'bg-gray-800/30 border-gray-700/50' : 'bg-gray-50 border-gray-200'
+              isDarkMode ? 'bg-gray-800/30 border-vis-border' : 'bg-gray-50 border-gray-200'
             )}
           >
-            <p className={cn('text-xs text-center', isDarkMode ? 'text-gray-500' : 'text-gray-500')}>
+            <p className={cn('text-xs text-center', isDarkMode ? 'text-vis-text-muted' : 'text-gray-500')}>
               {t.unlimitedUploads}
             </p>
           </div>

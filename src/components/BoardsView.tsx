@@ -644,16 +644,16 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     <div className="flex-1 flex flex-col min-h-0">
       {/* Boards Header */}
       <div
-        className="flex items-center justify-between mb-3 pb-2 border-b flex-shrink-0"
-        style={{ borderColor: 'var(--surface-border)' }}
+        className="flex items-center justify-between mb-3 pb-2 border-b border-vis-border flex-shrink-0"
       >
-        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        <h4 className="text-xs font-semibold text-vis-text-secondary uppercase tracking-wide">
           {t.boards}
         </h4>
         <div className="flex items-center space-x-1">
           <Button
             variant="ghost"
             size="icon"
+            className="h-6 w-6 text-vis-text-secondary hover:text-vis-teal-300 transition-colors"
             onClick={async () => {
               // Download all boards as a single zip
               try {
@@ -709,7 +709,6 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                 alert('Failed to create zip archive');
               }
             }}
-            className="h-6 w-6"
             title="Download all boards as ZIP"
           >
             <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -722,7 +721,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
             variant="ghost"
             size="icon"
             onClick={handleCreateBoard}
-            className="h-6 w-6"
+            className="h-6 w-6 text-vis-text-secondary hover:text-vis-teal-300 transition-colors"
           >
             <Plus className="h-3 w-3" />
           </Button>
@@ -732,7 +731,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       {/* Boards List */}
       <div className="flex-shrink-0 mb-3">
         {boards.length === 0 ? (
-          <div className="text-center py-6 text-sm text-gray-500">
+          <div className="text-center py-6 text-sm text-vis-text-muted">
             {t.noImagesYet}
           </div>
         ) : (
@@ -767,10 +766,10 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       }
                     }}
                     className={cn(
-                      "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all group cursor-pointer border",
+                      "w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 group cursor-pointer border",
                       isSelected
-                        ? "bg-[rgba(124,58,237,0.12)] text-[var(--text-primary)] border-[rgba(124,58,237,0.35)] shadow-sm"
-                        : "border-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                        ? "bg-gradient-to-r from-vis-teal-500/10 to-vis-cyan-500/10 text-vis-teal-300 border-vis-teal-400 shadow-vis-glow-teal"
+                        : "border-transparent text-vis-text-secondary hover:bg-gray-800/50 hover:text-vis-text-primary"
                     )}
                   >
                     <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -788,8 +787,8 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                         className={cn(
                           "text-sm font-medium truncate",
                           isSelected
-                            ? 'text-[var(--text-primary)]'
-                            : 'text-[var(--text-secondary)]'
+                            ? 'text-vis-teal-300'
+                            : 'text-vis-text-primary'
                         )}
                       >
                         {board.id === 'default' ? t.myCreations : board.name}
@@ -799,7 +798,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-gray-500 hover:text-gray-200 hover:bg-gray-800"
+                        className="h-6 w-6 text-vis-text-muted hover:text-vis-teal-300 hover:bg-gray-800/50 transition-colors"
                         onClick={(event) => {
                           event.stopPropagation();
                           boardFileInputsRef.current[board.id]?.click();
@@ -811,7 +810,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-gray-500 hover:text-gray-200 hover:bg-gray-800"
+                        className="h-6 w-6 text-vis-text-muted hover:text-vis-teal-300 hover:bg-gray-800/50 transition-colors"
                         onClick={(event) => {
                           event.stopPropagation();
                           handleRenameBoard(board.id);
@@ -824,7 +823,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 text-gray-500 hover:text-red-400 hover:bg-red-500/20"
+                          className="h-6 w-6 text-vis-text-muted hover:text-red-400 hover:bg-red-500/20 transition-colors"
                           onClick={(event) => {
                             event.stopPropagation();
                             handleDeleteBoard(board.id);
@@ -846,20 +845,16 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       {/* Context menu for boards (right click) - Using Portal to render outside container */}
       {contextMenu.open && contextMenu.boardId && ReactDOM.createPortal(
         <div
-          className="fixed z-[9999] rounded-md shadow-xl py-1 w-48 border"
+          className="fixed z-[9999] rounded-md shadow-vis-glow-teal py-1 w-48 border border-vis-border-light bg-gray-900/95 backdrop-blur-sm"
           style={{
             left: contextMenu.x,
-            top: contextMenu.y,
-            background: 'var(--surface-primary)',
-            borderColor: 'var(--surface-border)',
-            color: 'var(--text-primary)'
+            top: contextMenu.y
           }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Board Title Header */}
           <div
-            className="px-3 py-2 border-b"
-            style={{ borderColor: 'var(--surface-border-light)' }}
+            className="px-3 py-2 border-b border-vis-border"
           >
             <div className="flex items-center space-x-2">
               {(() => {
@@ -870,9 +865,9 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     {board.emoji ? (
                       <span className="text-base">{board.emoji}</span>
                     ) : (
-                      <FolderOpen className="h-4 w-4" />
+                      <FolderOpen className="h-4 w-4 text-vis-teal-400" />
                     )}
-                    <span className="text-sm font-semibold text-gray-200 truncate">
+                    <span className="text-sm font-semibold text-vis-text-primary truncate">
                       {board.id === 'default' ? t.myCreations : board.name}
                     </span>
                   </>
@@ -883,7 +878,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
           
           {/* Rename Board */}
           <button
-            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 flex items-center space-x-2"
+            className="w-full text-left px-3 py-2 text-sm text-vis-text-primary hover:bg-gray-800/50 hover:text-vis-teal-300 flex items-center space-x-2 transition-colors"
             onClick={() => {
               if (contextMenu.boardId) {
                 handleRenameBoard(contextMenu.boardId);
@@ -891,13 +886,13 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
               setContextMenu({ open: false, x: 0, y: 0, boardId: null });
             }}
           >
-            <Edit2 className="h-4 w-4 text-gray-400" />
+            <Edit2 className="h-4 w-4 text-vis-text-secondary" />
             <span>{t.renameBoard}</span>
           </button>
 
           {/* Download as Archive */}
           <button
-            className="w-full text-left px-3 py-2 text-sm text-gray-200 hover:bg-gray-900 flex items-center space-x-2"
+            className="w-full text-left px-3 py-2 text-sm text-vis-text-primary hover:bg-gray-800/50 hover:text-vis-teal-300 flex items-center space-x-2 transition-colors"
             onClick={async () => {
               const board = boards.find(b => b.id === contextMenu.boardId);
               if (!board) return;
@@ -953,7 +948,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
               }
             }}
           >
-            <svg className="h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="h-4 w-4 text-vis-text-secondary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -964,7 +959,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
           {/* Delete Board - Only for non-default boards */}
           {contextMenu.boardId !== 'default' && (
             <button
-              className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-gray-900 flex items-center space-x-2"
+              className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/20 hover:text-red-300 flex items-center space-x-2 transition-colors"
               onClick={() => {
                 // Trigger delete confirmation modal
                 setDeletingBoardId(contextMenu.boardId);
@@ -985,28 +980,14 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
         <>
           <div className="flex-shrink-0 mb-3">
             <div
-              className="flex w-full rounded-md p-0.5 border transition-colors"
-              style={{
-                background: isDarkMode ? 'var(--surface-secondary)' : 'var(--surface-primary)',
-                borderColor: 'var(--surface-border-light)'
-              }}
+              className="flex w-full rounded-md p-0.5 border border-vis-border bg-gray-800/50"
             >
               <button
                 className={cn(
-                  "flex-1 px-3 py-1.5 text-xs font-medium rounded-sm transition-colors",
+                  "flex-1 px-3 py-1.5 text-xs font-medium rounded-sm transition-all duration-200",
                   activeTab === 'images'
-                    ? cn(
-                        'border shadow-sm',
-                        isDarkMode
-                          ? 'bg-cyan-500/20 text-cyan-200 border-[var(--surface-border-light)]'
-                          : 'bg-cyan-100 text-cyan-700 border-cyan-200'
-                      )
-                    : cn(
-                        'border border-transparent',
-                        isDarkMode
-                          ? 'text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                          : 'text-slate-500 hover:text-slate-900 hover:bg-black/5'
-                      )
+                    ? 'bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 text-white shadow-vis-glow-teal border border-vis-teal-400/50'
+                    : 'border border-transparent text-vis-text-secondary hover:text-vis-teal-300 hover:bg-gray-800/70'
                 )}
                 onClick={() => setActiveTab('images')}
               >
@@ -1014,20 +995,10 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
               </button>
               <button
                 className={cn(
-                  "flex-1 px-3 py-1.5 text-xs font-medium rounded-sm transition-colors",
+                  "flex-1 px-3 py-1.5 text-xs font-medium rounded-sm transition-all duration-200",
                   activeTab === 'assets'
-                    ? cn(
-                        'border shadow-sm',
-                        isDarkMode
-                          ? 'bg-cyan-500/20 text-cyan-200 border-[var(--surface-border-light)]'
-                          : 'bg-cyan-100 text-cyan-700 border-cyan-200'
-                      )
-                    : cn(
-                        'border border-transparent',
-                        isDarkMode
-                          ? 'text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                          : 'text-slate-500 hover:text-slate-900 hover:bg-black/5'
-                      )
+                    ? 'bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 text-white shadow-vis-glow-teal border border-vis-teal-400/50'
+                    : 'border border-transparent text-vis-text-secondary hover:text-vis-teal-300 hover:bg-gray-800/70'
                 )}
                 onClick={() => setActiveTab('assets')}
               >
@@ -1051,25 +1022,20 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     />
                     <button
                       onClick={() => document.getElementById('asset-upload')?.click()}
-                      className={cn(
-                        "w-full flex flex-col items-center justify-center py-8 rounded-lg border border-dashed transition-all cursor-pointer",
-                        isDarkMode
-                          ? "bg-gray-800/30 hover:bg-gray-800/50 border-[var(--surface-border)] hover:border-[var(--surface-border-light)]"
-                          : "bg-gray-100 hover:bg-gray-200 border-gray-300 hover:border-gray-400"
-                      )}
+                      className="w-full flex flex-col items-center justify-center py-8 rounded-lg border border-dashed border-vis-border hover:border-vis-teal-400 bg-gray-800/30 hover:bg-gray-800/50 transition-all duration-200 cursor-pointer"
                     >
-                      <div className="w-12 h-12 mb-3 rounded-xl bg-gray-800 flex items-center justify-center">
-                        <Upload className="h-6 w-6 text-cyan-300" />
+                      <div className="w-12 h-12 mb-3 rounded-xl bg-gray-800/50 border border-vis-border flex items-center justify-center">
+                        <Upload className="h-6 w-6 text-vis-teal-400" />
                       </div>
-                      <div className="text-xs text-gray-500">{t.uploadImages}</div>
+                      <div className="text-xs text-vis-text-muted">{t.uploadImages}</div>
                     </button>
                   </>
                 ) : (
                   <>
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gray-800 flex items-center justify-center">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-gray-800/50 border border-vis-border flex items-center justify-center">
                       🖼️
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-vis-text-muted">
                       {t.createImagesMessage}
                     </div>
                   </>
@@ -1081,12 +1047,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                   <div key={item.imageId} className="relative group">
                     <button
                       onClick={() => onImageSelect(item.imageUrl, item.imageId, item.type)}
-                      className={cn(
-                        'relative aspect-square w-full rounded-lg overflow-hidden border-2 transition-all',
-                        isDarkMode
-                          ? 'border-[color:var(--surface-border)] hover:border-[color:var(--surface-border-light)]'
-                          : 'border-slate-200 hover:border-slate-300'
-                      )}
+                      className="relative aspect-square w-full rounded-lg overflow-hidden border-2 border-vis-border hover:border-vis-teal-400 transition-all duration-200 shadow-lg hover:shadow-vis-glow-teal"
                       onContextMenu={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -1201,12 +1162,12 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
                     )}
 
                     {item.type === 'generation' && (
-                      <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded bg-blue-600/80 text-white">
+                      <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded-md bg-vis-teal-500/80 text-white border border-vis-teal-400/50 backdrop-blur-sm shadow-vis-glow-teal">
                         {generationBadgeLabel}
                       </div>
                     )}
                     {item.type === 'asset' && (
-                      <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded bg-amber-500/80 text-gray-900">
+                      <div className="absolute bottom-2 left-2 text-xs px-2 py-1 rounded-md bg-vis-purple-500/80 text-white border border-vis-purple-400/50 backdrop-blur-sm">
                         {assetBadgeLabel}
                       </div>
                     )}
@@ -1420,7 +1381,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       {/* Delete Board Confirmation Modal */}
       <Dialog.Root open={showDeleteBoardModal} onOpenChange={setShowDeleteBoardModal}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
+          <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50" />
           <Dialog.Content
             className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl border"
             style={{
@@ -1492,14 +1453,11 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
 
       {boardImageContextMenu.open && boardImageContextMenu.imageId && ReactDOM.createPortal(
         <div
-          className="fixed z-[9999] min-w-[220px] rounded-xl border shadow-2xl backdrop-blur p-2"
+          className="fixed z-[9999] min-w-[220px] rounded-xl border border-vis-border-light shadow-vis-glow-teal backdrop-blur-sm bg-gray-900/95 p-2"
           ref={boardImageMenuRef}
           style={{
             left: boardImageContextMenu.x,
-            top: boardImageContextMenu.y,
-            background: 'var(--surface-primary)',
-            borderColor: 'var(--surface-border)',
-            color: 'var(--text-primary)'
+            top: boardImageContextMenu.y
           }}
           onPointerDown={(event) => event.stopPropagation()}
         >
