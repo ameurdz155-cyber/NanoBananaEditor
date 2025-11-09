@@ -1,0 +1,20 @@
+services:
+  aipod-lite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aipod-lite
+    restart: unless-stopped
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.aipod-lite.rule=Host(`aipod-lite.findapply.com`)"
+      - "traefik.http.routers.aipod-lite.entrypoints=websecure"
+      - "traefik.http.routers.aipod-lite.tls=true"
+      - "traefik.http.routers.aipod-lite.tls.certresolver=letsencrypt"
+      - "traefik.http.services.aipod-lite.loadbalancer.server.port=80"
+
+networks:
+  dokploy-network:
+    external: true

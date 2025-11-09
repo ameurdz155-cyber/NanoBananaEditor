@@ -28,6 +28,10 @@ dist-ssr
 gemini_tunnel/.env
 gemini_tunnel/credentials.json
 gemini_tunnel/test.json
+gemini_tunnel/__pycache__
+gemini_tunnel/venv
+gemini_tunnel/routes/__pycache__
+gemini_tunnel/services/__pycache__
 
 # Test directories
 test_py/
