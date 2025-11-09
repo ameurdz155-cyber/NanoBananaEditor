@@ -896,7 +896,7 @@ export const PromptComposer: React.FC = () => {
             ? t.promptPlaceholderGenerate
             : t.promptPlaceholderEdit
           }
-          className="min-h-[140px] resize-y bg-gray-950/90 border border-vis-border focus:border-vis-teal-400/70 focus:ring-1 focus:ring-vis-teal-400/30 transition-all duration-200 pr-20 pb-12 text-[13px] leading-relaxed text-vis-text-primary placeholder:text-vis-text-muted"
+          className="min-h-[150px] resize-y bg-gray-950/90 border border-vis-border focus:border-vis-teal-400/70 focus:ring-1 focus:ring-vis-teal-400/30 transition-all duration-200 pr-20 pb-12 text-[13px] leading-relaxed text-vis-text-primary placeholder:text-vis-text-muted"
         />
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
           <button
