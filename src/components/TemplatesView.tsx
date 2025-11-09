@@ -660,15 +660,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const resolvedCategories = React.useMemo<DisplayCategory[]>(() => {
     const map = new Map<string, DisplayCategory>();
 
-    DEFAULT_CATEGORY_CONFIG.forEach((config) => {
-      map.set(config.id, {
-        id: config.id,
-        emoji: config.emoji,
-        name: config.names[language] ?? config.names.en,
-        source: 'default',
-      });
-    });
-
+    // Only use categories from API (promptCategories), excluding hardcoded defaults
     promptCategories.forEach((category) => {
       map.set(category.id, {
         id: category.id,
@@ -680,7 +672,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     });
 
     return Array.from(map.values());
-  }, [language, promptCategories]);
+  }, [promptCategories]);
 
   const categoryLookup = React.useMemo(() => {
     const map = new Map<string, DisplayCategory>();
@@ -1589,9 +1581,17 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         }}
       >
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/70 z-50" />
+          <Dialog.Overlay className={cn(
+            'fixed inset-0 z-50 backdrop-blur-sm',
+            isDarkMode ? 'bg-black/70' : 'bg-black/40'
+          )} />
           <Dialog.Content
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg p-6 z-50 shadow-vis-glow-teal transition-colors bg-gray-900/95 border border-vis-border text-vis-text-primary backdrop-blur-sm"
+            className={cn(
+              'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg p-6 z-50 transition-colors backdrop-blur-sm',
+              isDarkMode
+                ? 'bg-gray-900/95 border border-vis-border text-vis-text-primary shadow-vis-glow-teal'
+                : 'bg-white/95 border border-slate-200 text-slate-900 shadow-2xl'
+            )}
             style={{
               width: '90vw',
               maxWidth: '960px',
@@ -1636,7 +1636,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       <Button
                         variant="outline"
                         size="sm"
-                        className="w-full border-dashed border-vis-teal-400/40 text-vis-teal-300 hover:text-vis-teal-200 hover:bg-vis-teal-500/10 transition-colors"
+                        className={cn(
+                          'w-full border-dashed transition-colors',
+                          isDarkMode
+                            ? 'border-vis-teal-400/40 text-vis-teal-300 hover:text-vis-teal-200 hover:bg-vis-teal-500/10'
+                            : 'border-purple-300 text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                        )}
                         type="button"
                         onClick={() => {
                           resetCategoryForm();
@@ -1658,17 +1663,26 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                               className={cn(
                                 'w-full flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all text-left',
                                 isSelected
-                                  ? 'border-vis-teal-400 bg-vis-teal-500/20 text-vis-teal-100'
-                                  : 'border-vis-border text-vis-text-secondary hover:text-vis-text-primary hover:border-vis-teal-400/40 hover:bg-vis-teal-500/10'
+                                  ? isDarkMode
+                                    ? 'border-vis-teal-400 bg-vis-teal-500/20 text-vis-teal-100'
+                                    : 'border-purple-400 bg-purple-100 text-purple-700'
+                                  : isDarkMode
+                                    ? 'border-vis-border text-vis-text-secondary hover:text-vis-text-primary hover:border-vis-teal-400/40 hover:bg-vis-teal-500/10'
+                                    : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-purple-300/50 hover:bg-purple-50/70'
                               )}
                             >
-                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-md overflow-hidden bg-gray-800/80">
+                              <span className={cn(
+                                'inline-flex h-8 w-8 items-center justify-center rounded-md overflow-hidden',
+                                isDarkMode ? 'bg-gray-800/80' : 'bg-slate-100'
+                              )}>
                                 {renderIconValue(category.emoji, 'h-5 w-5 text-base') || '✨'}
                               </span>
                               <span className="truncate">{category.name}</span>
                               {category.source === 'default' && (
-                                <span className="ml-auto text-xs uppercase tracking-wide text-vis-text-muted"
-                                  style={{ color: 'var(--text-tertiary)' }}
+                                <span className={cn(
+                                  'ml-auto text-xs uppercase tracking-wide',
+                                  isDarkMode ? 'text-vis-text-muted' : 'text-slate-400'
+                                )}
                                 >
                                   {language === 'zh' ? '默认' : 'Default'}
                                 </span>
@@ -1861,13 +1875,20 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   </div>
 
                   <div
-                    className="mt-6 flex items-center justify-between gap-3 pt-4 border-t"
-                    style={{ borderColor: 'var(--surface-border)' }}
+                    className={cn(
+                      'mt-6 flex items-center justify-between gap-3 pt-4 border-t',
+                      isDarkMode ? 'border-vis-border' : 'border-slate-200'
+                    )}
                   >
                     {categoryManagerMode === 'edit' && editingCategoryId && (
                       <Button
                         variant="ghost"
-                        className="text-sm text-red-400 hover:text-red-300"
+                        className={cn(
+                          'text-sm transition-colors',
+                          isDarkMode
+                            ? 'text-red-400 hover:text-red-300'
+                            : 'text-red-500 hover:text-red-600 hover:bg-red-50'
+                        )}
                         type="button"
                         onClick={() => handleDeleteCategory(editingCategoryId)}
                       >
@@ -1883,7 +1904,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                           setShowCategoryModal(false);
                           resetCategoryForm();
                         }}
-                        className="text-vis-text-secondary hover:text-vis-text-primary hover:bg-gray-800/50 transition-colors"
+                        className={cn(
+                          'transition-colors',
+                          isDarkMode
+                            ? 'text-vis-text-secondary hover:text-vis-text-primary hover:bg-gray-800/50'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        )}
                       >
                         {t.cancel}
                       </Button>
@@ -1891,7 +1917,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                         <Button
                           type="button"
                           onClick={handleSaveCategory}
-                          className="px-5"
+                          className="px-5 bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all"
                         >
                           {t.save}
                         </Button>

@@ -1836,21 +1836,13 @@ export const PromptComposer: React.FC = () => {
               borderColor: 'var(--surface-border)'
             }}
           >
-            <div className="flex items-center space-x-3">
-              <div className="relative w-24 h-24 gradient-primary rounded-3xl flex items-center justify-center shadow-2xl mx-auto transform hover:scale-105 transition-transform" style={{ boxShadow: 'rgba(124, 58, 237, 0.25) 0px 20px 45px' }}>
-                <Sparkles className="h-14 w-14" style={{ color: 'var(--text-primary)' }} />
-              </div>
-              <div>
-                <Dialog.Title className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                  {t.referenceImagesTitle}
-                </Dialog.Title>
-                <Dialog.Description id={referenceModalDescriptionId} className="sr-only">
-                  {t.referenceLibrary}: {t.uploadImageToGuideStyle}
-                </Dialog.Description>
-                {/* <p className="text-xs text-gray-400 mt-0.5">
-                  {t.referenceModel.replace('{model}', 'Gemini 2.5 Flash')}
-                </p> */}
-              </div>
+            <div>
+              <Dialog.Title className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                {t.referenceImagesTitle}
+              </Dialog.Title>
+              <Dialog.Description id={referenceModalDescriptionId} className="sr-only">
+                {t.referenceLibrary}: {t.uploadImageToGuideStyle}
+              </Dialog.Description>
             </div>
             <Dialog.Close asChild>
               <Button
