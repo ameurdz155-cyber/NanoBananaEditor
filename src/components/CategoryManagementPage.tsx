@@ -376,25 +376,50 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
             <div className="flex flex-col gap-3">
               {filtered.map(c => {
                 const displayEmoji = c.emoji || c.image || '📁';
+                const cardSurfaceClasses = isDarkMode
+                  ? 'border border-vis-border bg-gradient-to-br from-gray-800/50 to-gray-900/50 hover:border-vis-teal-400 hover:shadow-vis-glow-teal'
+                  : 'border border-slate-200 bg-white/95 shadow-md hover:border-purple-300/60 hover:shadow-[0_18px_36px_-20px_rgba(124,58,237,0.25)]';
+                const imageClasses = cn(
+                  'w-12 h-12 rounded-lg object-cover flex-shrink-0 ring-2',
+                  isDarkMode ? 'ring-vis-teal-400/30' : 'ring-purple-300/40'
+                );
+                const emojiClasses = cn(
+                  'text-3xl flex-shrink-0',
+                  isDarkMode ? 'text-vis-text-primary' : 'text-slate-700'
+                );
+                const nameClasses = cn(
+                  'font-semibold truncate',
+                  isDarkMode ? 'text-vis-text-primary' : 'text-slate-900'
+                );
+                const dateClasses = cn(
+                  'text-xs',
+                  isDarkMode ? 'text-vis-text-muted' : 'text-slate-500'
+                );
                 return (
-                <Card key={c.id} className="group p-4 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-vis-border hover:border-vis-teal-400 hover:shadow-vis-glow-teal transition-all duration-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      {displayEmoji.startsWith('data:') ? (
-                        <img src={displayEmoji} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-vis-teal-400/30 flex-shrink-0" />
-                      ) : (
-                        <div className="text-3xl flex-shrink-0">{displayEmoji}</div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-vis-text-primary truncate">{c.name}</h3>
-                        <p className="text-xs text-vis-text-muted">{new Date(c.createdAt).toLocaleDateString()}</p>
+                  <Card
+                    key={c.id}
+                    className={cn(
+                      'group p-4 transition-all duration-200 rounded-xl backdrop-blur-sm',
+                      cardSurfaceClasses
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        {displayEmoji.startsWith('data:') ? (
+                          <img src={displayEmoji} alt={c.name} className={imageClasses} />
+                        ) : (
+                          <div className={emojiClasses}>{displayEmoji}</div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className={nameClasses}>{c.name}</h3>
+                          <p className={dateClasses}>{new Date(c.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-4">
+                        <Button size="icon" variant="ghost" onClick={() => editCat(c)} className="h-8 w-8 text-vis-cyan-400 hover:text-vis-cyan-300 hover:bg-vis-cyan-500/10"><Edit2 className="h-4 w-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => del(c.id)} className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-4">
-                      <Button size="icon" variant="ghost" onClick={() => editCat(c)} className="h-8 w-8 text-vis-cyan-400 hover:text-vis-cyan-300 hover:bg-vis-cyan-500/10"><Edit2 className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => del(c.id)} className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                  </div>
                 </Card>
               )})}
             </div>
