@@ -389,18 +389,18 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 	}
 
 	return (
-		<div className="h-full w-full bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 overflow-y-auto">
+		<div className="h-full w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 overflow-y-auto">
 			{/* Header */}
-			<header className="sticky top-0 bg-gray-900/95 backdrop-blur-xl border-b border-lime-500/20 z-10">
+			<header className="sticky top-0 bg-gray-900/95 backdrop-blur-xl border-b border-vis-border z-10">
 				<div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
 					<div className="flex items-center gap-3">
-						<Button onClick={onClose} variant="ghost" size="sm" className="text-gray-300">
+						<Button onClick={onClose} variant="ghost" size="sm" className="text-vis-text-secondary hover:text-vis-teal-300">
 							<ArrowLeft className="h-5 w-5 mr-1" />
 							{language === 'zh' ? '返回' : 'Back'}
 						</Button>
 						<div className="flex items-center gap-2">
-							<FileText className="h-7 w-7 text-lime-400" />
-							<h1 className="text-2xl font-bold bg-gradient-to-r from-lime-400 to-cyan-400 bg-clip-text text-transparent">
+							<FileText className="h-7 w-7 text-vis-teal-400" />
+							<h1 className="text-2xl font-bold bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400 bg-clip-text text-transparent">
 								{language === 'zh' ? '模板管理' : 'Template Management'}
 							</h1>
 						</div>
@@ -409,7 +409,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 						variant="ghost"
 						onClick={() => refreshTemplates()}
 						disabled={templatesLoading}
-						className="text-gray-300"
+						className="text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10"
 					>
 						{templatesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
 						<span className="ml-2">{language === 'zh' ? '刷新' : 'Refresh'}</span>
@@ -422,20 +422,20 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 				<div className="flex gap-3 items-stretch">
 					<div className="relative flex-1 flex items-center">
 						<div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-10">
-							<Search className="h-5 w-5 text-gray-500" />
+							<Search className="h-5 w-5 text-vis-text-muted" />
 						</div>
 						<Input
 							value={searchTerm}
 							onChange={(event) => setSearchTerm(event.target.value)}
 							placeholder={language === 'zh' ? '搜索模板...' : 'Search templates...'}
-							className="pl-11 h-11 rounded-xl glass border border-purple-500/20 bg-gray-900/50 text-gray-100 placeholder:text-gray-400 focus-visible:border-purple-400/50 focus-visible:bg-gray-900/70 focus-visible:shadow-[0_0_20px_rgba(168,85,247,0.15)] transition-all duration-200"
+							className="pl-11 h-11 rounded-xl border border-vis-border bg-gray-900/50 text-vis-text-primary placeholder:text-vis-text-muted focus-visible:border-vis-teal-400 focus-visible:bg-gray-900/70 focus-visible:ring-2 focus-visible:ring-vis-teal-500/30 transition-all duration-200"
 						/>
 					</div>
 					<Select value={voiceLang} onValueChange={handleVoiceLangChange}>
-						<SelectTrigger className="h-11 w-auto min-w-[110px] bg-gray-900/80 border border-gray-700 text-xs text-gray-200 rounded-xl px-3">
+						<SelectTrigger className="h-11 w-auto min-w-[110px] bg-gray-900/80 border border-vis-border text-xs text-vis-text-primary rounded-xl px-3">
 							<SelectValue>{voiceLangLabel}</SelectValue>
 						</SelectTrigger>
-						<SelectContent className="bg-gray-900 text-gray-100 border border-gray-700">
+						<SelectContent className="bg-gray-900/95 text-vis-text-primary border border-vis-border-light">
 							<SelectItem value="en-US">English</SelectItem>
 							<SelectItem value="zh-CN">中文</SelectItem>
 						</SelectContent>
@@ -446,7 +446,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 						variant="ghost"
 						onClick={toggleVoiceSearch}
 						disabled={!recognitionRef.current}
-						className={`h-11 w-11 rounded-full border border-gray-700 bg-gray-900/80 flex-shrink-0 transition-colors ${isListening && recognitionRef.current ? 'border-lime-500 text-lime-400 shadow-[0_0_12px_rgba(132,204,22,0.35)]' : 'text-gray-300 hover:border-gray-500 hover:text-white'} ${!recognitionRef.current ? 'opacity-50 cursor-not-allowed' : ''}`}
+						className={`h-11 w-11 rounded-full border flex-shrink-0 transition-all duration-200 ${isListening && recognitionRef.current ? 'border-vis-teal-400 text-vis-teal-400 bg-vis-teal-500/10 shadow-vis-glow-teal' : 'border-vis-border bg-gray-900/80 text-vis-text-secondary hover:border-vis-border-light hover:text-vis-text-primary'} ${!recognitionRef.current ? 'opacity-50 cursor-not-allowed' : ''}`}
 						title={recognitionRef.current ? (isListening ? (language === 'zh' ? '停止语音搜索' : 'Stop voice search') : (language === 'zh' ? '开始语音搜索' : 'Start voice search')) : (language === 'zh' ? '浏览器不支持语音搜索' : 'Voice search not supported')}
 					>
 						{isListening && recognitionRef.current ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
@@ -454,8 +454,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 					<Button 
 						onClick={openCreateForm}
 						size="icon"
-						className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md border-0 flex-shrink-0"
-						style={{ background: 'linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end))' }}
+						className="h-11 w-11 rounded-full bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan border-0 flex-shrink-0 transition-all duration-200"
 					>
 						<Plus className="h-5 w-5" />
 					</Button>
@@ -463,12 +462,13 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 			</div>
 
 			{/* Category Filter */}
-			<section className="border-b border-[var(--surface-border-light)] px-6 py-4">
+			<section className="border-b border-vis-border px-6 py-4">
 				<div className="flex flex-wrap items-center gap-2">
 					<Button
 						variant={selectedCategory === 'all' ? 'default' : 'ghost'}
 						size="sm"
 						onClick={() => setSelectedCategory('all')}
+						className={selectedCategory === 'all' ? 'bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white border-0' : 'hover:bg-vis-teal-500/10 hover:text-vis-teal-400'}
 					>
 						{t.allCategories}
 					</Button>
@@ -476,6 +476,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 						variant={selectedCategory === 'uncategorized' ? 'default' : 'ghost'}
 						size="sm"
 						onClick={() => setSelectedCategory('uncategorized')}
+						className={selectedCategory === 'uncategorized' ? 'bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white border-0' : 'hover:bg-vis-teal-500/10 hover:text-vis-teal-400'}
 					>
 						{t.uncategorized}
 					</Button>
@@ -485,6 +486,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							variant={selectedCategory === category.id ? 'default' : 'ghost'}
 							size="sm"
 							onClick={() => setSelectedCategory(category.id)}
+							className={selectedCategory === category.id ? 'bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white border-0' : 'hover:bg-vis-teal-500/10 hover:text-vis-teal-400'}
 						>
 							<span className="mr-1">{category.emoji || '📁'}</span>
 							{category.name}
@@ -495,13 +497,13 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 
 			<main className="px-6 py-4 pb-8">
 				{templatesLoading ? (
-					<div className="flex h-full items-center justify-center text-sm text-[var(--text-secondary)]">
-						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+					<div className="flex h-full items-center justify-center text-sm text-vis-text-secondary">
+						<Loader2 className="mr-2 h-4 w-4 animate-spin text-vis-teal-400" />
 						{language === 'zh' ? '正在加载模板' : 'Loading templates'}
 					</div>
 				) : filteredTemplates.length === 0 ? (
-					<div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-[var(--text-secondary)]">
-						<EyeOff className="h-6 w-6" />
+					<div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-vis-text-secondary">
+						<EyeOff className="h-6 w-6 text-vis-text-muted" />
 						<p>
 							{searchTerm ? t.noMatchingTemplates : t.noPromptTemplatesAvailable}
 						</p>
@@ -516,15 +518,15 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							return (
 								<article
 									key={template.id}
-									className="space-y-3 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-secondary)] p-4 shadow-sm"
+									className="space-y-3 rounded-xl border border-vis-border bg-gray-800/50 p-4 shadow-sm hover:border-vis-teal-400 hover:shadow-vis-glow-teal transition-all duration-200"
 								>
 									<header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
 										<div>
-											<h2 className="text-lg font-semibold">{template.name}</h2>
+											<h2 className="text-lg font-semibold text-vis-text-primary">{template.name}</h2>
 											{template.description && (
-												<p className="text-sm text-[var(--text-secondary)]">{template.description}</p>
+												<p className="text-sm text-vis-text-secondary">{template.description}</p>
 											)}
-											<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--text-tertiary)]">
+											<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-vis-text-muted">
 												<span>
 													{language === 'zh' ? '更新' : 'Updated'}{' '}
 													{formatDistanceToNow(new Date(template.updatedAt ?? template.createdAt), {
@@ -535,20 +537,20 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 													<span>· {category.emoji ? `${category.emoji} ` : ''}{category.name}</span>
 												)}
 												{template.source === 'default' && (
-													<span className="rounded-full bg-[var(--surface-border-light)] px-2 py-0.5">
+													<span className="rounded-full bg-vis-teal-500/20 border border-vis-teal-400/30 text-vis-teal-300 px-2 py-0.5">
 														{language === 'zh' ? '默认' : 'Default'}
 													</span>
 												)}
 											</div>
 										</div>
 										<div className="flex items-center gap-2">
-											<Button variant="ghost" size="icon" onClick={() => togglePreview(template.id)}>
+											<Button variant="ghost" size="icon" onClick={() => togglePreview(template.id)} className="hover:bg-vis-cyan-500/10 hover:text-vis-cyan-400">
 												{previewId === template.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
 											</Button>
-											<Button variant="ghost" size="icon" onClick={() => handleDuplicate(template)}>
+											<Button variant="ghost" size="icon" onClick={() => handleDuplicate(template)} className="hover:bg-vis-teal-500/10 hover:text-vis-teal-400">
 												<Copy className="h-4 w-4" />
 											</Button>
-											<Button variant="ghost" size="icon" onClick={() => openEditForm(template)}>
+											<Button variant="ghost" size="icon" onClick={() => openEditForm(template)} className="hover:bg-vis-cyan-500/10 hover:text-vis-cyan-400">
 												<Edit2 className="h-4 w-4" />
 											</Button>
 											<Button
@@ -556,7 +558,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 												size="icon"
 												onClick={() => handleDelete(template)}
 												disabled={template.isDefault}
-												className={cn(template.isDefault && 'cursor-not-allowed opacity-50')}
+												className={cn(template.isDefault && 'cursor-not-allowed opacity-50', 'hover:bg-red-500/10 hover:text-red-300')}
 												title={template.isDefault
 													? language === 'zh'
 														? '默认模板无法删除'
@@ -568,15 +570,15 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 										</div>
 									</header>
 									{previewId === template.id && (
-										<div className="space-y-3 rounded-lg border border-[var(--surface-border-light)] bg-[var(--surface-primary)] p-3 text-sm">
+										<div className="space-y-3 rounded-lg border border-vis-border-light bg-gray-900/50 p-3 text-sm">
 											<section>
-												<h3 className="font-medium text-green-400">{language === 'zh' ? '正向提示词' : 'Positive prompt'}</h3>
-												<p className="mt-1 whitespace-pre-wrap text-[var(--text-secondary)]">{template.positivePrompt}</p>
+												<h3 className="font-medium text-vis-teal-400">{language === 'zh' ? '正向提示词' : 'Positive prompt'}</h3>
+												<p className="mt-1 whitespace-pre-wrap text-vis-text-secondary">{template.positivePrompt}</p>
 											</section>
 											{template.negativePrompt && (
 												<section>
 													<h3 className="font-medium text-red-400">{language === 'zh' ? '负向提示词' : 'Negative prompt'}</h3>
-													<p className="mt-1 whitespace-pre-wrap text-[var(--text-secondary)]">{template.negativePrompt}</p>
+													<p className="mt-1 whitespace-pre-wrap text-vis-text-secondary">{template.negativePrompt}</p>
 												</section>
 											)}
 										</div>
@@ -610,7 +612,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 					<div className="flex-1 overflow-y-auto px-1">
 						<div className="grid gap-4">
 						<div className="grid gap-2">
-							<label className="text-sm font-medium">{language === 'zh' ? '名称' : 'Name'}</label>
+							<label className="text-sm font-medium text-vis-text-primary">{language === 'zh' ? '名称' : 'Name'}</label>
 							<Input
 								value={formState.name}
 								onChange={(event) => setFormState((prev) => ({ ...prev, name: event.target.value }))}
@@ -618,7 +620,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							/>
 						</div>
 						<div className="grid gap-2">
-							<label className="text-sm font-medium">{language === 'zh' ? '描述' : 'Description'}</label>
+							<label className="text-sm font-medium text-vis-text-primary">{language === 'zh' ? '描述' : 'Description'}</label>
 							<Textarea
 								value={formState.description}
 								onChange={(event) => setFormState((prev) => ({ ...prev, description: event.target.value }))}
@@ -627,11 +629,11 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							/>
 						</div>
 						<div className="grid gap-2">
-							<label className="text-sm font-medium">{language === 'zh' ? '分类' : 'Category'}</label>
+							<label className="text-sm font-medium text-vis-text-primary">{language === 'zh' ? '分类' : 'Category'}</label>
 							<select
 								value={formState.categoryId}
 								onChange={(event) => setFormState((prev) => ({ ...prev, categoryId: event.target.value }))}
-								className="rounded-md border border-[var(--surface-border)] bg-[var(--surface-primary)] text-[var(--text-primary)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+								className="rounded-md border border-vis-border bg-gray-900/50 text-vis-text-primary px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-vis-teal-500/50 focus:border-vis-teal-400 transition-colors"
 							>
 								<option value="">{t.uncategorized}</option>
 								{promptCategories.map((category) => (
@@ -642,7 +644,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							</select>
 						</div>
 						<div className="grid gap-2">
-							<label className="text-sm font-medium">{language === 'zh' ? '模板图片' : 'Template Image'}</label>
+							<label className="text-sm font-medium text-vis-text-primary">{language === 'zh' ? '模板图片' : 'Template Image'}</label>
 							<input
 								ref={fileInputRef}
 								type="file"
@@ -653,7 +655,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							<Button
 								type="button"
 								variant="outline"
-								className="w-full flex items-center justify-center gap-2"
+								className="w-full flex items-center justify-center gap-2 border-vis-border hover:border-vis-teal-400 hover:bg-vis-teal-500/10 transition-colors"
 								onClick={() => fileInputRef.current?.click()}
 							>
 								<UploadCloud className="h-5 w-5" />
@@ -664,7 +666,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 									<img
 										src={formState.image}
 										alt="Preview"
-										className="h-20 w-20 rounded-md object-cover border border-[var(--surface-border)]"
+										className="h-20 w-20 rounded-md object-cover border border-vis-border"
 										onError={(e) => {
 											e.currentTarget.style.display = 'none';
 										}}
@@ -672,7 +674,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 									<Button
 										variant="ghost"
 										size="sm"
-										className="text-sm text-red-500 hover:text-red-400"
+										className="text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10"
 										type="button"
 										onClick={() => setFormState((prev) => ({ ...prev, image: '' }))}
 									>
@@ -682,7 +684,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							)}
 						</div>
 						<div className="grid gap-2">
-							<label className="text-sm font-medium">{language === 'zh' ? '正向提示词' : 'Positive prompt'}</label>
+							<label className="text-sm font-medium text-vis-text-primary">{language === 'zh' ? '正向提示词' : 'Positive prompt'}</label>
 							<Textarea
 								value={formState.positivePrompt}
 								onChange={(event) => setFormState((prev) => ({ ...prev, positivePrompt: event.target.value }))}
@@ -691,7 +693,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							/>
 						</div>
 						<div className="grid gap-2">
-							<label className="text-sm font-medium">{language === 'zh' ? '负向提示词' : 'Negative prompt'}</label>
+							<label className="text-sm font-medium text-vis-text-primary">{language === 'zh' ? '负向提示词' : 'Negative prompt'}</label>
 							<Textarea
 								value={formState.negativePrompt}
 								onChange={(event) => setFormState((prev) => ({ ...prev, negativePrompt: event.target.value }))}
@@ -703,10 +705,14 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 					</div>
 
 					<DialogFooter className="flex-shrink-0">
-						<Button variant="ghost" onClick={handleFormCancel}>
+						<Button variant="ghost" onClick={handleFormCancel} className="hover:bg-gray-800/50">
 							{language === 'zh' ? '取消' : 'Cancel'}
 						</Button>
-						<Button onClick={handleFormSubmit} disabled={!formState.name.trim() || !formState.positivePrompt.trim()}>
+						<Button 
+							onClick={handleFormSubmit} 
+							disabled={!formState.name.trim() || !formState.positivePrompt.trim()}
+							className="bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all duration-200"
+						>
 							{editingTemplate
 								? language === 'zh'
 									? '保存'

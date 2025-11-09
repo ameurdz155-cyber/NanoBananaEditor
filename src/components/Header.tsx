@@ -335,7 +335,7 @@ export function Header() {
 
   return (
     <>
-  <nav className="flex items-center justify-between px-6 py-3 bg-background text-foreground border-b border-border transition-colors">
+  <nav className="flex items-center justify-between px-6 py-3 bg-vis-panel text-vis-text-primary border-b border-vis-border transition-colors">
       {/* Left section: Logo and Generate with Select */}
       <div className="flex items-center gap-3">
         <img
@@ -349,23 +349,23 @@ export function Header() {
           className="h-9 hidden dark:block"
         />
         
-        <div className="w-px h-5 bg-border" />
+        <div className="w-px h-5 bg-vis-border" />
         
         {/* Primary action (Generate/Upscale) with integrated selector */}
-        <div className="flex items-center rounded-md overflow-hidden bg-background border border-border">
+        <div className="flex items-center rounded-md overflow-hidden bg-gray-800/50 border border-vis-border hover:border-vis-teal-400 transition-colors">
           <Button 
             variant="ghost"
             onClick={handlePrimaryAction}
-            className="flex items-center gap-2 hover:bg-accent px-3 h-8 rounded-none border-0"
+            className="flex items-center gap-2 hover:bg-vis-teal-500/10 px-3 h-8 rounded-none border-0"
             aria-pressed={isBusy}
             type="button"
           >
             {isBusy ? (
-              <Loader2 className={`w-4 h-4 animate-spin ${isUpscaleMode ? 'text-teal-300' : 'text-purple-400'}`} />
+              <Loader2 className={`w-4 h-4 animate-spin ${isUpscaleMode ? 'text-vis-teal-400' : 'text-vis-teal-400'}`} />
             ) : (
-              <IdleIcon className={`w-4 h-4 ${idleIconColor}`} />
+              <IdleIcon className={`w-4 h-4 ${isUpscaleMode ? 'text-vis-teal-400' : 'text-vis-teal-400'}`} />
             )}
-            <span className="text-sm font-medium">
+            <span className="text-sm font-medium text-vis-text-primary">
               {primaryActionLabel}
               {primaryHint ? ` · ${primaryHint}` : ''}
             </span>
@@ -377,14 +377,14 @@ export function Header() {
             disabled={isBusy}
           >
             <SelectTrigger
-              className="w-20 h-8 px-3 py-1 bg-muted text-foreground border-none focus:ring-0 rounded-none"
+              className="w-20 h-8 px-3 py-1 bg-gray-900/80 text-vis-text-primary border-none focus:ring-0 rounded-none"
               aria-label={isUpscaleMode
                 ? (language === 'zh' ? '放大倍数' : 'Upscale multiplier')
                 : (language === 'zh' ? '生成次数' : 'Number of images to generate')}
             >
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-gray-900/95 border border-vis-border-light">
               {isUpscaleMode
                 ? SUPPORTED_UPSCALE_SCALES.map((scaleOption) => (
                     <SelectItem key={scaleOption} value={String(scaleOption)}>
@@ -405,11 +405,11 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="hover:bg-accent rounded-lg w-8 h-8"
+              className="hover:bg-vis-teal-500/10 rounded-lg w-8 h-8"
               onClick={() => setShowExecuteHelpModal(!showExecuteHelpModal)}
               aria-label="Execute mode help"
             >
-              <HelpCircle className="w-4 h-4 text-muted-foreground" />
+              <HelpCircle className="w-4 h-4 text-vis-text-muted hover:text-vis-teal-400 transition-colors" />
             </Button>
             
             {showExecuteHelpModal && (
@@ -418,16 +418,16 @@ export function Header() {
                   className="fixed inset-0 z-40" 
                   onClick={() => setShowExecuteHelpModal(false)}
                 />
-                <div className="absolute top-full left-0 mt-2 z-50 w-80 bg-gray-950 border border-gray-700 rounded-lg shadow-lg p-4">
+                <div className="absolute top-full left-0 mt-2 z-50 w-80 bg-gray-900/95 border border-vis-border rounded-lg shadow-vis-glow-teal p-4">
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-                      <HelpCircle className="w-4 h-4 text-purple-400" />
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-vis-teal-500/20 flex items-center justify-center">
+                      <HelpCircle className="w-4 h-4 text-vis-teal-400" />
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-gray-100 mb-1">
+                      <h4 className="text-sm font-semibold text-vis-text-primary mb-1">
                         {language === 'zh' ? '执行按钮说明' : 'Execute Button Info'}
                       </h4>
-                      <p className="text-xs text-gray-400 leading-relaxed">
+                      <p className="text-xs text-vis-text-secondary leading-relaxed">
                         {language === 'zh'
                           ? '"执行"会根据模式采取不同操作：在生成模式下创建新的图像，在超分辨率模式下放大当前图像。'
                           : 'Execute behaves differently per mode: in Generate it creates new images, in Upscale it enlarges the current image.'}
@@ -449,14 +449,14 @@ export function Header() {
           variant="ghost"
           size="icon"
           onClick={handleZoomIn}
-          className="hover:bg-accent rounded-lg w-9 h-9 border border-purple-500/30"
+          className="hover:bg-vis-teal-500/10 rounded-lg w-9 h-9 border border-vis-border hover:border-vis-teal-400 transition-all"
           aria-label={language === 'zh' ? '放大画布' : 'Zoom in'}
         >
-          <ZoomIn className="w-4 h-4" />
+          <ZoomIn className="w-4 h-4 text-vis-text-secondary hover:text-vis-teal-400 transition-colors" />
         </Button>
         
         <span
-          className="text-sm font-medium px-3 cursor-pointer select-none"
+          className="text-sm font-medium text-vis-text-primary px-3 cursor-pointer select-none hover:text-vis-teal-400 transition-colors"
           onDoubleClick={handleResetView}
           title={language === 'zh' ? '双击重置视图' : 'Double-click to reset view'}
         >
@@ -467,25 +467,25 @@ export function Header() {
           variant="ghost" 
           size="icon"
           onClick={handleZoomOut}
-          className="hover:bg-accent rounded-lg w-9 h-9 border border-purple-500/30"
+          className="hover:bg-vis-teal-500/10 rounded-lg w-9 h-9 border border-vis-border hover:border-vis-teal-400 transition-all"
           aria-label={language === 'zh' ? '缩小画布' : 'Zoom out'}
         >
-          <ZoomOut className="w-4 h-4" />
+          <ZoomOut className="w-4 h-4 text-vis-text-secondary hover:text-vis-teal-400 transition-colors" />
         </Button>
         
         <Button 
           variant="ghost" 
           size="icon"
           onClick={handleRotate}
-          className="hover:bg-accent rounded-lg w-9 h-9 border border-purple-500/30"
+          className="hover:bg-vis-teal-500/10 rounded-lg w-9 h-9 border border-vis-border hover:border-vis-teal-400 transition-all"
           title={language === 'zh' ? '旋转画布 90°' : 'Rotate canvas 90°'}
         >
-          <RotateCcw className="w-4 h-4" />
+          <RotateCcw className="w-4 h-4 text-vis-text-secondary hover:text-vis-teal-400 transition-colors" />
         </Button>
 
         {selectedTool === 'mask' && (
-          <div className="flex items-center gap-2 pl-2 border-l border-purple-500/30">
-            <span className="text-xs font-semibold uppercase tracking-wide text-purple-300">
+          <div className="flex items-center gap-2 pl-2 border-l border-vis-border">
+            <span className="text-xs font-semibold uppercase tracking-wide text-vis-teal-400">
               {t.brush || 'Brush'}
             </span>
             <div className="w-28">
@@ -498,16 +498,16 @@ export function Header() {
                 aria-label={language === 'zh' ? '画笔大小' : 'Brush size'}
               />
             </div>
-            <span className="text-xs text-gray-400 w-8 text-right">{brushSize}</span>
+            <span className="text-xs text-vis-text-muted w-8 text-right">{brushSize}</span>
             <Button
               variant="ghost"
               size="icon"
               onClick={clearBrushStrokes}
               disabled={!brushStrokesCount}
-              className="hover:bg-accent rounded-lg w-9 h-9 border border-purple-500/30 disabled:opacity-50"
+              className="hover:bg-vis-teal-500/10 rounded-lg w-9 h-9 border border-vis-border hover:border-vis-teal-400 disabled:opacity-50 transition-all"
               title={language === 'zh' ? '清除画笔笔触' : 'Clear brush strokes'}
             >
-              <Eraser className="w-4 h-4" />
+              <Eraser className="w-4 h-4 text-vis-text-secondary hover:text-vis-teal-400 transition-colors" />
             </Button>
           </div>
         )}
@@ -515,23 +515,23 @@ export function Header() {
         <Button 
           variant="ghost"
           onClick={handleMasksToggle}
-          className={`flex items-center gap-2 hover:bg-accent rounded-lg px-3 py-2 h-9 border border-purple-500/30 ${showMasks ? 'bg-purple-500/20' : ''}`}
+          className={`flex items-center gap-2 hover:bg-vis-teal-500/10 rounded-lg px-3 py-2 h-9 border border-vis-border hover:border-vis-teal-400 transition-all ${showMasks ? 'bg-vis-teal-500/20 border-vis-teal-400' : ''}`}
           aria-pressed={showMasks}
           title={showMasks ? (language === 'zh' ? '隐藏蒙版' : 'Hide masks') : (language === 'zh' ? '显示蒙版' : 'Show masks')}
         >
-          {showMasks ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-          <span className="text-sm">{t.masks ?? 'Masks'}</span>
+          {showMasks ? <Eye className="w-4 h-4 text-vis-teal-400" /> : <EyeOff className="w-4 h-4 text-vis-text-secondary" />}
+          <span className="text-sm text-vis-text-primary">{t.masks ?? 'Masks'}</span>
         </Button>
 
         <Button
           variant="ghost"
           onClick={handleSave}
           disabled={!canvasImage || isGenerating || isUpscaling}
-          className="flex items-center gap-2 hover:bg-accent rounded-lg px-3 py-2 h-9 border border-purple-500/30 disabled:opacity-50"
+          className="flex items-center gap-2 hover:bg-vis-teal-500/10 rounded-lg px-3 py-2 h-9 border border-vis-border hover:border-vis-teal-400 disabled:opacity-50 transition-all"
           title={language === 'zh' ? '保存当前画布' : 'Save current canvas'}
         >
-          <Save className="w-4 h-4" />
-          <span className="text-sm">{t.save}</span>
+          <Save className="w-4 h-4 text-vis-text-secondary hover:text-vis-teal-400 transition-colors" />
+          <span className="text-sm text-vis-text-primary">{t.save}</span>
         </Button>
       </div>
 
@@ -541,10 +541,10 @@ export function Header() {
           variant="ghost" 
           size="icon"
           onClick={handleThemeToggle}
-          className="hover:bg-accent rounded-lg w-9 h-9 border bg-blue-500/20 border-blue-500/50 dark:bg-yellow-500/20 dark:border-yellow-500/50"
+          className="hover:bg-vis-cyan-500/10 rounded-lg w-9 h-9 border border-vis-border hover:border-vis-cyan-400 bg-vis-cyan-500/20 transition-all"
         >
-          <Moon className="w-4 h-4 text-blue-400 dark:hidden" />
-          <Sun className="w-4 h-4 text-yellow-400 hidden dark:block" />
+          <Moon className="w-4 h-4 text-vis-cyan-400 dark:hidden" />
+          <Sun className="w-4 h-4 text-vis-cyan-300 hidden dark:block" />
         </Button>
         
         <DropdownMenu>
@@ -552,52 +552,52 @@ export function Header() {
             <Button 
               variant="ghost" 
               size="icon"
-              className="hover:bg-accent rounded-lg w-9 h-9 border border-purple-500/30"
+              className="hover:bg-vis-teal-500/10 rounded-lg w-9 h-9 border border-vis-border hover:border-vis-teal-400 transition-all"
             >
-              <Menu className="w-4 h-4" />
+              <Menu className="w-4 h-4 text-vis-text-secondary hover:text-vis-teal-400 transition-colors" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end">
-            <DropdownMenuLabel>{menuLabel}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
+          <DropdownMenuContent className="w-56 bg-gray-900/95 border border-vis-border-light" align="end">
+            <DropdownMenuLabel className="text-vis-text-primary">{menuLabel}</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-vis-border" />
             {isAdminUser && (
               <>
-                <DropdownMenuItem onSelect={() => setShowCategoryModal(true)}>
-                  <Layers className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onSelect={() => setShowCategoryModal(true)} className="focus:bg-vis-teal-500/10 text-vis-text-primary">
+                  <Layers className="mr-2 h-4 w-4 text-vis-teal-400" />
                   <span>{t.menuPromptCategories || 'Prompt Categories'}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setShowTemplateModal(true)}>
-                  <FileText className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onSelect={() => setShowTemplateModal(true)} className="focus:bg-vis-teal-500/10 text-vis-text-primary">
+                  <FileText className="mr-2 h-4 w-4 text-vis-teal-400" />
                   <span>{t.menuTemplateManagement || 'Template Management'}</span>
                 </DropdownMenuItem>
               </>
             )}
-            <DropdownMenuItem onSelect={() => openExternal('/tutorials/?utm_source=AI_POD_Lite')}>
-              <GraduationCap className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onSelect={() => openExternal('/tutorials/?utm_source=AI_POD_Lite')} className="focus:bg-vis-teal-500/10 text-vis-text-primary">
+              <GraduationCap className="mr-2 h-4 w-4 text-vis-cyan-400" />
               <span>{t.menuTutorials || 'Tutorials'}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => openExternal('/community/?utm_source=AI_POD_Lite')}>
-              <Users className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onSelect={() => openExternal('/community/?utm_source=AI_POD_Lite')} className="focus:bg-vis-teal-500/10 text-vis-text-primary">
+              <Users className="mr-2 h-4 w-4 text-vis-cyan-400" />
               <span>{t.menuCommunity || 'Community'}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => openExternal('/assets/?utm_source=AI_POD_Lite')}>
-              <Package className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onSelect={() => openExternal('/assets/?utm_source=AI_POD_Lite')} className="focus:bg-vis-teal-500/10 text-vis-text-primary">
+              <Package className="mr-2 h-4 w-4 text-vis-cyan-400" />
               <span>{t.menuAssets || 'My Assets'}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => openExternal('/wallet/?utm_source=AI_POD_Lite')}>
-              <CreditCard className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onSelect={() => openExternal('/wallet/?utm_source=AI_POD_Lite')} className="focus:bg-vis-teal-500/10 text-vis-text-primary">
+              <CreditCard className="mr-2 h-4 w-4 text-vis-cyan-400" />
               <span>{t.menuWallet || 'Withdraw & Deposit'}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setShowSettingsModal(true)}>
-              <Settings className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onSelect={() => setShowSettingsModal(true)} className="focus:bg-vis-teal-500/10 text-vis-text-primary">
+              <Settings className="mr-2 h-4 w-4 text-vis-text-secondary" />
               <span>{t.settings || 'Settings'}</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setShowInfoModal(true)}>
-              <HelpCircle className="mr-2 h-4 w-4" />
+            <DropdownMenuSeparator className="bg-vis-border" />
+            <DropdownMenuItem onSelect={() => setShowInfoModal(true)} className="focus:bg-vis-teal-500/10 text-vis-text-primary">
+              <HelpCircle className="mr-2 h-4 w-4 text-vis-text-secondary" />
               <span>{t.about || 'About'}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600 dark:text-red-400" onSelect={logout}>
+            <DropdownMenuItem className="text-red-400 focus:bg-red-500/10 focus:text-red-300" onSelect={logout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>{logoutLabel}</span>
             </DropdownMenuItem>

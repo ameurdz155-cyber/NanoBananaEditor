@@ -296,13 +296,13 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
 
   return (
     <>
-      <div className="h-full w-full bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 overflow-y-auto">
+      <div className="h-full w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900/95 backdrop-blur-xl border-b border-lime-500/20 z-10">
+        <div className="sticky top-0 bg-gray-900/95 backdrop-blur-xl border-b border-vis-border z-10">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button onClick={onClose} variant="ghost" size="sm" className="text-gray-300"><ArrowLeft className="h-5 w-5 mr-1" />{language === 'zh' ? '返回' : 'Back'}</Button>
-              <div className="flex items-center gap-2"><Folder className="h-7 w-7 text-lime-400" /><h1 className="text-2xl font-bold bg-gradient-to-r from-lime-400 to-cyan-400 bg-clip-text text-transparent">{language === 'zh' ? '提示词分类' : 'Prompt Categories'}</h1></div>
+              <Button onClick={onClose} variant="ghost" size="sm" className="text-vis-text-secondary hover:text-vis-teal-300"><ArrowLeft className="h-5 w-5 mr-1" />{language === 'zh' ? '返回' : 'Back'}</Button>
+              <div className="flex items-center gap-2"><Folder className="h-7 w-7 text-vis-teal-400" /><h1 className="text-2xl font-bold bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400 bg-clip-text text-transparent">{language === 'zh' ? '提示词分类' : 'Prompt Categories'}</h1></div>
             </div>
           </div>
         </div>
@@ -312,21 +312,21 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
           <div className="flex gap-3 items-stretch">
             <div className="relative flex-1 flex items-center">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-10">
-                <Search className="h-5 w-5 text-gray-500" />
+                <Search className="h-5 w-5 text-vis-text-muted" />
               </div>
               <Input
                 ref={searchInputRef}
                 placeholder={language === 'zh' ? '搜索...' : 'Search prompts...'}
                 value={q}
                 onChange={e => setQ(e.target.value)}
-                className="pl-11 h-11 rounded-xl glass border border-purple-500/20 bg-gray-900/50 text-gray-100 placeholder:text-gray-400 focus-visible:border-purple-400/50 focus-visible:bg-gray-900/70 focus-visible:shadow-[0_0_20px_rgba(168,85,247,0.15)] transition-all duration-200"
+                className="pl-11 h-11 rounded-xl border border-vis-border bg-gray-900/50 text-vis-text-primary placeholder:text-vis-text-muted focus-visible:border-vis-teal-400 focus-visible:bg-gray-900/70 focus-visible:ring-2 focus-visible:ring-vis-teal-500/30 transition-all duration-200"
               />
             </div>
             <Select value={voiceLang} onValueChange={handleVoiceLangChange}>
-              <SelectTrigger className="h-11 w-auto min-w-[110px] bg-gray-900/80 border border-gray-700 text-xs text-gray-200 rounded-xl px-3">
+              <SelectTrigger className="h-11 w-auto min-w-[110px] bg-gray-900/80 border border-vis-border text-xs text-vis-text-primary rounded-xl px-3">
                 <SelectValue>{voiceLangLabel}</SelectValue>
               </SelectTrigger>
-              <SelectContent className="bg-gray-900 text-gray-100 border border-gray-700">
+              <SelectContent className="bg-gray-900/95 text-vis-text-primary border border-vis-border-light">
                 <SelectItem value="en-US">English</SelectItem>
                 <SelectItem value="zh-CN">中文</SelectItem>
               </SelectContent>
@@ -337,7 +337,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
               variant="ghost"
               onClick={toggleVoiceSearch}
               disabled={!voiceSupported}
-              className={`h-11 w-11 rounded-full border border-gray-700 bg-gray-900/80 flex-shrink-0 transition-colors ${listening && voiceSupported ? 'border-lime-500 text-lime-400 shadow-[0_0_12px_rgba(132,204,22,0.35)]' : 'text-gray-300 hover:border-gray-500 hover:text-white'} ${!voiceSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`h-11 w-11 rounded-full border flex-shrink-0 transition-all duration-200 ${listening && voiceSupported ? 'border-vis-teal-400 text-vis-teal-400 bg-vis-teal-500/10 shadow-vis-glow-teal' : 'border-vis-border bg-gray-900/80 text-vis-text-secondary hover:border-vis-border-light hover:text-vis-text-primary'} ${!voiceSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
               title={voiceSupported ? (listening ? (language === 'zh' ? '停止语音搜索' : 'Stop voice search') : (language === 'zh' ? '开始语音搜索' : 'Start voice search')) : (language === 'zh' ? '浏览器不支持语音搜索' : 'Voice search not supported')}
             >
               {listening && voiceSupported ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
@@ -345,8 +345,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
             <Button 
               onClick={add}
               size="icon"
-              className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 text-white shadow-sm hover:shadow-md border-0 flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end))' }}
+              className="h-11 w-11 rounded-full bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan border-0 flex-shrink-0 transition-all duration-200"
             >
               <Plus className="h-5 w-5" />
             </Button>
@@ -366,29 +365,29 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
         <div className="max-w-7xl mx-auto px-4 pb-8">
           {isLoading ? (
             <div className="text-center py-20">
-              <Loader2 className="h-12 w-12 text-lime-400 mx-auto mb-4 animate-spin" />
-              <p className="text-gray-400">{language === 'zh' ? '加载中...' : 'Loading...'}</p>
+              <Loader2 className="h-12 w-12 text-vis-teal-400 mx-auto mb-4 animate-spin" />
+              <p className="text-vis-text-secondary">{language === 'zh' ? '加载中...' : 'Loading...'}</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-20"><Folder className="h-20 w-20 text-gray-700 mx-auto mb-4 opacity-50" /><p className="text-gray-400">{q ? (language === 'zh' ? '未找到' : 'No results') : (language === 'zh' ? '暂无' : 'None yet')}</p></div>
+            <div className="text-center py-20"><Folder className="h-20 w-20 text-vis-text-muted mx-auto mb-4 opacity-50" /><p className="text-vis-text-secondary">{q ? (language === 'zh' ? '未找到' : 'No results') : (language === 'zh' ? '暂无' : 'None yet')}</p></div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {filtered.map(c => {
                 const displayEmoji = c.emoji || c.image || '📁';
                 return (
-                <Card key={c.id} className="group p-5 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-lime-500/50 transition-all">
+                <Card key={c.id} className="group p-5 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-vis-border hover:border-vis-teal-400 hover:shadow-vis-glow-teal transition-all duration-200">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       {displayEmoji.startsWith('data:') ? (
-                        <img src={displayEmoji} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-lime-500/30" />
+                        <img src={displayEmoji} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-vis-teal-400/30" />
                       ) : (
                         <div className="text-4xl">{displayEmoji}</div>
                       )}
-                      <div><h3 className="font-semibold text-white">{c.name}</h3><p className="text-xs text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</p></div>
+                      <div><h3 className="font-semibold text-vis-text-primary">{c.name}</h3><p className="text-xs text-vis-text-muted">{new Date(c.createdAt).toLocaleDateString()}</p></div>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button size="icon" variant="ghost" onClick={() => editCat(c)} className="h-8 w-8 text-cyan-400"><Edit2 className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => del(c.id)} className="h-8 w-8 text-red-400"><Trash2 className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => editCat(c)} className="h-8 w-8 text-vis-cyan-400 hover:text-vis-cyan-300 hover:bg-vis-cyan-500/10"><Edit2 className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => del(c.id)} className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
                 </Card>
@@ -425,7 +424,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
 
               {/* Icon Upload */}
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{language === 'zh' ? '图标' : 'Icon'}</label>
+                <label className="text-sm font-medium text-vis-text-primary">{language === 'zh' ? '图标' : 'Icon'}</label>
                 <input 
                   ref={fileRef} 
                   type="file" 
@@ -436,7 +435,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full flex items-center justify-center gap-2"
+                  className="w-full flex items-center justify-center gap-2 border-vis-border hover:border-vis-teal-400 hover:bg-vis-teal-500/10 transition-colors"
                   onClick={() => fileRef.current?.click()}
                 >
                   <Upload className="h-5 w-5" />
@@ -444,7 +443,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                 </Button>
                 {emoji && emoji !== '📁' && (
                   <div className="mt-2 flex items-center gap-4">
-                    <div className="h-20 w-20 rounded-md border border-[var(--surface-border)] flex items-center justify-center bg-[var(--surface-secondary)]">
+                    <div className="h-20 w-20 rounded-md border border-vis-border flex items-center justify-center bg-gray-800/50">
                       {emoji.startsWith('data:') ? (
                         <img src={emoji} alt="Icon preview" className="h-full w-full rounded-md object-cover" />
                       ) : (
@@ -454,7 +453,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-sm text-red-500 hover:text-red-400"
+                      className="text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10"
                       type="button"
                       onClick={() => setEmoji('📁')}
                     >
@@ -474,17 +473,19 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
           </div>
 
           {/* Footer - Sticky */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-[color:var(--surface-border)] flex-shrink-0">
+          <div className="flex justify-end gap-3 pt-4 border-t border-vis-border flex-shrink-0">
             <Button 
               onClick={() => { setOpen(false); setError(null); }} 
               variant="ghost"
               disabled={isSaving}
+              className="hover:bg-gray-800/50"
             >
               {t.cancel || 'Cancel'}
             </Button>
             <Button 
               onClick={submit} 
               disabled={!name.trim() || isSaving}
+              className="bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all duration-200"
             >
               {isSaving ? (
                 <>

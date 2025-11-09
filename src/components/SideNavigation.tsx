@@ -53,7 +53,7 @@ export const SideNavigation: React.FC = () => {
   return (
     <nav
       data-theme="dark"
-      className="flex flex-col items-center gap-4 py-6 px-2 border-r border-gray-800 bg-gray-950/95"
+      className="flex flex-col items-center gap-4 py-6 px-2 border-r border-vis-border bg-vis-panel"
       style={{ width: '64px' }}
       aria-label="Primary navigation"
     >
@@ -71,8 +71,8 @@ export const SideNavigation: React.FC = () => {
             onClick={() => handleSelect(key)}
             aria-pressed={selected}
             className={cn(
-              'h-12 w-12 rounded-xl flex items-center justify-center transition-all duration-200 text-gray-400 hover:text-gray-200 hover:bg-gray-800/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-lime-400/70 border border-transparent',
-              selected && 'bg-lime-400/15 text-lime-300 shadow-[0_10px_24px_-18px_rgba(190,242,100,0.9)] border border-lime-400/40'
+              'h-12 w-12 rounded-xl flex items-center justify-center transition-all duration-200 text-vis-text-secondary hover:text-vis-teal-300 hover:bg-vis-teal-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-vis-teal-400/70 border border-transparent',
+              selected && 'bg-vis-teal-500/20 text-vis-teal-300 shadow-vis-glow-teal border-vis-teal-400/40'
             )}
           >
             <Icon className="h-5 w-5" />

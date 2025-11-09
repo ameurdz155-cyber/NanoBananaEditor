@@ -83,31 +83,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
       <Dialog.Portal>
         <Dialog.Overlay className={cn(
           "fixed inset-0 backdrop-blur-sm z-50",
-          isDarkMode ? "bg-black/60" : "bg-black/40"
+          isDarkMode ? "bg-black/60" : "bg-black/30"
         )} />
         <Dialog.Content className={cn(
-          "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 w-full max-w-md z-50 shadow-2xl border transition-colors",
+          "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 w-full max-w-md z-50 border transition-colors",
           isDarkMode 
-            ? "bg-gray-950 border-gray-800" 
-            : "bg-white border-gray-200"
+            ? "bg-vis-panel border-vis-border shadow-vis-glow-teal" 
+            : "bg-white border-vis-border-light shadow-xl shadow-vis-teal-500/10"
         )}>
           <div className="relative">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <div className={cn(
-                  "p-2 rounded-xl",
+                  "p-2 rounded-xl border",
                   isDarkMode 
-                    ? "bg-gradient-to-br from-purple-500/20 to-pink-500/20" 
-                    : "bg-gradient-to-br from-purple-100 to-pink-100"
+                    ? "bg-gradient-to-br from-vis-teal-500/20 to-vis-cyan-500/20 border-vis-teal-500/30" 
+                    : "bg-gradient-to-br from-vis-teal-50 to-vis-cyan-50 border-vis-teal-200"
                 )}>
                   <Key className={cn(
                     "h-5 w-5",
-                    isDarkMode ? "text-purple-400" : "text-purple-600"
+                    isDarkMode ? "text-vis-teal-400" : "text-vis-teal-600"
                   )} />
                 </div>
                 <Dialog.Title className={cn(
                   "text-xl font-bold",
-                  isDarkMode ? "text-white" : "text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600"
+                  isDarkMode 
+                    ? "text-vis-text-primary" 
+                    : "text-transparent bg-clip-text bg-gradient-to-r from-vis-teal-600 to-vis-cyan-600"
                 )}>
                   {t.settings}
                 </Dialog.Title>
@@ -117,11 +119,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                   variant="ghost" 
                   size="icon" 
                   className={cn(
-                    "h-8 w-8",
-                    isDarkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
+                    "h-8 w-8 border",
+                    isDarkMode 
+                      ? "border-vis-border hover:bg-vis-teal-500/10 hover:border-vis-teal-500/50" 
+                      : "border-vis-border-light hover:bg-vis-teal-50 hover:border-vis-teal-300"
                   )}
                 >
-                  <X className="h-5 w-5" />
+                  <X className={cn("h-5 w-5", isDarkMode ? "text-vis-text-secondary" : "text-gray-600")} />
                 </Button>
               </Dialog.Close>
             </div>
@@ -131,17 +135,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
               <div className={cn(
                 "p-4 rounded-xl border",
                 isDarkMode 
-                  ? "bg-blue-900/20 border-blue-500/30" 
-                  : "bg-blue-50/50 border-blue-200/50"
+                  ? "bg-vis-teal-500/10 border-vis-teal-500/30" 
+                  : "bg-vis-teal-50/50 border-vis-teal-200"
               )}>
                 <div className="flex items-center mb-3">
                   <Globe className={cn(
                     "h-4 w-4 mr-2",
-                    isDarkMode ? "text-blue-400" : "text-blue-600"
+                    isDarkMode ? "text-vis-teal-400" : "text-vis-teal-600"
                   )} />
                   <label htmlFor="language" className={cn(
                     "text-sm font-medium",
-                    isDarkMode ? "text-blue-300" : "text-blue-700"
+                    isDarkMode ? "text-vis-teal-300" : "text-vis-teal-700"
                   )}>
                     {t.language}
                   </label>
@@ -151,10 +155,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                   value={language}
                   onChange={(e) => setLanguage(e.target.value as Language)}
                   className={cn(
-                    "w-full h-10 px-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors",
+                    "w-full h-10 px-3 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-transparent transition-colors",
                     isDarkMode 
-                      ? "bg-gray-900 border border-gray-700 text-gray-100" 
-                      : "bg-white border border-gray-300 text-gray-900"
+                      ? "bg-vis-card border border-vis-border text-vis-text-primary focus:ring-vis-teal-500" 
+                      : "bg-white border border-vis-border-light text-gray-900 focus:ring-vis-teal-400"
                   )}
                 >
                   <option value="en">English</option>
@@ -162,7 +166,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                 </select>
                 <p className={cn(
                   "text-xs mt-2",
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                  isDarkMode ? "text-vis-text-muted" : "text-gray-600"
                 )}>
                   {t.selectLanguage}
                 </p>
@@ -172,28 +176,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
               <div className={cn(
                 "p-4 rounded-xl border",
                 isDarkMode 
-                  ? "bg-cyan-900/20 border-cyan-500/30" 
-                  : "bg-cyan-50/50 border-cyan-200/50"
+                  ? "bg-vis-cyan-500/10 border-vis-cyan-500/30" 
+                  : "bg-vis-cyan-50/50 border-vis-cyan-200"
               )}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center flex-1">
                     <Save className={cn(
                       "h-4 w-4 mr-2",
-                      isDarkMode ? "text-cyan-400" : "text-cyan-600"
+                      isDarkMode ? "text-vis-cyan-400" : "text-vis-cyan-600"
                     )} />
                     <div className="flex-1">
                       <label 
                         htmlFor="auto-save-toggle" 
                         className={cn(
                           "text-sm font-medium cursor-pointer",
-                          isDarkMode ? "text-cyan-300" : "text-cyan-700"
+                          isDarkMode ? "text-vis-cyan-300" : "text-vis-cyan-700"
                         )}
                       >
                         {language === 'zh' ? '自动保存' : 'Auto-Save'}
                       </label>
                       <p className={cn(
                         "text-xs mt-0.5",
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
+                        isDarkMode ? "text-vis-text-muted" : "text-gray-600"
                       )}>
                         {language === 'zh' 
                           ? '生成后自动保存图像到画廊' 
@@ -207,18 +211,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                     aria-checked={autoSaveEnabled}
                     onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
                     className={cn(
-                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2",
-                      isDarkMode ? "focus:ring-offset-gray-900" : "focus:ring-offset-white",
+                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2",
+                      isDarkMode 
+                        ? "focus:ring-vis-cyan-500 focus:ring-offset-vis-panel" 
+                        : "focus:ring-vis-cyan-400 focus:ring-offset-white",
                       autoSaveEnabled
-                        ? "bg-cyan-600"
+                        ? isDarkMode ? "bg-vis-cyan-600" : "bg-vis-cyan-500"
                         : isDarkMode
-                          ? "bg-gray-700"
+                          ? "bg-vis-border"
                           : "bg-gray-300"
                     )}
                   >
                     <span
                       className={cn(
-                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                        "inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm",
                         autoSaveEnabled ? "translate-x-6" : "translate-x-1"
                       )}
                     />
@@ -230,17 +236,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
               <div className={cn(
                 "p-4 rounded-xl border",
                 isDarkMode 
-                  ? "bg-green-900/20 border-green-500/30" 
-                  : "bg-green-50/50 border-green-200/50"
+                  ? "bg-vis-teal-500/10 border-vis-teal-500/30" 
+                  : "bg-vis-teal-50/50 border-vis-teal-200"
               )}>
                 <div className="flex items-center mb-3">
                   <Folder className={cn(
                     "h-4 w-4 mr-2",
-                    isDarkMode ? "text-green-400" : "text-green-600"
+                    isDarkMode ? "text-vis-teal-400" : "text-vis-teal-600"
                   )} />
                   <label className={cn(
                     "text-sm font-medium",
-                    isDarkMode ? "text-green-300" : "text-green-700"
+                    isDarkMode ? "text-vis-teal-300" : "text-vis-teal-700"
                   )}>
                     {t.savePath}
                   </label>
@@ -251,12 +257,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                     <div className={cn(
                       "mb-3 p-2 rounded-lg border",
                       isDarkMode 
-                        ? "bg-gray-900/50 border-gray-700" 
-                        : "bg-gray-50 border-gray-300"
+                        ? "bg-vis-card/50 border-vis-border" 
+                        : "bg-gray-50 border-vis-border-light"
                     )}>
                       <p className={cn(
                         "text-xs break-all",
-                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                        isDarkMode ? "text-vis-text-secondary" : "text-gray-700"
                       )}>
                         {savePath || t.defaultSavePath}
                       </p>
@@ -288,12 +294,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                   <div className={cn(
                     "p-3 rounded-lg border",
                     isDarkMode 
-                      ? "bg-gray-900/50 border-gray-700" 
-                      : "bg-gray-50 border-gray-300"
+                      ? "bg-vis-card/50 border-vis-border" 
+                      : "bg-gray-50 border-vis-border-light"
                   )}>
                     <p className={cn(
                       "text-xs text-center",
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                      isDarkMode ? "text-vis-text-muted" : "text-gray-600"
                     )}>
                       {t.desktopAppOnly}
                     </p>
@@ -302,7 +308,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                 
                 <p className={cn(
                   "text-xs mt-2",
-                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                  isDarkMode ? "text-vis-text-muted" : "text-gray-600"
                 )}>
                   {t.savePathDescription}
                 </p>

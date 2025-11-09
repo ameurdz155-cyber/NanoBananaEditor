@@ -1235,10 +1235,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
     const categoryIconNode = renderIconValue(
       categoryInfo?.emoji,
-      cn(
-        'w-4 h-4 text-xs flex items-center justify-center',
-        isDarkMode ? 'text-purple-200' : 'text-purple-500'
-      )
+      'w-4 h-4 text-xs flex items-center justify-center text-vis-teal-400'
     );
 
     const activeActionsClasses = 'flex w-full items-center justify-end gap-2 pt-2';
@@ -1275,12 +1272,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               />
             ) : (
               templateIconNode || (
-                <span
-                  className={cn(
-                    'text-2xl font-semibold',
-                    isDarkMode ? 'text-purple-200' : 'text-purple-600'
-                  )}
-                >
+                <span className="text-2xl font-semibold text-vis-teal-400">
                   {template.name.charAt(0).toUpperCase()}
                 </span>
               )
@@ -1289,46 +1281,33 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
           <div className="flex-1 min-w-0 flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{template.name}</h4>
+              <h4 className="text-sm font-semibold text-vis-text-primary">{template.name}</h4>
               {selectedTemplate === template.id && (
-                <span
-                  className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border',
-                    isDarkMode
-                      ? 'border-purple-500/40 bg-purple-500/15 text-purple-200'
-                      : 'border-purple-300 bg-purple-100 text-purple-700'
-                  )}
-                >
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border border-vis-teal-400/40 bg-vis-teal-500/20 text-vis-teal-200">
                   {language === 'zh' ? '已应用' : 'Active'}
                 </span>
               )}
             </div>
 
             {template.description && (
-              <p
-                className="text-xs line-clamp-3"
-                style={{ color: 'var(--text-secondary)' }}
-              >
+              <p className="text-xs line-clamp-3 text-vis-text-secondary">
                 {template.description}
               </p>
             )}
 
             {categoryInfo ? (
-              <div className="flex items-center gap-1 text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+              <div className="flex items-center gap-1 text-[11px] text-vis-text-muted">
                 {categoryIconNode}
                 <span>{categoryInfo.name}</span>
               </div>
             ) : !template.categoryId ? (
-              <div className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{t.uncategorized}</div>
+              <div className="text-[11px] text-vis-text-muted">{t.uncategorized}</div>
             ) : null}
           </div>
 
           {selectedTemplate === template.id ? (
             <div className={activeActionsClasses}>
-              <div
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-transparent"
-                style={{ color: 'var(--text-tertiary)' }}
-              >
+              <div className="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-vis-text-muted">
                 <ChevronDown className="h-4 w-4" />
               </div>
             </div>
@@ -1337,8 +1316,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 hover:bg-[var(--bg-hover)]"
-                style={{ color: 'var(--text-secondary)' }}
+                className="h-8 w-8 text-vis-text-secondary hover:text-vis-cyan-400 hover:bg-vis-cyan-500/10"
                 onClick={(e) => {
                   e.stopPropagation();
                   openDuplicateModal(template);
@@ -1352,8 +1330,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 hover:bg-[var(--bg-hover)]"
-                    style={{ color: 'var(--text-secondary)' }}
+                    className="h-8 w-8 text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10"
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditModal(template);
@@ -1394,18 +1371,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative w-full sm:flex-1">
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors"
-              style={{ color: 'var(--text-tertiary)' }}
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-vis-text-muted transition-colors"
             />
             <Input
               type="text"
               placeholder={language === 'zh' ? '按名称搜索' : 'Search by name'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={cn(
-                'pl-10 pr-12 transition-colors rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] border-[var(--surface-border)] bg-[var(--surface-primary)]/90 focus-visible:bg-[var(--surface-primary)] focus-visible:shadow-[0_0_18px_rgba(168,85,247,0.12)]'
-              )}
-              style={{ color: 'var(--text-primary)' }}
+              className="pl-10 pr-12 transition-colors rounded-xl text-vis-text-primary placeholder:text-vis-text-muted border-vis-border bg-gray-800/50 focus-visible:bg-gray-800 focus-visible:ring-2 focus-visible:ring-vis-teal-500/50 focus-visible:border-vis-teal-400"
             />
             <button
               type="button"
@@ -1415,9 +1388,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               title={voiceSearchButtonLabel}
               aria-pressed={isListening}
               className={cn(
-                'absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/70',
-                'border-[var(--surface-border)] bg-[var(--surface-secondary)]/90 text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]',
-                isListening && 'border-purple-400/60 bg-purple-500/10 text-purple-500',
+                'absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vis-teal-400/70',
+                'border-vis-border bg-gray-800/50 text-vis-text-secondary hover:bg-vis-teal-500/10 hover:text-vis-teal-400 hover:border-vis-teal-400',
+                isListening && 'border-vis-teal-400 bg-vis-teal-500/20 text-vis-teal-400 shadow-vis-glow-teal',
                 !isVoiceSearchSupported && 'cursor-not-allowed opacity-60'
               )}
             >
@@ -1435,10 +1408,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               onClick={openCreateModal}
               title={t.createTemplate}
               aria-label={t.createTemplate}
-              className={cn(
-                'h-10 w-10 rounded-xl transition-all',
-                'bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg'
-              )}
+              className="h-10 w-10 rounded-xl bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all"
               type="button"
             >
               <Plus className="h-4 w-4" />
@@ -1449,12 +1419,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         {templateError && (
           <div
             role="alert"
-            className={cn(
-              'rounded-lg border px-3 py-2 text-sm',
-              isDarkMode
-                ? 'border-red-500/40 bg-red-500/10 text-red-200'
-                : 'border-red-200 bg-red-50 text-red-700'
-            )}
+            className="rounded-lg border border-red-500/40 bg-red-500/10 text-red-200 px-3 py-2 text-sm"
           >
             {language === 'zh'
               ? `加载模板时出错：${templateError}`
@@ -1464,22 +1429,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span
-              className="text-xs uppercase tracking-wide"
-              style={{ color: 'var(--text-tertiary)' }}
-            >
+            <span className="text-xs uppercase tracking-wide text-vis-text-muted">
               {t.templateCategories}
             </span>
             {isPremiumUser && (
               <Button
                 variant="ghost"
                 size="sm"
-                className={cn(
-                  'h-8 px-2 text-xs transition-colors',
-                  isDarkMode
-                    ? 'text-[color:var(--text-tertiary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                    : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
-                )}
+                className="h-8 px-2 text-xs text-vis-text-muted hover:text-vis-teal-400 hover:bg-vis-teal-500/10 transition-colors"
                 onClick={() => openCategoryModal()}
                 type="button"
               >
@@ -1495,13 +1452,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               const countValue = category.count ?? 0;
               const countClasses = cn(
                 'ml-1 text-[11px] font-medium transition-colors',
-                isActive
-                  ? isDarkMode
-                    ? 'text-purple-100'
-                    : 'text-purple-700'
-                  : isDarkMode
-                    ? 'text-[var(--text-tertiary)]'
-                    : 'text-slate-500'
+                isActive ? 'text-vis-teal-100' : 'text-vis-text-muted'
               );
               return (
                 <button
@@ -1510,12 +1461,8 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   className={cn(
                     'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition-all',
                     isActive
-                      ? isDarkMode
-                        ? 'border-purple-500 bg-purple-500/15 text-purple-200 shadow-sm'
-                        : 'border-purple-300 bg-purple-100 text-purple-700 shadow-sm'
-                      : isDarkMode
-                        ? 'border-[var(--surface-border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-purple-400/40 hover:bg-purple-500/10'
-                        : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-purple-300/60 hover:bg-purple-50'
+                      ? 'border-vis-teal-400 bg-gradient-to-r from-vis-teal-500/20 to-vis-cyan-500/20 text-vis-teal-200 shadow-vis-glow-teal'
+                      : 'border-vis-border text-vis-text-secondary hover:text-vis-text-primary hover:border-vis-teal-400/40 hover:bg-vis-teal-500/10'
                   )}
                   type="button"
                 >
@@ -1534,14 +1481,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       {/* Templates List */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-3">
         {templatesLoading && (
-          <div
-            className={cn(
-              'rounded-lg border px-3 py-2 text-sm flex items-center justify-between gap-2',
-              isDarkMode
-                ? 'border-purple-500/30 bg-purple-500/5 text-purple-100'
-                : 'border-purple-200 bg-purple-50 text-purple-700'
-            )}
-          >
+          <div className="rounded-lg border border-vis-teal-400/30 bg-vis-teal-500/10 text-vis-teal-200 px-3 py-2 text-sm flex items-center justify-between gap-2">
             <span>
               {language === 'zh' ? '正在加载模板…' : 'Loading templates…'}
             </span>
@@ -1555,7 +1495,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   strokeLinecap="round"
                   strokeDasharray="60"
                   strokeDashoffset="20"
-                  stroke={isDarkMode ? 'rgba(196,181,253,0.7)' : '#8b5cf6'}
+                  stroke="currentColor"
                   fill="none"
                 />
               </svg>
@@ -1568,30 +1508,27 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           <div>
             <button
               onClick={() => toggleSection('my')}
-              className={cn(
-                'w-full flex items-center justify-between p-2 rounded-lg transition-colors group',
-                isDarkMode ? 'hover:bg-white/5' : 'hover:bg-black/5'
-              )}
+              className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-vis-teal-500/10 transition-colors group"
               type="button"
             >
               <div className="flex items-center gap-2">
                 {expandedSections.my ? (
-                  <ChevronDown className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
+                  <ChevronDown className="h-4 w-4 text-vis-text-muted" />
                 ) : (
-                  <ChevronRight className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
+                  <ChevronRight className="h-4 w-4 text-vis-text-muted" />
                 )}
-                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>My Templates</h3>
+                <h3 className="text-sm font-semibold text-vis-text-primary">My Templates</h3>
               </div>
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{customTemplatesFromStore.length}</span>
+              <span className="text-xs text-vis-text-muted">{customTemplatesFromStore.length}</span>
             </button>
 
             {expandedSections.my && (
               <div className="mt-2">
                 {filteredMyTemplates.length === 0 ? (
-                  <div className="text-center py-6 text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                  <div className="text-center py-6 text-sm space-y-1 text-vis-text-secondary">
                     <p>{searchQuery ? t.noMatchingTemplates : t.noPromptTemplatesAvailable}</p>
                     {!searchQuery && (
-                      <p style={{ color: 'var(--text-tertiary)' }}>{t.createTemplateFirstMessage}</p>
+                      <p className="text-vis-text-muted">{t.createTemplateFirstMessage}</p>
                     )}
                   </div>
                 ) : (
@@ -1608,27 +1545,24 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         <div>
           <button
             onClick={() => toggleSection('default')}
-            className={cn(
-              'w-full flex items-center justify-between p-2 rounded-lg transition-colors group',
-              isDarkMode ? 'hover:bg-white/5' : 'hover:bg-black/5'
-            )}
+            className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-vis-teal-500/10 transition-colors group"
             type="button"
           >
             <div className="flex items-center gap-2">
               {expandedSections.default ? (
-                <ChevronDown className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
+                <ChevronDown className="h-4 w-4 text-vis-text-muted" />
               ) : (
-                <ChevronRight className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
+                <ChevronRight className="h-4 w-4 text-vis-text-muted" />
               )}
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Default Templates</h3>
+              <h3 className="text-sm font-semibold text-vis-text-primary">Default Templates</h3>
             </div>
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>{defaultTemplatesFromStore.length}</span>
+            <span className="text-xs text-vis-text-muted">{defaultTemplatesFromStore.length}</span>
           </button>
 
           {expandedSections.default && (
             <div className="mt-2">
               {filteredDefaultTemplates.length === 0 ? (
-                <div className="text-center py-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <div className="text-center py-6 text-sm text-vis-text-secondary">
                   {t.noMatchingTemplates}
                 </div>
               ) : (
@@ -1657,14 +1591,11 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/70 z-50" />
           <Dialog.Content
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg p-6 z-50 shadow-2xl transition-colors"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-lg p-6 z-50 shadow-vis-glow-teal transition-colors bg-gray-900/95 border border-vis-border text-vis-text-primary backdrop-blur-sm"
             style={{
               width: '90vw',
               maxWidth: '960px',
-              maxHeight: '85vh',
-              background: 'var(--modal-surface-background)',
-              border: '1px solid var(--modal-surface-border)',
-              color: 'var(--text-primary)'
+              maxHeight: '85vh'
             }}
           >
             {(() => {
@@ -1679,10 +1610,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 <div className="flex flex-col h-full">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <Dialog.Title className="text-xl font-semibold text-[color:var(--text-primary)]">
+                      <Dialog.Title className="text-xl font-semibold text-vis-text-primary">
                         {modalTitle}
                       </Dialog.Title>
-                      <p className="text-sm mt-1 text-[color:var(--text-secondary)]">
+                      <p className="text-sm mt-1 text-vis-text-secondary">
                         {language === 'zh'
                           ? '管理模板分类、图标与名称。默认分类不可编辑。'
                           : 'Manage names and icons for your categories. Default categories are view only.'}
@@ -1692,12 +1623,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={cn(
-                          'h-8 w-8 transition-colors',
-                          isDarkMode
-                            ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                            : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
-                        )}
+                        className="h-8 w-8 text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10 transition-colors"
                         type="button"
                       >
                         <X className="h-4 w-4" />
@@ -1710,12 +1636,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                       <Button
                         variant="outline"
                         size="sm"
-                        className={cn(
-                          'w-full border-dashed transition-colors',
-                          isDarkMode
-                            ? 'border-purple-500/40 text-purple-200 hover:text-purple-100'
-                            : 'border-purple-300 text-purple-600 hover:text-purple-700 bg-purple-50/70'
-                        )}
+                        className="w-full border-dashed border-vis-teal-400/40 text-vis-teal-300 hover:text-vis-teal-200 hover:bg-vis-teal-500/10 transition-colors"
                         type="button"
                         onClick={() => {
                           resetCategoryForm();
@@ -1737,26 +1658,16 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                               className={cn(
                                 'w-full flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-all text-left',
                                 isSelected
-                                  ? isDarkMode
-                                    ? 'border-purple-500 bg-purple-500/10 text-purple-100'
-                                    : 'border-purple-300 bg-purple-100 text-purple-700'
-                                  : isDarkMode
-                                    ? 'border-[color:var(--surface-border)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:border-purple-400/40'
-                                    : 'border-slate-200 text-slate-600 hover:text-slate-900 hover:border-purple-300/50 hover:bg-purple-50/70'
+                                  ? 'border-vis-teal-400 bg-vis-teal-500/20 text-vis-teal-100'
+                                  : 'border-vis-border text-vis-text-secondary hover:text-vis-text-primary hover:border-vis-teal-400/40 hover:bg-vis-teal-500/10'
                               )}
                             >
-                              <span
-                                className={cn(
-                                  'inline-flex h-8 w-8 items-center justify-center rounded-md overflow-hidden',
-                                  isDarkMode ? 'bg-gray-800/80' : 'bg-slate-100'
-                                )}
-                              >
+                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-md overflow-hidden bg-gray-800/80">
                                 {renderIconValue(category.emoji, 'h-5 w-5 text-base') || '✨'}
                               </span>
                               <span className="truncate">{category.name}</span>
                               {category.source === 'default' && (
-                                <span
-                                  className="ml-auto text-xs uppercase tracking-wide"
+                                <span className="ml-auto text-xs uppercase tracking-wide text-vis-text-muted"
                                   style={{ color: 'var(--text-tertiary)' }}
                                 >
                                   {language === 'zh' ? '默认' : 'Default'}
@@ -1770,7 +1681,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-sm font-medium text-[color:var(--text-secondary)] mb-2">
+                        <label className="block text-sm font-medium text-vis-text-secondary mb-2">
                           {t.categoryNameLabel}
                         </label>
                         <Input
@@ -1797,8 +1708,8 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                             {renderIconValue(categoryForm.emoji, 'h-10 w-10 text-3xl') || '⭐'}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-[color:var(--text-secondary)]">{t.categoryEmojiLabel}</p>
-                            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                            <p className="text-sm font-medium text-vis-text-secondary">{t.categoryEmojiLabel}</p>
+                            <p className="text-xs text-vis-text-muted">
                               {language === 'zh'
                                 ? '从下方选项卡中选择图标，或输入自定义图标。'
                                 : 'Pick an icon from the tabs below or provide your own.'}
@@ -1972,12 +1883,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                           setShowCategoryModal(false);
                           resetCategoryForm();
                         }}
-                        className={cn(
-                          'transition-colors',
-                          isDarkMode
-                            ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                            : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
-                        )}
+                        className="text-vis-text-secondary hover:text-vis-text-primary hover:bg-gray-800/50 transition-colors"
                       >
                         {t.cancel}
                       </Button>
@@ -2028,27 +1934,20 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               color: 'var(--text-primary)'
             }}
           >
-            <div className="flex items-center justify-between mb-6">
-              <Dialog.Title className="text-2xl font-semibold text-[color:var(--text-primary)]">
+              <div className="flex items-center justify-between mb-6">
+              <Dialog.Title className="text-2xl font-semibold text-vis-text-primary">
                 {editingTemplate ? t.editPromptTemplate : t.createPromptTemplate}
               </Dialog.Title>
               <Dialog.Close asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className={cn(
-                    'h-8 w-8 transition-colors',
-                    isDarkMode
-                      ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                      : 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-black/5'
-                  )}
+                  className="h-8 w-8 text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10 transition-colors"
                 >
                   <X className="h-5 w-5" />
                 </Button>
               </Dialog.Close>
-            </div>
-
-            <div className="space-y-6">
+            </div>            <div className="space-y-6">
               {/* Template Icon/Preview */}
               <div className="flex items-center gap-6">
                 <div
@@ -2062,50 +1961,39 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   </span>
                 </div>
                 <div className="flex-1">
-                  <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">{t.name}</label>
+                  <label className="block text-base font-medium text-vis-text-secondary mb-2">{t.name}</label>
                   <Input
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Anime (Copy)"
-                    className={cn(
-                      'w-full text-base py-3',
-                      !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white focus-visible:shadow-[0_0_18px_rgba(168,85,247,0.12)]'
-                    )}
+                    className="w-full text-base py-3"
                   />
                 </div>
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
+                <label className="block text-base font-medium text-vis-text-secondary mb-2">
                   {t.descriptionOptional}
                 </label>
                 <Input
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder={t.briefDescription}
-                  className={cn(
-                    'w-full text-base py-3',
-                    !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
-                  )}
+                  className="w-full text-base py-3"
                 />
               </div>
 
               {/* Category and Emoji */}
               <div className="grid gap-6 sm:grid-cols-2">
                 <div>
-                  <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
+                  <label className="block text-base font-medium text-vis-text-secondary mb-2">
                     {t.templateCategoryLabel}
                   </label>
                   <select
                     value={formData.categoryId}
                     onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
-                    className={cn(
-                      'w-full rounded-md px-4 py-3 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500',
-                      isDarkMode
-                        ? 'bg-[color:var(--surface-primary)] border-[color:var(--surface-border)] text-[color:var(--text-primary)]'
-                        : 'bg-white border-slate-200 text-slate-900 shadow-sm'
-                    )}
+                    className="w-full rounded-md px-4 py-3 text-base border border-vis-border bg-gray-800/50 text-vis-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-vis-teal-500/50 focus:border-vis-teal-400"
                   >
                     <option value="">{t.uncategorized}</option>
                     {resolvedCategories.map((category) => (
@@ -2116,7 +2004,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   </select>
                 </div>
                 <div>
-                  <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
+                  <label className="block text-base font-medium text-vis-text-secondary mb-2">
                     {t.templateEmojiLabel}
                   </label>
                   <Input
@@ -2124,17 +2012,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     onChange={(e) => setFormData((prev) => ({ ...prev, emoji: e.target.value }))}
                     placeholder="🎨"
                     maxLength={8}
-                    className={cn(
-                      'w-full text-base py-3',
-                      !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
-                    )}
+                    className="w-full text-base py-3"
                   />
                 </div>
               </div>
 
               {/* Representative Image */}
               <div>
-                <label className="block text-base font-medium text-[color:var(--text-secondary)] mb-2">
+                <label className="block text-base font-medium text-vis-text-secondary mb-2">
                   {t.templateImageLabel}
                 </label>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -2298,30 +2183,20 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               </div>
 
               {/* Save Button */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-[color:var(--surface-border)]">
+              <div className="flex justify-end gap-3 pt-4 border-t border-vis-border">
                 <Button
                   variant="ghost"
                   onClick={() => {
                     setShowCreateModal(false);
                     setIsDuplicationMode(false);
                   }}
-                  className={cn(
-                    'px-6 py-3 text-base transition-colors',
-                    isDarkMode
-                      ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-black/5'
-                  )}
+                  className="px-6 py-3 text-base text-vis-text-secondary hover:text-vis-text-primary hover:bg-gray-800/50 transition-colors"
                 >
                   {t.cancel}
                 </Button>
                 <Button
                   onClick={handleSaveTemplate}
-                  className={cn(
-                    'px-6 py-3 text-base transition-colors',
-                    isDarkMode
-                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_12px_30px_-12px_rgba(168,85,247,0.45)]'
-                      : 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_14px_34px_-18px_rgba(168,85,247,0.55)]'
-                  )}
+                  className="px-6 py-3 text-base bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all duration-200"
                   disabled={isSavingTemplate}
                   aria-busy={isSavingTemplate}
                 >
@@ -2343,32 +2218,15 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             )} 
           />
           <Dialog.Content
-            className={cn(
-              'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 z-50 transition-all max-w-md w-[90vw]',
-              isDarkMode 
-                ? 'shadow-2xl' 
-                : 'shadow-[0_20px_50px_rgba(0,0,0,0.15)]'
-            )}
-            style={{
-              background: 'var(--modal-surface-background)',
-              border: '1px solid var(--modal-surface-border)',
-              color: 'var(--text-primary)'
-            }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 z-50 transition-all max-w-md w-[90vw] shadow-vis-glow-teal bg-gray-900/95 border border-vis-border text-vis-text-primary backdrop-blur-sm"
           >
             <div className="space-y-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <div
-                    className={cn(
-                      'h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0',
-                      isDarkMode
-                        ? 'bg-purple-500/20 text-purple-300'
-                        : 'bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700'
-                    )}
-                  >
+                  <div className="h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 bg-vis-teal-500/20 text-vis-teal-300">
                     <FaStar className="h-6 w-6" />
                   </div>
-                  <Dialog.Title className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  <Dialog.Title className="text-xl font-semibold text-vis-text-primary">
                     {t.premiumFeatureTitle}
                   </Dialog.Title>
                 </div>
@@ -2388,31 +2246,15 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 </Dialog.Close>
               </div>
 
-              <p 
-                className={cn(
-                  'text-base leading-relaxed',
-                  isDarkMode ? '' : 'text-slate-600'
-                )}
-                style={{ color: isDarkMode ? 'var(--text-secondary)' : undefined }}
-              >
+              <p className="text-base leading-relaxed text-vis-text-secondary">
                 {t.premiumFeatureDescription}
               </p>
 
-              <div 
-                className={cn(
-                  'flex justify-end gap-3 pt-3 border-t',
-                  isDarkMode ? 'border-gray-800' : 'border-slate-200'
-                )}
-              >
+              <div className="flex justify-end gap-3 pt-3 border-t border-vis-border">
                 <Button
                   variant="ghost"
                   onClick={() => setShowPremiumAlert(false)}
-                  className={cn(
-                    'px-4 transition-colors',
-                    isDarkMode
-                      ? 'text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  )}
+                  className="px-4 text-vis-text-secondary hover:text-vis-text-primary hover:bg-gray-800/50 transition-colors"
                 >
                   {t.cancel}
                 </Button>
@@ -2421,12 +2263,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     setShowPremiumAlert(false);
                     // Here you could redirect to upgrade page or open upgrade modal
                   }}
-                  className={cn(
-                    'px-6 transition-all',
-                    isDarkMode
-                      ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                      : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40'
-                  )}
+                  className="px-6 bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all"
                 >
                   {t.upgradeToUnlock}
                 </Button>

@@ -129,7 +129,7 @@ export const HistoryPanel: React.FC = () => {
 
   const MenuSection = ({ title }: { title: string }) => (
     <div className="px-3 pt-2 pb-1">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-vis-text-muted">
         {title}
       </span>
     </div>
@@ -155,10 +155,10 @@ export const HistoryPanel: React.FC = () => {
       className={cn(
         'w-full text-left px-3 py-2 text-sm flex items-center gap-2 rounded-md transition-colors',
         disabled
-          ? 'text-gray-500 cursor-not-allowed'
+          ? 'text-vis-text-muted cursor-not-allowed'
           : destructive
             ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
-            : 'text-gray-200 hover:bg-gray-900'
+            : 'text-vis-text-primary hover:bg-vis-teal-500/10'
       )}
     >
       <span className="flex-shrink-0">{icon}</span>
@@ -472,11 +472,11 @@ export const HistoryPanel: React.FC = () => {
   }
 
   return (
-    <div className="w-64 bg-gray-950 border-l border-gray-800 p-4 flex flex-col h-full overflow-visible relative">
+    <div className="w-64 bg-vis-panel border-l border-vis-border p-4 flex flex-col h-full overflow-visible relative">
       {/* Hide Button - Positioned Outside */}
       <button
         onClick={() => setShowHistory(false)}
-        className="inline-flex items-center justify-center font-semibold duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 overflow-hidden absolute top-6 -left-3 h-8 w-8 rounded-full border border-gray-700 bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white transition-colors z-[9999] opacity-60 hover:opacity-100 pointer-events-auto shadow-lg"
+        className="inline-flex items-center justify-center font-semibold duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 overflow-hidden absolute top-6 -left-3 h-8 w-8 rounded-full border border-vis-border bg-gray-800/90 text-vis-text-muted hover:bg-vis-teal-500/20 hover:text-vis-teal-400 hover:border-vis-teal-400 transition-all z-[9999] opacity-60 hover:opacity-100 pointer-events-auto shadow-vis-glow-teal"
         title="Hide History Panel"
         aria-label="Hide History Panel"
       >
@@ -489,21 +489,21 @@ export const HistoryPanel: React.FC = () => {
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
         <div className="flex items-center ml-6">
           <div>
-            <h3 className="text-sm font-semibold text-gray-200">{t.myCreations}</h3>
-            <p className="text-xs text-gray-500">{generations.length + edits.length} {t.items}</p>
+            <h3 className="text-sm font-semibold text-vis-text-primary">{t.myCreations}</h3>
+            <p className="text-xs text-vis-text-muted">{generations.length + edits.length} {t.items}</p>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-2 gap-1 mb-4 flex-shrink-0 bg-gray-900/30 rounded-lg p-1">
+      <div className="grid grid-cols-2 gap-1 mb-4 flex-shrink-0 bg-gray-900/30 rounded-lg p-1 border border-vis-border">
         <button
           onClick={() => setActiveTab('history')}
           className={cn(
             "px-2 py-2 rounded-md text-xs font-medium transition-all",
             activeTab === 'history'
-              ? "bg-gray-800 text-gray-200 shadow-sm"
-              : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
+              ? "bg-gradient-to-r from-vis-teal-500/20 to-vis-cyan-500/20 text-vis-teal-300 border border-vis-teal-400/30 shadow-vis-glow-teal"
+              : "text-vis-text-muted hover:text-vis-text-primary hover:bg-gray-800/50"
           )}
         >
           <History className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
@@ -514,8 +514,8 @@ export const HistoryPanel: React.FC = () => {
           className={cn(
             "px-2 py-2 rounded-md text-xs font-medium transition-all",
             activeTab === 'boards'
-              ? "bg-gray-800 text-gray-200 shadow-sm"
-              : "text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"
+              ? "bg-gradient-to-r from-vis-teal-500/20 to-vis-cyan-500/20 text-vis-teal-300 border border-vis-teal-400/30 shadow-vis-glow-teal"
+              : "text-vis-text-muted hover:text-vis-text-primary hover:bg-gray-800/50"
           )}
         >
           <Folder className="h-3.5 w-3.5 inline-block mr-1 -mt-0.5" />
@@ -529,25 +529,24 @@ export const HistoryPanel: React.FC = () => {
           {/* Full History Grid - Scrollable */}
           <div className="mb-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
             <div
-              className="sticky top-0 bg-gray-950 pb-2 mb-3 z-10 border-b"
-              style={{ borderColor: 'var(--surface-border)' }}
+              className="sticky top-0 bg-vis-panel pb-2 mb-3 z-10 border-b border-vis-border"
             >
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <h4 className="text-xs font-semibold text-vis-text-secondary uppercase tracking-wide">
                   Gallery
             </h4>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-vis-text-muted">
               {generations.length + edits.length} total
             </span>
           </div>
         </div>
         {generations.length === 0 && edits.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-vis-teal-500/20 to-vis-cyan-500/20 flex items-center justify-center border border-vis-teal-400/30">
               <div className="text-4xl">🎨</div>
             </div>
-            <h4 className="text-sm font-medium text-gray-400 mb-1">No creations yet</h4>
-            <p className="text-xs text-gray-600">Your generated images will appear here</p>
+            <h4 className="text-sm font-medium text-vis-text-secondary mb-1">No creations yet</h4>
+            <p className="text-xs text-vis-text-muted">Your generated images will appear here</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 pb-2">
@@ -567,8 +566,8 @@ export const HistoryPanel: React.FC = () => {
                       className={cn(
                         'relative aspect-square rounded-xl border-2 cursor-pointer transition-all duration-200 overflow-hidden group',
                         selectedGenerationId === generation.id
-                          ? 'border-purple-500 ring-2 ring-purple-500/30 shadow-lg shadow-purple-500/20'
-                          : 'border-gray-800 hover:border-gray-700 hover:shadow-md'
+                          ? 'border-vis-teal-400 ring-2 ring-vis-teal-500/30 shadow-vis-glow-teal'
+                          : 'border-vis-border hover:border-vis-border-light hover:shadow-md'
                       )}
                       onClick={() => {
                         selectGeneration(generation.id);
@@ -631,7 +630,7 @@ export const HistoryPanel: React.FC = () => {
                         />
                       ) : null}
                       <div className="w-full h-full bg-gray-800 flex items-center justify-center" style={{ display: generation.outputAssets[0] && generation.outputAssets[0].url ? 'none' : 'flex' }}>
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-vis-teal-400" />
                       </div>
 
                       {/* Overlay on hover */}
@@ -639,18 +638,18 @@ export const HistoryPanel: React.FC = () => {
                       
                       {/* Generation Label & Upscale Indicator */}
                       <div className="absolute top-2 left-2 flex items-center gap-2">
-                        <div className="bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md border border-gray-700 font-medium">
+                        <div className="bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md border border-vis-border font-medium text-vis-text-primary">
                           #{genIndex + 1}
                         </div>
                         {generation.tags?.includes('upscall') && (
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-400/90 border border-teal-300/70 shadow-sm">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-vis-teal-400/90 border border-vis-teal-300/70 shadow-vis-glow-teal">
                             <Sparkles className="h-3 w-3 text-black" />
                           </div>
                         )}
                       </div>
                       
                       {/* Timestamp */}
-                      <div className="absolute bottom-2 right-2 bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-2 right-2 bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md text-vis-text-secondary border border-vis-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
                         {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </button>
@@ -664,8 +663,8 @@ export const HistoryPanel: React.FC = () => {
                       className={cn(
                         'relative aspect-square rounded-xl border-2 cursor-pointer transition-all duration-200 overflow-hidden group',
                         selectedEditId === edit.id
-                          ? 'border-purple-500 ring-2 ring-purple-500/30 shadow-lg shadow-purple-500/20'
-                          : 'border-gray-800 hover:border-gray-700 hover:shadow-md'
+                          ? 'border-vis-cyan-400 ring-2 ring-vis-cyan-500/30 shadow-vis-glow-cyan'
+                          : 'border-vis-border hover:border-vis-border-light hover:shadow-md'
                       )}
                       onClick={() => {
                         if (edit.outputAssets[0]) {
@@ -720,26 +719,26 @@ export const HistoryPanel: React.FC = () => {
                         />
                       ) : null}
                       <div className="w-full h-full bg-gray-800 flex items-center justify-center" style={{ display: edit.outputAssets[0] && edit.outputAssets[0].url ? 'none' : 'flex' }}>
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500" />
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-vis-cyan-400" />
                       </div>
                       
                       {/* Overlay on hover */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                       
                       {/* Edit Label with Badge */}
-                      <div className="absolute top-2 left-2 bg-purple-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md border border-purple-700 font-medium text-purple-200">
+                      <div className="absolute top-2 left-2 bg-vis-cyan-500/20 backdrop-blur-sm text-xs px-2 py-1 rounded-md border border-vis-cyan-400/50 font-medium text-vis-cyan-300">
                         Edit #{editIndex + 1}
                       </div>
                       
                       {/* Mask indicator */}
                       {edit.maskAssetId && (
-                        <div className="absolute top-2 right-2 bg-purple-500/90 backdrop-blur-sm text-xs p-1.5 rounded-md">
+                        <div className="absolute top-2 right-2 bg-vis-cyan-500/90 backdrop-blur-sm text-xs p-1.5 rounded-md border border-vis-cyan-400">
                           <Layers className="h-3 w-3 text-white" />
                         </div>
                       )}
                       
                       {/* Timestamp */}
-                      <div className="absolute bottom-2 right-2 bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-2 right-2 bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md text-vis-text-secondary border border-vis-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
                         {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </button>
@@ -789,19 +788,19 @@ export const HistoryPanel: React.FC = () => {
 
       {imageContextMenu.open && imageContextMenu.type && imageContextMenu.itemId && ReactDOM.createPortal(
         <div
-          className="fixed z-[9999] min-w-[220px] rounded-xl border border-gray-800 bg-gray-950/95 shadow-2xl backdrop-blur p-2"
+          className="fixed z-[9999] min-w-[220px] rounded-xl border border-vis-border bg-gray-900/95 shadow-vis-glow-teal backdrop-blur p-2"
           ref={imageMenuRef}
           style={{ left: imageContextMenu.x, top: imageContextMenu.y }}
           onPointerDown={(event) => event.stopPropagation()}
         >
           <MenuItem
-            icon={<PlusCircle className="h-4 w-4 text-cyan-400" />}
+            icon={<PlusCircle className="h-4 w-4 text-vis-cyan-400" />}
             label={t.addAsReference}
             onClick={handleAddAsReference}
             disabled={!imageContextMenu.imageUrl}
           />
           <MenuItem
-            icon={<Download className="h-4 w-4 text-gray-300" />}
+            icon={<Download className="h-4 w-4 text-vis-text-secondary" />}
             label={t.downloadImage}
             onClick={handleDownloadImage}
             disabled={!imageContextMenu.imageUrl}

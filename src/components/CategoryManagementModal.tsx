@@ -14,7 +14,7 @@ export const CategoryManagementModal: React.FC<CategoryManagementModalProps> = (
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-5xl w-full h-[85vh] overflow-hidden p-0 bg-transparent border-none"
+        className="max-w-5xl w-full h-[85vh] overflow-hidden p-0 bg-transparent border border-vis-border rounded-2xl shadow-vis-glow-teal"
         aria-describedby={undefined}
       >
         <CategoryManagementPage onClose={() => onOpenChange(false)} />
