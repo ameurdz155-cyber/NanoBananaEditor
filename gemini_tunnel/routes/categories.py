@@ -196,6 +196,9 @@ async def update_category(
     current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """Update a category."""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     categories_table = get_table("categories")
     Cat = Query()
     
@@ -206,6 +209,10 @@ async def update_category(
     
     if not existing:
         raise HTTPException(status_code=404, detail="Category not found")
+    
+    logger.info(f"[Categories] Updating category {category_id}")
+    logger.info(f"[Categories] Existing category: {existing}")
+    logger.info(f"[Categories] Update data: {category_update.dict(exclude_unset=True)}")
     
     # Check if new name conflicts with another category
     if category_update.name and category_update.name != existing["name"]:
@@ -221,6 +228,14 @@ async def update_category(
     update_data = category_update.dict(exclude_unset=True)
     update_data["updatedAt"] = int(datetime.utcnow().timestamp() * 1000)
     
+    # If setting image, clear emoji and vice versa
+    if "image" in update_data and update_data["image"]:
+        update_data["emoji"] = None
+    elif "emoji" in update_data and update_data["emoji"]:
+        update_data["image"] = None
+    
+    logger.info(f"[Categories] Final update_data to save: {update_data}")
+    
     categories_table.update(
         update_data,
         (Cat.id == category_id) & (Cat.userId == current_user["id"])
@@ -228,6 +243,7 @@ async def update_category(
     
     # Get updated category
     updated = categories_table.get(Cat.id == category_id)
+    logger.info(f"[Categories] Updated category from DB: {updated}")
     return updated
 
 

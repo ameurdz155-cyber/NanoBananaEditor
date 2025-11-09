@@ -6,36 +6,18 @@ import { Input } from './ui/Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Label } from './ui/label';
 import { Card } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import {
   ArrowLeft, Plus, Edit2, Trash2, Folder, Search, Upload, Mic, MicOff, Loader2,
 } from 'lucide-react';
-import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faFolder, faFolderOpen, faFileImage, faHome, faHeart, faStar,
-  faCamera, faPalette, faBriefcase, faBuilding, faBook, faPen,
-  faCoffee, faCar, faClock, faLightbulb, faTrophy, faLock,
-  faCircle, faSquare,
+  faFolder,
 } from '@fortawesome/free-solid-svg-icons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import { PromptCategory } from '../types';
 import * as categoryService from '../services/categoryService';
-
-const faIcons = [
-  { icon: faFolder, name: 'folder' }, { icon: faFolderOpen, name: 'folder-open' },
-  { icon: faFileImage, name: 'file-image' }, { icon: faHome, name: 'home' },
-  { icon: faHeart, name: 'heart' }, { icon: faStar, name: 'star' },
-  { icon: faCamera, name: 'camera' }, { icon: faPalette, name: 'palette' },
-  { icon: faBriefcase, name: 'briefcase' }, { icon: faBuilding, name: 'building' },
-  { icon: faBook, name: 'book' }, { icon: faPen, name: 'pen' },
-  { icon: faCoffee, name: 'coffee' }, { icon: faCar, name: 'car' },
-  { icon: faClock, name: 'clock' }, { icon: faLightbulb, name: 'lightbulb' },
-  { icon: faTrophy, name: 'trophy' }, { icon: faLock, name: 'lock' },
-  { icon: faCircle, name: 'circle' }, { icon: faSquare, name: 'square' },
-];
 
 export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   console.log('[CategoryManagementPage] Component rendered');
@@ -55,8 +37,6 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
   const [edit, setEdit] = useState<PromptCategory | null>(null);
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('📁');
-  const [tab, setTab] = useState<'emoji' | 'icon' | 'upload'>('upload');
-  const [iconQ, setIconQ] = useState('');
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [voiceLang, setVoiceLang] = useState<'en-US' | 'zh-CN'>(() => (language === 'zh' ? 'zh-CN' : 'en-US'));
@@ -191,19 +171,47 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
     setError(null);
     
     try {
+      // Determine if emoji is a base64 image or an actual emoji
+      const isImage = emoji.startsWith('data:');
+      const payload: any = {
+        name: name.trim(),
+      };
+      
+      if (isImage) {
+        payload.image = emoji;
+        payload.emoji = null; // Explicitly clear emoji when using image
+      } else {
+        payload.emoji = emoji;
+        payload.image = null; // Explicitly clear image when using emoji
+      }
+      
+      console.log('[CategoryManagement] Submitting payload:', { 
+        name: payload.name,
+        emoji: payload.emoji,
+        image: payload.image ? `${payload.image.substring(0, 50)}...` : null,
+        isImage
+      });
+      
       if (edit) {
         // Update existing category on backend
-        const updated = await categoryService.updateCategory(edit.id, { 
-          name: name.trim(), 
-          emoji 
+        console.log('[CategoryManagement] Updating category:', edit.id);
+        const updated = await categoryService.updateCategory(edit.id, payload);
+        console.log('[CategoryManagement] Update response:', updated);
+        
+        // Update in Zustand store with the complete updated category from backend
+        updatePromptCategory(edit.id, {
+          name: updated.name,
+          description: updated.description,
+          emoji: updated.emoji,
+          image: updated.image,
+          isDefault: updated.isDefault,
+          updatedAt: updated.updatedAt,
         });
-        updatePromptCategory(edit.id, updated);
       } else {
         // Create new category on backend
-        const newCategory = await categoryService.createCategory({
-          name: name.trim(),
-          emoji,
-        });
+        console.log('[CategoryManagement] Creating new category');
+        const newCategory = await categoryService.createCategory(payload);
+        console.log('[CategoryManagement] Create response:', newCategory);
         addPromptCategory(newCategory);
       }
       
@@ -211,7 +219,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
       setName('');
       setEmoji('📁');
     } catch (err) {
-      console.error('Failed to save category:', err);
+      console.error('[CategoryManagement] Failed to save category:', err);
       setError(err instanceof Error ? err.message : 'Failed to save category');
     } finally {
       setIsSaving(false);
@@ -234,10 +242,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
   };
 
   const filtered = cats.filter(c => c.name.toLowerCase().includes(q.toLowerCase()));
-  const filteredIcons = faIcons.filter(i => i.name.includes(iconQ.toLowerCase()));
 
-  const onEmoji = (d: EmojiClickData) => setEmoji(d.emoji);
-  const onFA = (n: string) => setEmoji(`fa-${n}`);
   const onImg = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) {
@@ -374,9 +379,11 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                 <Card key={c.id} className="group p-5 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-lime-500/50 transition-all">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      {displayEmoji.startsWith('data:') ? <img src={displayEmoji} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-lime-500/30" /> :
-                       displayEmoji.startsWith('fa-') ? <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-lime-600/20 to-cyan-600/20 flex items-center justify-center ring-2 ring-lime-500/30"><FontAwesomeIcon icon={faIcons.find(i => `fa-${i.name}` === displayEmoji)?.icon || faFolder} className="text-2xl text-lime-400" /></div> :
-                       <div className="text-4xl">{displayEmoji}</div>}
+                      {displayEmoji.startsWith('data:') ? (
+                        <img src={displayEmoji} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-lime-500/30" />
+                      ) : (
+                        <div className="text-4xl">{displayEmoji}</div>
+                      )}
                       <div><h3 className="font-semibold text-white">{c.name}</h3><p className="text-xs text-gray-500">{new Date(c.createdAt).toLocaleDateString()}</p></div>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -393,81 +400,101 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
 
       {/* Modal with inline picker */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-gradient-to-br from-gray-900 to-gray-850 border-lime-500/30 max-w-lg">
-          <DialogHeader><DialogTitle className="bg-gradient-to-r from-lime-400 to-cyan-400 bg-clip-text text-transparent">{edit ? (language === 'zh' ? '编辑' : 'Edit') : t.addCategory}</DialogTitle></DialogHeader>
-          <div className="space-y-5">
-            {/* Icon */}
-            <div>
-              <Label>Icon</Label>
-              <div className="mt-2 flex gap-3 items-center">
-                <Button variant="outline" size="lg" className="h-16 w-16 text-3xl">
-                  {emoji.startsWith('data:') ? <img src={emoji} className="w-12 h-12 rounded" /> :
-                   emoji.startsWith('fa-') ? <FontAwesomeIcon icon={faIcons.find(i => `fa-${i.name}` === emoji)?.icon || faFolder} className="text-3xl text-lime-400" /> :
-                   emoji}
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle>
+              {edit 
+                ? (language === 'zh' ? '编辑分类' : 'Edit Category')
+                : (language === 'zh' ? '创建分类' : 'Create Category')}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto px-1">
+            <div className="grid gap-4">
+              {/* Name */}
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{language === 'zh' ? '名称' : 'Name'}</label>
+                <Input 
+                  placeholder={language === 'zh' ? '分类名称' : 'Category name'} 
+                  value={name} 
+                  onChange={e => setName(e.target.value)} 
+                  onKeyDown={e => e.key === 'Enter' && name.trim() && !isSaving && submit()} 
+                  autoFocus 
+                />
+              </div>
+
+              {/* Icon Upload */}
+              <div className="grid gap-2">
+                <label className="text-sm font-medium">{language === 'zh' ? '图标' : 'Icon'}</label>
+                <input 
+                  ref={fileRef} 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={onImg} 
+                  className="hidden" 
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full flex items-center justify-center gap-2"
+                  onClick={() => fileRef.current?.click()}
+                >
+                  <Upload className="h-5 w-5" />
+                  <span>{language === 'zh' ? '上传图标' : 'Upload Icon'}</span>
                 </Button>
-              </div>
-              <Tabs value={tab} onValueChange={v => setTab(v as any)} className="mt-3">
-                <TabsList className="grid w-full grid-cols-3 bg-gray-800">
-                  <TabsTrigger value="emoji">Emoji</TabsTrigger>
-                  <TabsTrigger value="icon">Icons</TabsTrigger>
-                  <TabsTrigger value="upload">Upload</TabsTrigger>
-                </TabsList>
-                <TabsContent value="emoji" className="bg-gray-900 rounded-b-lg border border-gray-700"><EmojiPicker onEmojiClick={onEmoji} theme={Theme.DARK} width="100%" height={320} /></TabsContent>
-                <TabsContent value="icon" className="bg-gray-900 rounded-b-lg border border-gray-700 p-3" style={{ maxHeight: 320, overflowY: 'auto' }}>
-                  <Input placeholder="Search..." value={iconQ} onChange={e => setIconQ(e.target.value)} className="mb-2" />
-                  <div className="grid grid-cols-6 gap-2">
-                    {filteredIcons.map(i => (
-                      <button key={i.name} onClick={() => onFA(i.name)} className="h-11 w-11 flex items-center justify-center rounded bg-gray-800 hover:bg-lime-600/20 border border-gray-700">
-                        <FontAwesomeIcon icon={i.icon} className="text-lg text-gray-300" />
-                      </button>
-                    ))}
+                {emoji && emoji !== '📁' && (
+                  <div className="mt-2 flex items-center gap-4">
+                    <div className="h-20 w-20 rounded-md border border-[var(--surface-border)] flex items-center justify-center bg-[var(--surface-secondary)]">
+                      {emoji.startsWith('data:') ? (
+                        <img src={emoji} alt="Icon preview" className="h-full w-full rounded-md object-cover" />
+                      ) : (
+                        <span className="text-3xl">{emoji}</span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-sm text-red-500 hover:text-red-400"
+                      type="button"
+                      onClick={() => setEmoji('📁')}
+                    >
+                      {language === 'zh' ? '清除' : 'Clear'}
+                    </Button>
                   </div>
-                </TabsContent>
-                <TabsContent value="upload" className="bg-gray-900 rounded-b-lg border border-gray-700 p-6 text-center">
-                  <input ref={fileRef} type="file" accept="image/*" onChange={onImg} className="hidden" />
-                  <div onClick={() => fileRef.current?.click()} className="border-2 border-dashed border-gray-600 rounded-xl p-6 cursor-pointer hover:border-lime-500">
-                    <Upload className="h-10 w-10 mx-auto mb-2 text-gray-500" />
-                    <p className="text-sm text-gray-300">Click to upload</p>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            {/* Name */}
-            <div><Label>Name</Label><Input placeholder="Category name" value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && name.trim() && !isSaving && submit()} autoFocus /></div>
-
-            {/* Error Display */}
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
-                {error}
-              </div>
-            )}
-
-            {/* Buttons */}
-            <div className="flex gap-2">
-              <Button 
-                onClick={submit} 
-                disabled={!name.trim() || isSaving} 
-                className="flex-1 bg-gradient-to-r from-lime-600 to-cyan-600"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {language === 'zh' ? '保存中...' : 'Saving...'}
-                  </>
-                ) : (
-                  t.save || 'Save'
                 )}
-              </Button>
-              <Button 
-                onClick={() => { setOpen(false); setError(null); }} 
-                variant="outline" 
-                className="flex-1"
-                disabled={isSaving}
-              >
-                {t.cancel || 'Cancel'}
-              </Button>
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
+                  {error}
+                </div>
+              )}
             </div>
+          </div>
+
+          {/* Footer - Sticky */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-[color:var(--surface-border)] flex-shrink-0">
+            <Button 
+              onClick={() => { setOpen(false); setError(null); }} 
+              variant="ghost"
+              disabled={isSaving}
+            >
+              {t.cancel || 'Cancel'}
+            </Button>
+            <Button 
+              onClick={submit} 
+              disabled={!name.trim() || isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {language === 'zh' ? '保存中...' : 'Saving...'}
+                </>
+              ) : (
+                t.save || 'Save'
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

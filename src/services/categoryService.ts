@@ -81,18 +81,38 @@ export const fetchCategories = async (): Promise<PromptCategory[]> => {
 export const createCategory = async (
   category: CategoryCreateRequest
 ): Promise<PromptCategory> => {
-  const response = await fetch(joinBackendPath('/api/v1/categories'), {
+  const url = joinBackendPath('/api/v1/categories');
+  console.log('[CategoryService] Creating category');
+  console.log('[CategoryService] Create URL:', url);
+  console.log('[CategoryService] Create payload:', {
+    ...category,
+    image: category.image ? `${category.image.substring(0, 50)}...` : undefined
+  });
+  
+  const response = await fetch(url, {
     method: 'POST',
     headers: getAuthHeaders(),
     body: JSON.stringify(category),
   });
 
+  console.log('[CategoryService] Create response status:', response.status);
+
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to create category');
+    let errorMessage = 'Failed to create category';
+    try {
+      const error = await response.json();
+      console.error('[CategoryService] Create error:', error);
+      errorMessage = error.detail || errorMessage;
+    } catch (e) {
+      const errorText = await response.text();
+      console.error('[CategoryService] Create error (text):', errorText);
+    }
+    throw new Error(errorMessage);
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log('[CategoryService] Create result:', result);
+  return result;
 };
 
 /**
@@ -102,18 +122,38 @@ export const updateCategory = async (
   id: string,
   category: CategoryUpdateRequest
 ): Promise<PromptCategory> => {
-  const response = await fetch(joinBackendPath(`/api/v1/categories/${id}`), {
+  const url = joinBackendPath(`/api/v1/categories/${id}`);
+  console.log('[CategoryService] Updating category:', id);
+  console.log('[CategoryService] Update URL:', url);
+  console.log('[CategoryService] Update payload:', {
+    ...category,
+    image: category.image ? `${category.image.substring(0, 50)}...` : undefined
+  });
+  
+  const response = await fetch(url, {
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(category),
   });
 
+  console.log('[CategoryService] Update response status:', response.status);
+
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Failed to update category');
+    let errorMessage = 'Failed to update category';
+    try {
+      const error = await response.json();
+      console.error('[CategoryService] Update error:', error);
+      errorMessage = error.detail || errorMessage;
+    } catch (e) {
+      const errorText = await response.text();
+      console.error('[CategoryService] Update error (text):', errorText);
+    }
+    throw new Error(errorMessage);
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log('[CategoryService] Update result:', result);
+  return result;
 };
 
 /**
