@@ -18,12 +18,29 @@ import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import { PromptCategory } from '../types';
 import * as categoryService from '../services/categoryService';
+import { cn } from '../utils/cn';
 
 export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   console.log('[CategoryManagementPage] Component rendered');
   
   const language = useAppStore(s => s.language);
   const t = getTranslation(language);
+  
+  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+    if (typeof window === 'undefined') return true;
+    const savedTheme = localStorage.getItem('app-theme');
+    return savedTheme !== 'light';
+  });
+
+  React.useEffect(() => {
+    const handleThemeChange = () => {
+      const savedTheme = localStorage.getItem('app-theme');
+      setIsDarkMode(savedTheme !== 'light');
+    };
+
+    window.addEventListener('themeChange', handleThemeChange);
+    return () => window.removeEventListener('themeChange', handleThemeChange);
+  }, []);
   
   // Use Zustand store for categories
   const cats = useAppStore(s => s.promptCategories);
@@ -401,7 +418,12 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle>
+            <DialogTitle className={cn(
+              "text-xl font-bold",
+              isDarkMode 
+                ? "text-transparent bg-clip-text bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400"
+                : "text-purple-600"
+            )}>
               {edit 
                 ? (language === 'zh' ? '编辑分类' : 'Edit Category')
                 : (language === 'zh' ? '创建分类' : 'Create Category')}
@@ -412,19 +434,31 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
             <div className="grid gap-4">
               {/* Name */}
               <div className="grid gap-2">
-                <label className="text-sm font-medium">{language === 'zh' ? '名称' : 'Name'}</label>
+                <label className={cn(
+                  "text-sm font-medium",
+                  isDarkMode ? "text-vis-text-secondary" : "text-gray-700"
+                )}>{language === 'zh' ? '名称' : 'Name'}</label>
                 <Input 
                   placeholder={language === 'zh' ? '分类名称' : 'Category name'} 
                   value={name} 
                   onChange={e => setName(e.target.value)} 
                   onKeyDown={e => e.key === 'Enter' && name.trim() && !isSaving && submit()} 
                   autoFocus 
+                  className={cn(
+                    "transition-all duration-200",
+                    isDarkMode
+                      ? "bg-gray-900/50 border-vis-border text-vis-text-primary placeholder:text-vis-text-muted focus-visible:border-vis-teal-400 focus-visible:bg-gray-900/70 focus-visible:shadow-[0_0_20px_rgba(20,184,166,0.15)]"
+                      : "bg-white border-purple-200/60 text-gray-800 placeholder:text-gray-400 focus-visible:border-purple-400 focus-visible:bg-purple-50/50 focus-visible:shadow-[0_0_18px_rgba(168,85,247,0.12)]"
+                  )}
                 />
               </div>
 
               {/* Icon Upload */}
               <div className="grid gap-2">
-                <label className="text-sm font-medium text-vis-text-primary">{language === 'zh' ? '图标' : 'Icon'}</label>
+                <label className={cn(
+                  "text-sm font-medium",
+                  isDarkMode ? "text-vis-text-secondary" : "text-gray-700"
+                )}>{language === 'zh' ? '图标' : 'Icon'}</label>
                 <input 
                   ref={fileRef} 
                   type="file" 
@@ -435,7 +469,12 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full flex items-center justify-center gap-2 border-vis-border hover:border-vis-teal-400 hover:bg-vis-teal-500/10 transition-colors"
+                  className={cn(
+                    "w-full flex items-center justify-center gap-2 transition-colors",
+                    isDarkMode
+                      ? "border-vis-border hover:border-vis-teal-400 hover:bg-vis-teal-500/10"
+                      : "border-purple-200/60 hover:border-purple-400 hover:bg-purple-50"
+                  )}
                   onClick={() => fileRef.current?.click()}
                 >
                   <Upload className="h-5 w-5" />
@@ -443,7 +482,12 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                 </Button>
                 {emoji && emoji !== '📁' && (
                   <div className="mt-2 flex items-center gap-4">
-                    <div className="h-20 w-20 rounded-md border border-vis-border flex items-center justify-center bg-gray-800/50">
+                    <div className={cn(
+                      "h-20 w-20 rounded-md border flex items-center justify-center",
+                      isDarkMode 
+                        ? "border-vis-border bg-gray-800/50" 
+                        : "border-purple-200/60 bg-purple-50/50"
+                    )}>
                       {emoji.startsWith('data:') ? (
                         <img src={emoji} alt="Icon preview" className="h-full w-full rounded-md object-cover" />
                       ) : (
@@ -453,7 +497,12 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      className={cn(
+                        "text-sm transition-colors",
+                        isDarkMode
+                          ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          : "text-red-600 hover:text-red-700 hover:bg-red-100"
+                      )}
                       type="button"
                       onClick={() => setEmoji('📁')}
                     >
@@ -465,7 +514,12 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
 
               {/* Error Display */}
               {error && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
+                <div className={cn(
+                  "rounded-lg p-3 text-sm",
+                  isDarkMode
+                    ? "bg-red-500/10 border border-red-500/30 text-red-400"
+                    : "bg-red-50 border border-red-200 text-red-700"
+                )}>
                   {error}
                 </div>
               )}
@@ -473,19 +527,32 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
           </div>
 
           {/* Footer - Sticky */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-vis-border flex-shrink-0">
+          <div className={cn(
+            "flex justify-end gap-3 pt-4 border-t flex-shrink-0",
+            isDarkMode ? "border-vis-border" : "border-purple-200/40"
+          )}>
             <Button 
               onClick={() => { setOpen(false); setError(null); }} 
               variant="ghost"
               disabled={isSaving}
-              className="hover:bg-gray-800/50"
+              className={cn(
+                "transition-colors",
+                isDarkMode 
+                  ? "hover:bg-gray-800/50 text-vis-text-secondary hover:text-vis-text-primary" 
+                  : "hover:bg-gray-100 text-gray-600 hover:text-gray-800"
+              )}
             >
               {t.cancel || 'Cancel'}
             </Button>
             <Button 
               onClick={submit} 
               disabled={!name.trim() || isSaving}
-              className="bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all duration-200"
+              className={cn(
+                "text-white shadow-lg transition-all duration-200",
+                isDarkMode
+                  ? "bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 shadow-vis-glow-teal hover:shadow-vis-glow-cyan"
+                  : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-purple-500/30 hover:shadow-purple-500/50"
+              )}
             >
               {isSaving ? (
                 <>

@@ -61,16 +61,25 @@ export const PromptHints: React.FC<PromptHintsProps> = ({ open, onOpenChange }) 
       default: return category;
     }
   };
+
+  const descriptionId = React.useId();
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
-        <Dialog.Content className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-vis-border-light rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto z-50 shadow-vis-glow-teal">
+        <Dialog.Content 
+          aria-describedby={descriptionId}
+          className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border border-vis-border-light rounded-2xl p-6 w-full max-w-md max-h-[80vh] overflow-y-auto z-50 shadow-vis-glow-teal"
+        >
           <div className="flex items-center justify-between mb-4">
             <Dialog.Title className="text-lg font-semibold text-vis-teal-300 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400"></span>
               {t.promptQualityTips}
             </Dialog.Title>
+            <Dialog.Description id={descriptionId} className="sr-only">
+              {t.promptQualityTips} — {t.bestPractice}
+            </Dialog.Description>
             <Dialog.Close asChild>
               <Button variant="ghost" size="icon" className="h-6 w-6 text-vis-text-secondary hover:text-vis-teal-300 hover:bg-gray-800/50">
                 <X className="h-4 w-4" />

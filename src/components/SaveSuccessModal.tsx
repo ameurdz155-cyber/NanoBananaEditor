@@ -49,10 +49,13 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
       console.error('Error opening folder:', error);
     }
   };
+
+  const descriptionId = React.useId();
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Content className="save-modal-content">
+        <Dialog.Content className="save-modal-content" aria-describedby={descriptionId}>
           <Dialog.Close className="save-modal-close" aria-label={t.cancel}>
             ×
           </Dialog.Close>
@@ -67,7 +70,7 @@ export const SaveSuccessModal: React.FC<SaveSuccessModalProps> = ({
             {t.imageSavedSuccessfully}
           </Dialog.Title>
 
-          <Dialog.Description className="save-modal-subtitle">
+          <Dialog.Description id={descriptionId} className="save-modal-subtitle">
             {t.imageSavedToGallery}{' '}
             <span className="save-modal-highlight">"{galleryName}"</span>{' '}
             {t.gallery}.

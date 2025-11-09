@@ -711,6 +711,49 @@ export const PromptComposer: React.FC = () => {
     setHistorySearchQuery('');
   }, [promptHistory, deletePromptFromHistory, setHistorySearchQuery]);
 
+  const improvedPromptDescriptionId = React.useId();
+  const referenceModalDescriptionId = React.useId();
+  const templatesModalDescriptionId = React.useId();
+
+  const sanitizeImageSrc = React.useCallback((src: string): string | null => {
+    if (!src || typeof src !== 'string') {
+      return null;
+    }
+
+    const trimmed = src.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    if (trimmed.startsWith('data:image')) {
+      const [metadata, base64] = trimmed.split(',', 2);
+      if (!base64) {
+        return null;
+      }
+
+  const sanitizedData = base64.replace(/[^A-Za-z0-9+/=_-]/g, '');
+      if (!sanitizedData) {
+        return null;
+      }
+
+      const paddingNeeded = sanitizedData.length % 4;
+      const paddedData =
+        paddingNeeded === 0 ? sanitizedData : sanitizedData.padEnd(sanitizedData.length + (4 - paddingNeeded), '=');
+
+      return `${metadata},${paddedData}`;
+    }
+
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.href;
+    } catch (error) {
+      if (trimmed.startsWith('/')) {
+        return trimmed;
+      }
+      return null;
+    }
+  }, []);
+
   const tools = [
     { id: 'generate', icon: Wand2, label: t.generate, description: t.createFromText },
     { id: 'edit', icon: Edit3, label: t.edit, description: t.modifyExisting },
@@ -1116,6 +1159,7 @@ export const PromptComposer: React.FC = () => {
               )}
             />
             <Dialog.Content
+              aria-describedby={improvedPromptDescriptionId}
               className={cn(
                 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto z-50 transition-colors',
                 isDarkMode
@@ -1142,6 +1186,9 @@ export const PromptComposer: React.FC = () => {
                     {t.improvedPromptTitle}
                   </Dialog.Title>
                 </div>
+                <Dialog.Description id={improvedPromptDescriptionId} className="sr-only">
+                  {t.improvedPromptTitle} — {t.canEditImproved}
+                </Dialog.Description>
                 <Dialog.Close asChild>
                   <Button
                     variant="ghost"
@@ -1287,25 +1334,33 @@ export const PromptComposer: React.FC = () => {
         {((selectedTool === 'generate' && uploadedImages.length > 0) ||
           (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
           <div className="flex gap-2 mb-3">
-            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
-              <div 
-                key={index} 
-                className="relative group w-14 h-14 rounded-lg border-2 border-vis-border hover:border-red-500 overflow-hidden bg-gray-800/50 flex-shrink-0 transition-all"
-              >
-                <img
-                  src={image}
-                  alt={`Reference ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
-                  className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  title={t.removeImage}
+            {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => {
+              const safeImage = sanitizeImageSrc(image);
+              if (!safeImage) {
+                return null;
+              }
+
+              return (
+                <div
+                  key={index}
+                  className="relative group w-14 h-14 rounded-lg border-2 border-vis-border hover:border-red-500 overflow-hidden bg-gray-800/50 flex-shrink-0 transition-all"
                 >
-                  <X className="h-5 w-5 text-red-400" />
-                </button>
-              </div>
-            ))}
+                  <img
+                    src={safeImage}
+                    alt={`Reference ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  <button
+                    onClick={() => (selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index))}
+                    className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    title={t.removeImage}
+                  >
+                    <X className="h-5 w-5 text-red-400" />
+                  </button>
+                </div>
+              );
+            })}
             {/* Add more button */}
             <button
               onClick={() => document.getElementById('reference-image-upload')?.click()}
@@ -1319,13 +1374,28 @@ export const PromptComposer: React.FC = () => {
 
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-semibold text-vis-cyan-300 flex items-center">
-            <span className="w-2 h-2 rounded-full bg-gradient-to-r from-vis-cyan-400 to-vis-teal-400 mr-2"></span>
+          <label
+            className={cn(
+              'text-sm font-semibold flex items-center transition-colors',
+              isDarkMode ? 'text-vis-cyan-300' : 'text-purple-600'
+            )}
+          >
+            <span
+              className={cn(
+                'w-2 h-2 rounded-full mr-2',
+                isDarkMode ? 'bg-gradient-to-r from-vis-cyan-400 to-vis-teal-400' : 'bg-gradient-to-r from-purple-400 to-pink-400'
+              )}
+            ></span>
             {selectedTool === 'generate' ? t.addReferenceImages : selectedTool === 'edit' ? t.styleReferences : t.uploadImage}
           </label>
           <button
             onClick={() => setShowReferenceModal(true)}
-            className="text-xs text-vis-cyan-400 hover:text-vis-cyan-300 font-medium flex items-center gap-1 transition-colors"
+            className={cn(
+              'text-xs font-medium flex items-center gap-1 transition-colors',
+              isDarkMode
+                ? 'text-vis-cyan-400 hover:text-vis-cyan-300'
+                : 'text-purple-500 hover:text-purple-600'
+            )}
           >
             <History className="h-3 w-3" />
             {t.referenceLibrary}
@@ -1379,27 +1449,35 @@ export const PromptComposer: React.FC = () => {
                   return !currentImages.includes(img);
                 })
                 .slice(0, 10) // Show max 10 history items
-                .map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      if (selectedTool === 'generate') {
-                        addUploadedImage(image);
-                      } else {
-                        addEditReferenceImage(image);
-                      }
-                    }}
-                    className="relative w-14 h-14 rounded-lg border-2 border-vis-border hover:border-vis-cyan-400 overflow-hidden bg-gray-800/50 flex-shrink-0 transition-all group"
-                    title={t.clickToAddToReferences}
-                  >
-                    <img
-                      src={image}
-                      alt={`History ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-vis-cyan-500/0 group-hover:bg-vis-cyan-500/20 transition-all" />
-                  </button>
-                ))}
+                .map((image, index) => {
+                  const safeImage = sanitizeImageSrc(image);
+                  if (!safeImage) {
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        if (selectedTool === 'generate') {
+                          addUploadedImage(image);
+                        } else {
+                          addEditReferenceImage(image);
+                        }
+                      }}
+                      className="relative w-14 h-14 rounded-lg border-2 border-vis-border hover:border-vis-cyan-400 overflow-hidden bg-gray-800/50 flex-shrink-0 transition-all group"
+                      title={t.clickToAddToReferences}
+                    >
+                      <img
+                        src={safeImage}
+                        alt={`History ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-vis-cyan-500/0 group-hover:bg-vis-cyan-500/20 transition-all" />
+                    </button>
+                  );
+                })}
             </div>
           </div>
         )}
@@ -1454,33 +1532,17 @@ export const PromptComposer: React.FC = () => {
 
       {/* Image Settings Controls - Only show for Generate mode */}
       {selectedTool === 'generate' && (
-        <div
-          className={cn(
-            'mt-3 p-4 rounded-xl border space-y-4 transition-colors shadow-vis-glow-teal',
-            isDarkMode
-              ? 'bg-gray-900/70 border-vis-border-light backdrop-blur-sm'
-              : 'border-gray-200'
-          )}
-        >
+        <div className="mt-3 p-4 rounded-xl border space-y-4 transition-colors shadow-lg" style={{ backgroundColor: 'var(--surface-primary)', borderColor: 'var(--surface-border)' }}>
           {/* Aspect Ratio */}
           <div>
-            <label
-              className={cn(
-                'text-xs font-semibold mb-2 block tracking-wide transition-colors',
-                isDarkMode ? 'text-vis-teal-300' : 'text-gray-700'
-              )}
-            >
+            <label className="text-xs font-semibold mb-2 block tracking-wide transition-colors" style={{ color: 'var(--text-primary)' }}>
               {t.aspectRatioLabel}
             </label>
             <select
               value={aspectRatio}
               onChange={(e) => handleAspectRatioChange(e.target.value)}
-              className={cn(
-                'w-full h-10 px-3 border rounded-lg text-sm font-medium cursor-pointer transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none',
-                isDarkMode
-                  ? 'bg-gray-900/90 border-vis-border text-vis-text-primary hover:border-vis-border-light'
-                  : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white'
-              )}
+              className="w-full h-10 px-3 border rounded-lg text-sm font-medium cursor-pointer transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none"
+              style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)', color: 'var(--text-primary)' }}
             >
               <option value="auto">Auto</option>
               <option value="1:1">1:1 ({t.square})</option>
@@ -1496,31 +1558,17 @@ export const PromptComposer: React.FC = () => {
           </div>
 
           {/* Width Control */}
-          <div
-            className={cn(
-              'rounded-lg p-3 border transition-colors',
-              isDarkMode ? 'bg-gray-800/30 border-vis-border' : 'border-gray-200'
-            )}
-          >
+          <div className="rounded-lg p-3 border transition-colors" style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)' }}>
             <div className="flex items-center justify-between mb-2">
-              <label
-                className={cn(
-                  'text-xs font-semibold tracking-wide transition-colors',
-                  isDarkMode ? 'text-vis-cyan-300' : 'text-gray-700'
-                )}
-              >
+              <label className="text-xs font-semibold tracking-wide transition-colors" style={{ color: 'var(--text-primary)' }}>
                 {t.width}
               </label>
               <input
                 type="number"
                 value={imageWidth}
                 onChange={(e) => handleWidthChange(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
-                className={cn(
-                  'w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none',
-                  isDarkMode
-                    ? 'bg-gray-900/90 border-vis-border text-vis-text-primary hover:border-vis-border-light'
-                    : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white'
-                )}
+                className="w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none"
+                style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)', color: 'var(--text-primary)' }}
                 min="64"
                 max="1536"
               />
@@ -1540,31 +1588,17 @@ export const PromptComposer: React.FC = () => {
           </div>
 
           {/* Height Control */}
-          <div
-            className={cn(
-              'rounded-lg p-3 border transition-colors',
-              isDarkMode ? 'bg-gray-800/30 border-vis-border' : 'border-gray-200'
-            )}
-          >
+          <div className="rounded-lg p-3 border transition-colors" style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)' }}>
             <div className="flex items-center justify-between mb-2">
-              <label
-                className={cn(
-                  'text-xs font-semibold tracking-wide transition-colors',
-                  isDarkMode ? 'text-vis-cyan-300' : 'text-gray-700'
-                )}
-              >
+              <label className="text-xs font-semibold tracking-wide transition-colors" style={{ color: 'var(--text-primary)' }}>
                 {t.height}
               </label>
               <input
                 type="number"
                 value={imageHeight}
                 onChange={(e) => handleHeightChange(Math.max(64, Math.min(1536, parseInt(e.target.value) || 1024)))}
-                className={cn(
-                  'w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none',
-                  isDarkMode
-                    ? 'bg-gray-900/90 border-vis-border text-vis-text-primary hover:border-vis-border-light'
-                    : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white'
-                )}
+                className="w-16 h-8 px-2 border rounded-md text-sm font-medium text-center transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none"
+                style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)', color: 'var(--text-primary)' }}
                 min="64"
                 max="1536"
               />
@@ -1584,24 +1618,9 @@ export const PromptComposer: React.FC = () => {
           </div>
 
           {/* Seed Controls */}
-          <div
-            className={cn(
-              'pt-3 border-t transition-colors',
-              isDarkMode ? 'border-vis-border' : 'border-gray-200'
-            )}
-          >
-            <div
-              className={cn(
-                'rounded-lg p-3 border space-y-3 transition-colors',
-                isDarkMode ? 'bg-gray-800/30 border-vis-border' : 'border-gray-200'
-              )}
-            >
-              <label
-                className={cn(
-                  'text-xs font-semibold block tracking-wide transition-colors',
-                  isDarkMode ? 'text-vis-purple-300' : 'text-gray-700'
-                )}
-              >
+          <div className="pt-3 border-t transition-colors" style={{ borderColor: 'var(--surface-border)' }}>
+            <div className="rounded-lg p-3 border space-y-3 transition-colors" style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)' }}>
+              <label className="text-xs font-semibold block tracking-wide transition-colors" style={{ color: 'var(--text-primary)' }}>
                 {t.seed}
               </label>
               <input
@@ -1610,12 +1629,8 @@ export const PromptComposer: React.FC = () => {
                 onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : null)}
                 placeholder="0"
                 disabled={randomSeed}
-                className={cn(
-                  'w-full h-10 px-3 border rounded-lg text-sm font-medium transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed',
-                  isDarkMode
-                    ? 'bg-gray-900/90 border-vis-border text-vis-text-primary hover:border-vis-border-light'
-                    : 'bg-slate-100 border-gray-300 text-gray-800 hover:border-gray-400 focus:bg-white disabled:bg-slate-200'
-                )}
+                className="w-full h-10 px-3 border rounded-lg text-sm font-medium transition-all shadow-sm focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-400/30 focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)', color: 'var(--text-primary)' }}
               />
               <div className="flex items-center gap-2">
                 <button
@@ -1760,6 +1775,7 @@ export const PromptComposer: React.FC = () => {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/65 backdrop-blur-md z-50" />
         <Dialog.Content
+          aria-describedby={templatesModalDescriptionId}
           className="fixed top-1/2 left-1/2 z-50 w-[min(95vw,80rem)] h-[90vh] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-vis-border-light bg-gradient-to-br from-gray-950 via-gray-900 to-gray-900 p-8 shadow-vis-glow-teal focus:outline-none flex flex-col overflow-hidden"
         >
           <div className="flex items-center justify-between">
@@ -1770,6 +1786,9 @@ export const PromptComposer: React.FC = () => {
               <Dialog.Title className="text-lg font-semibold text-vis-teal-200">
                 {t.templates}
               </Dialog.Title>
+              <Dialog.Description id={templatesModalDescriptionId} className="sr-only">
+                {t.templates} — {t.viewTemplatePrompt}
+              </Dialog.Description>
             </div>
             <Dialog.Close asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 text-vis-text-secondary hover:text-vis-teal-300 hover:bg-gray-800/50">
@@ -1801,35 +1820,33 @@ export const PromptComposer: React.FC = () => {
           )}
         />
         <Dialog.Content
-          className={cn(
-            'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden z-50 shadow-vis-glow-cyan border transition-colors',
-            isDarkMode
-              ? 'bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-vis-border-light'
-              : 'bg-white border-gray-200'
-          )}
+          aria-describedby={referenceModalDescriptionId}
+          className="fixed top-1/2 left-1/2 w-full max-w-2xl max-h-[85vh] -translate-x-1/2 -translate-y-1/2 transform rounded-2xl overflow-hidden border transition-colors shadow-lg z-[60]"
+          style={{
+            background: 'var(--modal-surface-background)',
+            borderColor: 'var(--modal-surface-border)',
+            color: 'var(--text-primary)'
+          }}
         >
           {/* Header */}
           <div
-            className={cn(
-              'flex items-center justify-between px-6 py-4 border-b transition-colors',
-              isDarkMode ? 'border-vis-border bg-gray-800/30' : 'border-gray-200 bg-white'
-            )}
+            className="flex items-center justify-between px-6 py-4 border-b transition-colors"
+            style={{
+              backgroundColor: 'var(--surface-primary)',
+              borderColor: 'var(--surface-border)'
+            }}
           >
             <div className="flex items-center space-x-3">
-              <div
-                className={cn(
-                  'p-2 rounded-lg transition-colors',
-                  isDarkMode ? 'bg-vis-cyan-600/20' : 'bg-cyan-100'
-                )}
-              >
-                <History className={cn('h-5 w-5', isDarkMode ? 'text-vis-cyan-400' : 'text-cyan-600')} />
+              <div className="relative w-24 h-24 gradient-primary rounded-3xl flex items-center justify-center shadow-2xl mx-auto transform hover:scale-105 transition-transform" style={{ boxShadow: 'rgba(124, 58, 237, 0.25) 0px 20px 45px' }}>
+                <Sparkles className="h-14 w-14" style={{ color: 'var(--text-primary)' }} />
               </div>
               <div>
-                <Dialog.Title
-                  className={cn('text-lg font-bold transition-colors', isDarkMode ? 'text-vis-cyan-200' : 'text-gray-800')}
-                >
+                <Dialog.Title className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
                   {t.referenceImagesTitle}
                 </Dialog.Title>
+                <Dialog.Description id={referenceModalDescriptionId} className="sr-only">
+                  {t.referenceLibrary}: {t.uploadImageToGuideStyle}
+                </Dialog.Description>
                 {/* <p className="text-xs text-gray-400 mt-0.5">
                   {t.referenceModel.replace('{model}', 'Gemini 2.5 Flash')}
                 </p> */}
@@ -1839,10 +1856,8 @@ export const PromptComposer: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className={cn(
-                  'h-8 w-8 transition-colors',
-                  isDarkMode ? 'hover:bg-gray-700 text-vis-text-secondary hover:text-vis-cyan-300' : 'hover:bg-gray-100 text-gray-500'
-                )}
+                className="h-8 w-8 transition-colors hover:bg-gray-800"
+                style={{ color: 'var(--text-primary)' }}
               >
                 <X className="h-5 w-5" />
               </Button>
@@ -1851,70 +1866,64 @@ export const PromptComposer: React.FC = () => {
 
           {/* Content */}
           <div
-            className={cn('p-6 overflow-y-auto custom-scrollbar transition-colors', isDarkMode ? '' : 'bg-white')}
-            style={{ maxHeight: 'calc(85vh - 140px)' }}
+            className="p-6 overflow-y-auto custom-scrollbar transition-colors"
+            style={{ 
+              maxHeight: 'calc(85vh - 140px)',
+              backgroundColor: 'var(--surface-primary)'
+            }}
           >
             {/* Current References */}
             {((selectedTool === 'generate' && uploadedImages.length > 0) ||
               (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
               <div className="mb-6">
-                <h3
-                  className={cn(
-                    'text-sm font-semibold mb-3 flex items-center transition-colors',
-                    isDarkMode ? 'text-vis-teal-300' : 'text-gray-700'
-                  )}
-                >
-                  <Check className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-green-400' : 'text-green-600')} />
+                <h3 className="text-sm font-semibold mb-3 flex items-center transition-colors" style={{ color: 'var(--text-primary)' }}>
+                  <Check className="h-4 w-4 mr-2 text-green-500" />
                   {`${t.currentReferences} (${(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length})`}
                 </h3>
-                <div 
+                <div
                   className={`flex gap-3 ${
-                    (selectedTool === 'generate' ? uploadedImages : editReferenceImages).length > 3 
-                      ? 'overflow-x-auto custom-scrollbar pb-2' 
+                    (selectedTool === 'generate' ? uploadedImages : editReferenceImages).length > 3
+                      ? 'overflow-x-auto custom-scrollbar pb-2'
                       : 'flex-wrap'
                   }`}
                   style={(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length > 3 ? { maxHeight: '140px' } : {}}
                 >
-                  {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => (
-                    <div key={index} className="relative group flex-shrink-0">
-                      <div
-                        className={cn(
-                          'w-24 h-24 rounded-lg border-2 overflow-hidden transition-colors',
-                          isDarkMode
-                            ? 'border-green-500/50 bg-gray-800/50'
-                            : 'border-green-400/40 bg-slate-100'
-                        )}
-                      >
-                        <img
-                          src={image}
-                          alt={`Reference ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
+                  {(selectedTool === 'generate' ? uploadedImages : editReferenceImages).map((image, index) => {
+                    const safeImage = sanitizeImageSrc(image);
+                    if (!safeImage) {
+                      return null;
+                    }
+
+                    return (
+                      <div key={index} className="relative group flex-shrink-0">
+                        <div className="w-24 h-24 rounded-lg border-2 overflow-hidden transition-colors border-green-500" style={{ backgroundColor: 'var(--surface-secondary)' }}>
+                          <img
+                            src={safeImage}
+                            alt={`Reference ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                        <button
+                          onClick={() => (selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index))}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        <div className="absolute bottom-1 left-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded font-medium">
+                          #{index + 1}
+                        </div>
                       </div>
-                      <button
-                        onClick={() => selectedTool === 'generate' ? removeUploadedImage(index) : removeEditReferenceImage(index)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                      <div className="absolute bottom-1 left-1 bg-green-500 text-white text-xs px-1.5 py-0.5 rounded font-medium">
-                        #{index + 1}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* Upload New */}
             <div className="mb-6">
-              <h3
-                className={cn(
-                  'text-sm font-semibold mb-3 flex items-center transition-colors',
-                  isDarkMode ? 'text-vis-cyan-300' : 'text-gray-700'
-                )}
-              >
-                <Upload className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-vis-cyan-400' : 'text-purple-500')} />
+              <h3 className="text-sm font-semibold mb-3 flex items-center transition-colors" style={{ color: 'var(--text-primary)' }}>
+                <Upload className="h-4 w-4 mr-2 text-purple-500" />
                 {t.uploadNewImage}
               </h3>
               <input
@@ -1926,15 +1935,11 @@ export const PromptComposer: React.FC = () => {
               />
               <button
                 onClick={() => document.getElementById('reference-modal-upload')?.click()}
-                className={cn(
-                  'w-full py-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all group',
-                  isDarkMode
-                    ? 'bg-gray-800/50 hover:bg-gray-800/70 border-vis-border hover:border-vis-cyan-400'
-                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300 hover:border-cyan-400'
-                )}
+                className="w-full py-4 flex flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all group hover:opacity-80"
+                style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)' }}
               >
-                <Plus className={cn('h-6 w-6 mb-2 transition-colors', isDarkMode ? 'text-vis-text-secondary group-hover:text-vis-cyan-400' : 'text-gray-500')} />
-                <span className={cn('text-sm transition-colors', isDarkMode ? 'text-vis-text-secondary group-hover:text-vis-cyan-300' : 'text-gray-600')}>
+                <Plus className="h-6 w-6 mb-2 transition-colors text-purple-500 group-hover:text-purple-600" />
+                <span className="text-sm transition-colors" style={{ color: 'var(--text-secondary)' }}>
                   {t.clickToUploadImage}
                 </span>
               </button>
@@ -1943,51 +1948,50 @@ export const PromptComposer: React.FC = () => {
             {/* Recent Work */}
             {currentProject && currentProject.generations.length > 0 && (
               <div className="mb-6">
-                <h3
-                  className={cn(
-                    'text-sm font-semibold mb-3 flex items-center transition-colors',
-                    isDarkMode ? 'text-vis-teal-300' : 'text-gray-700'
-                  )}
-                >
-                  <Sparkles className={cn('h-4 w-4 mr-2', isDarkMode ? 'text-vis-teal-400' : 'text-blue-500')} />
+                <h3 className="text-sm font-semibold mb-3 flex items-center transition-colors" style={{ color: 'var(--text-primary)' }}>
+                  <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
                   {t.recentWork}
                 </h3>
                 <div className="grid grid-cols-4 gap-3 max-h-80 overflow-y-auto custom-scrollbar">
                   {currentProject.generations
                     .filter(gen => gen.outputAssets && gen.outputAssets.length > 0)
                     .slice(0, 20)
-                    .flatMap((generation) => 
-                      generation.outputAssets.map((asset, assetIdx) => (
-                        <button
-                          key={`${generation.id}-${assetIdx}`}
-                          onClick={() => {
-                            if (selectedTool === 'generate') {
-                              addUploadedImage(asset.url);
-                            } else {
-                              addEditReferenceImage(asset.url);
-                            }
-                          }}
-                          className={cn(
-                            'relative group aspect-square rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105',
-                            isDarkMode
-                              ? 'border-vis-border hover:border-vis-teal-400'
-                              : 'border-slate-200 hover:border-blue-500 shadow-sm'
-                          )}
-                        >
-                          <img
-                            src={asset.url}
-                            alt="Generated"
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          <div className="absolute bottom-1 left-1 bg-vis-teal-500 text-white text-xs px-1.5 py-0.5 rounded font-medium shadow-vis-glow-teal">
-                            {t.genLabel}
-                          </div>
-                          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Plus className="h-4 w-4 text-white drop-shadow-lg" />
-                          </div>
-                        </button>
-                      ))
+                    .flatMap((generation) =>
+                      generation.outputAssets.map((asset, assetIdx) => {
+                        const safeImage = sanitizeImageSrc(asset.url);
+                        if (!safeImage) {
+                          return null;
+                        }
+
+                        return (
+                          <button
+                            key={`${generation.id}-${assetIdx}`}
+                            onClick={() => {
+                              if (selectedTool === 'generate') {
+                                addUploadedImage(asset.url);
+                              } else {
+                                addEditReferenceImage(asset.url);
+                              }
+                            }}
+                            className="relative group aspect-square rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105"
+                            style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)' }}
+                          >
+                            <img
+                              src={safeImage}
+                              alt="Generated"
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute bottom-1 left-1 text-white text-xs px-1.5 py-0.5 rounded font-medium bg-purple-500">
+                              {t.genLabel}
+                            </div>
+                            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Plus className="h-4 w-4 text-white drop-shadow-lg" />
+                            </div>
+                          </button>
+                        );
+                      })
                     )}
                 </div>
               </div>
@@ -1996,9 +2000,7 @@ export const PromptComposer: React.FC = () => {
             {/* Upload History */}
             {uploadHistory.length > 0 && (
               <div>
-                <h3
-                  className={cn('text-sm font-semibold mb-3 transition-colors', isDarkMode ? 'text-vis-cyan-300' : 'text-gray-700')}
-                >
+                <h3 className="text-sm font-semibold mb-3 transition-colors" style={{ color: 'var(--text-primary)' }}>
                   {`${t.previousUploads} (${uploadHistory.length})`}
                 </h3>
                 <div className="grid grid-cols-4 gap-3">
@@ -2007,39 +2009,43 @@ export const PromptComposer: React.FC = () => {
                       const currentImages = selectedTool === 'generate' ? uploadedImages : editReferenceImages;
                       return !currentImages.includes(img);
                     })
-                    .map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          if (selectedTool === 'generate') {
-                            addUploadedImage(image);
-                          } else {
-                            addEditReferenceImage(image);
-                          }
-                        }}
-                        className={cn(
-                          'relative aspect-square rounded-lg border-2 overflow-hidden transition-all group',
-                          isDarkMode
-                            ? 'border-vis-border hover:border-vis-cyan-400 bg-gray-800/50'
-                            : 'border-slate-200 hover:border-cyan-500 bg-slate-100'
-                        )}
-                      >
-                        <img
-                          src={image}
-                          alt={`History ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-vis-cyan-500/0 group-hover:bg-vis-cyan-500/20 transition-all flex items-center justify-center">
-                          <Plus className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                        </div>
-                      </button>
-                    ))}
+                    .map((image, index) => {
+                      const safeImage = sanitizeImageSrc(image);
+                      if (!safeImage) {
+                        return null;
+                      }
+
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            if (selectedTool === 'generate') {
+                              addUploadedImage(image);
+                            } else {
+                              addEditReferenceImage(image);
+                            }
+                          }}
+                          className="relative aspect-square rounded-lg border-2 overflow-hidden transition-all group"
+                          style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)' }}
+                        >
+                          <img
+                            src={safeImage}
+                            alt={`History ${index + 1}`}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 transition-all flex items-center justify-center bg-purple-500/0 group-hover:bg-purple-500/20">
+                            <Plus className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                          </div>
+                        </button>
+                      );
+                    })}
                 </div>
                 {uploadHistory.filter(img => {
                   const currentImages = selectedTool === 'generate' ? uploadedImages : editReferenceImages;
                   return !currentImages.includes(img);
                 }).length === 0 && (
-                  <p className={cn('text-sm text-center py-6', isDarkMode ? 'text-vis-text-muted' : 'text-gray-600')}>
+                  <p className={cn('text-sm text-center py-6', isDarkMode ? 'text-vis-text-muted' : 'text-purple-600')}>
                     {t.allImagesAdded}
                   </p>
                 )}
@@ -2048,18 +2054,13 @@ export const PromptComposer: React.FC = () => {
 
             {uploadHistory.length === 0 && (
               <div className="text-center py-8">
-                <div
-                  className={cn(
-                    'w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center text-3xl transition-colors',
-                    isDarkMode ? 'bg-gray-800/50 text-white' : 'bg-slate-100 text-gray-600'
-                  )}
-                >
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center text-3xl transition-colors" style={{ backgroundColor: 'var(--surface-secondary)', color: 'var(--text-secondary)' }}>
                   📁
                 </div>
-                <p className={cn('text-sm', isDarkMode ? 'text-vis-text-secondary' : 'text-gray-600')}>
+                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
                   {t.noUploadHistoryYet}
                 </p>
-                <p className={cn('text-xs mt-1', isDarkMode ? 'text-vis-text-muted' : 'text-gray-500')}>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                   {t.uploadImageToSeeHistory}
                 </p>
               </div>
@@ -2068,12 +2069,13 @@ export const PromptComposer: React.FC = () => {
 
           {/* Footer */}
           <div
-            className={cn(
-              'px-6 py-3 border-t transition-colors',
-              isDarkMode ? 'bg-gray-800/30 border-vis-border' : 'bg-gray-50 border-gray-200'
-            )}
+            className="px-6 py-3 border-t transition-colors"
+            style={{
+              backgroundColor: 'var(--surface-secondary)',
+              borderColor: 'var(--surface-border)'
+            }}
           >
-            <p className={cn('text-xs text-center', isDarkMode ? 'text-vis-text-muted' : 'text-gray-500')}>
+            <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
               {t.unlimitedUploads}
             </p>
           </div>

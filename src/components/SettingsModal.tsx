@@ -78,6 +78,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
     }
   };
 
+  const descriptionId = React.useId();
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -85,7 +87,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
           "fixed inset-0 backdrop-blur-sm z-50",
           isDarkMode ? "bg-black/60" : "bg-black/30"
         )} />
-        <Dialog.Content className={cn(
+        <Dialog.Content 
+          aria-describedby={descriptionId}
+          className={cn(
           "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 w-full max-w-md z-50 border transition-colors",
           isDarkMode 
             ? "bg-vis-panel border-vis-border shadow-vis-glow-teal" 
@@ -113,6 +117,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ open, onOpenChange
                 )}>
                   {t.settings}
                 </Dialog.Title>
+                <Dialog.Description id={descriptionId} className="sr-only">
+                  {t.settings} — Configure API key and preferences
+                </Dialog.Description>
               </div>
               <Dialog.Close asChild>
                 <Button 

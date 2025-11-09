@@ -201,14 +201,14 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     'h-6 w-6 rounded-md transition-colors flex items-center justify-center border backdrop-blur-sm',
     isDarkMode
       ? 'bg-black/60 border-white/10 text-gray-100 hover:bg-black/70'
-      : 'bg-white/90 border-purple-200/60 text-purple-500 hover:bg-purple-50 shadow-sm'
+      : 'bg-white/90 border-slate-300/70 text-slate-600 hover:bg-slate-100 hover:text-slate-800 shadow-sm'
   );
 
   const cardActionDestructiveClasses = cn(
     'h-6 w-6 rounded-md transition-colors flex items-center justify-center border backdrop-blur-sm',
     isDarkMode
       ? 'bg-black/60 border-red-500/40 text-white hover:bg-red-500/60'
-      : 'bg-white/90 border-red-200 text-red-500 hover:bg-red-100 shadow-sm'
+      : 'bg-white/90 border-red-300/70 text-red-600 hover:bg-red-100 hover:text-red-700 shadow-sm'
   );
 
   const moveToBoardOverlayClasses = cn(
