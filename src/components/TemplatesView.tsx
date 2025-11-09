@@ -580,29 +580,19 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     updatePromptCategory,
     deletePromptCategory,
   } = useAppStore();
-  const {
-    templates,
-    fetchTemplates,
-    createTemplate: createTemplateFromStore,
-    updateTemplate: updateTemplateFromStore,
-    deleteTemplate: deleteTemplateFromStore,
-    loading,
-    error: templateError,
-  } = useTemplateStore((state) => ({
-    templates: state.templates,
-    fetchTemplates: state.fetchTemplates,
-    createTemplate: state.createTemplate,
-    updateTemplate: state.updateTemplate,
-    deleteTemplate: state.deleteTemplate,
-    loading: state.loading,
-    error: state.error,
-  }));
+  const templates = useTemplateStore((state) => state.templates);
+  const fetchTemplates = useTemplateStore((state) => state.fetchTemplates);
+  const createTemplateFromStore = useTemplateStore((state) => state.createTemplate);
+  const updateTemplateFromStore = useTemplateStore((state) => state.updateTemplate);
+  const deleteTemplateFromStore = useTemplateStore((state) => state.deleteTemplate);
+  const templateError = useTemplateStore((state) => state.error);
+  const templatesLoadingFlag = useTemplateStore((state) => state.loading.templates);
   const t = getTranslation(language);
   const [isDarkMode, setIsDarkMode] = React.useState(resolveIsDarkMode);
   const [isSavingTemplate, setIsSavingTemplate] = React.useState(false);
   const [deletingTemplateId, setDeletingTemplateId] = React.useState<string | null>(null);
   const hasFetchedTemplatesRef = React.useRef(false);
-  const templatesLoading = loading?.templates ?? false;
+  const templatesLoading = templatesLoadingFlag ?? false;
 
   const defaultTemplatesFromStore = React.useMemo<PromptTemplate[]>(() => {
     if (templates.length > 0) {
@@ -1230,7 +1220,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       borderColor: 'var(--surface-border)'
     };
 
-    const templateIconNode = !template.image
+    const rawImage = template.image?.trim();
+    const imageSrc = rawImage && (/^https?:\/\//i.test(rawImage) || /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(rawImage)) ? rawImage : undefined;
+
+    const templateIconNode = !imageSrc
       ? renderIconValue(
           template.emoji,
           cn(
@@ -1262,7 +1255,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               onTemplateSelect({
                 id: template.id,
                 name: template.name,
-                image: template.image,
+                image: imageSrc,
                 emoji: template.emoji,
                 positivePrompt: template.positivePrompt,
                 negativePrompt: template.negativePrompt,
@@ -1271,9 +1264,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           }}
         >
           <div className={thumbnailClasses} style={thumbnailStyle}>
-            {template.image ? (
+            {imageSrc ? (
               <img
-                src={template.image}
+                src={imageSrc}
                 alt={template.name}
                 className="h-full w-full object-cover"
                 onError={(e) => {

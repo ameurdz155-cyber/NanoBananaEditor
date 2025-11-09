@@ -1,6 +1,6 @@
 import React from 'react';
 import { TemplateManagementPage } from './TemplateManagementPage';
-import { Dialog, DialogContent } from './ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 
 interface TemplateManagementModalProps {
   open: boolean;
@@ -14,6 +14,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
         className="max-w-5xl w-full h-[85vh] overflow-hidden p-0 bg-transparent border-none"
         aria-describedby={undefined}
       >
+        <DialogTitle className="sr-only">Template management</DialogTitle>
         <TemplateManagementPage onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>

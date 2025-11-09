@@ -11,7 +11,7 @@
       "is_superuser": true,
       "created_at": "2025-11-08T20:28:58.888043",
       "updated_at": "2025-11-08T20:28:58.888043",
-      "last_login": "2025-11-08T23:40:23.374565"
+      "last_login": "2025-11-09T05:59:23.673136"
     },
     "2": {
       "id": "9d6bfe43-3e27-4aa6-9e14-50ca3e988ea6",
@@ -38,6 +38,19 @@
       "created_at": "2025-11-08T21:37:11.819284",
       "updated_at": "2025-11-08T21:37:11.819284",
       "last_login": "2025-11-08T21:37:12.224310"
+    },
+    "4": {
+      "id": "858331e8-2ebb-427b-b849-6bfcc3e7bd06",
+      "email": "jjj@gmail.com",
+      "username": "jjj",
+      "password_hash": "$2b$12$6Yh6uUUunHnXMjK.MfZJFerf3PjMAepm5NCUiORrCLSJgA9aHkWUe",
+      "full_name": "Mabrouk Bennaoui",
+      "is_active": true,
+      "is_admin": false,
+      "is_superuser": false,
+      "created_at": "2025-11-08T23:56:03.127687",
+      "updated_at": "2025-11-08T23:56:03.127687",
+      "last_login": "2025-11-08T23:56:03.536890"
     }
   },
   "sessions": {
@@ -200,6 +213,46 @@
       "expires_at": "2025-11-15T23:40:23.396552",
       "created_at": "2025-11-08T23:40:23.396565",
       "last_activity": "2025-11-08T23:40:23.396571"
+    },
+    "17": {
+      "id": "018c85b1-a04e-40cf-86c6-c59ce305db5b",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "bQHHXfUeEqXdRNOUOSOtjYNtqCjqqG0PwRAbmJOQmgg",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:55:08.211199",
+      "created_at": "2025-11-08T23:55:08.211210",
+      "last_activity": "2025-11-08T23:55:08.211214"
+    },
+    "18": {
+      "id": "3ad41d4f-aabc-4292-8acf-832079402544",
+      "user_id": "858331e8-2ebb-427b-b849-6bfcc3e7bd06",
+      "token_hash": "k2cf8t2TPVwlWxRgPTA4Z7-ulNsDE7ppxmPQJfFC71c",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:56:03.544588",
+      "created_at": "2025-11-08T23:56:03.544606",
+      "last_activity": "2025-11-08T23:56:03.544612"
+    },
+    "19": {
+      "id": "91d61827-2ff9-49d9-849a-353eaa5b2fdd",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "xUAbdo6ZRNefwonajGePy4a8aoqRFtnc4VJhwfyEj5U",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-15T23:57:11.489774",
+      "created_at": "2025-11-08T23:57:11.489794",
+      "last_activity": "2025-11-08T23:57:11.489799"
+    },
+    "20": {
+      "id": "51d43c17-b2da-448a-a1e5-1eae93f1ca22",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "token_hash": "l3G6uufRMRLgTPr50ywKKg9Bo-aOuAyJiIL5V-wN96c",
+      "ip_address": "127.0.0.1",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
+      "expires_at": "2025-11-16T05:59:23.675555",
+      "created_at": "2025-11-09T05:59:23.675565",
+      "last_activity": "2025-11-09T05:59:23.675569"
     }
   },
   "audit_logs": {
@@ -364,18 +417,63 @@
       "details": null,
       "ip_address": "127.0.0.1",
       "created_at": "2025-11-08T23:40:23.402560"
+    },
+    "19": {
+      "id": "84fca8f7-b70f-4c34-b56e-cda5f86a5cb6",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:55:08.214347"
+    },
+    "20": {
+      "id": "a4e9938d-fb8f-49dd-9832-b6692cdc65ea",
+      "user_id": "858331e8-2ebb-427b-b849-6bfcc3e7bd06",
+      "action": "user_registered",
+      "resource": null,
+      "details": "{\"email\": \"jjj@gmail.com\", \"username\": \"jjj\"}",
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:56:03.149520"
+    },
+    "21": {
+      "id": "7aabc619-581f-4ea7-bb7c-3e42ba84c377",
+      "user_id": "858331e8-2ebb-427b-b849-6bfcc3e7bd06",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:56:03.548598"
+    },
+    "22": {
+      "id": "b3c2b344-0315-4019-9dfc-523c561b52b2",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-08T23:57:11.493957"
+    },
+    "23": {
+      "id": "7eae760e-772c-4a24-88fc-a9d53b66bd71",
+      "user_id": "8001235a-f37c-43cd-ab8d-06d6978123c6",
+      "action": "user_login",
+      "resource": null,
+      "details": null,
+      "ip_address": "127.0.0.1",
+      "created_at": "2025-11-09T05:59:23.677741"
     }
   },
   "categories": {
     "1": {
       "id": "cat-48255bf68e1c",
-      "name": "jjjj",
+      "name": "jjjjhh",
       "description": "Go-to prompts and inspiration you reach for often.",
       "emoji": "\u2b50",
       "image": null,
       "isDefault": true,
       "createdAt": 1762631237367,
-      "updatedAt": 1762631383077,
+      "updatedAt": 1762635456880,
       "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
     },
     "2": {
@@ -489,6 +587,20 @@
       "isDefault": true,
       "createdAt": 1762633772659,
       "updatedAt": 1762633772659,
+      "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
+    },
+    "5": {
+      "id": "tpl-88478765db61",
+      "name": "nnn",
+      "description": "fffd",
+      "positivePrompt": "xxcc",
+      "negativePrompt": null,
+      "categoryId": "cat-648473deb843",
+      "emoji": "gg",
+      "image": null,
+      "isDefault": false,
+      "createdAt": 1762635047688,
+      "updatedAt": 1762635075206,
       "userId": "8001235a-f37c-43cd-ab8d-06d6978123c6"
     }
   }

@@ -145,15 +145,9 @@ export const PromptComposer: React.FC = () => {
   const { edit, cancelEdit } = useImageEditing();
 
   // Get all templates (default + custom)
-  const {
-    templates: backendTemplates,
-    fetchTemplates,
-    isTemplatesLoading,
-  } = useTemplateStore((state) => ({
-    templates: state.templates,
-    fetchTemplates: state.fetchTemplates,
-    isTemplatesLoading: state.loading.templates,
-  }));
+  const backendTemplates = useTemplateStore((state) => state.templates);
+  const fetchTemplates = useTemplateStore((state) => state.fetchTemplates);
+  const isTemplatesLoading = useTemplateStore((state) => state.loading.templates);
 
   const hasRequestedTemplatesRef = React.useRef(false);
 

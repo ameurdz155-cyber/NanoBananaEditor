@@ -111,6 +111,7 @@ export function Header() {
   const showHistory = useAppStore((state) => state.showHistory);
   const setShowHistory = useAppStore((state) => state.setShowHistory);
   const user = useAuthStore((state) => state.user);
+  const isAdminUser = useAuthStore((state) => (state.user?.is_admin || state.user?.is_superuser) ?? false);
   const logout = useAuthStore((state) => state.logout);
 
   const t = useMemo(() => getTranslation(language), [language]);
@@ -306,6 +307,13 @@ export function Header() {
     window.addEventListener('triggerSaveImage', handleExternalSave);
     return () => window.removeEventListener('triggerSaveImage', handleExternalSave);
   }, [handleSave]);
+
+  useEffect(() => {
+    if (!isAdminUser) {
+      setShowCategoryModal(false);
+      setShowTemplateModal(false);
+    }
+  }, [isAdminUser]);
 
   const isBusy = isUpscaleMode ? isUpscaling : (isGenerating || isValidating);
   const primaryActionLabel = (() => {
@@ -552,14 +560,18 @@ export function Header() {
           <DropdownMenuContent className="w-56" align="end">
             <DropdownMenuLabel>{menuLabel}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setShowCategoryModal(true)}>
-              <Layers className="mr-2 h-4 w-4" />
-              <span>{t.menuPromptCategories || 'Prompt Categories'}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setShowTemplateModal(true)}>
-              <FileText className="mr-2 h-4 w-4" />
-              <span>{t.menuTemplateManagement || 'Template Management'}</span>
-            </DropdownMenuItem>
+            {isAdminUser && (
+              <>
+                <DropdownMenuItem onSelect={() => setShowCategoryModal(true)}>
+                  <Layers className="mr-2 h-4 w-4" />
+                  <span>{t.menuPromptCategories || 'Prompt Categories'}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setShowTemplateModal(true)}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>{t.menuTemplateManagement || 'Template Management'}</span>
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuItem onSelect={() => openExternal('/tutorials/?utm_source=AI_POD_Lite')}>
               <GraduationCap className="mr-2 h-4 w-4" />
               <span>{t.menuTutorials || 'Tutorials'}</span>
@@ -593,8 +605,12 @@ export function Header() {
         </DropdownMenu>
       </div>
     </nav>
-    <CategoryManagementModal open={showCategoryModal} onOpenChange={setShowCategoryModal} />
-    <TemplateManagementModal open={showTemplateModal} onOpenChange={setShowTemplateModal} />
+    {isAdminUser && (
+      <>
+        <CategoryManagementModal open={showCategoryModal} onOpenChange={setShowCategoryModal} />
+        <TemplateManagementModal open={showTemplateModal} onOpenChange={setShowTemplateModal} />
+      </>
+    )}
     <SettingsModal open={showSettingsModal} onOpenChange={setShowSettingsModal} />
     <InfoModal open={showInfoModal} onOpenChange={setShowInfoModal} />
     <SaveSuccessModal

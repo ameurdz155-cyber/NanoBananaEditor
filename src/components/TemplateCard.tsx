@@ -55,7 +55,10 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
     borderColor: 'var(--surface-border)'
   };
 
-  const templateIconNode = !template.image
+  const rawImage = template.image?.trim();
+  const imageSrc = rawImage && (/^https?:\/\//i.test(rawImage) || /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(rawImage)) ? rawImage : undefined;
+
+  const templateIconNode = !imageSrc
     ? renderIconValue(
         template.emoji,
         cn(
@@ -84,9 +87,9 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
         onClick={() => onSelect(template)}
       >
         <div className={thumbnailClasses} style={thumbnailStyle}>
-          {template.image ? (
+          {imageSrc ? (
             <img
-              src={template.image}
+              src={imageSrc}
               alt={template.name}
               className="h-full w-full object-cover"
               onError={(e) => {

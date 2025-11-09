@@ -50,32 +50,18 @@ type TemplateFormState = {
 type SpeechRecognitionConstructor = new () => SpeechRecognition;
 
 export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ onClose }) => {
-	const { language, promptCategories, setPromptCategories } = useAppStore((state) => ({
-		language: state.language,
-		promptCategories: state.promptCategories,
-		setPromptCategories: state.setPromptCategories,
-	}));
-	const { isAuthenticated, isPremiumUser } = useAuthStore((state) => ({
-		isAuthenticated: state.isAuthenticated,
-		isPremiumUser: state.isPremiumUser,
-	}));
-	const {
-		templates,
-		loading,
-		fetchTemplates,
-		refreshTemplates,
-		createTemplate,
-		updateTemplate,
-		deleteTemplate,
-	} = useTemplateStore((state) => ({
-		templates: state.templates,
-		loading: state.loading,
-		fetchTemplates: state.fetchTemplates,
-		refreshTemplates: state.refreshTemplates,
-		createTemplate: state.createTemplate,
-		updateTemplate: state.updateTemplate,
-		deleteTemplate: state.deleteTemplate,
-	}));
+	const language = useAppStore((state) => state.language);
+	const promptCategories = useAppStore((state) => state.promptCategories);
+	const setPromptCategories = useAppStore((state) => state.setPromptCategories);
+	const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+	const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
+	const templates = useTemplateStore((state) => state.templates);
+	const templatesLoading = useTemplateStore((state) => state.loading.templates);
+	const fetchTemplates = useTemplateStore((state) => state.fetchTemplates);
+	const refreshTemplates = useTemplateStore((state) => state.refreshTemplates);
+	const createTemplate = useTemplateStore((state) => state.createTemplate);
+	const updateTemplate = useTemplateStore((state) => state.updateTemplate);
+	const deleteTemplate = useTemplateStore((state) => state.deleteTemplate);
 	const t = getTranslation(language);
 
 	const [searchTerm, setSearchTerm] = useState('');
@@ -223,30 +209,35 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 	};
 
 	const handleFormSubmit = async () => {
-			if (!formState.name.trim() || !formState.positivePrompt.trim()) {
+		const name = formState.name.trim();
+		const positivePrompt = formState.positivePrompt.trim();
+		if (!name || !positivePrompt) {
 			return;
 		}
 
 		try {
+			const imageValue = formState.image.trim();
+			const normalizedImage = imageValue.length > 0 ? imageValue : undefined;
+
 			if (editingTemplate) {
 				await updateTemplate(editingTemplate.id, {
-					name: formState.name.trim(),
-						positivePrompt: formState.positivePrompt.trim(),
+					name,
+					positivePrompt,
 					negativePrompt: formState.negativePrompt.trim() || undefined,
 					categoryId: formState.categoryId || undefined,
 					description: formState.description.trim() || undefined,
 					emoji: formState.emoji || undefined,
-					image: formState.image || undefined,
+					image: normalizedImage,
 				});
 			} else {
 				await createTemplate({
-					name: formState.name.trim(),
-							positivePrompt: formState.positivePrompt.trim(),
+					name,
+					positivePrompt,
 					negativePrompt: formState.negativePrompt.trim() || undefined,
 					categoryId: formState.categoryId || undefined,
 					description: formState.description.trim() || undefined,
 					emoji: formState.emoji || undefined,
-					image: formState.image || undefined,
+					image: normalizedImage,
 				});
 			}
 			setFormOpen(false);
@@ -291,6 +282,8 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 
 	const handleDuplicate = async (template: Template) => {
 		try {
+			const imageValue = template.image?.trim();
+			const normalizedImage = imageValue && imageValue.length > 0 ? imageValue : undefined;
 			await createTemplate({
 				name: `${template.name} (Copy)`,
 						positivePrompt: template.positivePrompt,
@@ -298,7 +291,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 				categoryId: template.categoryId,
 				description: template.description,
 				emoji: template.emoji,
-				image: template.image,
+				image: normalizedImage,
 			});
 		} catch (error) {
 			console.error('Failed to duplicate template:', error);
@@ -367,9 +360,9 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 					<Button
 						variant="ghost"
 						onClick={() => refreshTemplates()}
-						disabled={loading.templates}
+						disabled={templatesLoading}
 					>
-						{loading.templates ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+						{templatesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
 						<span>{language === 'zh' ? '刷新' : 'Refresh'}</span>
 					</Button>
 					<Button onClick={openCreateForm}>
@@ -430,7 +423,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 			</section>
 
 			<main className="flex-1 overflow-y-auto px-6 py-4">
-				{loading.templates ? (
+				{templatesLoading ? (
 					<div className="flex h-full items-center justify-center text-sm text-[var(--text-secondary)]">
 						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 						{language === 'zh' ? '正在加载模板' : 'Loading templates'}
