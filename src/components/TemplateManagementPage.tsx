@@ -631,7 +631,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							<select
 								value={formState.categoryId}
 								onChange={(event) => setFormState((prev) => ({ ...prev, categoryId: event.target.value }))}
-								className="rounded-md border border-[var(--surface-border)] bg-transparent px-3 py-2 text-sm"
+								className="rounded-md border border-[var(--surface-border)] bg-[var(--surface-primary)] text-[var(--text-primary)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
 							>
 								<option value="">{t.uncategorized}</option>
 								{promptCategories.map((category) => (
