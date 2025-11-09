@@ -1,9 +1,11 @@
 """Routes for prompt category management."""
 
+import base64
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from pydantic import BaseModel, Field
 from tinydb import Query
 
@@ -12,6 +14,87 @@ from services.auth_service_db import get_current_user
 
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
+
+# Base path for category assets
+ASSETS_DIR = Path(__file__).parent.parent / "assets" / "categories"
+ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+async def save_category_image(image_data: str, category_id: str) -> str:
+    """
+    Save category image from base64 or URL.
+    Returns the URL path to the saved asset.
+    """
+    # If it's already a URL path, return it
+    if image_data and image_data.startswith("/assets/"):
+        return image_data
+    
+    # If it's a base64 image, save it as a file
+    if image_data and image_data.startswith("data:image"):
+        # Extract base64 data
+        header, encoded = image_data.split(",", 1)
+        image_bytes = base64.b64decode(encoded)
+        
+        # Determine file extension from header
+        if "jpeg" in header or "jpg" in header:
+            ext = "jpg"
+        elif "png" in header:
+            ext = "png"
+        elif "gif" in header:
+            ext = "gif"
+        elif "webp" in header:
+            ext = "webp"
+        else:
+            ext = "jpg"  # default
+        
+        # Save file
+        filename = f"{category_id}.{ext}"
+        filepath = ASSETS_DIR / filename
+        
+        with open(filepath, "wb") as f:
+            f.write(image_bytes)
+        
+        return f"/assets/categories/{filename}"
+    
+    return None
+
+
+async def save_uploaded_file(file: UploadFile, category_id: str) -> str:
+    """
+    Save uploaded file and return URL path.
+    """
+    # Determine extension from content type or filename
+    content_type = file.content_type or ""
+    if "jpeg" in content_type or "jpg" in content_type:
+        ext = "jpg"
+    elif "png" in content_type:
+        ext = "png"
+    elif "gif" in content_type:
+        ext = "gif"
+    elif "webp" in content_type:
+        ext = "webp"
+    elif file.filename:
+        ext = file.filename.split(".")[-1]
+    else:
+        ext = "jpg"
+    
+    filename = f"{category_id}.{ext}"
+    filepath = ASSETS_DIR / filename
+    
+    content = await file.read()
+    with open(filepath, "wb") as f:
+        f.write(content)
+    
+    return f"/assets/categories/{filename}"
+
+
+def delete_category_image(category_id: str):
+    """Delete all image files for a category."""
+    for ext in ["jpg", "jpeg", "png", "gif", "webp"]:
+        filepath = ASSETS_DIR / f"{category_id}.{ext}"
+        if filepath.exists():
+            filepath.unlink()
+
 
 DEFAULT_CATEGORIES: List[Dict[str, Any]] = [
     {
@@ -118,8 +201,27 @@ async def get_categories(
     if not user_categories:
         user_categories = _seed_default_categories(current_user["id"])
     
-    return [
-        {
+    # Convert any base64 images to asset URLs
+    result = []
+    for cat in user_categories:
+        image = cat.get("image")
+        
+        # If image is base64, convert it to an asset file
+        if image and image.startswith("data:image"):
+            try:
+                image_url = await save_category_image(image, cat["id"])
+                # Update the database with the new URL
+                categories_table.update(
+                    {"image": image_url},
+                    Cat.id == cat["id"]
+                )
+                cat["image"] = image_url
+            except Exception as e:
+                import logging
+                logging.error(f"Failed to convert base64 image for category {cat['id']}: {e}")
+                cat["image"] = None
+        
+        result.append({
             "id": cat["id"],
             "name": cat["name"],
             "description": cat.get("description"),
@@ -129,9 +231,9 @@ async def get_categories(
             "createdAt": cat["createdAt"],
             "updatedAt": cat["updatedAt"],
             "userId": cat["userId"]
-        }
-        for cat in user_categories
-    ]
+        })
+    
+    return result
 
 
 @router.post("", response_model=Category, status_code=201)
@@ -151,14 +253,22 @@ async def create_category(
     if existing:
         raise HTTPException(status_code=400, detail="Category with this name already exists")
     
+    # Generate category ID
+    category_id = f"cat-{uuid.uuid4().hex[:12]}"
+    
+    # Handle image - save as asset if base64
+    image_url = None
+    if category.image:
+        image_url = await save_category_image(category.image, category_id)
+    
     # Create new category
     now = int(datetime.utcnow().timestamp() * 1000)  # milliseconds
     new_category = {
-        "id": f"cat-{uuid.uuid4().hex[:12]}",
+        "id": category_id,
         "name": category.name,
         "description": category.description,
         "emoji": category.emoji or "📁",
-        "image": category.image,
+        "image": image_url,  # Save as URL path, not base64
         "isDefault": category.isDefault or False,
         "createdAt": now,
         "updatedAt": now,
@@ -228,10 +338,19 @@ async def update_category(
     update_data = category_update.dict(exclude_unset=True)
     update_data["updatedAt"] = int(datetime.utcnow().timestamp() * 1000)
     
-    # If setting image, clear emoji and vice versa
+    # Handle image update - convert base64 to asset URL
     if "image" in update_data and update_data["image"]:
+        # Delete old image if exists
+        if existing.get("image") and existing["image"].startswith("/assets/"):
+            delete_category_image(category_id)
+        # Save new image
+        image_url = await save_category_image(update_data["image"], category_id)
+        update_data["image"] = image_url
         update_data["emoji"] = None
     elif "emoji" in update_data and update_data["emoji"]:
+        # If setting emoji, delete image file
+        if existing.get("image") and existing["image"].startswith("/assets/"):
+            delete_category_image(category_id)
         update_data["image"] = None
     
     logger.info(f"[Categories] Final update_data to save: {update_data}")
@@ -267,6 +386,10 @@ async def delete_category(
     # Don't allow deleting default categories
     if existing.get("isDefault"):
         raise HTTPException(status_code=400, detail="Cannot delete default categories")
+    
+    # Delete associated image file if exists
+    if existing.get("image") and existing["image"].startswith("/assets/"):
+        delete_category_image(category_id)
     
     # Delete the category
     categories_table.remove(

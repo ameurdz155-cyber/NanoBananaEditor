@@ -7,8 +7,10 @@ editing, upscaling, and inpainting using Google Gemini and Imagen models.
 
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from config import ALLOW_ALL_ORIGINS, ALLOWED_ORIGINS
 from database import connect_db, disconnect_db
@@ -63,6 +65,11 @@ app.add_middleware(
     expose_headers=["*"],
     max_age=3600,
 )
+
+# Mount static files for assets
+assets_path = Path(__file__).parent / "assets"
+assets_path.mkdir(exist_ok=True)
+app.mount("/assets", StaticFiles(directory=str(assets_path)), name="assets")
 
 # Register routers
 app.include_router(auth_router, prefix="/api/v1/auth/legacy", tags=["Legacy Auth"])

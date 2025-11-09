@@ -145,20 +145,23 @@ def edit_image(
     )
 
     prompt_text = (
-        "MASKED REGION EDITING - Follow these instructions precisely:\n\n"
-        "IMAGE 1: Original image to edit\n"
-        "IMAGE 2 (optional): Binary mask - WHITE pixels show WHERE to apply changes,"
-        " BLACK pixels show what to preserve\n\n"
-        f"YOUR TASK: {instruction}\n\n"
-        "CRITICAL MASK RULES:\n"
-        "1. Apply changes ONLY in white mask areas\n"
-        "2. Keep black mask areas unchanged\n"
-        "3. Blend changes seamlessly at boundaries\n"
-        "4. Match original lighting, colors, and textures\n"
+        "GENERATE A NEW IMAGE based on the reference provided:\n\n"
+        "REFERENCE IMAGE: The image below shows what you should use as a base.\n"
+        f"MODIFICATION REQUEST: {instruction}\n\n"
+        "INSTRUCTIONS:\n"
+        "1. Generate a new image that incorporates the requested changes\n"
+        "2. Maintain the overall composition, lighting, and style of the reference\n"
+        "3. Make the changes look natural and seamlessly integrated\n"
+        "4. Ensure the output is a complete, high-quality image\n\n"
+        "OUTPUT: A single generated image that fulfills the modification request.\n"
     ) if mask_image else (
-        f"Edit this image according to the following instruction: {instruction}\n\n"
-        "Maintain the original image's lighting, perspective, and overall composition."
-        " Make the changes look natural and seamlessly integrated."
+        f"GENERATE A NEW IMAGE based on this reference:\n\n"
+        f"MODIFICATION REQUEST: {instruction}\n\n"
+        "Create a new image that:\n"
+        "- Uses the reference image as inspiration for composition and style\n"
+        "- Incorporates the requested modifications naturally\n"
+        "- Maintains consistent lighting, perspective, and quality\n"
+        "- Looks like a cohesive, professionally edited photo\n"
     )
 
     parts: List[Dict[str, Any]] = [{"text": prompt_text}]

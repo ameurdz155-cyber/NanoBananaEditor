@@ -18,6 +18,7 @@ import { useAppStore } from '../store/useAppStore';
 import { getTranslation } from '../i18n/translations';
 import { PromptCategory } from '../types';
 import * as categoryService from '../services/categoryService';
+import { getStoredBackendUrl } from '../services/apiConfig';
 
 export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   console.log('[CategoryManagementPage] Component rendered');
@@ -375,12 +376,17 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {filtered.map(c => {
                 const displayEmoji = c.emoji || c.image || '📁';
+                const isImage = displayEmoji.startsWith('data:') || displayEmoji.startsWith('/assets/') || displayEmoji.startsWith('http');
+                // Convert relative asset paths to absolute URLs
+                const imageUrl = displayEmoji.startsWith('/assets/') 
+                  ? `${getStoredBackendUrl()}${displayEmoji}` 
+                  : displayEmoji;
                 return (
                 <Card key={c.id} className="group p-5 bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-lime-500/50 transition-all">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      {displayEmoji.startsWith('data:') ? (
-                        <img src={displayEmoji} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-lime-500/30" />
+                      {isImage ? (
+                        <img src={imageUrl} alt={c.name} className="w-12 h-12 rounded-lg object-cover ring-2 ring-lime-500/30" />
                       ) : (
                         <div className="text-4xl">{displayEmoji}</div>
                       )}
