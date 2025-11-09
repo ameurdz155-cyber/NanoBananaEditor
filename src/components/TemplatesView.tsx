@@ -15,10 +15,7 @@ import {
   Edit2,
   X,
   UploadCloud,
-  Tag,
-  Search,
-  Mic,
-  MicOff
+  Tag
 } from 'lucide-react';
 import { IconType } from 'react-icons';
 import {
@@ -50,6 +47,7 @@ import {
 import { cn } from '../utils/cn';
 import { getTranslation, Language } from '../i18n/translations';
 import { PromptTemplate } from '../types';
+import { CategoryManagementToolbar, VoiceLanguageOption } from './CategoryManagementToolbar';
 
 const templateThumbnails: Record<string, string> = {
   anime: new URL('../assets/templates/Anime.png', import.meta.url).href,
@@ -632,7 +630,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
   const [isListening, setIsListening] = React.useState(false);
   const [isVoiceSearchSupported, setIsVoiceSearchSupported] = React.useState(false);
+  const [voiceLang, setVoiceLang] = React.useState<'en-US' | 'zh-CN'>(() => (language === 'zh' ? 'zh-CN' : 'en-US'));
+  const voiceLangWasManuallyChanged = React.useRef(false);
   const speechRecognitionRef = React.useRef<any>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') {
@@ -816,9 +817,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       return;
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-    if (!SpeechRecognition) {
+    if (!SpeechRecognitionCtor) {
       setIsVoiceSearchSupported(false);
       speechRecognitionRef.current = null;
       return;
@@ -827,7 +828,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     setIsVoiceSearchSupported(true);
 
     if (!speechRecognitionRef.current) {
-      const recognitionInstance = new SpeechRecognition();
+      const recognitionInstance = new SpeechRecognitionCtor();
       recognitionInstance.continuous = false;
       recognitionInstance.interimResults = false;
       recognitionInstance.maxAlternatives = 1;
@@ -839,12 +840,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       return;
     }
 
-    recognition.lang = language === 'zh' ? 'zh-CN' : 'en-US';
+    recognition.lang = voiceLang;
     recognition.onresult = (event: any) => {
       try {
         const transcript = event?.results?.[0]?.[0]?.transcript;
         if (transcript) {
-          setSearchQuery(transcript.trim());
+          const normalizedTranscript = transcript.trim();
+          setSearchQuery(normalizedTranscript);
+          searchInputRef.current?.focus();
         }
         recognition.stop?.();
       } finally {
@@ -859,13 +862,11 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     };
 
     return () => {
-      if (recognition) {
-        recognition.onresult = null;
-        recognition.onerror = null;
-        recognition.onend = null;
-      }
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
     };
-  }, [language]);
+  }, [voiceLang]);
 
   React.useEffect(() => {
     return () => {
@@ -881,6 +882,21 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     };
   }, []);
 
+  React.useEffect(() => {
+    const defaultVoiceLang = language === 'zh' ? 'zh-CN' : 'en-US';
+    if (!voiceLangWasManuallyChanged.current) {
+      setVoiceLang(defaultVoiceLang);
+    } else if (voiceLang === defaultVoiceLang) {
+      voiceLangWasManuallyChanged.current = false;
+    }
+  }, [language, voiceLang]);
+
+  const handleVoiceLangChange = React.useCallback((value: 'en-US' | 'zh-CN') => {
+    const defaultVoiceLang = language === 'zh' ? 'zh-CN' : 'en-US';
+    voiceLangWasManuallyChanged.current = value !== defaultVoiceLang;
+    setVoiceLang(value);
+  }, [language]);
+
   const handleVoiceSearch = React.useCallback(() => {
     if (!isVoiceSearchSupported || !speechRecognitionRef.current) {
       return;
@@ -893,6 +909,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         recognition.stop?.();
         setIsListening(false);
       } else {
+        recognition.lang = voiceLang;
         recognition.start();
         setIsListening(true);
       }
@@ -900,7 +917,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       console.error('Voice search activation failed', error);
       setIsListening(false);
     }
-  }, [isListening, isVoiceSearchSupported]);
+  }, [isListening, isVoiceSearchSupported, voiceLang]);
+
+  const handleUpgradeClick = React.useCallback(() => {
+    setShowPremiumAlert(false);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('app:request-upgrade'));
+    }
+  }, []);
 
   const openCategoryModal = React.useCallback((categoryId?: string) => {
     if (!isPremiumUser) {
@@ -1145,12 +1169,32 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     }
   };
 
-  const voiceSearchButtonLabel = React.useMemo(() => {
+  const voiceButtonTitle = React.useMemo(() => {
+    if (!isVoiceSearchSupported) {
+      return language === 'zh' ? '浏览器不支持语音搜索' : 'Voice search not supported';
+    }
     if (isListening) {
       return language === 'zh' ? '停止语音搜索' : 'Stop voice search';
     }
-    return language === 'zh' ? '使用语音搜索' : 'Search by voice';
-  }, [isListening, language]);
+    return language === 'zh' ? '开始语音搜索' : 'Start voice search';
+  }, [isListening, isVoiceSearchSupported, language]);
+
+  const voiceLangLabel = React.useMemo(() => (
+    voiceLang === 'zh-CN'
+      ? (language === 'zh' ? '中文' : '中文')
+      : (language === 'zh' ? '英语' : 'English')
+  ), [voiceLang, language]);
+
+  const voiceLanguageOptions = React.useMemo<VoiceLanguageOption[]>(() => [
+    { value: 'en-US', label: language === 'zh' ? '英语' : 'English' },
+    { value: 'zh-CN', label: language === 'zh' ? '中文' : '中文' },
+  ], [language]);
+
+  const searchPlaceholder = language === 'zh' ? '按名称搜索' : 'Search by name';
+  const addButtonAriaLabel = isPremiumUser ? t.createTemplate : t.premiumFeatureTitle;
+  const premiumFeatureNotice = language === 'zh'
+    ? '此功能仅向高级订阅用户开放。'
+    : 'This feature is only available to Premium members.';
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -1360,60 +1404,28 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     <div className="flex flex-col w-full h-full min-h-0">
       {/* Search, Actions, and Categories */}
       <div className="flex-shrink-0 mb-3 space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:flex-1">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-vis-text-muted transition-colors"
-            />
-            <Input
-              type="text"
-              placeholder={language === 'zh' ? '按名称搜索' : 'Search by name'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-12 transition-colors rounded-xl text-vis-text-primary placeholder:text-vis-text-muted border-vis-border bg-gray-800/50 focus-visible:bg-gray-800 focus-visible:ring-2 focus-visible:ring-vis-teal-500/50 focus-visible:border-vis-teal-400"
-            />
-            <button
-              type="button"
-              onClick={handleVoiceSearch}
-              disabled={!isVoiceSearchSupported}
-              aria-label={voiceSearchButtonLabel}
-              title={voiceSearchButtonLabel}
-              aria-pressed={isListening}
-              className={cn(
-                'absolute right-2.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-vis-teal-400/70',
-                'border-vis-border bg-gray-800/50 text-vis-text-secondary hover:bg-vis-teal-500/10 hover:text-vis-teal-400 hover:border-vis-teal-400',
-                isListening && 'border-vis-teal-400 bg-vis-teal-500/20 text-vis-teal-400 shadow-vis-glow-teal',
-                !isVoiceSearchSupported && 'cursor-not-allowed opacity-60'
-              )}
-            >
-              {isVoiceSearchSupported ? (
-                <Mic className={cn('h-4 w-4', isListening && 'animate-pulse')} />
-              ) : (
-                <MicOff className="h-4 w-4" />
-              )}
-            </button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="default"
-              size="icon"
-              onClick={() => {
-                if (!isPremiumUser) {
-                  setShowPremiumAlert(true);
-                  return;
-                }
-                openCreateModal();
-              }}
-              title={isPremiumUser ? t.createTemplate : t.premiumFeatureTitle}
-              aria-label={isPremiumUser ? t.createTemplate : t.premiumFeatureTitle}
-              className="h-10 w-10 rounded-xl bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all"
-              type="button"
-              aria-disabled={!isPremiumUser}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <CategoryManagementToolbar
+          searchValue={searchQuery}
+          onSearchChange={(value) => setSearchQuery(value)}
+          searchPlaceholder={searchPlaceholder}
+          searchInputRef={searchInputRef}
+          voiceLang={voiceLang}
+          onVoiceLangChange={handleVoiceLangChange}
+          voiceLangLabel={voiceLangLabel}
+          voiceLanguageOptions={voiceLanguageOptions}
+          voiceSupported={isVoiceSearchSupported}
+          listening={isListening}
+          voiceButtonTitle={voiceButtonTitle}
+          addButtonAriaLabel={addButtonAriaLabel}
+          onToggleVoiceSearch={handleVoiceSearch}
+          onAddCategory={() => {
+            if (!isPremiumUser) {
+              setShowPremiumAlert(true);
+              return;
+            }
+            openCreateModal();
+          }}
+        />
 
         {templateError && (
           <div
@@ -2280,6 +2292,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               </div>
 
               <p className="text-base leading-relaxed text-vis-text-secondary">
+                {premiumFeatureNotice}
+              </p>
+              <p className="text-base leading-relaxed text-vis-text-secondary">
                 {t.premiumFeatureDescription}
               </p>
 
@@ -2292,10 +2307,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   {t.cancel}
                 </Button>
                 <Button
-                  onClick={() => {
-                    setShowPremiumAlert(false);
-                    // Here you could redirect to upgrade page or open upgrade modal
-                  }}
+                  onClick={handleUpgradeClick}
                   className="px-6 bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all"
                 >
                   {t.upgradeToUnlock}

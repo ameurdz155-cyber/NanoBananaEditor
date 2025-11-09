@@ -65,7 +65,7 @@ export const CategoryManagementToolbar: React.FC<CategoryManagementToolbarProps>
           />
         </div>
 
-        <Select value={voiceLang} onValueChange={onVoiceLangChange}>
+  <Select value={voiceLang} onValueChange={(value) => onVoiceLangChange(value as 'en-US' | 'zh-CN')}>
           <SelectTrigger className="h-11 w-auto min-w-[110px] bg-gray-900/80 border border-vis-border text-xs text-vis-text-primary rounded-xl px-3">
             <SelectValue>{voiceLangLabel}</SelectValue>
           </SelectTrigger>
@@ -86,6 +86,8 @@ export const CategoryManagementToolbar: React.FC<CategoryManagementToolbarProps>
           disabled={!voiceSupported}
           className={`h-11 w-11 rounded-full border flex-shrink-0 transition-all duration-200 ${listening && voiceSupported ? 'border-vis-teal-400 text-vis-teal-400 bg-vis-teal-500/10 shadow-vis-glow-teal' : 'border-vis-border bg-gray-900/80 text-vis-text-secondary hover:border-vis-border-light hover:text-vis-text-primary'} ${!voiceSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
           title={voiceButtonTitle}
+          aria-label={voiceButtonTitle}
+          aria-pressed={listening}
         >
           {listening && voiceSupported ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
         </Button>
@@ -95,6 +97,7 @@ export const CategoryManagementToolbar: React.FC<CategoryManagementToolbarProps>
           size="icon"
           className="h-11 w-11 rounded-full bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan border-0 flex-shrink-0 transition-all duration-200"
           aria-label={addButtonAriaLabel}
+          title={addButtonAriaLabel}
           type="button"
         >
           <Plus className="h-5 w-5" />
