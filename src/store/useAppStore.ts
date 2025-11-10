@@ -71,6 +71,7 @@ interface AppState {
   selectedGenerationId: string | null;
   selectedEditId: string | null;
   showHistory: boolean;
+  showQueue: boolean;
   
   // Panel visibility
   showPromptPanel: boolean;
@@ -140,6 +141,7 @@ interface AppState {
   selectGeneration: (id: string | null) => void;
   selectEdit: (id: string | null) => void;
   setShowHistory: (show: boolean) => void;
+  setShowQueue: (show: boolean) => void;
   
   setShowPromptPanel: (show: boolean) => void;
   setPromptPanelWidth: (width: number) => void;
@@ -234,6 +236,7 @@ export const useAppStore = create<AppState>()(
       selectedGenerationId: null,
       selectedEditId: null,
       showHistory: true,
+      showQueue: false,
       
       showPromptPanel: true,
   promptPanelWidth: 320,
@@ -372,6 +375,7 @@ export const useAppStore = create<AppState>()(
       selectGeneration: (id) => set({ selectedGenerationId: id }),
       selectEdit: (id) => set({ selectedEditId: id }),
       setShowHistory: (show) => set({ showHistory: show }),
+      setShowQueue: (show) => set({ showQueue: show }),
       
       setShowPromptPanel: (show) => set({ showPromptPanel: show }),
   setPromptPanelWidth: (width) => set({ promptPanelWidth: width }),

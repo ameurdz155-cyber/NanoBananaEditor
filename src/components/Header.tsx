@@ -41,6 +41,11 @@ import {
   HelpCircle,
   LogOut,
   Loader2,
+  MoreVertical,
+  RotateCw,
+  ListOrdered,
+  X,
+  XCircle,
 } from "lucide-react";
 import logoDark from "../assets/AI-POD-lite-logo.png";
 import logoLight from "../assets/AI-POD-lite-logo-light.png";
@@ -75,6 +80,8 @@ export function Header() {
   const isUpscaling = useAppStore((state) => state.isUpscaling);
   const upscaleScale = useAppStore((state) => state.upscaleScale);
   const setUpscaleScale = useAppStore((state) => state.setUpscaleScale);
+  const setCurrentPrompt = useAppStore((state) => state.setCurrentPrompt);
+  const setSelectedTemplate = useAppStore((state) => state.setSelectedTemplate);
 
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -91,6 +98,7 @@ export function Header() {
   const setCanvasPan = useAppStore((state) => state.setCanvasPan);
   const canvasRotation = useAppStore((state) => state.canvasRotation);
   const setCanvasRotation = useAppStore((state) => state.setCanvasRotation);
+  const setShowQueue = useAppStore((state) => state.setShowQueue);
   const showMasks = useAppStore((state) => state.showMasks);
   const setShowMasks = useAppStore((state) => state.setShowMasks);
   const canvasImage = useAppStore((state) => state.canvasImage);
@@ -352,52 +360,127 @@ export function Header() {
         <div className="w-px h-5 bg-vis-border" />
         
         {/* Primary action (Generate/Upscale) with integrated selector */}
-        <div className="flex items-center rounded-md overflow-hidden bg-gray-800/50 border border-vis-border hover:border-vis-teal-400 transition-colors">
-          <Button 
-            variant="ghost"
-            onClick={handlePrimaryAction}
-            className="flex items-center gap-2 hover:bg-vis-teal-500/10 px-3 h-8 rounded-none border-0"
-            aria-pressed={isBusy}
-            type="button"
-          >
-            {isBusy ? (
-              <Loader2 className={`w-4 h-4 animate-spin ${isUpscaleMode ? 'text-vis-teal-400' : 'text-vis-teal-400'}`} />
-            ) : (
-              <IdleIcon className={`w-4 h-4 ${isUpscaleMode ? 'text-vis-teal-400' : 'text-vis-teal-400'}`} />
-            )}
-            <span className="text-sm font-medium text-vis-text-primary">
-              {primaryActionLabel}
-              {primaryHint ? ` · ${primaryHint}` : ''}
-            </span>
-          </Button>
-          
-          <Select
-            value={isUpscaleMode ? String(getNormalizedUpscaleScale(upscaleScale)) : String(Math.max(1, iterations ?? 1))}
-            onValueChange={handlePrimarySelectChange}
-            disabled={isBusy}
-          >
-            <SelectTrigger
-              className="w-20 h-8 px-3 py-1 bg-gray-900/80 text-vis-text-primary border-none focus:ring-0 rounded-none"
-              aria-label={isUpscaleMode
-                ? (language === 'zh' ? '放大倍数' : 'Upscale multiplier')
-                : (language === 'zh' ? '生成次数' : 'Number of images to generate')}
+        <div className="flex items-center gap-0">
+          <div className="flex items-center rounded-l-md overflow-hidden bg-gray-800/50 border border-vis-border hover:border-vis-teal-400 transition-colors">
+            <Button 
+              variant="ghost"
+              onClick={handlePrimaryAction}
+              className="flex items-center gap-2 hover:bg-vis-teal-500/10 px-3 h-8 rounded-none border-0"
+              aria-pressed={isBusy}
+              type="button"
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-900/95 border border-vis-border-light">
-              {isUpscaleMode
-                ? SUPPORTED_UPSCALE_SCALES.map((scaleOption) => (
-                    <SelectItem key={scaleOption} value={String(scaleOption)}>
-                      {`${scaleOption}x`}
-                    </SelectItem>
-                  ))
-                : [1, 2, 3, 4, 5].map((count) => (
-                    <SelectItem key={count} value={String(count)}>
-                      {count}
-                    </SelectItem>
-                  ))}
-            </SelectContent>
-          </Select>
+              {isBusy ? (
+                <Loader2 className={`w-4 h-4 animate-spin ${isUpscaleMode ? 'text-vis-teal-400' : 'text-vis-teal-400'}`} />
+              ) : (
+                <IdleIcon className={`w-4 h-4 ${isUpscaleMode ? 'text-vis-teal-400' : 'text-vis-teal-400'}`} />
+              )}
+              <span className="text-sm font-medium text-vis-text-primary">
+                {primaryActionLabel}
+                {primaryHint ? ` · ${primaryHint}` : ''}
+              </span>
+            </Button>
+            
+            <Select
+              value={isUpscaleMode ? String(getNormalizedUpscaleScale(upscaleScale)) : String(Math.max(1, iterations ?? 1))}
+              onValueChange={handlePrimarySelectChange}
+              disabled={isBusy}
+            >
+              <SelectTrigger
+                className="w-20 h-8 px-3 py-1 bg-gray-900/80 text-vis-text-primary border-none focus:ring-0 rounded-none"
+                aria-label={isUpscaleMode
+                  ? (language === 'zh' ? '放大倍数' : 'Upscale multiplier')
+                  : (language === 'zh' ? '生成次数' : 'Number of images to generate')}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-900/95 border border-vis-border-light">
+                {isUpscaleMode
+                  ? SUPPORTED_UPSCALE_SCALES.map((scaleOption) => (
+                      <SelectItem key={scaleOption} value={String(scaleOption)}>
+                        {`${scaleOption}x`}
+                      </SelectItem>
+                    ))
+                  : [1, 2, 3, 4, 5].map((count) => (
+                      <SelectItem key={count} value={String(count)}>
+                        {count}
+                      </SelectItem>
+                    ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Execution Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-r-md rounded-l-none bg-gray-800/50 border border-l-0 border-vis-border hover:border-vis-teal-400 hover:bg-vis-teal-500/10 transition-colors"
+                aria-label="Execution options"
+              >
+                <MoreVertical className="w-4 h-4 text-vis-text-secondary hover:text-vis-teal-400 transition-colors" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64 bg-gray-900/95 border border-vis-border-light" align="start">
+              <DropdownMenuItem 
+                className="focus:bg-vis-teal-500/10 text-vis-text-primary cursor-pointer"
+                onSelect={() => {
+                  // Reset all generation settings to defaults
+                  setIterations(1);
+                  if (isUpscaleMode) {
+                    setUpscaleScale(SUPPORTED_UPSCALE_SCALES[0]);
+                  }
+                  // Clear prompt text and deselect any active template
+                  setCurrentPrompt('');
+                  setSelectedTemplate(null);
+                  // Dispatch event to reset template selector UI
+                  window.dispatchEvent(new CustomEvent('resetTemplateSelector'));
+                }}
+              >
+                <RotateCw className="mr-2 h-4 w-4 text-vis-text-muted" />
+                <span>{language === 'zh' ? '重置生成设置' : 'Reset Generation Settings'}</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator className="bg-vis-border" />
+              
+              <DropdownMenuLabel className="text-vis-text-muted text-xs">
+                {language === 'zh' ? '队列' : 'Queue'}
+              </DropdownMenuLabel>
+              
+              <DropdownMenuItem 
+                className="focus:bg-vis-teal-500/10 text-vis-text-primary cursor-pointer"
+                disabled={!isBusy}
+                onSelect={() => {
+                  window.dispatchEvent(new CustomEvent('cancelGeneration'));
+                }}
+              >
+                <X className="mr-2 h-4 w-4 text-vis-text-muted" />
+                <span>{language === 'zh' ? '取消当前项' : 'Cancel Current Item'}</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                className="focus:bg-vis-teal-500/10 text-vis-text-primary cursor-pointer"
+                disabled={!isBusy}
+                onSelect={() => {
+                  // Cancel all except current - placeholder for future implementation
+                  console.log('Cancel all except current item');
+                }}
+              >
+                <XCircle className="mr-2 h-4 w-4 text-vis-text-muted" />
+                <span>{language === 'zh' ? '取消所有除当前项' : 'Cancel All Except Current Item'}</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                className="focus:bg-vis-teal-500/10 text-vis-text-primary cursor-pointer"
+                onSelect={() => {
+                  setShowQueue(true);
+                }}
+              >
+                <ListOrdered className="mr-2 h-4 w-4 text-vis-text-muted" />
+                <span>{language === 'zh' ? '打开队列' : 'Open Queue'}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {!isUpscaleMode && (

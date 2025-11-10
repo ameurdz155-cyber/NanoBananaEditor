@@ -1,25 +1,93 @@
 """Image upscaling and inpainting routes."""
 
 from io import BytesIO
-from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, Optional
+from datetime import datetime
+from fastapi import APIRouter, HTTPException, Depends
 from PIL import Image
+import uuid
 
 from models import UpscaleRequest, UpscaleResponse, InpaintRequest, InpaintResponse
 from services.imagen_service import upscale_with_google_imagen, inpaint_with_google_imagen
 from utils import normalize_base64, serialize_inline_image
+from database import get_table
+from routes.auth_db import get_current_user
 
 router = APIRouter(tags=["image-processing"])
 
 
+def create_queue_item(user_id: str, type: str, prompt: str, preview_url: Optional[str] = None) -> str:
+    """Create a queue item and return its ID."""
+    queue_table = get_table("queue")
+    now = datetime.utcnow().isoformat()
+    
+    queue_item = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "type": type,
+        "status": "pending",
+        "prompt": prompt,
+        "preview_url": preview_url,
+        "result_url": None,
+        "error_message": None,
+        "progress": 0,
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+        "metadata": {}
+    }
+    
+    queue_table.insert(queue_item)
+    return queue_item["id"]
+
+
+def update_queue_item(item_id: str, status: str, progress: int = 0, result_url: Optional[str] = None, error_message: Optional[str] = None):
+    """Update a queue item status and progress."""
+    queue_table = get_table("queue")
+    from tinydb import Query
+    QueueQuery = Query()
+    
+    now = datetime.utcnow().isoformat()
+    updates = {
+        "status": status,
+        "progress": progress,
+        "updated_at": now
+    }
+    
+    if status in ["completed", "failed"]:
+        updates["completed_at"] = now
+    
+    if result_url:
+        updates["result_url"] = result_url
+    
+    if error_message:
+        updates["error_message"] = error_message
+    
+    queue_table.update(updates, QueueQuery.id == item_id)
+
+
 @router.post("/upscale", response_model=UpscaleResponse)
-async def upscale_image(payload: UpscaleRequest) -> UpscaleResponse:
+async def upscale_image(
+    payload: UpscaleRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> UpscaleResponse:
     """Upscale an image using Google Imagen AI model."""
     
     scale_factor = payload.scale
     if scale_factor not in [2, 4]:
         scale_factor = 4
     
+    # Create queue item
+    queue_id = create_queue_item(
+        user_id=current_user["id"],
+        type="upscale",
+        prompt=f"Upscale {scale_factor}x"
+    )
+    
     try:
+        # Update status to processing
+        update_queue_item(queue_id, "processing", progress=10)
+        
         image_bytes = normalize_base64(payload.image)
         
         try:
@@ -35,6 +103,9 @@ async def upscale_image(payload: UpscaleRequest) -> UpscaleResponse:
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"Invalid image format: {exc}") from exc
         
+        # Update progress
+        update_queue_item(queue_id, "processing", progress=30)
+        
         upscaled_bytes = upscale_with_google_imagen(image_bytes, scale_factor)
         
         try:
@@ -45,7 +116,13 @@ async def upscale_image(payload: UpscaleRequest) -> UpscaleResponse:
         
         print(f"Successfully upscaled image from {original_size} to {new_size} (scale: {scale_factor}x)")
         
+        # Update progress
+        update_queue_item(queue_id, "processing", progress=90)
+        
         upscaled_image = serialize_inline_image(upscaled_bytes)
+        
+        # Mark as completed
+        update_queue_item(queue_id, "completed", progress=100, result_url=upscaled_image)
         
         return UpscaleResponse(
             model="google-imagen-upscale",
@@ -53,17 +130,33 @@ async def upscale_image(payload: UpscaleRequest) -> UpscaleResponse:
             image=upscaled_image,
         )
         
-    except HTTPException:
+    except HTTPException as he:
+        # Mark as failed
+        update_queue_item(queue_id, "failed", progress=0, error_message=str(he.detail))
         raise
     except Exception as exc:
+        # Mark as failed
+        update_queue_item(queue_id, "failed", progress=0, error_message=str(exc))
         raise HTTPException(status_code=500, detail=f"Upscaling failed: {str(exc)}") from exc
 
 
 @router.post("/inpaint", response_model=InpaintResponse)
-async def inpaint_image(payload: InpaintRequest) -> InpaintResponse:
+async def inpaint_image(
+    payload: InpaintRequest,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> InpaintResponse:
     """Insert objects into an image using Google Imagen inpainting."""
     
+    # Create queue item
+    queue_id = create_queue_item(
+        user_id=current_user["id"],
+        type="inpaint",
+        prompt=payload.prompt
+    )
+    
     try:
+        # Update status to processing
+        update_queue_item(queue_id, "processing", progress=10)
         image_bytes = normalize_base64(payload.image)
         
         try:
@@ -121,6 +214,9 @@ async def inpaint_image(payload: InpaintRequest) -> InpaintResponse:
         
         print(f"Starting inpainting: {original_size}, prompt: '{payload.prompt[:50]}...', mode: {payload.mask_mode}")
         
+        # Update progress
+        update_queue_item(queue_id, "processing", progress=30)
+        
         edited_images_bytes = inpaint_with_google_imagen(
             image_data=image_bytes,
             prompt=payload.prompt,
@@ -132,12 +228,19 @@ async def inpaint_image(payload: InpaintRequest) -> InpaintResponse:
             sample_count=payload.sample_count
         )
         
+        # Update progress
+        update_queue_item(queue_id, "processing", progress=80)
+        
         images = []
         for i, img_bytes in enumerate(edited_images_bytes):
             images.append(serialize_inline_image(img_bytes))
             print(f"Generated image {i+1}/{len(edited_images_bytes)}: {len(img_bytes)} bytes")
         
         print(f"✓ Inpainting completed: {len(images)} image(s) generated")
+        
+        # Mark as completed
+        result_url = images[0] if images else None
+        update_queue_item(queue_id, "completed", progress=100, result_url=result_url)
         
         return InpaintResponse(
             model="google-imagen-3.0-inpaint",
@@ -146,7 +249,11 @@ async def inpaint_image(payload: InpaintRequest) -> InpaintResponse:
             sample_count=len(images)
         )
         
-    except HTTPException:
+    except HTTPException as he:
+        # Mark as failed
+        update_queue_item(queue_id, "failed", progress=0, error_message=str(he.detail))
         raise
     except Exception as exc:
+        # Mark as failed
+        update_queue_item(queue_id, "failed", progress=0, error_message=str(exc))
         raise HTTPException(status_code=500, detail=f"Inpainting failed: {str(exc)}") from exc

@@ -493,13 +493,22 @@ export const PromptComposer: React.FC = () => {
         handleGenerateRef.current();
       }
     };
+
+    const handleResetTemplateSelector = () => {
+      // Reset template selection state
+      setLastSelectedTemplate(null);
+      setIsTemplatePromptActive(false);
+      setSavedPromptBeforeTemplate('');
+    };
     
     window.addEventListener('triggerGenerate', handleTriggerGenerate);
     window.addEventListener('cancelGeneration', handleCancelGeneration);
+    window.addEventListener('resetTemplateSelector', handleResetTemplateSelector);
     
     return () => {
       window.removeEventListener('triggerGenerate', handleTriggerGenerate);
       window.removeEventListener('cancelGeneration', handleCancelGeneration);
+      window.removeEventListener('resetTemplateSelector', handleResetTemplateSelector);
     };
   }, []);
 

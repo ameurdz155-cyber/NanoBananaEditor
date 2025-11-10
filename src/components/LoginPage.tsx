@@ -11,8 +11,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onRegisterClick }) => {
   const login = useAuthStore((state) => state.login);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load saved credentials on mount
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberEmail');
+    const savedRemember = localStorage.getItem('rememberMe') === 'true';
+    if (savedEmail && savedRemember) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -21,6 +32,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onRegisterClick }) => {
 
     try {
       await login(email.trim(), password.trim());
+      
+      // Save credentials if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem('rememberEmail', email.trim());
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberEmail');
+        localStorage.removeItem('rememberMe');
+      }
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -89,6 +109,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onRegisterClick }) => {
                     autoComplete="current-password"
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-vis-border bg-gray-800/50 text-vis-teal-500 focus:ring-2 focus:ring-vis-teal-500/30 focus:ring-offset-0 transition-colors cursor-pointer"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-vis-text-secondary cursor-pointer">
+                  Remember me
+                </label>
               </div>
 
               {error && (

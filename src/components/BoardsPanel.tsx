@@ -478,7 +478,7 @@ export const BoardsPanel: React.FC = () => {
 
                       return (
                         <div key={id} className="group relative">
-                          <div className="aspect-square rounded-lg overflow-hidden border-2 border-vis-border hover:border-vis-teal-400 bg-gray-900/50 relative transition-all duration-200 cursor-pointer shadow-lg hover:shadow-vis-glow-teal">
+                          <div className="aspect-square rounded-lg overflow-hidden bg-gray-900/50 relative transition-all duration-200 cursor-pointer shadow-lg hover:shadow-vis-glow-teal">
                             <img
                               src={imageUrl}
                               alt={type === 'generation' ? 'Generation' : 'Edit'}
@@ -644,7 +644,7 @@ export const BoardsPanel: React.FC = () => {
 
                       return (
                         <div key={id} className="group relative">
-                          <div className="aspect-square rounded-lg overflow-hidden border border-vis-border hover:border-vis-teal-400 bg-gray-900/50 relative transition-all duration-200 cursor-pointer shadow-lg hover:shadow-vis-glow-teal">
+                          <div className="aspect-square rounded-lg overflow-hidden bg-gray-900/50 relative transition-all duration-200 cursor-pointer shadow-lg hover:shadow-vis-glow-teal">
                             <img
                               src={imageUrl}
                               alt={type === 'generation' ? 'Generation' : 'Edit'}

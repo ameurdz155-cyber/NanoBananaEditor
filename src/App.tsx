@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { PromptComposer } from './components/PromptComposer';
 import { ImageCanvas } from './components/ImageCanvas';
 import { HistoryPanel } from './components/HistoryPanel';
+import { QueuePanel } from './components/QueuePanel';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useAppStore } from './store/useAppStore';
 import { getTranslation } from './i18n/translations';
@@ -171,6 +172,7 @@ function AppContent() {
             <HistoryPanel />
           </div>
         </div>
+        <QueuePanel />
       </div>
       
     </div>
