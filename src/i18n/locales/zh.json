@@ -227,7 +227,7 @@
   "loadWorkflow": "加载工作流",
   "recallMetadata": "查看元数据 Recall Metadata",
   "sendToUpscale": "无损放大 Send To Upscale",
-  "useForPromptTemplate": "用于提示模板 Use For Prompt Template",
+  "useForPromptTemplate": "用于提示生成 Use for Prompt Generation",
   "newCanvasFromImage": "基于此图新建画布",
   "changeBoardAction": "切换画板",
   "starImage": "收藏 Star",
