@@ -1336,10 +1336,10 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     const isSelected = selectedTemplate === template.id;
 
     const cardClasses = cn(
-      'group relative w-full cursor-pointer overflow-hidden rounded-xl border transition-all duration-300 backdrop-blur hover:border-purple-500/40 h-full',
+      'group relative w-full cursor-pointer overflow-hidden rounded-lg border transition-all duration-300 backdrop-blur hover:border-purple-500/40 h-full',
       isSelected
-        ? 'shadow-[0_15px_35px_-18px_rgba(168,85,247,0.45)]'
-        : 'hover:shadow-[0_18px_36px_-20px_rgba(168,85,247,0.35)] hover:-translate-y-0.5'
+        ? 'shadow-[0_8px_20px_-10px_rgba(168,85,247,0.45)]'
+        : 'hover:shadow-[0_10px_24px_-12px_rgba(168,85,247,0.35)] hover:-translate-y-0.5'
     );
 
     const cardStyle: React.CSSProperties = {
@@ -1347,9 +1347,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       borderColor: isSelected ? 'rgba(168, 85, 247, 0.4)' : 'var(--surface-border)'
     };
 
-    const contentClasses = 'cursor-pointer flex h-full flex-col gap-4 p-4';
+    const contentClasses = 'cursor-pointer flex h-full flex-col gap-2 p-2';
 
-    const thumbnailClasses = 'relative overflow-hidden rounded-lg border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-full h-32';
+    const thumbnailClasses = 'relative overflow-hidden rounded-md border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-full aspect-square';
 
     const thumbnailStyle = {
       borderColor: 'var(--surface-border)'
@@ -1362,7 +1362,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     const templateIconNode = renderIconValue(
       template.emoji,
       cn(
-        'w-12 h-12 text-3xl leading-none flex items-center justify-center',
+        'w-8 h-8 text-2xl leading-none flex items-center justify-center',
         isDarkMode ? 'text-purple-200' : 'text-purple-600'
       )
     );
@@ -1373,9 +1373,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       </span>
     ) : null;
 
-    const activeActionsClasses = 'flex w-full items-center justify-end gap-2 pt-2';
+    const activeActionsClasses = 'flex w-full items-center justify-end gap-1 pt-1';
 
-    const hoverActionsClasses = 'flex w-full items-center justify-end gap-2 pt-2 opacity-0 transition-opacity group-hover:opacity-100';
+    const hoverActionsClasses = 'flex w-full items-center justify-end gap-1 pt-1 opacity-0 transition-opacity group-hover:opacity-100';
 
     return (
   <div key={template.id} className={cardClasses} style={cardStyle}>
@@ -1415,7 +1415,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 />
                 <div className="fallback-icon hidden w-full h-full items-center justify-center">
                   {templateIconNode || (
-                    <span className="text-2xl font-semibold text-vis-teal-400">
+                    <span className="text-xl font-semibold text-vis-teal-400">
                       {template.name.charAt(0).toUpperCase()}
                     </span>
                   )}
@@ -1423,43 +1423,43 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               </>
             ) : (
               templateIconNode || (
-                <span className="text-2xl font-semibold text-vis-teal-400">
+                <span className="text-xl font-semibold text-vis-teal-400">
                   {template.name.charAt(0).toUpperCase()}
                 </span>
               )
             )}
           </div>
 
-          <div className="flex-1 min-w-0 flex flex-col gap-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-sm font-semibold text-vis-text-primary">{template.name}</h4>
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
+              <h4 className="text-xs font-semibold text-vis-text-primary line-clamp-2">{template.name}</h4>
               {selectedTemplate === template.id && (
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border border-vis-teal-400/40 bg-vis-teal-500/20 text-vis-teal-200">
-                  {language === 'zh' ? '已应用' : 'Active'}
+                <span className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide border border-vis-teal-400/40 bg-vis-teal-500/20 text-vis-teal-200">
+                  {language === 'zh' ? '✓' : '✓'}
                 </span>
               )}
             </div>
 
             {template.description && (
-              <p className="text-xs line-clamp-3 text-vis-text-secondary">
+              <p className="text-[10px] line-clamp-2 text-vis-text-secondary">
                 {template.description}
               </p>
             )}
 
             {categoryInfo ? (
-              <div className="flex items-center gap-1 text-[11px] text-vis-text-muted">
+              <div className="flex items-center gap-1 text-[10px] text-vis-text-muted">
                 {categoryIconNode}
-                <span>{categoryInfo.name}</span>
+                <span className="line-clamp-1">{categoryInfo.name}</span>
               </div>
             ) : !template.categoryId ? (
-              <div className="text-[11px] text-vis-text-muted">{t.uncategorized}</div>
+              <div className="text-[10px] text-vis-text-muted">{t.uncategorized}</div>
             ) : null}
           </div>
 
           {selectedTemplate === template.id ? (
             <div className={activeActionsClasses}>
-              <div className="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-vis-text-muted">
-                <ChevronDown className="h-4 w-4" />
+              <div className="flex h-6 w-6 items-center justify-center rounded-md border border-transparent text-vis-text-muted">
+                <ChevronDown className="h-3 w-3" />
               </div>
             </div>
           ) : (
@@ -1467,33 +1467,33 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-vis-text-secondary hover:text-vis-cyan-400 hover:bg-vis-cyan-500/10"
+                className="h-6 w-6 text-vis-text-secondary hover:text-vis-cyan-400 hover:bg-vis-cyan-500/10"
                 onClick={(e) => {
                   e.stopPropagation();
                   openDuplicateModal(template);
                 }}
                 title={t.duplicateTemplate}
               >
-                <Copy className="h-3.5 w-3.5" />
+                <Copy className="h-3 w-3" />
               </Button>
               {isCustom && (
                 <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10"
+                    className="h-6 w-6 text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10"
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditModal(template);
                     }}
                     title={t.editTemplate}
                   >
-                    <Edit2 className="h-3.5 w-3.5" />
+                    <Edit2 className="h-3 w-3" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-red-400 hover:text-red-200 hover:bg-red-500/15"
+                    className="h-6 w-6 text-red-400 hover:text-red-200 hover:bg-red-500/15"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteTemplate(template.id);
@@ -1502,7 +1502,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     disabled={deletingTemplateId === template.id}
                     aria-busy={deletingTemplateId === template.id}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3 w-3" />
                   </Button>
                 </>
               )}
@@ -1513,7 +1513,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     );
   };
 
-  const templateListClasses = 'grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5';
+  const templateListClasses = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2';
 
   return (
     <div className="flex flex-col w-full h-full min-h-0">
@@ -2112,27 +2112,15 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 </Button>
               </Dialog.Close>
             </div>            <div className="space-y-6">
-              {/* Template Icon/Preview */}
-              <div className="flex items-center gap-6">
-                <div
-                  className={cn(
-                    'w-20 h-20 rounded-lg bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center border',
-                    isDarkMode ? 'border-gray-800' : 'border-purple-200/60'
-                  )}
-                >
-                  <span className={cn('text-4xl font-bold', isDarkMode ? 'text-purple-400' : 'text-purple-600')}>
-                    {formData.name.charAt(0).toUpperCase() || '?'}
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <label className="block text-base font-medium text-vis-text-secondary mb-2">{t.name}</label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Anime (Copy)"
-                    className="w-full text-base py-3"
-                  />
-                </div>
+              {/* Template Name */}
+              <div>
+                <label className="block text-base font-medium text-vis-text-secondary mb-2">{t.name}</label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Anime Style"
+                  className="w-full text-base py-3"
+                />
               </div>
 
               {/* Description */}
@@ -2148,54 +2136,31 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 />
               </div>
 
-              {/* Category and Emoji */}
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div>
-                  <label className="block text-base font-medium text-vis-text-secondary mb-2">
-                    {t.templateCategoryLabel}
-                  </label>
-                  <select
-                    value={formData.categoryId}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
-                    className="w-full rounded-md px-4 py-3 text-base border border-vis-border bg-gray-800/50 text-vis-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-vis-teal-500/50 focus:border-vis-teal-400"
-                  >
-                    <option value="">{t.uncategorized}</option>
-                    {resolvedCategories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                          {`${getIconLabel(category.image || category.emoji)}${category.name}`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-base font-medium text-vis-text-secondary mb-2">
-                    {t.templateEmojiLabel}
-                  </label>
-                  <Input
-                    value={formData.emoji}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, emoji: e.target.value }))}
-                    placeholder="🎨"
-                    maxLength={8}
-                    className="w-full text-base py-3"
-                  />
-                </div>
-              </div>
-
-              {/* Representative Image */}
+              {/* Category */}
               <div>
                 <label className="block text-base font-medium text-vis-text-secondary mb-2">
-                  {t.templateImageLabel}
+                  {t.templateCategoryLabel}
                 </label>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Input
-                    value={formData.image}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, image: e.target.value }))}
-                    placeholder={t.templateImageUrlPlaceholder}
-                    className={cn(
-                      'w-full sm:flex-1 text-base py-3',
-                      !isDarkMode && 'bg-white/95 text-slate-900 border-slate-200 placeholder:text-slate-500 focus-visible:bg-white'
-                    )}
-                  />
+                <select
+                  value={formData.categoryId}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, categoryId: e.target.value }))}
+                  className="w-full rounded-md px-4 py-3 text-base border border-vis-border bg-gray-800/50 text-vis-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-vis-teal-500/50 focus:border-vis-teal-400"
+                >
+                  <option value="">{t.uncategorized}</option>
+                  {resolvedCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                        {`${getIconLabel(category.image || category.emoji)}${category.name}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Template Image (1:1 Square) */}
+              <div>
+                <label className="block text-base font-medium text-vis-text-secondary mb-2">
+                  {language === 'zh' ? '模板图片 (1:1 正方形)' : 'Template Image (1:1 Square)'}
+                </label>
+                <div className="flex flex-col gap-3">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -2207,7 +2172,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     type="button"
                     variant="outline"
                     className={cn(
-                      'flex items-center gap-2 py-3 px-4 transition-colors',
+                      'flex items-center justify-center gap-2 py-3 px-4 transition-colors w-full',
                       isDarkMode
                         ? 'border-[color:var(--surface-border)] bg-[color:var(--surface-secondary)] text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:bg-white/5'
                         : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200/70'
@@ -2215,36 +2180,51 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <UploadCloud className="h-5 w-5" />
-                    <span>{t.templateImageUpload}</span>
+                    <span>{language === 'zh' ? '上传图片' : 'Upload Image'}</span>
                   </Button>
+                  <p className="text-xs text-vis-text-muted">
+                    {language === 'zh' 
+                      ? '上传后可裁剪为 1:1 正方形。推荐尺寸：512x512 或更大。'
+                      : 'Upload and crop to 1:1 square. Recommended: 512x512 or larger.'}
+                  </p>
                 </div>
                 {formData.image && (
-                  <div className="mt-3 flex items-center gap-4">
-                    <img
-                      src={formData.image}
-                      alt="Preview"
-                      className={cn(
-                        'h-24 w-24 rounded-md object-cover transition-colors',
-                        isDarkMode ? 'border border-gray-800' : 'border border-purple-200/70'
-                      )}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        'text-sm transition-colors',
-                        isDarkMode
-                          ? 'text-[color:var(--text-tertiary)] hover:text-red-300'
-                          : 'text-slate-500 hover:text-red-500'
-                      )}
-                      type="button"
-                      onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
-                    >
-                      {t.templateImageClear}
-                    </Button>
+                  <div className="mt-4 flex items-center gap-4">
+                    <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-vis-border">
+                      <img
+                        src={formData.image}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-sm"
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {language === 'zh' ? '更换图片' : 'Change Image'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          'text-sm transition-colors',
+                          isDarkMode
+                            ? 'text-red-400 hover:text-red-300'
+                            : 'text-red-500 hover:text-red-600'
+                        )}
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
+                      >
+                        {language === 'zh' ? '移除图片' : 'Remove Image'}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
