@@ -1749,8 +1749,8 @@ export const PromptComposer: React.FC = () => {
             <span>Ctrl + Enter</span>
           </div>
           <div className="flex justify-between">
-            <span>{t.reRoll}</span>
-            <span>Shift + R</span>
+            <span>{t.startUpscaling}</span>
+            <span>Ctrl + Alt + U</span>
           </div>
           <div className="flex justify-between">
             <span>{t.editMode}</span>
