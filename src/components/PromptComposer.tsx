@@ -13,6 +13,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
 import { usePromptPanelResize } from './PromptComposer/usePromptPanelResize';
 import { TemplateSelector } from './PromptComposer/TemplateSelector';
+import { CreditsDisplay } from './PromptComposer/CreditsDisplay';
 import { uploadAsset, getAssetUrl } from '../services/uploadService';
 import type { PromptTemplate } from '../types';
 
@@ -893,6 +894,15 @@ export const PromptComposer: React.FC = () => {
             onFlattenTemplate={handleFlattenTemplate}
             onClearTemplate={handleClearTemplateSelection}
             t={t}
+          />
+
+          {/* Credits Display */}
+          <CreditsDisplay
+            credits={0}
+            onPurchase={() => {
+              console.log('Purchase initiated from PromptComposer');
+              // TODO: Integrate with your payment system
+            }}
           />
 
           {/* Prompt Input - Enhanced Card Design */}

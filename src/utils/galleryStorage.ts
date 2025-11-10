@@ -39,7 +39,7 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 /**
- * Save image to IndexedDB gallery
+ * Save image to IndexedDB gallery and backend
  */
 export async function saveImageToGalleryDB(
   imageId: string,
@@ -49,6 +49,7 @@ export async function saveImageToGalleryDB(
   path?: string
 ): Promise<boolean> {
   try {
+    // Save to IndexedDB (local storage)
     const db = await openDB();
     const transaction = db.transaction([STORE_NAME], 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
@@ -62,7 +63,7 @@ export async function saveImageToGalleryDB(
       path
     };
 
-    return new Promise((resolve, reject) => {
+    const localSaveSuccess = await new Promise<boolean>((resolve, reject) => {
       const request = store.put(imageData);
       request.onsuccess = () => {
         console.log(`Image ${imageId} saved to ${boardName} gallery in IndexedDB`);
@@ -70,6 +71,25 @@ export async function saveImageToGalleryDB(
       };
       request.onerror = () => reject(request.error);
     });
+
+    if (!localSaveSuccess) {
+      return false;
+    }
+
+    // Also save to backend if user is authenticated
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (token && boardId) {
+        const { saveImageToBoard } = await import('../services/boardsService');
+        await saveImageToBoard(boardId, imageId, imageUrl, boardName, path);
+        console.log(`Image ${imageId} also saved to backend board ${boardName}`);
+      }
+    } catch (backendError) {
+      console.warn('Failed to save to backend, but local save succeeded:', backendError);
+      // Don't fail the entire operation if backend save fails
+    }
+
+    return true;
   } catch (error) {
     console.error('Error saving to IndexedDB:', error);
     return false;

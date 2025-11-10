@@ -242,6 +242,14 @@ async def delete_board(
     return None
 
 
+class SaveImageToBoard(BaseModel):
+    """Model for saving image with data to a board"""
+    image_id: str
+    image_data: str = Field(..., description="Base64 encoded image data")
+    board_name: Optional[str] = None
+    path: Optional[str] = None
+
+
 @router.post("/{board_id}/images", response_model=BoardResponse)
 async def add_images_to_board(
     board_id: str,
@@ -289,15 +297,16 @@ async def add_images_to_board(
     return BoardResponse(**updated_board)
 
 
-@router.delete("/{board_id}/images/{image_id}", response_model=BoardResponse)
-async def remove_image_from_board(
+@router.post("/{board_id}/save-image", response_model=dict)
+async def save_image_to_board(
     board_id: str,
-    image_id: str,
+    data: SaveImageToBoard,
     current_user: Dict[str, Any] = Depends(get_current_user),
     db = Depends(get_db)
 ):
     """
-    Remove an image from a board.
+    Save an image with its data to a specific board.
+    This endpoint handles both storing the image ID in the board and persisting image data.
     """
     user_id = current_user.get("id") or current_user.get("sub")
     
@@ -313,7 +322,117 @@ async def remove_image_from_board(
             detail="Board not found"
         )
     
-    # Remove image ID
+    # Store image data in gallery table
+    gallery_table = db.table("gallery")
+    
+    gallery_entry = {
+        "id": data.image_id,
+        "user_id": user_id,
+        "board_id": board_id,
+        "board_name": data.board_name or board["name"],
+        "image_data": data.image_data,  # Base64 encoded image
+        "path": data.path,
+        "timestamp": int(datetime.now().timestamp() * 1000),
+        "created_at": datetime.now().isoformat()
+    }
+    
+    # Check if image already exists
+    GalleryQuery = Query()
+    existing = gallery_table.get(
+        (GalleryQuery.id == data.image_id) & (GalleryQuery.user_id == user_id)
+    )
+    
+    if existing:
+        # Update existing entry
+        gallery_table.update(gallery_entry, 
+            (GalleryQuery.id == data.image_id) & (GalleryQuery.user_id == user_id)
+        )
+    else:
+        # Insert new entry
+        gallery_table.insert(gallery_entry)
+    
+    # Add image ID to board
+    current_images = set(board.get("image_ids", []))
+    current_images.add(data.image_id)
+    
+    UpdateQuery = Query()
+    boards_table.update(
+        {
+            "image_ids": list(current_images),
+            "updated_at": int(datetime.now().timestamp() * 1000)
+        },
+        (UpdateQuery.id == board_id) & (UpdateQuery.user_id == user_id)
+    )
+    
+    return {
+        "success": True,
+        "image_id": data.image_id,
+        "board_id": board_id,
+        "message": f"Image saved to {board['name']}"
+    }
+
+
+@router.get("/{board_id}/images", response_model=List[dict])
+async def get_board_images(
+    board_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Get all images from a specific board with their data.
+    """
+    user_id = current_user.get("id") or current_user.get("sub")
+    
+    boards_table = db.table("boards")
+    BoardQuery = Query()
+    board = boards_table.get(
+        (BoardQuery.id == board_id) & (BoardQuery.user_id == user_id)
+    )
+    
+    if not board:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Board not found"
+        )
+    
+    # Get all images for this board from gallery table
+    gallery_table = db.table("gallery")
+    GalleryQuery = Query()
+    images = gallery_table.search(
+        (GalleryQuery.board_id == board_id) & (GalleryQuery.user_id == user_id)
+    )
+    
+    # Sort by timestamp descending (newest first)
+    images.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+    
+    return images
+
+
+@router.delete("/{board_id}/images/{image_id}", response_model=BoardResponse)
+async def remove_image_from_board(
+    board_id: str,
+    image_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db = Depends(get_db)
+):
+    """
+    Remove an image from a board and delete its data.
+    """
+    user_id = current_user.get("id") or current_user.get("sub")
+    
+    boards_table = db.table("boards")
+    BoardQuery = Query()
+    board = boards_table.get(
+        (BoardQuery.id == board_id) & (BoardQuery.user_id == user_id)
+    )
+    
+    if not board:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Board not found"
+        )
+    
+    # Remove image ID from board
     current_images = board.get("image_ids", [])
     updated_images = [img_id for img_id in current_images if img_id != image_id]
     
@@ -324,6 +443,15 @@ async def remove_image_from_board(
             "updated_at": int(datetime.now().timestamp() * 1000)
         },
         (UpdateQuery.id == board_id) & (UpdateQuery.user_id == user_id)
+    )
+    
+    # Also delete image data from gallery table
+    gallery_table = db.table("gallery")
+    GalleryQuery = Query()
+    gallery_table.remove(
+        (GalleryQuery.id == image_id) & 
+        (GalleryQuery.user_id == user_id) & 
+        (GalleryQuery.board_id == board_id)
     )
     
     # Fetch and return updated board
