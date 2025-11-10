@@ -18,6 +18,7 @@ import {
   Tag
 } from 'lucide-react';
 import { IconType } from 'react-icons';
+import { uploadAsset, getAssetUrl } from '../services/uploadService';
 import {
   FaPalette,
   FaPaintBrush,
@@ -212,8 +213,9 @@ const renderIconValue = (value?: string, className?: string) => {
       <img
         src={src}
         alt=""
-        className={cn('h-full w-full object-contain', className)}
+        className={cn('object-cover rounded w-full h-full', className)}
         onError={(e) => {
+          console.error('Failed to load icon image:', src);
           e.currentTarget.style.display = 'none';
         }}
       />
@@ -742,38 +744,57 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const iconUploadInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        setFormData((prev) => ({ ...prev, image: result }));
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Upload to backend for better performance
+      const uploadResult = await uploadAsset(file);
+      const assetUrl = getAssetUrl(uploadResult.asset_id);
+      setFormData((prev) => ({ ...prev, image: assetUrl }));
+    } catch (error) {
+      console.error('Failed to upload template image:', error);
+      // Fallback to base64 if upload fails
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result === 'string') {
+          setFormData((prev) => ({ ...prev, image: result }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
     event.target.value = '';
   };
 
-  const handleCategoryIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCategoryIconUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        setCategoryForm((prev) => ({ ...prev, emoji: result }));
-        setIconPickerTab('upload');
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Upload to backend for better performance
+      const uploadResult = await uploadAsset(file);
+      const assetUrl = getAssetUrl(uploadResult.asset_id);
+      setCategoryForm((prev) => ({ ...prev, emoji: assetUrl }));
+      setIconPickerTab('upload');
+    } catch (error) {
+      console.error('Failed to upload category icon:', error);
+      // Fallback to base64 if upload fails
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (typeof result === 'string') {
+          setCategoryForm((prev) => ({ ...prev, emoji: result }));
+          setIconPickerTab('upload');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
     event.target.value = '';
   };
 
@@ -1269,10 +1290,11 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         )
       : null;
 
-    const categoryIconNode = renderIconValue(
-      categoryInfo?.emoji,
-      'w-4 h-4 text-xs flex items-center justify-center text-vis-teal-400'
-    );
+    const categoryIconNode = categoryInfo ? (
+      <span className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-vis-teal-400">
+        {renderIconValue(categoryInfo.image || categoryInfo.emoji, 'w-full h-full text-xs')}
+      </span>
+    ) : null;
 
     const activeActionsClasses = 'flex w-full items-center justify-end gap-2 pt-2';
 
@@ -1477,7 +1499,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   )}
                   type="button"
                 >
-                  {renderIconValue(category.emoji, 'w-4 h-4 text-sm leading-none flex items-center justify-center')}
+                  <span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                    {renderIconValue(category.image || category.emoji, 'w-full h-full text-sm')}
+                  </span>
                   <span className="inline-flex items-center gap-1">
                     <span>{category.name}</span>
                     <span className={countClasses}>({countValue})</span>
@@ -1691,10 +1715,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                               )}
                             >
                               <span className={cn(
-                                'inline-flex h-8 w-8 items-center justify-center rounded-md overflow-hidden',
+                                'inline-flex h-8 w-8 items-center justify-center rounded-md overflow-hidden flex-shrink-0',
                                 isDarkMode ? 'bg-gray-800/80' : 'bg-slate-100'
                               )}>
-                                {renderIconValue(category.emoji, 'h-5 w-5 text-base') || '✨'}
+                                <span className="w-5 h-5 flex items-center justify-center">
+                                  {renderIconValue(category.image || category.emoji, 'w-full h-full text-base') || '✨'}
+                                </span>
                               </span>
                               <span className="truncate">{category.name}</span>
                               {category.source === 'default' && (
@@ -2043,7 +2069,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     <option value="">{t.uncategorized}</option>
                     {resolvedCategories.map((category) => (
                       <option key={category.id} value={category.id}>
-                          {`${getIconLabel(category.emoji)}${category.name}`}
+                          {`${getIconLabel(category.image || category.emoji)}${category.name}`}
                       </option>
                     ))}
                   </select>

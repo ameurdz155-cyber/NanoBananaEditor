@@ -83,6 +83,20 @@ async def register(request: Request, user_data: RegisterRequest) -> UserResponse
     
     users_table.insert(user)
     
+    # Create default board for new user
+    boards_table = get_table("boards")
+    default_board = {
+        "id": f"board-{uuid.uuid4()}",
+        "name": "My Creations",
+        "emoji": "🎨",
+        "description": "All your generated images",
+        "created_at": int(now.timestamp() * 1000),
+        "updated_at": int(now.timestamp() * 1000),
+        "image_ids": [],
+        "user_id": user["id"]
+    }
+    boards_table.insert(default_board)
+    
     # Log registration
     import json
     await log_audit(

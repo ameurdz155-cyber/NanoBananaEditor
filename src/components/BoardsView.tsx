@@ -19,6 +19,7 @@ import {
 import { blobToBase64 } from '../utils/imageUtils';
 import { cn } from '../utils/cn';
 import { getTranslation } from '../i18n/translations';
+import { uploadAsset, getAssetUrl } from '../services/uploadService';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Input } from './ui/Input';
 import { saveImageWithDialog } from '../utils/fileSaver';
@@ -396,15 +397,25 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/') && selectedBoardId) {
       try {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const dataUrl = e.target?.result as string;
-          // Add the uploaded asset to the current board
-          addImageToBoard(selectedBoardId, dataUrl);
-        };
-        reader.readAsDataURL(file);
+        // Upload to backend for better performance
+        const uploadResult = await uploadAsset(file);
+        const assetUrl = getAssetUrl(uploadResult.asset_id);
+        
+        // Add the uploaded asset ID (not URL) to the current board
+        await addImageToBoard(selectedBoardId, uploadResult.asset_id);
       } catch (error) {
         console.error('Failed to upload asset:', error);
+        // Fallback to base64 if upload fails
+        try {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const dataUrl = e.target?.result as string;
+            addImageToBoard(selectedBoardId, dataUrl);
+          };
+          reader.readAsDataURL(file);
+        } catch (fallbackError) {
+          console.error('Fallback upload also failed:', fallbackError);
+        }
       }
     }
     // Reset the input so the same file can be selected again
@@ -430,12 +441,22 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       }
 
       try {
-        const base64 = await blobToBase64(file);
-        const dataUrl = `data:${file.type};base64,${base64}`;
-        addImageToBoard(boardId, dataUrl);
+        // Upload to backend for better performance
+        const uploadResult = await uploadAsset(file);
+        const assetUrl = getAssetUrl(uploadResult.asset_id);
+        await addImageToBoard(boardId, uploadResult.asset_id);
         setActiveTab('assets');
       } catch (error) {
         console.error('Failed to upload image to board:', error);
+        // Fallback to base64 if upload fails
+        try {
+          const base64 = await blobToBase64(file);
+          const dataUrl = `data:${file.type};base64,${base64}`;
+          addImageToBoard(boardId, dataUrl);
+          setActiveTab('assets');
+        } catch (fallbackError) {
+          console.error('Fallback upload also failed:', fallbackError);
+        }
       }
     }
 
@@ -489,7 +510,7 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
     setShowCreateBoardModal(true);
   };
 
-  const handleConfirmCreateBoard = () => {
+  const handleConfirmCreateBoard = async () => {
     if (newBoardName && newBoardName.trim()) {
       // Check if board name already exists
       const isDuplicate = boards.some(
@@ -501,22 +522,28 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
         return;
       }
       
-      // Generate unique ID using timestamp and random number
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(2, 15);
-      const uniqueId = `board-${timestamp}-${random}`;
-      
-      addBoard({
-        id: uniqueId,
-        name: newBoardName.trim(),
-        description: '',
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        imageIds: []
-      });
-      setNewBoardName('');
-      setCreateBoardError('');
-      setShowCreateBoardModal(false);
+      try {
+        // Generate unique ID using timestamp and random number
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 15);
+        const uniqueId = `board-${timestamp}-${random}`;
+        
+        await addBoard({
+          id: uniqueId,
+          name: newBoardName.trim(),
+          description: '',
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          imageIds: []
+        });
+        
+        setNewBoardName('');
+        setCreateBoardError('');
+        setShowCreateBoardModal(false);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to create board';
+        setCreateBoardError(errorMessage);
+      }
     }
   };
 

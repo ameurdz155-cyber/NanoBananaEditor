@@ -109,3 +109,29 @@ export async function fetchCurrentUser(token: string): Promise<UserResponse> {
   const data = await response.json();
   return data as UserResponse;
 }
+
+export async function refreshAccessToken(refreshToken: string): Promise<LoginResult> {
+  const response = await fetch(joinBackendPath('/api/v1/auth/refresh'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+
+  if (!response.ok) {
+    let message = 'Unable to refresh session.';
+    try {
+      const errorBody = await response.json();
+      if (typeof errorBody?.detail === 'string') {
+        message = errorBody.detail;
+      }
+    } catch {
+      // ignore JSON parse errors
+    }
+    throw new Error(message);
+  }
+
+  const data = await response.json();
+  return data as LoginResult;
+}

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { fetchCurrentUser, loginRequest, registerRequest } from '../services/authService';
+import { fetchCurrentUser, loginRequest, registerRequest, refreshAccessToken } from '../services/authService';
 
 interface User {
   id: string;
@@ -14,6 +14,7 @@ interface User {
 interface AuthState {
   token: string | null;
   refreshToken: string | null;
+  tokenExpiresAt: number | null;
   user: User | null;
   isAuthenticated: boolean;
   isPremiumUser: boolean;
@@ -21,6 +22,8 @@ interface AuthState {
   register: (email: string, username: string, password: string, fullName?: string) => Promise<void>;
   logout: () => void;
   verifyAuth: () => Promise<boolean>;
+  refreshAuthToken: () => Promise<boolean>;
+  isTokenExpiringSoon: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -28,6 +31,7 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       token: null,
       refreshToken: null,
+      tokenExpiresAt: null,
       user: null,
       isAuthenticated: false,
       isPremiumUser: false,
@@ -40,9 +44,13 @@ export const useAuthStore = create<AuthState>()(
           localStorage.setItem('refresh_token', result.refresh_token);
         }
 
+        // Calculate when the token will expire (current time + expires_in seconds)
+        const expiresAt = Date.now() + (result.expires_in * 1000);
+
         set({
           token: result.access_token,
           refreshToken: result.refresh_token,
+          tokenExpiresAt: expiresAt,
           user: {
             id: result.user.id,
             email: result.user.email,
@@ -71,9 +79,13 @@ export const useAuthStore = create<AuthState>()(
           localStorage.setItem('refresh_token', loginResult.refresh_token);
         }
 
+        // Calculate when the token will expire
+        const expiresAt = Date.now() + (loginResult.expires_in * 1000);
+
         set({
           token: loginResult.access_token,
           refreshToken: loginResult.refresh_token,
+          tokenExpiresAt: expiresAt,
           user: {
             id: loginResult.user.id,
             email: loginResult.user.email,
@@ -91,7 +103,8 @@ export const useAuthStore = create<AuthState>()(
         localStorage.removeItem('refresh_token');
         set({ 
           token: null, 
-          refreshToken: null, 
+          refreshToken: null,
+          tokenExpiresAt: null, 
           user: null, 
           isAuthenticated: false, 
           isPremiumUser: false 
@@ -134,12 +147,61 @@ export const useAuthStore = create<AuthState>()(
           return false;
         }
       },
+      refreshAuthToken: async () => {
+        try {
+          const currentRefreshToken = get().refreshToken;
+          if (!currentRefreshToken) {
+            console.warn('No refresh token available');
+            get().logout();
+            return false;
+          }
+
+          const result = await refreshAccessToken(currentRefreshToken);
+          
+          // Calculate when the new token will expire
+          const expiresAt = Date.now() + (result.expires_in * 1000);
+          
+          set({
+            token: result.access_token,
+            refreshToken: result.refresh_token,
+            tokenExpiresAt: expiresAt,
+            user: {
+              id: result.user.id,
+              email: result.user.email,
+              username: result.user.username,
+              full_name: result.user.full_name,
+              is_admin: result.user.is_admin,
+              is_superuser: result.user.is_superuser,
+            },
+            isAuthenticated: true,
+            isPremiumUser: result.user.is_admin || result.user.is_superuser,
+          });
+
+          localStorage.setItem('access_token', result.access_token);
+          localStorage.setItem('refresh_token', result.refresh_token);
+
+          return true;
+        } catch (error) {
+          console.error('Token refresh failed:', error);
+          get().logout();
+          return false;
+        }
+      },
+      isTokenExpiringSoon: () => {
+        const expiresAt = get().tokenExpiresAt;
+        if (!expiresAt) return false;
+        
+        // Consider token expiring soon if less than 5 minutes remaining
+        const fiveMinutes = 5 * 60 * 1000;
+        return Date.now() + fiveMinutes >= expiresAt;
+      },
     }),
     {
       name: 'ai-pod-auth',
       partialize: (state) => ({
         token: state.token,
         refreshToken: state.refreshToken,
+        tokenExpiresAt: state.tokenExpiresAt,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         isPremiumUser: state.isPremiumUser,

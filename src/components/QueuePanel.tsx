@@ -13,9 +13,13 @@ import {
   X,
   RefreshCw,
   AlertCircle,
+  Info,
+  Download,
+  ExternalLink,
 } from 'lucide-react';
 import {
   getQueue,
+  getQueueItem,
   deleteQueueItem,
   clearCompletedQueue,
   type QueueItem,
@@ -33,6 +37,8 @@ export const QueuePanel: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
+  const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   // Fetch queue data
   const fetchQueue = async () => {
@@ -68,11 +74,17 @@ export const QueuePanel: React.FC = () => {
 
     if (!hasActiveItems) return;
 
-    const cleanup = pollQueue(token, (data) => {
+    let cleanup: (() => void) | undefined;
+    
+    pollQueue(token, (data) => {
       setQueueData(data);
-    }, 3000);
+    }, 3000).then((fn) => {
+      cleanup = fn;
+    });
 
-    return cleanup;
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, [showQueue, token, queueData?.pending, queueData?.processing]);
 
   const handleDelete = async (itemId: string) => {
@@ -95,6 +107,32 @@ export const QueuePanel: React.FC = () => {
     } catch (err) {
       console.error('Failed to clear completed items:', err);
     }
+  };
+
+  const handleShowDetails = async (item: QueueItem) => {
+    if (!token) return;
+
+    try {
+      setDetailsLoading(true);
+      // Fetch full item details from backend
+      const fullItem = await getQueueItem(token, item.id);
+      setSelectedItem(fullItem);
+    } catch (err) {
+      console.error('Failed to fetch item details:', err);
+      // Fallback to showing the item we have
+      setSelectedItem(item);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const handleDownloadImage = (url: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getStatusIcon = (status: QueueItem['status']) => {
@@ -416,11 +454,12 @@ export const QueuePanel: React.FC = () => {
                       src={item.result_url}
                       alt="Result"
                       className="w-full h-52 object-cover border border-green-500/40 dark:border-green-500/30 rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-green-500/30 dark:hover:shadow-green-500/20"
-                      onClick={() => window.open(item.result_url, '_blank')}
+                      onClick={() => handleShowDetails(item)}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-green-500/30 dark:from-green-500/20 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="text-white font-semibold text-sm bg-green-500/90 dark:bg-green-500/80 px-4 py-2 rounded-lg backdrop-blur-sm shadow-lg">
-                        {language === 'zh' ? '点击查看' : 'Click to view'}
+                      <div className="text-white font-semibold text-sm bg-green-500/90 dark:bg-green-500/80 px-4 py-2 rounded-lg backdrop-blur-sm shadow-lg flex items-center gap-2">
+                        <Info className="h-4 w-4" />
+                        {language === 'zh' ? '点击查看详情' : 'Click for details'}
                       </div>
                     </div>
                   </div>
@@ -463,7 +502,248 @@ export const QueuePanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Details Modal */}
+      {selectedItem && (
+        <div
+          className="absolute inset-0 z-10 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setSelectedItem(null)}
+        >
+          <div
+            className={cn(
+              'bg-white dark:bg-gradient-to-br dark:from-vis-bg-primary dark:via-vis-bg-secondary dark:to-vis-bg-primary',
+              'border-2 border-vis-teal-500/30 dark:border-vis-teal-500/20 rounded-2xl',
+              'shadow-2xl shadow-black/20 dark:shadow-black/40',
+              'w-[90vw] max-w-4xl max-h-[85vh] overflow-y-auto custom-scrollbar',
+              'animate-in fade-in-0 zoom-in-95 duration-200'
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b border-vis-teal-500/20 bg-white/95 dark:bg-vis-bg-primary/95 backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-vis-teal-500/10 border border-vis-teal-500/30">
+                  <Info className="h-6 w-6 text-vis-teal-600 dark:text-vis-teal-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-vis-text-primary">
+                    {language === 'zh' ? '任务详情' : 'Task Details'}
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-vis-text-muted">
+                    ID: {selectedItem.id.slice(0, 8)}...
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedItem(null)}
+                className="h-10 w-10 rounded-lg"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Result Image */}
+              {selectedItem.result_url && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary uppercase tracking-wider">
+                    {language === 'zh' ? '生成结果' : 'Generated Result'}
+                  </h4>
+                  <div className="relative group rounded-xl overflow-hidden border-2 border-vis-teal-500/30">
+                    <img
+                      src={selectedItem.result_url}
+                      alt="Result"
+                      className="w-full h-auto max-h-[50vh] object-contain bg-gray-100 dark:bg-vis-bg-tertiary"
+                    />
+                    <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleDownloadImage(selectedItem.result_url!, `result-${selectedItem.id}.png`)}
+                        className="gap-2 bg-vis-teal-500 hover:bg-vis-teal-600 shadow-lg"
+                      >
+                        <Download className="h-4 w-4" />
+                        {language === 'zh' ? '下载' : 'Download'}
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => window.open(selectedItem.result_url, '_blank')}
+                        className="gap-2 bg-gray-700 hover:bg-gray-800 shadow-lg"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        {language === 'zh' ? '新窗口打开' : 'Open'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                  <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1 font-medium">
+                    {language === 'zh' ? '类型' : 'Type'}
+                  </div>
+                  <div className="text-lg font-bold text-gray-900 dark:text-vis-text-primary">
+                    {getTypeLabel(selectedItem.type)}
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                  <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1 font-medium">
+                    {language === 'zh' ? '状态' : 'Status'}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(selectedItem.status)}
+                    <span className={cn('text-lg font-bold', getStatusColor(selectedItem.status))}>
+                      {selectedItem.status.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Prompt */}
+              {selectedItem.prompt && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary uppercase tracking-wider">
+                    {language === 'zh' ? '提示词' : 'Prompt'}
+                  </h4>
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                    <p className="text-sm text-gray-700 dark:text-vis-text-secondary leading-relaxed">
+                      {selectedItem.prompt}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata */}
+              {selectedItem.metadata && Object.keys(selectedItem.metadata).length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary uppercase tracking-wider">
+                    {language === 'zh' ? '参数详情' : 'Parameters'}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedItem.metadata.width && selectedItem.metadata.height && (
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                          {language === 'zh' ? '尺寸' : 'Dimensions'}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                          {selectedItem.metadata.width} × {selectedItem.metadata.height}
+                        </div>
+                      </div>
+                    )}
+                    {selectedItem.metadata.aspectRatio && (
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                          {language === 'zh' ? '宽高比' : 'Aspect Ratio'}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                          {selectedItem.metadata.aspectRatio}
+                        </div>
+                      </div>
+                    )}
+                    {selectedItem.metadata.seed !== undefined && (
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                          {language === 'zh' ? '种子' : 'Seed'}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary font-mono">
+                          {selectedItem.metadata.seed}
+                        </div>
+                      </div>
+                    )}
+                    {selectedItem.metadata.temperature !== undefined && (
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                          {language === 'zh' ? '温度' : 'Temperature'}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                          {selectedItem.metadata.temperature}
+                        </div>
+                      </div>
+                    )}
+                    {selectedItem.metadata.scale && (
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                          {language === 'zh' ? '放大倍数' : 'Scale'}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                          {selectedItem.metadata.scale}x
+                        </div>
+                      </div>
+                    )}
+                    {selectedItem.metadata.modelVersion && (
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                          {language === 'zh' ? '模型' : 'Model'}
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary truncate">
+                          {selectedItem.metadata.modelVersion}
+                        </div>
+                      </div>
+                    )}
+                    {selectedItem.metadata.negativePrompt && (
+                      <div className="col-span-2 p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                          {language === 'zh' ? '负面提示词' : 'Negative Prompt'}
+                        </div>
+                        <div className="text-sm text-gray-700 dark:text-vis-text-secondary">
+                          {selectedItem.metadata.negativePrompt}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Timestamps */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                  <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1 font-medium">
+                    {language === 'zh' ? '创建时间' : 'Created'}
+                  </div>
+                  <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                    {new Date(selectedItem.created_at).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}
+                  </div>
+                </div>
+                {selectedItem.completed_at && (
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
+                    <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1 font-medium">
+                      {language === 'zh' ? '完成时间' : 'Completed'}
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                      {new Date(selectedItem.completed_at).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Error Message */}
+              {selectedItem.error_message && (
+                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-500/15 border border-red-300 dark:border-red-500/40">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="text-sm font-semibold text-red-900 dark:text-red-300 mb-1">
+                        {language === 'zh' ? '错误信息' : 'Error Message'}
+                      </div>
+                      <div className="text-sm text-red-700 dark:text-red-400">
+                        {selectedItem.error_message}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </div>
   );
 };
+

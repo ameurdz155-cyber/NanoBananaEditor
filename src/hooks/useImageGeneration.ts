@@ -6,6 +6,7 @@ import { Generation, Edit, Asset } from '../types';
 import { useRef } from 'react';
 import { saveImageToGallery } from '../utils/fileSaver';
 import { saveImageToGalleryDB } from '../utils/galleryStorage';
+import { assetUrlToBase64 } from '../services/uploadService';
 
 export const useImageGeneration = () => {
   const {
@@ -27,13 +28,39 @@ export const useImageGeneration = () => {
   } = useAppStore();
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Helper to convert asset URLs or data URLs to base64
+  const convertToBase64 = async (imageUrl: string): Promise<string> => {
+    // If it's already a data URL, extract base64
+    if (imageUrl.startsWith('data:')) {
+      const base64Part = imageUrl.split(',')[1];
+      return base64Part || '';
+    }
+    
+    // If it's an asset URL, fetch and convert
+    if (imageUrl.startsWith('/api/v1/assets/') || imageUrl.includes('/assets/')) {
+      return await assetUrlToBase64(imageUrl);
+    }
+    
+    // If it's a full URL, treat as asset URL
+    return await assetUrlToBase64(imageUrl);
+  };
+
   const generateMutation = useMutation({
     mutationFn: async (request: GenerationRequest) => {
       // Create new AbortController for this request
       abortControllerRef.current = new AbortController();
       
+      // Convert reference images to base64 if needed
+      let referenceImagesBase64: string[] | undefined;
+      if (request.referenceImages && request.referenceImages.length > 0) {
+        referenceImagesBase64 = await Promise.all(
+          request.referenceImages.map(img => convertToBase64(img))
+        );
+      }
+      
       const images = await geminiService.generateImage({
         ...request,
+        referenceImages: referenceImagesBase64,
         signal: abortControllerRef.current.signal,
         modelType: modelFamily,
         modelName,
@@ -216,6 +243,23 @@ export const useImageEditing = () => {
   
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Helper to convert asset URLs or data URLs to base64
+  const convertToBase64 = async (imageUrl: string): Promise<string> => {
+    // If it's already a data URL, extract base64
+    if (imageUrl.startsWith('data:')) {
+      const base64Part = imageUrl.split(',')[1];
+      return base64Part || '';
+    }
+    
+    // If it's an asset URL, fetch and convert
+    if (imageUrl.startsWith('/api/v1/assets/') || imageUrl.includes('/assets/')) {
+      return await assetUrlToBase64(imageUrl);
+    }
+    
+    // If it's a full URL, treat as asset URL
+    return await assetUrlToBase64(imageUrl);
+  };
+
   const editMutation = useMutation({
     mutationFn: async (instruction: string) => {
       // Create new AbortController for this request
@@ -225,15 +269,17 @@ export const useImageEditing = () => {
       const sourceImage = canvasImage || uploadedImages[0];
       if (!sourceImage) throw new Error('No image to edit');
       
-      // Convert canvas image to base64
-      const base64Image = sourceImage.includes('base64,') 
-        ? sourceImage.split('base64,')[1] 
-        : sourceImage;
+      // Convert canvas image to base64 (handle both data URLs and asset URLs)
+      const base64Image = await convertToBase64(sourceImage);
       
-      // Get reference images for style guidance
-      let referenceImages = editReferenceImages
-        .filter(img => img.includes('base64,'))
-        .map(img => img.split('base64,')[1]);
+      // Get reference images for style guidance and convert to base64
+      let referenceImagesBase64: string[] = [];
+      if (editReferenceImages.length > 0) {
+        referenceImagesBase64 = await Promise.all(
+          editReferenceImages.map(img => convertToBase64(img))
+        );
+      }
+      let referenceImages = referenceImagesBase64;
       
       let maskImage: string | undefined;
       let maskedReferenceImage: string | undefined;

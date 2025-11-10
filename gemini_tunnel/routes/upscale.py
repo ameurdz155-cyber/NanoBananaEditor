@@ -77,12 +77,29 @@ async def upscale_image(
     if scale_factor not in [2, 4]:
         scale_factor = 4
     
-    # Create queue item
-    queue_id = create_queue_item(
-        user_id=current_user["id"],
-        type="upscale",
-        prompt=f"Upscale {scale_factor}x"
-    )
+    # Create queue item with metadata
+    queue_table = get_table("queue")
+    now = datetime.utcnow().isoformat()
+    queue_id = str(uuid.uuid4())
+    
+    queue_item = {
+        "id": queue_id,
+        "user_id": current_user["id"],
+        "type": "upscale",
+        "status": "pending",
+        "prompt": f"Upscale {scale_factor}x",
+        "preview_url": None,
+        "result_url": None,
+        "error_message": None,
+        "progress": 0,
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+        "metadata": {
+            "scale": scale_factor
+        }
+    }
+    queue_table.insert(queue_item)
     
     try:
         # Update status to processing
@@ -121,8 +138,9 @@ async def upscale_image(
         
         upscaled_image = serialize_inline_image(upscaled_bytes)
         
-        # Mark as completed
-        update_queue_item(queue_id, "completed", progress=100, result_url=upscaled_image)
+        # Mark as completed (convert ImagePayload to string)
+        result_url = f"data:{upscaled_image.mime_type};base64,{upscaled_image.b64_data}"
+        update_queue_item(queue_id, "completed", progress=100, result_url=result_url)
         
         return UpscaleResponse(
             model="google-imagen-upscale",
@@ -147,12 +165,31 @@ async def inpaint_image(
 ) -> InpaintResponse:
     """Insert objects into an image using Google Imagen inpainting."""
     
-    # Create queue item
-    queue_id = create_queue_item(
-        user_id=current_user["id"],
-        type="inpaint",
-        prompt=payload.prompt
-    )
+    # Create queue item with metadata
+    queue_table = get_table("queue")
+    now = datetime.utcnow().isoformat()
+    queue_id = str(uuid.uuid4())
+    
+    queue_item = {
+        "id": queue_id,
+        "user_id": current_user["id"],
+        "type": "inpaint",
+        "status": "pending",
+        "prompt": payload.prompt,
+        "preview_url": None,
+        "result_url": None,
+        "error_message": None,
+        "progress": 0,
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+        "metadata": {
+            "prompt": payload.prompt,
+            "hasMask": payload.mask_image is not None,
+            "negativePrompt": payload.negative_prompt
+        }
+    }
+    queue_table.insert(queue_item)
     
     try:
         # Update status to processing
@@ -238,8 +275,11 @@ async def inpaint_image(
         
         print(f"✓ Inpainting completed: {len(images)} image(s) generated")
         
-        # Mark as completed
-        result_url = images[0] if images else None
+        # Mark as completed (convert ImagePayload to string)
+        result_url = None
+        if images:
+            first_image = images[0]
+            result_url = f"data:{first_image.mime_type};base64,{first_image.b64_data}"
         update_queue_item(queue_id, "completed", progress=100, result_url=result_url)
         
         return InpaintResponse(

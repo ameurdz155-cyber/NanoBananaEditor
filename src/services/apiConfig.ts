@@ -40,9 +40,18 @@ export const buildJsonHeaders = (extra?: Record<string, string>) => {
     'Content-Type': 'application/json',
     ...(extra ?? {}),
   };
+  
+  // Add JWT token for authentication
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  // Add API key if available
   const apiKey = getStoredApiKey();
   if (apiKey) {
     headers['x-api-key'] = apiKey;
   }
+  
   return headers;
 };

@@ -23,6 +23,9 @@ from routes.admin import router as admin_router
 from routes.categories import router as categories_router
 from routes.templates import router as templates_router
 from routes.queue import router as queue_router
+from routes.assets import router as assets_router
+from routes.boards import router as boards_router
+from routes.history import router as history_router
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -71,6 +74,9 @@ app.include_router(auth_db_router, prefix="/api/v1", tags=["Authentication"])
 app.include_router(admin_router, prefix="/api/v1", tags=["Admin"])
 app.include_router(categories_router, prefix="/api/v1", tags=["Categories"])
 app.include_router(templates_router, prefix="/api/v1", tags=["Templates"])
+app.include_router(assets_router, prefix="/api/v1", tags=["Assets"])
+app.include_router(boards_router, tags=["Boards"])
+app.include_router(history_router, tags=["History"])
 app.include_router(queue_router, tags=["Queue"])
 app.include_router(generation_router, tags=["Image Generation"])
 app.include_router(editing_router, tags=["Image Editing"])

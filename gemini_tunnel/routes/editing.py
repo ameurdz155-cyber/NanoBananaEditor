@@ -70,13 +70,33 @@ async def edit_with_gemini(
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> EditResponse:
     """Edit an image using Gemini AI."""
-    # Create queue item
-    queue_id = create_queue_item(
-        user_id=current_user["id"],
-        type="edit",
-        prompt=payload.instruction,
-        preview_url=payload.original_image
-    )
+    # Create queue item with metadata
+    queue_table = get_table("queue")
+    now = datetime.utcnow().isoformat()
+    queue_id = str(uuid.uuid4())
+    
+    queue_item = {
+        "id": queue_id,
+        "user_id": current_user["id"],
+        "type": "edit",
+        "status": "pending",
+        "prompt": payload.instruction,
+        "preview_url": payload.original_image,
+        "result_url": None,
+        "error_message": None,
+        "progress": 0,
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+        "metadata": {
+            "instruction": payload.instruction,
+            "temperature": payload.temperature,
+            "seed": payload.seed,
+            "hasMask": payload.mask_image is not None,
+            "referenceCount": len(payload.reference_images or [])
+        }
+    }
+    queue_table.insert(queue_item)
     
     try:
         # Update status to processing

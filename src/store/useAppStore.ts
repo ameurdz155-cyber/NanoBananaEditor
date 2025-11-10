@@ -95,6 +95,7 @@ interface AppState {
   setCurrentProject: (project: Project | null) => void;
   addToPromptHistory: (prompt: string) => void;
   deletePromptFromHistory: (index: number) => void;
+  hydrateHistoryFromBackend: () => Promise<void>;
 
   // Auto-save setting
   autoSaveEnabled: boolean;
@@ -136,7 +137,7 @@ interface AppState {
   setAvailableImagenModels: (models: string[]) => void;
   setIterations: (iterations: number) => void;
   
-  addGeneration: (generation: Generation) => void;
+  addGeneration: (generation: Generation) => Promise<void>;
   addEdit: (edit: Edit) => void;
   selectGeneration: (id: string | null) => void;
   selectEdit: (id: string | null) => void;
@@ -164,12 +165,13 @@ interface AppState {
   // Boards actions
   setBoards: (boards: Board[]) => void;
   setSelectedBoardId: (boardId: string | null) => void;
-  addBoard: (board: Board) => void;
-  updateBoard: (boardId: string, updates: Partial<Board>) => void;
-  deleteBoard: (boardId: string) => void;
-  addImageToBoard: (boardId: string, imageId: string) => void;
-  removeImageFromBoard: (boardId: string, imageId: string) => void;
+  addBoard: (board: Board) => Promise<void>;
+  updateBoard: (boardId: string, updates: Partial<Board>) => Promise<void>;
+  deleteBoard: (boardId: string) => Promise<void>;
+  addImageToBoard: (boardId: string, imageId: string) => Promise<void>;
+  removeImageFromBoard: (boardId: string, imageId: string) => Promise<void>;
   moveImageToBoard: (targetBoardId: string, imageId: string) => void;
+  loadBoardsFromBackend: () => Promise<void>;
   favoriteImageIds: string[];
   toggleFavoriteImage: (imageId: string) => void;
   isFavoriteImage: (imageId: string) => boolean;
@@ -356,13 +358,31 @@ export const useAppStore = create<AppState>()(
       }),
       setIterations: (iterations) => set({ iterations }),
       
-      addGeneration: (generation) => set((state) => ({
-        currentProject: state.currentProject ? {
-          ...state.currentProject,
-          generations: [...state.currentProject.generations, generation],
-          updatedAt: Date.now()
-        } : null
-      })),
+      addGeneration: async (generation) => {
+        // Save to local store first
+        set((state) => ({
+          currentProject: state.currentProject ? {
+            ...state.currentProject,
+            generations: [...state.currentProject.generations, generation],
+            updatedAt: Date.now()
+          } : null
+        }));
+
+        // Save to backend history asynchronously
+        try {
+          const { historyService } = await import('../services/historyService');
+          const { useAuthStore } = await import('./useAuthStore');
+          
+          const token = useAuthStore.getState().token;
+          if (token) {
+            await historyService.createHistoryEntry(generation);
+            console.log('✅ Generation saved to backend history');
+          }
+        } catch (error) {
+          console.error('Failed to save generation to backend:', error);
+          // Don't throw - we already saved locally
+        }
+      },
       
       addEdit: (edit) => set((state) => ({
         currentProject: state.currentProject ? {
@@ -401,6 +421,48 @@ export const useAppStore = create<AppState>()(
       deletePromptFromHistory: (index) => set((state) => ({
         promptHistory: state.promptHistory.filter((_, i) => i !== index)
       })),
+
+      hydrateHistoryFromBackend: async () => {
+        const { historyService } = await import('../services/historyService');
+        const { useAuthStore } = await import('./useAuthStore');
+        
+        const token = useAuthStore.getState().token;
+        if (!token) {
+          console.warn('No auth token available, skipping history hydration');
+          return;
+        }
+
+        try {
+          // Fetch history from dedicated history API
+          const historyResponse = await historyService.getHistory(100);
+          
+          const state = get();
+          if (!state.currentProject) {
+            console.warn('No current project, skipping history hydration');
+            return;
+          }
+
+          const generations: Generation[] = historyResponse.items;
+
+          // Merge with existing history (avoid duplicates)
+          const existingGenIds = new Set(state.currentProject.generations.map(g => g.id));
+
+          const newGenerations = generations.filter(g => !existingGenIds.has(g.id));
+
+          // Update store with merged history
+          set({
+            currentProject: {
+              ...state.currentProject,
+              generations: [...newGenerations, ...state.currentProject.generations],
+              updatedAt: Date.now(),
+            },
+          });
+
+          console.log(`✅ Hydrated ${newGenerations.length} generations from backend history`);
+        } catch (error) {
+          console.error('Failed to hydrate history from backend:', error);
+        }
+      },
 
       deleteGeneration: (generationId) => set((state) => {
         if (!state.currentProject) {
@@ -464,43 +526,201 @@ export const useAppStore = create<AppState>()(
       setBoards: (boards) => set({ boards }),
       setSelectedBoardId: (boardId) => set({ selectedBoardId: boardId }),
       
-      addBoard: (board) => set((state) => ({
-        boards: [...state.boards, board]
-      })),
+      // Load boards from backend
+      loadBoardsFromBackend: async () => {
+        try {
+          const { boardService } = await import('../services/boardService');
+          const backendBoards = await boardService.getBoards();
+          
+          // Convert backend format to frontend format
+          const boards: Board[] = backendBoards.map(b => ({
+            id: b.id,
+            name: b.name,
+            emoji: b.emoji,
+            description: b.description,
+            createdAt: b.created_at,
+            updatedAt: b.updated_at,
+            imageIds: b.image_ids
+          }));
+          
+          // If there are boards and current selected board is "default", 
+          // update to the first board from backend
+          const currentState = get();
+          const newSelectedBoardId = boards.length > 0 && currentState.selectedBoardId === 'default' 
+            ? boards[0].id 
+            : currentState.selectedBoardId;
+          
+          set({ boards, selectedBoardId: newSelectedBoardId });
+        } catch (error) {
+          console.error('Failed to load boards from backend:', error);
+          // If failed, keep local boards
+        }
+      },
       
-      updateBoard: (boardId, updates) => set((state) => ({
-        boards: state.boards.map(b =>
-          b.id === boardId
-            ? { ...b, ...updates, updatedAt: Date.now() }
-            : b
-        )
-      })),
+      addBoard: async (board) => {
+        try {
+          const { boardService } = await import('../services/boardService');
+          
+          // Create on backend first
+          const backendBoard = await boardService.createBoard({
+            name: board.name,
+            emoji: board.emoji,
+            description: board.description
+          });
+          
+          // Convert and add to local state
+          const newBoard: Board = {
+            id: backendBoard.id,
+            name: backendBoard.name,
+            emoji: backendBoard.emoji,
+            description: backendBoard.description,
+            createdAt: backendBoard.created_at,
+            updatedAt: backendBoard.updated_at,
+            imageIds: backendBoard.image_ids
+          };
+          
+          set((state) => ({
+            boards: [...state.boards, newBoard]
+          }));
+        } catch (error) {
+          console.error('Failed to create board:', error);
+          // Fallback to local only
+          set((state) => ({
+            boards: [...state.boards, board]
+          }));
+          throw error;
+        }
+      },
       
-      deleteBoard: (boardId) => set((state) => ({
-        boards: state.boards.filter(b => b.id !== boardId)
-      })),
+      updateBoard: async (boardId, updates) => {
+        try {
+          const { boardService } = await import('../services/boardService');
+          
+          // Update on backend first
+          const backendBoard = await boardService.updateBoard(boardId, {
+            name: updates.name,
+            emoji: updates.emoji,
+            description: updates.description
+          });
+          
+          // Update local state with backend response
+          set((state) => ({
+            boards: state.boards.map(b =>
+              b.id === boardId
+                ? {
+                    ...b,
+                    name: backendBoard.name,
+                    emoji: backendBoard.emoji,
+                    description: backendBoard.description,
+                    updatedAt: backendBoard.updated_at
+                  }
+                : b
+            )
+          }));
+        } catch (error) {
+          console.error('Failed to update board:', error);
+          // Fallback to local only
+          set((state) => ({
+            boards: state.boards.map(b =>
+              b.id === boardId
+                ? { ...b, ...updates, updatedAt: Date.now() }
+                : b
+            )
+          }));
+          throw error;
+        }
+      },
       
-      addImageToBoard: (boardId, imageId) => set((state) => ({
-        boards: state.boards.map(b =>
-          b.id === boardId
-            ? {
-                ...b,
-                imageIds: b.imageIds.includes(imageId)
-                  ? b.imageIds
-                  : [...b.imageIds, imageId],
-                updatedAt: Date.now(),
-              }
-            : b
-        )
-      })),
+      deleteBoard: async (boardId) => {
+        try {
+          const { boardService } = await import('../services/boardService');
+          
+          // Delete from backend first
+          await boardService.deleteBoard(boardId);
+          
+          // Remove from local state
+          set((state) => ({
+            boards: state.boards.filter(b => b.id !== boardId)
+          }));
+        } catch (error) {
+          console.error('Failed to delete board:', error);
+          throw error;
+        }
+      },
       
-      removeImageFromBoard: (boardId, imageId) => set((state) => ({
-        boards: state.boards.map(b =>
-          b.id === boardId
-            ? { ...b, imageIds: b.imageIds.filter(id => id !== imageId), updatedAt: Date.now() }
-            : b
-        )
-      })),
+      addImageToBoard: async (boardId, imageId) => {
+        try {
+          const { boardService } = await import('../services/boardService');
+          
+          // Add image on backend
+          const backendBoard = await boardService.addImagesToBoard(boardId, {
+            image_ids: [imageId]
+          });
+          
+          // Update local state with backend response
+          set((state) => ({
+            boards: state.boards.map(b =>
+              b.id === boardId
+                ? {
+                    ...b,
+                    imageIds: backendBoard.image_ids,
+                    updatedAt: backendBoard.updated_at
+                  }
+                : b
+            )
+          }));
+        } catch (error) {
+          console.error('Failed to add image to board:', error);
+          // Fallback to local only
+          set((state) => ({
+            boards: state.boards.map(b =>
+              b.id === boardId
+                ? {
+                    ...b,
+                    imageIds: b.imageIds.includes(imageId)
+                      ? b.imageIds
+                      : [...b.imageIds, imageId],
+                    updatedAt: Date.now(),
+                  }
+                : b
+            )
+          }));
+          throw error;
+        }
+      },
+      
+      removeImageFromBoard: async (boardId, imageId) => {
+        try {
+          const { boardService } = await import('../services/boardService');
+          
+          // Remove image on backend
+          const backendBoard = await boardService.removeImageFromBoard(boardId, imageId);
+          
+          // Update local state with backend response
+          set((state) => ({
+            boards: state.boards.map(b =>
+              b.id === boardId
+                ? {
+                    ...b,
+                    imageIds: backendBoard.image_ids,
+                    updatedAt: backendBoard.updated_at
+                  }
+                : b
+            )
+          }));
+        } catch (error) {
+          console.error('Failed to remove image from board:', error);
+          // Fallback to local only
+          set((state) => ({
+            boards: state.boards.map(b =>
+              b.id === boardId
+                ? { ...b, imageIds: b.imageIds.filter(id => id !== imageId), updatedAt: Date.now() }
+                : b
+            )
+          }));
+          throw error;
+        }
+      },
       
       moveImageToBoard: (targetBoardId, imageId) => set((state) => ({
         boards: state.boards.map(b => {

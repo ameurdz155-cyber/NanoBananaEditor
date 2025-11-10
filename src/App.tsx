@@ -35,7 +35,41 @@ function AppContent() {
   const showHistory = useAppStore((state) => state.showHistory);
   const language = useAppStore((state) => state.language);
   const activePrimarySection = useAppStore((state) => state.activePrimarySection);
+  const hydrateHistoryFromBackend = useAppStore((state) => state.hydrateHistoryFromBackend);
+  const loadBoardsFromBackend = useAppStore((state) => state.loadBoardsFromBackend);
+  const setPromptCategories = useAppStore((state) => state.setPromptCategories);
+  const currentProject = useAppStore((state) => state.currentProject);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const t = getTranslation(language);
+  
+  // Load categories from backend on mount when authenticated
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      const loadCategories = async () => {
+        try {
+          const { fetchCategories } = await import('./services/categoryService');
+          const categories = await fetchCategories();
+          setPromptCategories(categories);
+          console.log('✅ Categories loaded from backend:', categories.length);
+        } catch (error) {
+          console.error('Failed to load categories from backend:', error);
+        }
+      };
+      loadCategories();
+    }
+  }, [isAuthenticated, setPromptCategories]);
+  
+  // Load history and boards from backend on mount
+  React.useEffect(() => {
+    if (currentProject) {
+      hydrateHistoryFromBackend().catch(err => {
+        console.error('Failed to load history from backend:', err);
+      });
+      loadBoardsFromBackend().catch(err => {
+        console.error('Failed to load boards from backend:', err);
+      });
+    }
+  }, [currentProject?.id]); // Only run when project ID changes
   
   // Update page title when language changes
   React.useEffect(() => {

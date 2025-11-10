@@ -37,6 +37,14 @@ const handleResponse = async (response: Response) => {
     return response.json();
   }
 
+  // Handle authentication errors
+  if (response.status === 401) {
+    // Clear invalid token and force re-login
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    throw new Error('Your session has expired. Please log in again.');
+  }
+
   let errorMessage = DEFAULT_ERROR_MESSAGE;
   try {
     const body = (await response.json()) as BackendErrorBody;

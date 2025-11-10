@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useAppStore } from '../store/useAppStore';
+import { getAssetUrl } from '../services/uploadService';
 import {
   History,
   Layers,
@@ -45,11 +46,25 @@ export const HistoryPanel: React.FC = () => {
     setSeed,
     setTemperature,
     setLastGenerationParameters,
+    hydrateHistoryFromBackend,
   } = useAppStore();
 
   const t = getTranslation(language);
 
   const [activeTab, setActiveTab] = React.useState<'history' | 'boards'>('boards');
+  const [isLoadingHistory, setIsLoadingHistory] = React.useState(false);
+
+  const refreshHistory = React.useCallback(async () => {
+    setIsLoadingHistory(true);
+    try {
+      await hydrateHistoryFromBackend();
+      console.log('✅ History refreshed from backend');
+    } catch (error) {
+      console.error('Failed to refresh history:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [hydrateHistoryFromBackend]);
 
   const [previewModal, setPreviewModal] = React.useState<{
     open: boolean;
@@ -407,6 +422,13 @@ export const HistoryPanel: React.FC = () => {
     return () => window.removeEventListener('galleryUpdated', handleGalleryUpdate);
   }, [boards]);
 
+  // Auto-load history from backend when history tab is active
+  useEffect(() => {
+    if (activeTab === 'history' && showHistory && !isLoadingHistory) {
+      refreshHistory();
+    }
+  }, [activeTab, showHistory]); // Only when switching to history tab or opening panel
+
   useEffect(() => {
     const handlePointer = (event: MouseEvent) => {
       if (event.button !== 0) return;
@@ -464,6 +486,12 @@ export const HistoryPanel: React.FC = () => {
       return edit.outputAssets[0].url;
     }
 
+    // If it looks like an asset ID (UUID format), construct asset URL
+    // UUIDs are 36 characters with dashes in specific positions
+    if (imageId.length === 36 && imageId.includes('-')) {
+      return getAssetUrl(imageId);
+    }
+
     return null;
   }, [generations, edits, galleryImages]);
 
@@ -493,6 +521,14 @@ export const HistoryPanel: React.FC = () => {
             <p className="text-xs text-vis-text-muted">{generations.length + edits.length} {t.items}</p>
           </div>
         </div>
+        <button
+          onClick={refreshHistory}
+          disabled={isLoadingHistory}
+          className="p-1.5 rounded-md text-vis-text-muted hover:text-vis-teal-400 hover:bg-vis-teal-500/10 transition-colors disabled:opacity-50"
+          title="Refresh history from server"
+        >
+          <History className={cn("h-4 w-4", isLoadingHistory && "animate-spin")} />
+        </button>
       </div>
 
       {/* Tabs */}

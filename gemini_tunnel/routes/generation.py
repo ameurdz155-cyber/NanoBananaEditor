@@ -82,12 +82,37 @@ async def generate_with_gemini(
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> GenerateResponse:
     """Generate images using Gemini AI."""
-    # Create queue item
-    queue_id = create_queue_item(
-        user_id=current_user["id"],
-        type="generation",
-        prompt=payload.prompt
-    )
+    # Create queue item with metadata
+    queue_table = get_table("queue")
+    now = datetime.utcnow().isoformat()
+    queue_id = str(uuid.uuid4())
+    
+    queue_item = {
+        "id": queue_id,
+        "user_id": current_user["id"],
+        "type": "generation",
+        "status": "pending",
+        "prompt": payload.prompt,
+        "preview_url": None,
+        "result_url": None,
+        "error_message": None,
+        "progress": 0,
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+        "metadata": {
+            "negativePrompt": payload.negative_prompt,
+            "aspectRatio": payload.aspect_ratio,
+            "width": payload.width,
+            "height": payload.height,
+            "seed": payload.seed,
+            "temperature": payload.temperature,
+            "numImages": payload.num_images,
+            "modelVersion": payload.model,
+            "referenceCount": len(payload.reference_images or [])
+        }
+    }
+    queue_table.insert(queue_item)
     
     try:
         # Update status to processing
@@ -110,8 +135,12 @@ async def generate_with_gemini(
         # Update progress
         update_queue_item(queue_id, "processing", progress=90)
         
-        # Mark as completed with first image as result
-        result_url = images[0] if images else None
+        # Mark as completed with first image as result (convert ImagePayload to string)
+        result_url = None
+        if images:
+            first_image = images[0]
+            # Store as data URL string for JSON serialization
+            result_url = f"data:{first_image.mime_type};base64,{first_image.b64_data}"
         update_queue_item(queue_id, "completed", progress=100, result_url=result_url)
         
         return GenerateResponse(model=model_name, images=images)
@@ -130,12 +159,37 @@ async def generate_with_imagen(
     
     print("⚠️  Note: Imagen models require Vertex AI setup. Using Gemini Flash for image generation.")
     
-    # Create queue item
-    queue_id = create_queue_item(
-        user_id=current_user["id"],
-        type="generation",
-        prompt=payload.prompt
-    )
+    # Create queue item with metadata
+    queue_table = get_table("queue")
+    now = datetime.utcnow().isoformat()
+    queue_id = str(uuid.uuid4())
+    
+    queue_item = {
+        "id": queue_id,
+        "user_id": current_user["id"],
+        "type": "generation",
+        "status": "pending",
+        "prompt": payload.prompt,
+        "preview_url": None,
+        "result_url": None,
+        "error_message": None,
+        "progress": 0,
+        "created_at": now,
+        "updated_at": now,
+        "completed_at": None,
+        "metadata": {
+            "negativePrompt": payload.negative_prompt,
+            "aspectRatio": payload.aspect_ratio,
+            "width": payload.width,
+            "height": payload.height,
+            "seed": payload.seed,
+            "temperature": payload.temperature,
+            "numImages": payload.num_images,
+            "modelVersion": GEMINI_FLASH_MODEL,
+            "referenceCount": len(payload.reference_images or [])
+        }
+    }
+    queue_table.insert(queue_item)
     
     try:
         # Update status to processing
@@ -158,8 +212,12 @@ async def generate_with_imagen(
         # Update progress
         update_queue_item(queue_id, "processing", progress=90)
         
-        # Mark as completed with first image as result
-        result_url = images[0] if images else None
+        # Mark as completed with first image as result (convert ImagePayload to string)
+        result_url = None
+        if images:
+            first_image = images[0]
+            # Store as data URL string for JSON serialization
+            result_url = f"data:{first_image.mime_type};base64,{first_image.b64_data}"
         update_queue_item(queue_id, "completed", progress=100, result_url=result_url)
         
         return GenerateResponse(model=model_name, images=images)

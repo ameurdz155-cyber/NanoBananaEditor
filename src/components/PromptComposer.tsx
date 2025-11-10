@@ -13,6 +13,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { getTranslation } from '../i18n/translations';
 import { usePromptPanelResize } from './PromptComposer/usePromptPanelResize';
 import { TemplateSelector } from './PromptComposer/TemplateSelector';
+import { uploadAsset, getAssetUrl } from '../services/uploadService';
 import type { PromptTemplate } from '../types';
 
 const DEFAULT_MODEL_FAMILY = 'gemini';
@@ -671,31 +672,55 @@ export const PromptComposer: React.FC = () => {
     const file = event.target.files?.[0];
     if (file && file.type.startsWith('image/')) {
       try {
-        // Read file as data URL (includes the data:image/...;base64, prefix)
+        // Upload to backend and get asset URL instead of storing base64
+        const uploadResult = await uploadAsset(file);
+        const assetUrl = getAssetUrl(uploadResult.asset_id);
+        
+        // Create a data URL for preview (smaller thumbnail)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const previewDataUrl = e.target?.result as string;
+          
+          // Store the asset URL (not base64) for better performance
+          if (selectedTool === 'generate') {
+            // Add to reference images (unlimited)
+            addUploadedImage(assetUrl);
+          } else if (selectedTool === 'edit') {
+            // For edit mode, add to separate edit reference images (unlimited)
+            addEditReferenceImage(assetUrl);
+            // Set as canvas image if none exists
+            if (!canvasImage) {
+              setCanvasImage(assetUrl, 'upload');
+            }
+          } else if (selectedTool === 'mask') {
+            // For mask mode, set as canvas image immediately
+            clearUploadedImages();
+            addUploadedImage(assetUrl);
+            setCanvasImage(assetUrl, 'upload');
+          }
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        // Fallback to base64 if upload fails
         const reader = new FileReader();
         reader.onload = (e) => {
           const dataUrl = e.target?.result as string;
           
           if (selectedTool === 'generate') {
-            // Add to reference images (unlimited)
             addUploadedImage(dataUrl);
           } else if (selectedTool === 'edit') {
-            // For edit mode, add to separate edit reference images (unlimited)
             addEditReferenceImage(dataUrl);
-            // Set as canvas image if none exists
             if (!canvasImage) {
               setCanvasImage(dataUrl, 'upload');
             }
           } else if (selectedTool === 'mask') {
-            // For mask mode, set as canvas image immediately
             clearUploadedImages();
             addUploadedImage(dataUrl);
             setCanvasImage(dataUrl, 'upload');
           }
         };
         reader.readAsDataURL(file);
-      } catch (error) {
-        console.error('Failed to upload image:', error);
       }
     }
     // Reset the input so the same file can be selected again

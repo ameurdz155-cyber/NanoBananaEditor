@@ -7,6 +7,7 @@ import { upscaleImage } from '../services/upscaleService';
 import { getTranslation } from '../i18n/translations';
 import { Generation, Asset } from '../types';
 import { createImageFromBase64, generateId } from '../utils/imageUtils';
+import { uploadAsset, getAssetUrl, assetUrlToBase64 } from '../services/uploadService';
 
 const DEFAULT_UPSCALE_MODEL = 'models/imagen-3.0-generate-002';
 const DEFAULT_UPSCALE_MODEL_LABEL = 'Imagen 3 · Generate 002';
@@ -80,27 +81,38 @@ export const UpscalingPanel: React.FC = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : '';
-      if (!result) {
-        setErrorMessage(t.upscalingReadError);
-        return;
-      }
-      setSourceImage(result);
+    try {
+      // Upload to backend for better performance
+      const uploadResult = await uploadAsset(file);
+      const assetUrl = getAssetUrl(uploadResult.asset_id);
+      setSourceImage(assetUrl);
       setErrorMessage(null);
       setStatusMessage(t.upscalingImageReady);
-    };
-    reader.onerror = () => {
-      setErrorMessage(t.upscalingLoadError);
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Failed to upload upscale source:', error);
+      // Fallback to base64 if upload fails
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === 'string' ? reader.result : '';
+        if (!result) {
+          setErrorMessage(t.upscalingReadError);
+          return;
+        }
+        setSourceImage(result);
+        setErrorMessage(null);
+        setStatusMessage(t.upscalingImageReady);
+      };
+      reader.onerror = () => {
+        setErrorMessage(t.upscalingLoadError);
+      };
+      reader.readAsDataURL(file);
+    }
     event.target.value = '';
   };
 
@@ -109,6 +121,13 @@ export const UpscalingPanel: React.FC = () => {
       const [, payload] = image.split('base64,');
       return payload || '';
     }
+    
+    // If it's an asset URL, use the uploadService helper
+    if (image.startsWith('/api/v1/assets/') || image.includes('/assets/')) {
+      return await assetUrlToBase64(image);
+    }
+    
+    // Fallback for other URLs
     const response = await fetch(image);
     if (!response.ok) {
       throw new Error(t.upscalingFetchSourceError);
@@ -259,7 +278,7 @@ export const UpscalingPanel: React.FC = () => {
       };
 
       if (currentProject) {
-        addGeneration(generation);
+        await addGeneration(generation);
       } else {
         const now = Date.now();
         setCurrentProject({
