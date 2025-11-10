@@ -594,8 +594,7 @@ export const ImageCanvas: React.FC = () => {
               <div className="relative inline-block mb-6">
                 <div className="absolute inset-0 gradient-glow opacity-40 blur-3xl rounded-full" aria-hidden="true" />
                 <div
-                  className="relative w-24 h-24 gradient-primary rounded-3xl flex items-center justify-center shadow-2xl mx-auto transform hover:scale-105 transition-transform"
-                  style={{ boxShadow: '0 20px 45px rgba(124, 58, 237, 0.25)' }}
+                  className="relative w-24 h-24 bg-transparent rounded-3xl flex items-center justify-center mx-auto transform hover:scale-105 transition-transform"
                 >
                   <Sparkles className="h-14 w-14" style={{ color: 'var(--text-primary)' }} />
                 </div>
