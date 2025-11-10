@@ -838,6 +838,12 @@ export const ImageCanvas: React.FC = () => {
                   onClick={handleUseForPromptTemplate}
                   disabled={!hasPrompt}
                 />
+                <MenuItem
+                  icon={<ImageIcon className="h-4 w-4 text-cyan-300" />}
+                  label={t.addCanvasImageToReferences}
+                  onClick={handleAddAsReference}
+                  disabled={!contextImageUrl}
+                />
               </div>
 
               <div className="my-3 h-px bg-gray-800" />
