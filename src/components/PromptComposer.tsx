@@ -897,13 +897,13 @@ export const PromptComposer: React.FC = () => {
           />
 
           {/* Credits Display */}
-          <CreditsDisplay
+          {/* <CreditsDisplay
             credits={0}
             onPurchase={() => {
               console.log('Purchase initiated from PromptComposer');
               // TODO: Integrate with your payment system
             }}
-          />
+          /> */}
 
           {/* Prompt Input - Enhanced Card Design */}
           <div className="bg-gray-900/70 rounded-xl p-4 border border-vis-border-light hover:border-vis-teal-500/50 transition-all duration-200 flex-shrink-0 shadow-vis-glow-teal">

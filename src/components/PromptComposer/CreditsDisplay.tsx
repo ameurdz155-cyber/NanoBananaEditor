@@ -142,11 +142,10 @@ export const CreditsDisplay: React.FC<CreditsDisplayProps> = ({
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="text-sm font-medium text-gray-100 dark:text-white mb-1">
-                    Nano Banana AI Image Editor (100 Credits)
+                    AI POD Lite (100 Credits)
                   </h3>
                   <p className="text-xs text-gray-400 dark:text-gray-300 mb-2">
-                    Generate, edit, or upscale 100 images with the world's best Nano Banana
-                    AI image editor.
+                    Generate, edit, or upscale 100 images with AI POD Lite.
                   </p>
                   <div className="flex items-center space-x-2">
                     <span className="text-lg font-bold text-vis-teal-400 dark:text-vis-teal-300">$10</span>
@@ -188,7 +187,7 @@ export const CreditsDisplay: React.FC<CreditsDisplayProps> = ({
                 <div className="text-xs text-blue-200 dark:text-blue-100">
                   <p className="font-medium mb-1">Secure Payment</p>
                   <p>
-                    Powered by Stripe. Your payment information is encrypted and
+                    Powered by (Your Payment Methode ). Your payment information is encrypted and
                     secure.
                   </p>
                 </div>
