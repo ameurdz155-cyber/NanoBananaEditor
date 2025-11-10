@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import Cropper from 'react-easy-crop';
+import type { Area } from 'react-easy-crop';
 import {
 	ArrowLeft,
 	Copy,
@@ -85,6 +87,13 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 	const voiceLangWasManuallyChanged = useRef(false);
 	const recognitionRef = useRef<any>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	// Image cropper state
+	const [showCropper, setShowCropper] = useState(false);
+	const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+	const [crop, setCrop] = useState({ x: 0, y: 0 });
+	const [zoom, setZoom] = useState(1);
+	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
 	useEffect(() => {
 		if (!isAuthenticated) {
@@ -228,16 +237,96 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 		resetForm();
 	};
 
+	const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
+		setCroppedAreaPixels(croppedAreaPixels);
+	}, []);
+
+	const createCroppedImage = useCallback(async (imageSrc: string, pixelCrop: Area): Promise<string> => {
+		const image = new Image();
+		image.src = imageSrc;
+
+		return new Promise((resolve, reject) => {
+			image.onload = () => {
+				const canvas = document.createElement('canvas');
+				const ctx = canvas.getContext('2d');
+
+				if (!ctx) {
+					reject(new Error('Failed to get canvas context'));
+					return;
+				}
+
+				// Set canvas size to 16:9 aspect ratio
+				canvas.width = pixelCrop.width;
+				canvas.height = pixelCrop.height;
+
+				ctx.drawImage(
+					image,
+					pixelCrop.x,
+					pixelCrop.y,
+					pixelCrop.width,
+					pixelCrop.height,
+					0,
+					0,
+					pixelCrop.width,
+					pixelCrop.height
+				);
+
+				canvas.toBlob((blob) => {
+					if (!blob) {
+						reject(new Error('Failed to create blob'));
+						return;
+					}
+					const reader = new FileReader();
+					reader.onloadend = () => {
+						resolve(reader.result as string);
+					};
+					reader.onerror = reject;
+					reader.readAsDataURL(blob);
+				}, 'image/jpeg', 0.9);
+			};
+			image.onerror = reject;
+		});
+	}, []);
+
 	const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (file) {
 			const reader = new FileReader();
 			reader.onloadend = () => {
 				const base64String = reader.result as string;
-				setFormState((prev) => ({ ...prev, image: base64String }));
+				setImageToCrop(base64String);
+				setShowCropper(true);
+				setCrop({ x: 0, y: 0 });
+				setZoom(1);
 			};
 			reader.readAsDataURL(file);
 		}
+		// Reset the input value to allow re-uploading the same file
+		event.target.value = '';
+	};
+
+	const handleCropSave = async () => {
+		if (!imageToCrop || !croppedAreaPixels) {
+			return;
+		}
+
+		try {
+			const croppedImage = await createCroppedImage(imageToCrop, croppedAreaPixels);
+			setFormState((prev) => ({ ...prev, image: croppedImage }));
+			setShowCropper(false);
+			setImageToCrop(null);
+		} catch (error) {
+			console.error('Failed to crop image:', error);
+			alert(language === 'zh' ? '裁剪图片失败' : 'Failed to crop image');
+		}
+	};
+
+	const handleCropCancel = () => {
+		setShowCropper(false);
+		setImageToCrop(null);
+		setCrop({ x: 0, y: 0 });
+		setZoom(1);
+		setCroppedAreaPixels(null);
 	};
 
 	const handleFormSubmit = async () => {
@@ -521,26 +610,67 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 									className="space-y-3 rounded-xl border border-vis-border bg-gray-800/50 p-4 shadow-sm hover:border-vis-teal-400 hover:shadow-vis-glow-teal transition-all duration-200"
 								>
 									<header className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-										<div>
-											<h2 className="text-lg font-semibold text-vis-text-primary">{template.name}</h2>
-											{template.description && (
-												<p className="text-sm text-vis-text-secondary">{template.description}</p>
-											)}
-											<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-vis-text-muted">
-												<span>
-													{language === 'zh' ? '更新' : 'Updated'}{' '}
-													{formatDistanceToNow(new Date(template.updatedAt ?? template.createdAt), {
-														addSuffix: true,
-													})}
-												</span>
-												{category && (
-													<span>· {category.emoji ? `${category.emoji} ` : ''}{category.name}</span>
+										<div className="flex gap-4 flex-1">
+											{/* Template Image Thumbnail */}
+											{(() => {
+												const rawImage = template.image?.trim();
+												const imageSrc = rawImage && (/^https?:\/\//i.test(rawImage) || /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(rawImage) || rawImage.startsWith('/')) ? rawImage : undefined;
+												
+												return (
+													<div className="relative overflow-hidden rounded-lg border border-vis-border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-24 h-24 flex-shrink-0">
+														{imageSrc ? (
+															<>
+																<img
+																	src={imageSrc}
+																	alt={template.name}
+																	className="h-full w-full object-cover absolute inset-0"
+																	onError={(e) => {
+																		const parent = e.currentTarget.parentElement;
+																		e.currentTarget.style.display = 'none';
+																		if (parent) {
+																			const fallback = parent.querySelector('.fallback-icon');
+																			if (fallback instanceof HTMLElement) {
+																				fallback.style.display = 'flex';
+																			}
+																		}
+																	}}
+																/>
+																<div className="fallback-icon hidden w-full h-full items-center justify-center">
+																	<span className="text-2xl font-semibold text-vis-teal-400">
+																		{template.emoji || template.name.charAt(0).toUpperCase()}
+																	</span>
+																</div>
+															</>
+														) : (
+															<span className="text-2xl font-semibold text-vis-teal-400">
+																{template.emoji || template.name.charAt(0).toUpperCase()}
+															</span>
+														)}
+													</div>
+												);
+											})()}
+											
+											<div className="flex-1 min-w-0">
+												<h2 className="text-lg font-semibold text-vis-text-primary">{template.name}</h2>
+												{template.description && (
+													<p className="text-sm text-vis-text-secondary">{template.description}</p>
 												)}
-												{template.source === 'default' && (
-													<span className="rounded-full bg-vis-teal-500/20 border border-vis-teal-400/30 text-vis-teal-300 px-2 py-0.5">
-														{language === 'zh' ? '默认' : 'Default'}
+												<div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-vis-text-muted">
+													<span>
+														{language === 'zh' ? '更新' : 'Updated'}{' '}
+														{formatDistanceToNow(new Date(template.updatedAt ?? template.createdAt), {
+															addSuffix: true,
+														})}
 													</span>
-												)}
+													{category && (
+														<span>· {category.emoji ? `${category.emoji} ` : ''}{category.name}</span>
+													)}
+													{template.source === 'default' && (
+														<span className="rounded-full bg-vis-teal-500/20 border border-vis-teal-400/30 text-vis-teal-300 px-2 py-0.5">
+															{language === 'zh' ? '默认' : 'Default'}
+														</span>
+													)}
+												</div>
 											</div>
 										</div>
 										<div className="flex items-center gap-2">
@@ -720,6 +850,75 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 								: language === 'zh'
 									? '创建'
 									: 'Create'}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Image Cropper Modal */}
+			<Dialog open={showCropper} onOpenChange={(open) => !open && handleCropCancel()}>
+				<DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+					<DialogHeader>
+						<DialogTitle>
+							{language === 'zh' ? '裁剪图片 (1:1)' : 'Crop Image (1:1)'}
+						</DialogTitle>
+						<DialogDescription>
+							{language === 'zh'
+								? '调整图片位置和缩放以获得最佳效果'
+								: 'Adjust the image position and zoom for the best result'}
+						</DialogDescription>
+					</DialogHeader>
+
+					<div className="relative w-full h-[500px] bg-gray-900 rounded-lg overflow-hidden">
+						{imageToCrop && (
+							<Cropper
+								image={imageToCrop}
+								crop={crop}
+								zoom={zoom}
+								aspect={1}
+								onCropChange={setCrop}
+								onZoomChange={setZoom}
+								onCropComplete={onCropComplete}
+								style={{
+									containerStyle: {
+										width: '100%',
+										height: '100%',
+										backgroundColor: '#000',
+									},
+								}}
+							/>
+						)}
+					</div>
+
+					<div className="space-y-2 py-2">
+						<label className="text-sm font-medium">
+							{language === 'zh' ? '缩放' : 'Zoom'}
+						</label>
+						<input
+							type="range"
+							min={1}
+							max={3}
+							step={0.1}
+							value={zoom}
+							onChange={(e) => setZoom(Number(e.target.value))}
+							className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+						/>
+					</div>
+
+					<DialogFooter className="gap-2">
+						<Button
+							variant="outline"
+							onClick={handleCropCancel}
+							type="button"
+						>
+							{language === 'zh' ? '取消' : 'Cancel'}
+						</Button>
+						<Button
+							onClick={handleCropSave}
+							disabled={!croppedAreaPixels}
+							type="button"
+						>
+							{language === 'zh' ? '保存' : 'Save'}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

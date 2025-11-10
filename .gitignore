@@ -35,4 +35,5 @@ gemini_tunnel/services/__pycache__
 
 # Test directories
 test_py/
+gemini_tunnel/__pycache__
 

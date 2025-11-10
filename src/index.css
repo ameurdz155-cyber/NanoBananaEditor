@@ -749,3 +749,32 @@ body::before {
 [data-radix-select-viewport] {
   transition: none !important;
 }
+
+/* Image Cropper Slider Styles */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #10b981;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: #059669;
+}
+
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #10b981;
+  cursor: pointer;
+  border-radius: 50%;
+  border: none;
+  transition: background 0.2s;
+}
+
+.slider::-moz-range-thumb:hover {
+  background: #059669;
+}

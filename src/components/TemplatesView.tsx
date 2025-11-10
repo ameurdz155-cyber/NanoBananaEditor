@@ -1,4 +1,6 @@
 import React from 'react';
+import Cropper from 'react-easy-crop';
+import type { Area } from 'react-easy-crop';
 import { useAppStore } from '../store/useAppStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useTemplateStore } from '../store/useTemplateStore';
@@ -744,29 +746,105 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const iconUploadInputRef = React.useRef<HTMLInputElement | null>(null);
 
+  // Image cropper state for template images
+  const [showImageCropper, setShowImageCropper] = React.useState(false);
+  const [imageToCrop, setImageToCrop] = React.useState<string | null>(null);
+  const [imageCrop, setImageCrop] = React.useState({ x: 0, y: 0 });
+  const [imageZoom, setImageZoom] = React.useState(1);
+  const [imageCroppedAreaPixels, setImageCroppedAreaPixels] = React.useState<Area | null>(null);
+
+  const onImageCropComplete = React.useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
+    setImageCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const createCroppedImage = React.useCallback(async (imageSrc: string, pixelCrop: Area): Promise<string> => {
+    const image = new Image();
+    image.src = imageSrc;
+
+    return new Promise((resolve, reject) => {
+      image.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+
+        canvas.width = pixelCrop.width;
+        canvas.height = pixelCrop.height;
+
+        ctx.drawImage(
+          image,
+          pixelCrop.x,
+          pixelCrop.y,
+          pixelCrop.width,
+          pixelCrop.height,
+          0,
+          0,
+          pixelCrop.width,
+          pixelCrop.height
+        );
+
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Failed to create blob'));
+            return;
+          }
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve(reader.result as string);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        }, 'image/jpeg', 0.9);
+      };
+      image.onerror = reject;
+    });
+  }, []);
+
+  const handleImageCropSave = async () => {
+    if (!imageToCrop || !imageCroppedAreaPixels) {
+      return;
+    }
+
+    try {
+      const croppedImage = await createCroppedImage(imageToCrop, imageCroppedAreaPixels);
+      setFormData((prev) => ({ ...prev, image: croppedImage }));
+      setShowImageCropper(false);
+      setImageToCrop(null);
+    } catch (error) {
+      console.error('Failed to crop image:', error);
+      alert(language === 'zh' ? '裁剪图片失败' : 'Failed to crop image');
+    }
+  };
+
+  const handleImageCropCancel = () => {
+    setShowImageCropper(false);
+    setImageToCrop(null);
+    setImageCrop({ x: 0, y: 0 });
+    setImageZoom(1);
+    setImageCroppedAreaPixels(null);
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
     }
 
-    try {
-      // Upload to backend for better performance
-      const uploadResult = await uploadAsset(file);
-      const assetUrl = getAssetUrl(uploadResult.asset_id);
-      setFormData((prev) => ({ ...prev, image: assetUrl }));
-    } catch (error) {
-      console.error('Failed to upload template image:', error);
-      // Fallback to base64 if upload fails
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result;
-        if (typeof result === 'string') {
-          setFormData((prev) => ({ ...prev, image: result }));
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+    // Read file as data URL and open cropper
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setImageToCrop(base64String);
+      setShowImageCropper(true);
+      setImageCrop({ x: 0, y: 0 });
+      setImageZoom(1);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset the input value to allow re-uploading the same file
     event.target.value = '';
   };
 
@@ -1278,17 +1356,16 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     };
 
     const rawImage = template.image?.trim();
-    const imageSrc = rawImage && (/^https?:\/\//i.test(rawImage) || /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(rawImage)) ? rawImage : undefined;
+    // Support http://, https://, data:image URIs, and backend asset URLs (starting with /)
+    const imageSrc = rawImage && (/^https?:\/\//i.test(rawImage) || /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(rawImage) || rawImage.startsWith('/')) ? rawImage : undefined;
 
-    const templateIconNode = !imageSrc
-      ? renderIconValue(
-          template.emoji,
-          cn(
-            'w-12 h-12 text-3xl leading-none flex items-center justify-center',
-            isDarkMode ? 'text-purple-200' : 'text-purple-600'
-          )
-        )
-      : null;
+    const templateIconNode = renderIconValue(
+      template.emoji,
+      cn(
+        'w-12 h-12 text-3xl leading-none flex items-center justify-center',
+        isDarkMode ? 'text-purple-200' : 'text-purple-600'
+      )
+    );
 
     const categoryIconNode = categoryInfo ? (
       <span className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-vis-teal-400">
@@ -1320,14 +1397,30 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
         >
           <div className={thumbnailClasses} style={thumbnailStyle}>
             {imageSrc ? (
-              <img
-                src={imageSrc}
-                alt={template.name}
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
+              <>
+                <img
+                  src={imageSrc}
+                  alt={template.name}
+                  className="h-full w-full object-cover absolute inset-0"
+                  onError={(e) => {
+                    const parent = e.currentTarget.parentElement;
+                    e.currentTarget.style.display = 'none';
+                    if (parent) {
+                      const fallback = parent.querySelector('.fallback-icon');
+                      if (fallback instanceof HTMLElement) {
+                        fallback.style.display = 'flex';
+                      }
+                    }
+                  }}
+                />
+                <div className="fallback-icon hidden w-full h-full items-center justify-center">
+                  {templateIconNode || (
+                    <span className="text-2xl font-semibold text-vis-teal-400">
+                      {template.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </>
             ) : (
               templateIconNode || (
                 <span className="text-2xl font-semibold text-vis-teal-400">
@@ -2337,6 +2430,87 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   className="px-6 bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all"
                 >
                   {t.upgradeToUnlock}
+                </Button>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Image Cropper Modal for Template Images */}
+      <Dialog.Root open={showImageCropper} onOpenChange={(open) => !open && handleImageCropCancel()}>
+        <Dialog.Portal>
+          <Dialog.Overlay 
+            className={cn(
+              'fixed inset-0 z-50 backdrop-blur-sm',
+              isDarkMode ? 'bg-black/70' : 'bg-black/40'
+            )} 
+          />
+          <Dialog.Content
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl z-50 transition-all max-w-4xl w-[90vw] max-h-[90vh] shadow-vis-glow-teal bg-gray-900/95 border border-vis-border backdrop-blur-sm overflow-hidden flex flex-col"
+          >
+            <div className="p-6 border-b border-vis-border">
+              <Dialog.Title className="text-2xl font-bold text-vis-text-primary">
+                {language === 'zh' ? '裁剪图片 (1:1)' : 'Crop Image (1:1)'}
+              </Dialog.Title>
+              <Dialog.Description className="text-vis-text-secondary mt-2">
+                {language === 'zh'
+                  ? '调整图片位置和缩放以获得最佳效果'
+                  : 'Adjust the image position and zoom for the best result'}
+              </Dialog.Description>
+            </div>
+
+            <div className="relative w-full h-[500px] bg-black">
+              {imageToCrop && (
+                <Cropper
+                  image={imageToCrop}
+                  crop={imageCrop}
+                  zoom={imageZoom}
+                  aspect={1}
+                  onCropChange={setImageCrop}
+                  onZoomChange={setImageZoom}
+                  onCropComplete={onImageCropComplete}
+                  style={{
+                    containerStyle: {
+                      width: '100%',
+                      height: '100%',
+                      backgroundColor: '#000',
+                    },
+                  }}
+                />
+              )}
+            </div>
+
+            <div className="p-6 space-y-4 border-t border-vis-border">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-vis-text-primary">
+                  {language === 'zh' ? '缩放' : 'Zoom'}
+                </label>
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={imageZoom}
+                  onChange={(e) => setImageZoom(Number(e.target.value))}
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button
+                  variant="ghost"
+                  onClick={handleImageCropCancel}
+                  className="px-6 text-vis-text-secondary hover:text-vis-text-primary hover:bg-gray-800/50 transition-colors"
+                >
+                  {language === 'zh' ? '取消' : 'Cancel'}
+                </Button>
+                <Button
+                  onClick={handleImageCropSave}
+                  disabled={!imageCroppedAreaPixels}
+                  className="px-6 bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white shadow-vis-glow-teal hover:shadow-vis-glow-cyan transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {language === 'zh' ? '保存' : 'Save'}
                 </Button>
               </div>
             </div>
