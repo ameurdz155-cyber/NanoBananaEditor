@@ -138,26 +138,26 @@ export const QueuePanel: React.FC = () => {
   const getStatusIcon = (status: QueueItem['status']) => {
     switch (status) {
       case 'pending':
-        return <Clock className="h-4 w-4 text-vis-text-muted" />;
+        return <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />;
       case 'processing':
-        return <Loader2 className="h-4 w-4 text-vis-teal-500 animate-spin" />;
+        return <Loader2 className="h-4 w-4 text-vis-teal-500 dark:text-vis-teal-400 animate-spin" />;
       case 'completed':
-        return <CheckCircle className="h-4 w-4 text-vis-success" />;
+        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case 'failed':
-        return <XCircle className="h-4 w-4 text-vis-danger" />;
+        return <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />;
     }
   };
 
   const getStatusColor = (status: QueueItem['status']) => {
     switch (status) {
       case 'pending':
-        return 'text-vis-text-muted';
+        return 'text-yellow-600 dark:text-yellow-400';
       case 'processing':
-        return 'text-vis-teal-500';
+        return 'text-vis-teal-500 dark:text-vis-teal-400';
       case 'completed':
-        return 'text-vis-success';
+        return 'text-green-600 dark:text-green-400';
       case 'failed':
-        return 'text-vis-danger';
+        return 'text-red-600 dark:text-red-400';
     }
   };
 
@@ -191,30 +191,30 @@ export const QueuePanel: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 dark:bg-black/70 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md"
       onClick={() => setShowQueue(false)}
     >
       <div
         className={cn(
-          'bg-white dark:bg-gradient-to-br dark:from-vis-bg-primary dark:via-vis-bg-secondary dark:to-vis-bg-primary',
-          'border-2 border-vis-teal-500/30 dark:border-vis-teal-500/20 rounded-2xl',
-          'shadow-2xl shadow-black/10 dark:shadow-black/40',
+          'bg-white dark:bg-gray-900',
+          'border-2 border-teal-500/30 dark:border-teal-700/50 rounded-2xl',
+          'shadow-2xl shadow-black/10 dark:shadow-black/60',
           'w-[92vw] h-[88vh] max-w-7xl flex flex-col',
           'animate-in fade-in-0 zoom-in-95 duration-300'
         )}
         onClick={(e) => e.stopPropagation()}
       >
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-vis-teal-500/20 bg-gradient-to-r from-gray-50 to-transparent dark:from-vis-bg-tertiary/50 dark:to-transparent">
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 dark:from-gray-800/50 to-transparent">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-vis-teal-500/10 border border-vis-teal-500/30">
-            <ListOrdered className="h-6 w-6 text-vis-teal-600 dark:text-vis-teal-400" />
+          <div className="p-2 rounded-lg bg-teal-500/10 dark:bg-teal-500/20 border border-teal-500/30 dark:border-teal-500/40">
+            <ListOrdered className="h-6 w-6 text-teal-600 dark:text-teal-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-vis-text-primary">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {language === 'zh' ? '任务队列' : 'Task Queue'}
             </h2>
-            <p className="text-xs text-gray-600 dark:text-vis-text-muted">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               {language === 'zh' ? '实时监控您的生成任务' : 'Monitor your generation tasks in real-time'}
             </p>
           </div>
@@ -223,7 +223,7 @@ export const QueuePanel: React.FC = () => {
           variant="ghost"
           size="icon"
           onClick={() => setShowQueue(false)}
-          className="h-10 w-10 rounded-lg text-gray-600 dark:text-vis-text-muted hover:text-gray-900 dark:hover:text-vis-text-primary hover:bg-vis-teal-500/10 transition-all"
+          className="h-10 w-10 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-teal-500/10 dark:hover:bg-teal-500/20 transition-all"
         >
           <X className="h-5 w-5" />
         </Button>
@@ -231,38 +231,38 @@ export const QueuePanel: React.FC = () => {
 
       {/* Stats Bar */}
       {queueData && (
-        <div className="grid grid-cols-4 gap-4 p-6 border-b border-gray-200 dark:border-vis-teal-500/20">
-          <div className="text-center p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border shadow-sm dark:shadow-vis-teal-500/5 hover:border-gray-400 dark:hover:border-vis-teal-500/60 transition-all">
-            <div className="text-gray-600 dark:text-vis-text-primary/80 text-xs uppercase tracking-wider mb-2 font-medium">
+        <div className="grid grid-cols-4 gap-4 p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="text-center p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:border-teal-400 dark:hover:border-teal-500 transition-all">
+            <div className="text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider mb-2 font-medium">
               {language === 'zh' ? '总计' : 'Total'}
             </div>
             <div className="text-gray-900 dark:text-white font-bold text-3xl">
               {queueData.total}
             </div>
           </div>
-          <div className="text-center p-4 rounded-xl bg-yellow-50 dark:bg-yellow-500/20 border border-yellow-300 dark:border-yellow-400/50 shadow-sm dark:shadow-yellow-500/10 hover:border-yellow-500 dark:hover:border-yellow-400/70 transition-all">
+          <div className="text-center p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700/50 shadow-sm hover:border-yellow-500 dark:hover:border-yellow-600 transition-all">
             <div className="text-yellow-700 dark:text-yellow-300 text-xs uppercase tracking-wider mb-2 font-medium">
               {language === 'zh' ? '等待中' : 'Pending'}
             </div>
-            <div className="text-yellow-700 dark:text-yellow-200 font-bold text-3xl">{queueData.pending}</div>
+            <div className="text-yellow-800 dark:text-yellow-200 font-bold text-3xl">{queueData.pending}</div>
           </div>
-          <div className="text-center p-4 rounded-xl bg-teal-50 dark:bg-vis-teal-500/20 border border-teal-300 dark:border-vis-teal-400/50 shadow-sm dark:shadow-vis-teal-500/10 hover:border-teal-500 dark:hover:border-vis-teal-400/70 transition-all">
-            <div className="text-teal-700 dark:text-vis-teal-300 text-xs uppercase tracking-wider mb-2 font-medium">
+          <div className="text-center p-4 rounded-xl bg-teal-50 dark:bg-teal-900/30 border border-teal-300 dark:border-teal-700/50 shadow-sm hover:border-teal-500 dark:hover:border-teal-600 transition-all">
+            <div className="text-teal-700 dark:text-teal-300 text-xs uppercase tracking-wider mb-2 font-medium">
               {language === 'zh' ? '处理中' : 'Processing'}
             </div>
-            <div className="text-teal-700 dark:text-vis-teal-200 font-bold text-3xl animate-pulse">{queueData.processing}</div>
+            <div className="text-teal-700 dark:text-teal-200 font-bold text-3xl animate-pulse">{queueData.processing}</div>
           </div>
-          <div className="text-center p-4 rounded-xl bg-green-50 dark:bg-green-500/20 border border-green-300 dark:border-green-400/50 shadow-sm dark:shadow-green-500/10 hover:border-green-500 dark:hover:border-green-400/70 transition-all">
+          <div className="text-center p-4 rounded-xl bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-700/50 shadow-sm hover:border-green-500 dark:hover:border-green-600 transition-all">
             <div className="text-green-700 dark:text-green-300 text-xs uppercase tracking-wider mb-2 font-medium">
               {language === 'zh' ? '已完成' : 'Completed'}
             </div>
-            <div className="text-green-700 dark:text-green-200 font-bold text-3xl">{queueData.completed}</div>
+            <div className="text-green-800 dark:text-green-200 font-bold text-3xl">{queueData.completed}</div>
           </div>
         </div>
       )}
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 p-4 border-b border-vis-teal-500/10">
+      <div className="flex items-center gap-2 p-4 border-b border-gray-200 dark:border-gray-700">
         <Button
           variant={filterStatus === undefined ? 'default' : 'ghost'}
           size="sm"
@@ -270,8 +270,8 @@ export const QueuePanel: React.FC = () => {
           className={cn(
             'flex-1 text-sm font-medium transition-all',
             filterStatus === undefined 
-              ? 'bg-vis-teal-500 hover:bg-vis-teal-600 text-white shadow-lg shadow-vis-teal-500/30 dark:shadow-vis-teal-500/20' 
-              : 'hover:bg-vis-teal-500/10 hover:text-vis-teal-600 dark:hover:text-vis-teal-500'
+              ? 'bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-700 text-white shadow-lg' 
+              : 'text-gray-700 dark:text-gray-300 hover:bg-teal-500/10 dark:hover:bg-teal-500/20 hover:text-teal-600 dark:hover:text-teal-400'
           )}
         >
           {language === 'zh' ? '全部' : 'All'}
@@ -283,8 +283,8 @@ export const QueuePanel: React.FC = () => {
           className={cn(
             'flex-1 text-sm font-medium transition-all',
             filterStatus === 'pending' 
-              ? 'bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg shadow-yellow-500/30 dark:shadow-yellow-500/20' 
-              : 'hover:bg-yellow-500/10 hover:text-yellow-600 dark:hover:text-yellow-500'
+              ? 'bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700 text-white shadow-lg' 
+              : 'text-gray-700 dark:text-gray-300 hover:bg-yellow-500/10 dark:hover:bg-yellow-500/20 hover:text-yellow-600 dark:hover:text-yellow-400'
           )}
         >
           {language === 'zh' ? '等待' : 'Pending'}
@@ -296,8 +296,8 @@ export const QueuePanel: React.FC = () => {
           className={cn(
             'flex-1 text-sm font-medium transition-all',
             filterStatus === 'processing' 
-              ? 'bg-vis-teal-500 hover:bg-vis-teal-600 text-white shadow-lg shadow-vis-teal-500/30 dark:shadow-vis-teal-500/20' 
-              : 'hover:bg-vis-teal-500/10 hover:text-vis-teal-600 dark:hover:text-vis-teal-500'
+              ? 'bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-700 text-white shadow-lg' 
+              : 'text-gray-700 dark:text-gray-300 hover:bg-teal-500/10 dark:hover:bg-teal-500/20 hover:text-teal-600 dark:hover:text-teal-400'
           )}
         >
           {language === 'zh' ? '处理中' : 'Processing'}
@@ -309,8 +309,8 @@ export const QueuePanel: React.FC = () => {
           className={cn(
             'flex-1 text-sm font-medium transition-all',
             filterStatus === 'completed' 
-              ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg shadow-green-500/30 dark:shadow-green-500/20' 
-              : 'hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-500'
+              ? 'bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white shadow-lg' 
+              : 'text-gray-700 dark:text-gray-300 hover:bg-green-500/10 dark:hover:bg-green-500/20 hover:text-green-600 dark:hover:text-green-400'
           )}
         >
           {language === 'zh' ? '已完成' : 'Completed'}
@@ -318,14 +318,14 @@ export const QueuePanel: React.FC = () => {
       </div>
 
       {/* Action Bar */}
-      <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-gray-200 dark:border-vis-teal-500/10 bg-gray-50 dark:bg-vis-bg-tertiary/20">
+      <div className="flex items-center justify-between gap-3 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30">
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={fetchQueue}
             disabled={loading}
-            className="gap-2 text-sm font-medium text-gray-700 dark:text-vis-text-secondary hover:bg-vis-teal-500/10 hover:text-vis-teal-600 dark:hover:text-vis-teal-500 transition-all"
+            className="gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-teal-500/10 dark:hover:bg-teal-500/20 hover:text-teal-600 dark:hover:text-teal-400 transition-all"
           >
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
             {language === 'zh' ? '刷新' : 'Refresh'}
@@ -335,7 +335,7 @@ export const QueuePanel: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={handleClearCompleted}
-              className="gap-2 text-sm font-medium text-gray-600 dark:text-vis-text-muted hover:text-red-600 dark:hover:text-red-500 hover:bg-red-500/10 transition-all"
+              className="gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 transition-all"
             >
               <Trash2 className="h-4 w-4" />
               {language === 'zh' ? '清除已完成' : 'Clear Completed'}
@@ -343,7 +343,7 @@ export const QueuePanel: React.FC = () => {
           )}
         </div>
         {queueData && queueData.items.length > 0 && (
-          <div className="text-xs text-gray-600 dark:text-vis-text-muted font-medium">
+          <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
             {language === 'zh' ? `显示 ${queueData.items.length} 个任务` : `Showing ${queueData.items.length} tasks`}
           </div>
         )}
@@ -353,12 +353,12 @@ export const QueuePanel: React.FC = () => {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6">
         {loading && !queueData ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="h-12 w-12 text-vis-teal-500 animate-spin" />
+            <Loader2 className="h-12 w-12 text-teal-500 dark:text-teal-400 animate-spin" />
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-64 px-4">
-            <AlertCircle className="h-16 w-16 text-red-500 dark:text-vis-danger mb-4" />
-            <p className="text-base text-gray-600 dark:text-vis-text-muted text-center mb-4">{error}</p>
+            <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mb-4" />
+            <p className="text-base text-gray-600 dark:text-gray-400 text-center mb-4">{error}</p>
             <Button
               variant="ghost"
               size="default"
@@ -369,11 +369,11 @@ export const QueuePanel: React.FC = () => {
           </div>
         ) : !queueData || queueData.items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 px-4">
-            <ListOrdered className="h-24 w-24 text-gray-300 dark:text-vis-text-muted/20 mb-4" />
-            <p className="text-lg text-gray-600 dark:text-vis-text-muted text-center">
+            <ListOrdered className="h-24 w-24 text-gray-300 dark:text-gray-600 mb-4" />
+            <p className="text-lg text-gray-600 dark:text-gray-400 text-center">
               {language === 'zh' ? '队列为空' : 'Queue is empty'}
             </p>
-            <p className="text-sm text-gray-500 dark:text-vis-text-muted/60 text-center mt-2">
+            <p className="text-sm text-gray-500 dark:text-gray-500 text-center mt-2">
               {language === 'zh' ? '您的任务将显示在这里' : 'Your tasks will appear here'}
             </p>
           </div>
@@ -383,14 +383,14 @@ export const QueuePanel: React.FC = () => {
               <div
                 key={item.id}
                 className={cn(
-                  'bg-white dark:bg-gradient-to-br dark:from-vis-bg-tertiary/60 dark:to-vis-bg-secondary/40',
+                  'bg-white dark:bg-gray-800',
                   'rounded-xl p-5 border',
                   'hover:shadow-xl transition-all duration-300',
                   'flex flex-col h-full group',
-                  item.status === 'pending' && 'border-yellow-300 dark:border-yellow-500/30 hover:border-yellow-500 dark:hover:border-yellow-500/50',
-                  item.status === 'processing' && 'border-teal-300 dark:border-vis-teal-500/40 hover:border-teal-500 dark:hover:border-vis-teal-500/70 shadow-md shadow-teal-100 dark:shadow-vis-teal-500/10',
-                  item.status === 'completed' && 'border-green-300 dark:border-green-500/30 hover:border-green-500 dark:hover:border-green-500/50',
-                  item.status === 'failed' && 'border-red-300 dark:border-red-500/30 hover:border-red-500 dark:hover:border-red-500/50'
+                  item.status === 'pending' && 'border-yellow-300 dark:border-yellow-700/50 hover:border-yellow-500 dark:hover:border-yellow-600',
+                  item.status === 'processing' && 'border-teal-300 dark:border-teal-700/50 hover:border-teal-500 dark:hover:border-teal-600 shadow-md shadow-teal-100 dark:shadow-teal-900/30',
+                  item.status === 'completed' && 'border-green-300 dark:border-green-700/50 hover:border-green-500 dark:hover:border-green-600',
+                  item.status === 'failed' && 'border-red-300 dark:border-red-700/50 hover:border-red-500 dark:hover:border-red-600'
                 )}
               >
                 {/* Header */}
@@ -398,29 +398,29 @@ export const QueuePanel: React.FC = () => {
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className={cn(
                       'p-2 rounded-lg border',
-                      item.status === 'pending' && 'bg-yellow-100 dark:bg-yellow-500/15 border-yellow-300 dark:border-yellow-500/30',
-                      item.status === 'processing' && 'bg-teal-100 dark:bg-vis-teal-500/15 border-teal-300 dark:border-vis-teal-500/30',
-                      item.status === 'completed' && 'bg-green-100 dark:bg-green-500/15 border-green-300 dark:border-green-500/30',
-                      item.status === 'failed' && 'bg-red-100 dark:bg-red-500/15 border-red-300 dark:border-red-500/30'
+                      item.status === 'pending' && 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700/50',
+                      item.status === 'processing' && 'bg-teal-100 dark:bg-teal-900/30 border-teal-300 dark:border-teal-700/50',
+                      item.status === 'completed' && 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700/50',
+                      item.status === 'failed' && 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700/50'
                     )}>
                       {getStatusIcon(item.status)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-bold text-gray-900 dark:text-vis-text-primary">
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">
                           {getTypeLabel(item.type)}
                         </span>
                         <span className={cn(
                           'text-xs font-semibold px-2.5 py-1 rounded-full border',
-                          item.status === 'pending' && 'bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-400 dark:border-yellow-500/40',
-                          item.status === 'processing' && 'bg-teal-100 dark:bg-vis-teal-500/20 text-teal-700 dark:text-vis-teal-400 border-teal-400 dark:border-vis-teal-500/40 animate-pulse',
-                          item.status === 'completed' && 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 border-green-400 dark:border-green-500/40',
-                          item.status === 'failed' && 'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-400 dark:border-red-500/40'
+                          item.status === 'pending' && 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 border-yellow-400 dark:border-yellow-700/50',
+                          item.status === 'processing' && 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 border-teal-400 dark:border-teal-700/50 animate-pulse',
+                          item.status === 'completed' && 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-400 dark:border-green-700/50',
+                          item.status === 'failed' && 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-400 dark:border-red-700/50'
                         )}>
                           {item.status.toUpperCase()}
                         </span>
                       </div>
-                      <div className="text-xs text-gray-600 dark:text-vis-text-muted font-medium">
+                      <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                         {formatDate(item.created_at)}
                       </div>
                     </div>
@@ -429,7 +429,7 @@ export const QueuePanel: React.FC = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDelete(item.id)}
-                    className="h-9 w-9 rounded-lg text-gray-500 dark:text-vis-text-muted hover:text-red-600 dark:hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                    className="h-9 w-9 rounded-lg text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -441,9 +441,9 @@ export const QueuePanel: React.FC = () => {
                     <img
                       src={item.preview_url}
                       alt="Preview"
-                      className="w-full h-52 object-cover border border-gray-200 dark:border-vis-border/50 rounded-xl transition-transform duration-300 group-hover/img:scale-105"
+                      className="w-full h-52 object-cover border border-gray-200 dark:border-gray-700 rounded-xl transition-transform duration-300 group-hover/img:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 dark:from-black/40 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 dark:from-black/60 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity" />
                   </div>
                 )}
 
@@ -467,23 +467,23 @@ export const QueuePanel: React.FC = () => {
 
                 {/* Prompt */}
                 {item.prompt && (
-                  <div className="text-sm text-gray-700 dark:text-vis-text-secondary line-clamp-3 mb-4 flex-1 p-3 bg-gray-50 dark:bg-vis-bg-tertiary/30 rounded-lg border border-gray-200 dark:border-vis-border/50">
+                  <div className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3 mb-4 flex-1 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
                     <p className="font-medium leading-relaxed">{item.prompt}</p>
                   </div>
                 )}
 
                 {/* Progress Bar */}
                 {item.status === 'processing' && item.progress > 0 && (
-                  <div className="space-y-2 mt-auto p-3 bg-teal-50 dark:bg-vis-teal-500/10 rounded-lg border border-teal-200 dark:border-vis-teal-500/30">
+                  <div className="space-y-2 mt-auto p-3 bg-teal-50 dark:bg-teal-900/30 rounded-lg border border-teal-200 dark:border-teal-700/50">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-vis-text-muted font-medium">
+                      <span className="text-gray-600 dark:text-gray-400 font-medium">
                         {language === 'zh' ? '进度' : 'Progress'}
                       </span>
-                      <span className="text-teal-700 dark:text-vis-teal-400 font-bold">{item.progress}%</span>
+                      <span className="text-teal-700 dark:text-teal-300 font-bold">{item.progress}%</span>
                     </div>
-                    <div className="h-2.5 bg-gray-200 dark:bg-vis-bg-primary rounded-full overflow-hidden border border-teal-300 dark:border-vis-teal-500/30">
+                    <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden border border-teal-300 dark:border-teal-700/50">
                       <div
-                        className="h-full bg-gradient-to-r from-teal-500 to-teal-400 dark:from-vis-teal-500 dark:to-vis-teal-400 transition-all duration-500 rounded-full shadow-md shadow-teal-200 dark:shadow-vis-teal-500/40"
+                        className="h-full bg-gradient-to-r from-teal-500 to-teal-400 dark:from-teal-600 dark:to-teal-500 transition-all duration-500 rounded-full"
                         style={{ width: `${item.progress}%` }}
                       />
                     </div>
@@ -526,10 +526,10 @@ export const QueuePanel: React.FC = () => {
                   <Info className="h-6 w-6 text-vis-teal-600 dark:text-vis-teal-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-vis-text-primary">
+                  <h3 className="text-xl font-bold text-vis-text-primary">
                     {language === 'zh' ? '任务详情' : 'Task Details'}
                   </h3>
-                  <p className="text-xs text-gray-600 dark:text-vis-text-muted">
+                  <p className="text-xs text-vis-text-muted">
                     ID: {selectedItem.id.slice(0, 8)}...
                   </p>
                 </div>
@@ -549,21 +549,21 @@ export const QueuePanel: React.FC = () => {
               {/* Result Image */}
               {selectedItem.result_url && (
                 <div className="space-y-3">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary uppercase tracking-wider">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
                     {language === 'zh' ? '生成结果' : 'Generated Result'}
                   </h4>
-                  <div className="relative group rounded-xl overflow-hidden border-2 border-vis-teal-500/30">
+                  <div className="relative group rounded-xl overflow-hidden border-2 border-teal-500/30 dark:border-teal-700/50">
                     <img
                       src={selectedItem.result_url}
                       alt="Result"
-                      className="w-full h-auto max-h-[50vh] object-contain bg-gray-100 dark:bg-vis-bg-tertiary"
+                      className="w-full h-auto max-h-[50vh] object-contain bg-gray-100 dark:bg-gray-800"
                     />
                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         variant="default"
                         size="sm"
                         onClick={() => handleDownloadImage(selectedItem.result_url!, `result-${selectedItem.id}.png`)}
-                        className="gap-2 bg-vis-teal-500 hover:bg-vis-teal-600 shadow-lg"
+                        className="gap-2 bg-teal-500 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-700 shadow-lg"
                       >
                         <Download className="h-4 w-4" />
                         {language === 'zh' ? '下载' : 'Download'}
@@ -572,7 +572,7 @@ export const QueuePanel: React.FC = () => {
                         variant="default"
                         size="sm"
                         onClick={() => window.open(selectedItem.result_url, '_blank')}
-                        className="gap-2 bg-gray-700 hover:bg-gray-800 shadow-lg"
+                        className="gap-2 bg-gray-700 hover:bg-gray-800 dark:bg-gray-600 dark:hover:bg-gray-700 shadow-lg"
                       >
                         <ExternalLink className="h-4 w-4" />
                         {language === 'zh' ? '新窗口打开' : 'Open'}
@@ -584,16 +584,16 @@ export const QueuePanel: React.FC = () => {
 
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                  <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1 font-medium">
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
                     {language === 'zh' ? '类型' : 'Type'}
                   </div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-vis-text-primary">
+                  <div className="text-lg font-bold text-gray-900 dark:text-white">
                     {getTypeLabel(selectedItem.type)}
                   </div>
                 </div>
-                <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                  <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1 font-medium">
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
                     {language === 'zh' ? '状态' : 'Status'}
                   </div>
                   <div className="flex items-center gap-2">
@@ -608,11 +608,11 @@ export const QueuePanel: React.FC = () => {
               {/* Prompt */}
               {selectedItem.prompt && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary uppercase tracking-wider">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
                     {language === 'zh' ? '提示词' : 'Prompt'}
                   </h4>
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                    <p className="text-sm text-gray-700 dark:text-vis-text-secondary leading-relaxed">
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                       {selectedItem.prompt}
                     </p>
                   </div>
@@ -622,76 +622,76 @@ export const QueuePanel: React.FC = () => {
               {/* Metadata */}
               {selectedItem.metadata && Object.keys(selectedItem.metadata).length > 0 && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary uppercase tracking-wider">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
                     {language === 'zh' ? '参数详情' : 'Parameters'}
                   </h4>
                   <div className="grid grid-cols-2 gap-3">
                     {selectedItem.metadata.width && selectedItem.metadata.height && (
-                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                           {language === 'zh' ? '尺寸' : 'Dimensions'}
                         </div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
                           {selectedItem.metadata.width} × {selectedItem.metadata.height}
                         </div>
                       </div>
                     )}
                     {selectedItem.metadata.aspectRatio && (
-                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                           {language === 'zh' ? '宽高比' : 'Aspect Ratio'}
                         </div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
                           {selectedItem.metadata.aspectRatio}
                         </div>
                       </div>
                     )}
                     {selectedItem.metadata.seed !== undefined && (
-                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                           {language === 'zh' ? '种子' : 'Seed'}
                         </div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary font-mono">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white font-mono">
                           {selectedItem.metadata.seed}
                         </div>
                       </div>
                     )}
                     {selectedItem.metadata.temperature !== undefined && (
-                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                           {language === 'zh' ? '温度' : 'Temperature'}
                         </div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
                           {selectedItem.metadata.temperature}
                         </div>
                       </div>
                     )}
                     {selectedItem.metadata.scale && (
-                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                           {language === 'zh' ? '放大倍数' : 'Scale'}
                         </div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
                           {selectedItem.metadata.scale}x
                         </div>
                       </div>
                     )}
                     {selectedItem.metadata.modelVersion && (
-                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                      <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                           {language === 'zh' ? '模型' : 'Model'}
                         </div>
-                        <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary truncate">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                           {selectedItem.metadata.modelVersion}
                         </div>
                       </div>
                     )}
                     {selectedItem.metadata.negativePrompt && (
-                      <div className="col-span-2 p-3 rounded-lg bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                        <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1">
+                      <div className="col-span-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                           {language === 'zh' ? '负面提示词' : 'Negative Prompt'}
                         </div>
-                        <div className="text-sm text-gray-700 dark:text-vis-text-secondary">
+                        <div className="text-sm text-gray-700 dark:text-gray-300">
                           {selectedItem.metadata.negativePrompt}
                         </div>
                       </div>
@@ -702,20 +702,20 @@ export const QueuePanel: React.FC = () => {
 
               {/* Timestamps */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                  <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1 font-medium">
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
                     {language === 'zh' ? '创建时间' : 'Created'}
                   </div>
-                  <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">
                     {new Date(selectedItem.created_at).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}
                   </div>
                 </div>
                 {selectedItem.completed_at && (
-                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-vis-bg-tertiary/50 border border-gray-200 dark:border-vis-border">
-                    <div className="text-xs text-gray-600 dark:text-vis-text-muted mb-1 font-medium">
+                  <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
                       {language === 'zh' ? '完成时间' : 'Completed'}
                     </div>
-                    <div className="text-sm font-semibold text-gray-900 dark:text-vis-text-primary">
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
                       {new Date(selectedItem.completed_at).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}
                     </div>
                   </div>
@@ -728,7 +728,7 @@ export const QueuePanel: React.FC = () => {
                   <div className="flex items-start gap-3">
                     <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <div className="text-sm font-semibold text-red-900 dark:text-red-300 mb-1">
+                      <div className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">
                         {language === 'zh' ? '错误信息' : 'Error Message'}
                       </div>
                       <div className="text-sm text-red-700 dark:text-red-400">

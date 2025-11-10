@@ -78,6 +78,7 @@
    * BORDER SYSTEM
    * ================================ */
   
+  --vis-border: rgba(75, 85, 99, 0.3);             /* Default border */
   --vis-border-default: rgba(75, 85, 99, 0.3);     /* #4b5563 at 30% */
   --vis-border-subtle: rgba(75, 85, 99, 0.2);      /* Lighter borders */
   --vis-border-strong: rgba(75, 85, 99, 0.5);      /* Stronger borders */
@@ -255,6 +256,7 @@
   --vis-card-bg-solid: #f8fafc;
   
   /* Border System - Light Mode */
+  --vis-border: rgba(148, 163, 184, 0.3);
   --vis-border-default: rgba(148, 163, 184, 0.3);
   --vis-border-subtle: rgba(148, 163, 184, 0.2);
   --vis-border-strong: rgba(148, 163, 184, 0.5);

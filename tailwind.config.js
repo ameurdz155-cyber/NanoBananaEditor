@@ -142,6 +142,12 @@ export default {
   		},
   		// VIS Brand System Extensions
   		backgroundColor: {
+  			'vis-bg-app': 'var(--vis-bg-app)',
+  			'vis-bg-primary': 'var(--vis-bg-primary)',
+  			'vis-bg-secondary': 'var(--vis-bg-secondary)',
+  			'vis-bg-tertiary': 'var(--vis-bg-tertiary)',
+  			'vis-bg-elevated': 'var(--vis-bg-elevated)',
+  			'vis-bg-hover': 'var(--vis-bg-hover)',
   			'vis-app': 'var(--vis-bg-app)',
   			'vis-primary': 'var(--vis-bg-primary)',
   			'vis-secondary': 'var(--vis-bg-secondary)',
@@ -152,6 +158,7 @@ export default {
   			'vis-card': 'var(--vis-card-bg)',
   		},
   		borderColor: {
+  			'vis-border': 'var(--vis-border)',
   			'vis-default': 'var(--vis-border-default)',
   			'vis-subtle': 'var(--vis-border-subtle)',
   			'vis-strong': 'var(--vis-border-strong)',
