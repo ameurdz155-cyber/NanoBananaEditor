@@ -325,9 +325,9 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
 
   return (
     <>
-      <div className="h-full w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 overflow-y-auto">
+      <div className="h-full w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex flex-col overflow-hidden">
         {/* Header */}
-  <div className="sticky top-0 bg-gray-900 backdrop-blur-xl border-b border-vis-border z-30">
+  <div className="flex-shrink-0 bg-gray-900 backdrop-blur-xl border-b border-vis-border z-30">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button onClick={onClose} variant="ghost" size="sm" className="text-vis-text-secondary hover:text-vis-teal-300"><ArrowLeft className="h-5 w-5 mr-1" />{language === 'zh' ? '返回' : 'Back'}</Button>
@@ -337,34 +337,37 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
         </div>
 
         {/* Search */}
-        <CategoryManagementToolbar
-          searchValue={q}
-          onSearchChange={value => setQ(value)}
-          searchPlaceholder={searchPlaceholder}
-          searchInputRef={searchInputRef}
-          voiceLang={voiceLang}
-          onVoiceLangChange={handleVoiceLangChange}
-          voiceLangLabel={voiceLangLabel}
-          voiceLanguageOptions={voiceLanguageOptions}
-          voiceSupported={voiceSupported}
-          listening={listening}
-          voiceButtonTitle={voiceButtonTitle}
-          addButtonAriaLabel={addButtonAriaLabel}
-          onToggleVoiceSearch={toggleVoiceSearch}
-          onAddCategory={add}
-        />
+        <div className="flex-shrink-0">
+          <CategoryManagementToolbar
+            searchValue={q}
+            onSearchChange={value => setQ(value)}
+            searchPlaceholder={searchPlaceholder}
+            searchInputRef={searchInputRef}
+            voiceLang={voiceLang}
+            onVoiceLangChange={handleVoiceLangChange}
+            voiceLangLabel={voiceLangLabel}
+            voiceLanguageOptions={voiceLanguageOptions}
+            voiceSupported={voiceSupported}
+            listening={listening}
+            voiceButtonTitle={voiceButtonTitle}
+            addButtonAriaLabel={addButtonAriaLabel}
+            onToggleVoiceSearch={toggleVoiceSearch}
+            onAddCategory={add}
+          />
+        </div>
 
         {/* Error Display */}
         {error && (
-          <div className="max-w-7xl mx-auto px-6 pb-4">
+          <div className="flex-shrink-0 max-w-7xl mx-auto px-6 pb-4 w-full">
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
               {error}
             </div>
           </div>
         )}
 
-        {/* Grid */}
-        <div className="max-w-7xl mx-auto px-4 pb-8">
+        {/* Grid - Scrollable Area */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-4 py-6">
           {isLoading ? (
             <div className="text-center py-20">
               <Loader2 className="h-12 w-12 text-vis-teal-400 mx-auto mb-4 animate-spin" />
@@ -424,6 +427,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
               )})}
             </div>
           )}
+          </div>
         </div>
       </div>
 

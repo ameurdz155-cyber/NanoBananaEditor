@@ -478,9 +478,9 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 	}
 
 	return (
-		<div className="h-full w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 overflow-y-auto">
+		<div className="h-full w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex flex-col overflow-hidden">
 			{/* Header */}
-			<header className="sticky top-0 bg-gray-900/95 backdrop-blur-xl border-b border-vis-border z-10">
+			<header className="flex-shrink-0 bg-gray-900/95 backdrop-blur-xl border-b border-vis-border z-10">
 				<div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
 					<div className="flex items-center gap-3">
 						<Button onClick={onClose} variant="ghost" size="sm" className="text-vis-text-secondary hover:text-vis-teal-300">
@@ -507,7 +507,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 			</header>
 
 			{/* Search Bar */}
-			<div className="px-6 py-4">
+			<div className="flex-shrink-0 px-6 py-4">
 				<div className="flex gap-3 items-stretch">
 					<div className="relative flex-1 flex items-center">
 						<div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none z-10">
@@ -551,7 +551,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 			</div>
 
 			{/* Category Filter */}
-			<section className="border-b border-vis-border px-6 py-4">
+			<section className="flex-shrink-0 border-b border-vis-border px-6 py-4">
 				<div className="flex flex-wrap items-center gap-2">
 					<Button
 						variant={selectedCategory === 'all' ? 'default' : 'ghost'}
@@ -584,7 +584,9 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 				</div>
 			</section>
 
-			<main className="px-6 py-4 pb-8">
+			{/* Templates - Scrollable Area */}
+			<div className="flex-1 overflow-y-auto">
+				<main className="px-6 py-6">
 				{templatesLoading ? (
 					<div className="flex h-full items-center justify-center text-sm text-vis-text-secondary">
 						<Loader2 className="mr-2 h-4 w-4 animate-spin text-vis-teal-400" />
@@ -718,7 +720,8 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 						})}
 					</div>
 				)}
-			</main>
+				</main>
+			</div>
 
 			<Dialog open={isFormOpen} onOpenChange={(open) => (open ? setFormOpen(true) : handleFormCancel())}>
 				<DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">

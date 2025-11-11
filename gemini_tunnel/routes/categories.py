@@ -264,10 +264,6 @@ async def delete_category(
     if not existing:
         raise HTTPException(status_code=404, detail="Category not found")
     
-    # Don't allow deleting default categories
-    if existing.get("isDefault"):
-        raise HTTPException(status_code=400, detail="Cannot delete default categories")
-    
     # Delete the category
     categories_table.remove(
         (Cat.id == category_id) & (Cat.userId == current_user["id"])
