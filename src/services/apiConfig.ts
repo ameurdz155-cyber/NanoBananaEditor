@@ -29,15 +29,22 @@ export const getStoredApiKey = (): string | null => API_KEY;
 
 export const joinBackendPath = (path: string): string => {
   const base = getStoredBackendUrl().replace(/\/$/, '');
-  if (!path.startsWith('/')) {
-    return `${base}/${path}`;
-  }
-  return `${base}${path}`;
+  const cleanPath = !path.startsWith('/') ? `/${path}` : path;
+  
+  // Add cache-busting timestamp to prevent browser caching
+  const cacheBuster = `_t=${Date.now()}`;
+  const separator = path.includes('?') ? '&' : '?';
+  
+  return `${base}${cleanPath}${separator}${cacheBuster}`;
 };
 
 export const buildJsonHeaders = (extra?: Record<string, string>) => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    // Disable caching
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
     ...(extra ?? {}),
   };
   

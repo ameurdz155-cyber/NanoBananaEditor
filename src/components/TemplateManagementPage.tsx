@@ -296,7 +296,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 		});
 	}, []);
 
-	const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (file) {
 			const reader = new FileReader();
@@ -319,13 +319,27 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 		}
 
 		try {
-			const croppedImage = await createCroppedImage(imageToCrop, croppedAreaPixels);
-			setFormState((prev) => ({ ...prev, image: croppedImage }));
+			// Create cropped image as base64
+			const croppedImageDataUrl = await createCroppedImage(imageToCrop, croppedAreaPixels);
+			
+			// Convert data URL to blob
+			const response = await fetch(croppedImageDataUrl);
+			const blob = await response.blob();
+			
+			// Create File from blob
+			const file = new File([blob], 'template-image.jpg', { type: 'image/jpeg' });
+			
+			// Upload to backend as asset
+			const { uploadAsset } = await import('../services/uploadService');
+			const uploadResult = await uploadAsset(file);
+			
+			// Store the asset URL instead of base64
+			setFormState((prev) => ({ ...prev, image: uploadResult.url }));
 			setShowCropper(false);
 			setImageToCrop(null);
 		} catch (error) {
-			console.error('Failed to crop image:', error);
-			alert(language === 'zh' ? '裁剪图片失败' : 'Failed to crop image');
+			console.error('Failed to crop and upload image:', error);
+			alert(language === 'zh' ? '图片处理失败' : 'Failed to process image');
 		}
 	};
 
@@ -416,10 +430,11 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 	const handleDuplicate = async (template: Template) => {
 		try {
 			const imageValue = template.image?.trim();
+			// Images can be either asset URLs or legacy base64 - both are safe to duplicate
 			const normalizedImage = imageValue && imageValue.length > 0 ? imageValue : undefined;
 			await createTemplate({
 				name: `${template.name} (Copy)`,
-						positivePrompt: template.positivePrompt,
+				positivePrompt: template.positivePrompt,
 				negativePrompt: template.negativePrompt,
 				categoryId: template.categoryId,
 				description: template.description,
@@ -628,7 +643,14 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 											{/* Template Image Thumbnail */}
 											{(() => {
 												const rawImage = template.image?.trim();
-												const imageSrc = rawImage && (/^https?:\/\//i.test(rawImage) || /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(rawImage) || rawImage.startsWith('/')) ? rawImage : undefined;
+												// Support both asset URLs (/api/v1/assets/...) and legacy base64 data URLs
+												const imageSrc = rawImage && (
+													rawImage.startsWith('/api/v1/assets/') || 
+													rawImage.startsWith('http://') || 
+													rawImage.startsWith('https://') || 
+													rawImage.startsWith('data:image/') ||
+													rawImage.startsWith('/')
+												) ? rawImage : undefined;
 												
 												return (
 													<div className="relative overflow-hidden rounded-lg border border-vis-border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-40 h-[90px] flex-shrink-0">
@@ -638,6 +660,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 																	src={imageSrc}
 																	alt={template.name}
 																	className="h-full w-full object-cover absolute inset-0"
+																	loading="lazy"
 																	onError={(e) => {
 																		const parent = e.currentTarget.parentElement;
 																		e.currentTarget.style.display = 'none';
@@ -805,7 +828,8 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 									<img
 										src={formState.image}
 										alt="Preview"
-										className="h-20 w-20 rounded-md object-cover border border-vis-border"
+										className="h-20 w-32 rounded-md object-cover border border-vis-border"
+										loading="lazy"
 										onError={(e) => {
 											e.currentTarget.style.display = 'none';
 										}}

@@ -3,7 +3,12 @@ import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from 'next-themes';
 import App from './App.tsx';
 import './index.css';
+import { initCacheBusting } from './utils/cacheBusting';
 
+// Initialize cache busting to prevent style/asset caching issues
+initCacheBusting();
+
+// Force clear browser cache on app start
 if (typeof window !== 'undefined') {
   const rootElement = document.documentElement;
   const storedTheme = window.localStorage.getItem('app-theme');

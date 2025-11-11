@@ -68,6 +68,19 @@ app.add_middleware(
     max_age=3600,
 )
 
+# Add no-cache headers middleware
+@app.middleware("http")
+async def add_no_cache_headers(request, call_next):
+    """Add no-cache headers to all responses to prevent browser caching."""
+    response = await call_next(request)
+    
+    # Disable caching for all responses
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    
+    return response
+
 # Register routers
 app.include_router(auth_router, prefix="/api/v1/auth/legacy", tags=["Legacy Auth"])
 app.include_router(auth_db_router, prefix="/api/v1", tags=["Authentication"])

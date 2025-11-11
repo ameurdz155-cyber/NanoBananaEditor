@@ -1,6 +1,7 @@
 """Routes for prompt template management."""
 
 import uuid
+import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
@@ -10,6 +11,9 @@ from tinydb import Query
 
 from database import get_table
 from services.auth_service_db import get_current_user
+from routes.template_migration import migrate_templates_batch
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/templates", tags=["Templates"])
 
@@ -191,6 +195,26 @@ async def list_templates(current_user: Dict[str, Any] = Depends(get_current_user
 
     if not user_templates:
         user_templates = _seed_default_templates(current_user["id"])
+    
+    # Auto-migrate base64 images to assets
+    def save_migrated_template(template: Dict[str, Any]):
+        """Save migrated template back to database."""
+        templates_table.update(
+            {"image": template["image"], "updatedAt": int(datetime.utcnow().timestamp() * 1000)},
+            (TemplateQuery.id == template["id"]) & (TemplateQuery.userId == current_user["id"])
+        )
+    
+    try:
+        user_templates, migration_count = migrate_templates_batch(
+            user_templates,
+            save_callback=save_migrated_template
+        )
+        
+        if migration_count > 0:
+            logger.info(f"Auto-migrated {migration_count} template(s) for user {current_user['id']}")
+    except Exception as e:
+        logger.error(f"Template migration failed: {e}")
+        # Continue even if migration fails - return original templates
 
     return user_templates
 
@@ -314,3 +338,48 @@ async def delete_template(
     )
 
     return None
+
+
+@router.post("/migrate-images", status_code=200)
+async def migrate_template_images(current_user: Dict[str, Any] = Depends(get_current_user)):
+    """
+    Manually trigger migration of base64 images to assets.
+    This is useful for bulk migration or troubleshooting.
+    Normally this happens automatically when fetching templates.
+    """
+    templates_table = get_table("templates")
+    TemplateQuery = Query()
+
+    user_templates = templates_table.search(TemplateQuery.userId == current_user["id"])
+    
+    if not user_templates:
+        return {
+            "message": "No templates found",
+            "migrated_count": 0,
+            "total_count": 0
+        }
+    
+    def save_migrated_template(template: Dict[str, Any]):
+        """Save migrated template back to database."""
+        templates_table.update(
+            {"image": template["image"], "updatedAt": int(datetime.utcnow().timestamp() * 1000)},
+            (TemplateQuery.id == template["id"]) & (TemplateQuery.userId == current_user["id"])
+        )
+    
+    try:
+        updated_templates, migration_count = migrate_templates_batch(
+            user_templates,
+            save_callback=save_migrated_template
+        )
+        
+        return {
+            "message": f"Successfully migrated {migration_count} template(s)",
+            "migrated_count": migration_count,
+            "total_count": len(user_templates)
+        }
+    except Exception as e:
+        logger.error(f"Manual migration failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Migration failed: {str(e)}"
+        )

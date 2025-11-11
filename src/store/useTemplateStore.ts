@@ -59,6 +59,16 @@ export const useTemplateStore = create<TemplateStoreState>((set, get) => ({
 
     try {
       const data = await templateService.fetchTemplates();
+      
+      // Check if any templates have base64 images (for migration notification)
+      const hasBase64Images = data.some((template) => 
+        template.image && template.image.startsWith('data:image/')
+      );
+      
+      if (hasBase64Images) {
+        console.info('📦 Auto-migration: Converting base64 images to optimized assets...');
+      }
+      
       set((state) => ({
         templates: data,
         loading: { ...state.loading, templates: false },

@@ -1356,8 +1356,13 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     };
 
     const rawImage = template.image?.trim();
-    // Support http://, https://, data:image URIs, and backend asset URLs (starting with /)
-    const imageSrc = rawImage && (/^https?:\/\//i.test(rawImage) || /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(rawImage) || rawImage.startsWith('/')) ? rawImage : undefined;
+    // Support http://, https://, data:image URIs, backend asset URLs (/api/v1/assets/...), and other paths starting with /
+    const imageSrc = rawImage && (
+      rawImage.startsWith('/api/v1/assets/') || 
+      /^https?:\/\//i.test(rawImage) || 
+      /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(rawImage) || 
+      rawImage.startsWith('/')
+    ) ? rawImage : undefined;
 
     const templateIconNode = renderIconValue(
       template.emoji,
@@ -1402,6 +1407,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   src={imageSrc}
                   alt={template.name}
                   className="h-full w-full object-cover absolute inset-0"
+                  loading="lazy"
                   onError={(e) => {
                     const parent = e.currentTarget.parentElement;
                     e.currentTarget.style.display = 'none';
