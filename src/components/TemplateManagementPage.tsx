@@ -482,27 +482,27 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 			{/* Header */}
 			<header className="flex-shrink-0 bg-gray-900/95 backdrop-blur-xl border-b border-vis-border z-10">
 				<div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-					<div className="flex items-center gap-3">
+					<div className="flex items-center gap-2">
+						<FileText className="h-7 w-7 text-vis-teal-400" />
+						<h1 className="text-2xl font-bold bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400 bg-clip-text text-transparent">
+							{language === 'zh' ? '模板管理' : 'Template Management'}
+						</h1>
+					</div>
+					<div className="flex items-center gap-2">
+						<Button
+							variant="ghost"
+							onClick={() => refreshTemplates()}
+							disabled={templatesLoading}
+							className="text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10"
+						>
+							{templatesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+							<span className="ml-2">{language === 'zh' ? '刷新' : 'Refresh'}</span>
+						</Button>
 						<Button onClick={onClose} variant="ghost" size="sm" className="text-vis-text-secondary hover:text-vis-teal-300">
 							<ArrowLeft className="h-5 w-5 mr-1" />
 							{language === 'zh' ? '返回' : 'Back'}
 						</Button>
-						<div className="flex items-center gap-2">
-							<FileText className="h-7 w-7 text-vis-teal-400" />
-							<h1 className="text-2xl font-bold bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400 bg-clip-text text-transparent">
-								{language === 'zh' ? '模板管理' : 'Template Management'}
-							</h1>
-						</div>
 					</div>
-					<Button
-						variant="ghost"
-						onClick={() => refreshTemplates()}
-						disabled={templatesLoading}
-						className="text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10"
-					>
-						{templatesLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-						<span className="ml-2">{language === 'zh' ? '刷新' : 'Refresh'}</span>
-					</Button>
 				</div>
 			</header>
 

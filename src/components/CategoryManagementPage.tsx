@@ -329,10 +329,14 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
         {/* Header */}
   <div className="flex-shrink-0 bg-gray-900 backdrop-blur-xl border-b border-vis-border z-30">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button onClick={onClose} variant="ghost" size="sm" className="text-vis-text-secondary hover:text-vis-teal-300"><ArrowLeft className="h-5 w-5 mr-1" />{language === 'zh' ? '返回' : 'Back'}</Button>
-              <div className="flex items-center gap-2"><Folder className="h-7 w-7 text-vis-teal-400" /><h1 className="text-2xl font-bold bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400 bg-clip-text text-transparent">{language === 'zh' ? '提示词分类' : 'Prompt Categories'}</h1></div>
+            <div className="flex items-center gap-2">
+              <Folder className="h-7 w-7 text-vis-teal-400" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400 bg-clip-text text-transparent">{language === 'zh' ? '提示词分类' : 'Prompt Categories'}</h1>
             </div>
+            <Button onClick={onClose} variant="ghost" size="sm" className="text-vis-text-secondary hover:text-vis-teal-300">
+              <ArrowLeft className="h-5 w-5 mr-1" />
+              {language === 'zh' ? '返回' : 'Back'}
+            </Button>
           </div>
         </div>
 
