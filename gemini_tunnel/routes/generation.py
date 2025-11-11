@@ -150,6 +150,108 @@ async def generate_with_gemini(
         raise
 
 
+@router.post("/generate/gemini/bulk", response_model=List[GenerateResponse])
+async def generate_with_gemini_bulk(
+    payloads: List[ImageRequest],
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> List[GenerateResponse]:
+    """
+    Generate multiple images simultaneously using Gemini AI.
+    This endpoint processes multiple generation requests in parallel for better performance.
+    """
+    import asyncio
+    
+    async def process_single_generation(payload: ImageRequest) -> GenerateResponse:
+        """Process a single generation request asynchronously."""
+        queue_table = get_table("queue")
+        now = datetime.utcnow().isoformat()
+        queue_id = str(uuid.uuid4())
+        
+        queue_item = {
+            "id": queue_id,
+            "user_id": current_user["id"],
+            "type": "generation",
+            "status": "pending",
+            "prompt": payload.prompt,
+            "preview_url": None,
+            "result_url": None,
+            "error_message": None,
+            "progress": 0,
+            "created_at": now,
+            "updated_at": now,
+            "completed_at": None,
+            "metadata": {
+                "negativePrompt": payload.negative_prompt,
+                "aspectRatio": payload.aspect_ratio,
+                "width": payload.width,
+                "height": payload.height,
+                "seed": payload.seed,
+                "temperature": payload.temperature,
+                "numImages": payload.num_images,
+                "modelVersion": payload.model,
+                "referenceCount": len(payload.reference_images or [])
+            }
+        }
+        queue_table.insert(queue_item)
+        
+        try:
+            # Update status to processing
+            update_queue_item(queue_id, "processing", progress=10)
+            
+            # Generate images in thread pool to avoid blocking
+            loop = asyncio.get_event_loop()
+            model_name, images = await loop.run_in_executor(
+                None,
+                generate_images,
+                payload.prompt,
+                payload.negative_prompt,
+                payload.reference_images,
+                payload.temperature,
+                payload.seed,
+                payload.aspect_ratio,
+                payload.width,
+                payload.height,
+                payload.num_images,
+                payload.model
+            )
+            
+            # Update progress
+            update_queue_item(queue_id, "processing", progress=90)
+            
+            # Mark as completed with first image as result
+            result_url = None
+            if images:
+                first_image = images[0]
+                result_url = f"data:{first_image.mime_type};base64,{first_image.b64_data}"
+            update_queue_item(queue_id, "completed", progress=100, result_url=result_url)
+            
+            return GenerateResponse(model=model_name, images=images)
+        except Exception as e:
+            # Mark as failed
+            update_queue_item(queue_id, "failed", progress=0, error_message=str(e))
+            raise
+    
+    # Process all generations in parallel
+    try:
+        results = await asyncio.gather(
+            *[process_single_generation(payload) for payload in payloads],
+            return_exceptions=True
+        )
+        
+        # Filter out exceptions and return successful results
+        successful_results = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                print(f"⚠️  Bulk generation item {i+1} failed: {str(result)}")
+            else:
+                successful_results.append(result)
+        
+        return successful_results
+    except Exception as e:
+        print(f"❌ Bulk generation failed: {str(e)}")
+        raise
+
+
 @router.post("/generate/imagen", response_model=GenerateResponse)
 async def generate_with_imagen(
     payload: ImagenRequest,

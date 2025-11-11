@@ -308,9 +308,7 @@ async def delete_template(
     if not existing:
         raise HTTPException(status_code=404, detail="Template not found")
 
-    if existing.get("isDefault"):
-        raise HTTPException(status_code=400, detail="Cannot delete default templates")
-
+    # Allow deletion of all templates including default ones
     templates_table.remove(
         (TemplateQuery.id == template_id) & (TemplateQuery.userId == current_user["id"])
     )

@@ -623,9 +623,8 @@ export const PromptComposer: React.FC = () => {
     if (selectedTool === 'generate') {
       setLastGenerationParameters({ width: imageWidth, height: imageHeight, aspectRatio });
 
-      const referenceImages = uploadedImages
-        .filter(img => img.includes('base64,'))
-        .map(img => img.split('base64,')[1]);
+      // Pass reference images directly - the generate hook will handle conversion
+      const referenceImages = uploadedImages.length > 0 ? uploadedImages : undefined;
 
       const totalIterations = Math.max(1, iterations);
       
@@ -637,7 +636,7 @@ export const PromptComposer: React.FC = () => {
           await generate({
             prompt: currentPrompt,
             negativePrompt: negativePrompt.trim() || undefined,
-            referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+            referenceImages: referenceImages,
             temperature,
             seed: seed || undefined,
             aspectRatio,
@@ -645,7 +644,7 @@ export const PromptComposer: React.FC = () => {
             height: imageHeight,
             iterationIndex: currentIteration,
             totalIterations,
-            referenceCount: referenceImages.length,
+            referenceCount: referenceImages?.length || 0,
             modelType: activeModelFamily,
             modelName: activeModelName,
           });

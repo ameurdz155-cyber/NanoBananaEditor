@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import {
+	AlertCircle,
 	ArrowLeft,
 	Copy,
 	Edit2,
@@ -94,6 +95,13 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 	const [crop, setCrop] = useState({ x: 0, y: 0 });
 	const [zoom, setZoom] = useState(1);
 	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+	// Delete confirmation modal state
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
+	const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+	const [showDeleteError, setShowDeleteError] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	useEffect(() => {
 		if (!isAuthenticated) {
@@ -374,31 +382,35 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 		}
 	};
 
-	const handleDelete = async (template: Template) => {
-		if (template.isDefault) {
-			return;
-		}
+	const handleDeleteClick = (template: Template) => {
+		setTemplateToDelete(template);
+		setShowDeleteConfirm(true);
+	};
 
-		const confirmed = window.confirm(
-			language === 'zh'
-				? '确定要删除此模板吗？'
-				: 'Are you sure you want to delete this template?'
-		);
+	const handleDeleteConfirm = async () => {
+		if (!templateToDelete) return;
 
-		if (!confirmed) {
-			return;
-		}
-
+		setIsDeleting(true);
 		try {
-			await deleteTemplate(template.id);
+			await deleteTemplate(templateToDelete.id);
+			setShowDeleteConfirm(false);
+			setShowDeleteSuccess(true);
+			setTimeout(() => {
+				setShowDeleteSuccess(false);
+				setTemplateToDelete(null);
+			}, 2000);
 		} catch (error) {
 			console.error('Failed to delete template:', error);
-			alert(
-				language === 'zh'
-					? '删除模板失败，请稍后重试。'
-					: 'Unable to delete template. Please try again later.'
-			);
+			setShowDeleteConfirm(false);
+			setShowDeleteError(true);
+		} finally {
+			setIsDeleting(false);
 		}
+	};
+
+	const handleDeleteCancel = () => {
+		setShowDeleteConfirm(false);
+		setTemplateToDelete(null);
 	};
 
 	const handleDuplicate = async (template: Template) => {
@@ -688,14 +700,8 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 											<Button
 												variant="ghost"
 												size="icon"
-												onClick={() => handleDelete(template)}
-												disabled={template.isDefault}
-												className={cn(template.isDefault && 'cursor-not-allowed opacity-50', 'hover:bg-red-500/10 hover:text-red-300')}
-												title={template.isDefault
-													? language === 'zh'
-														? '默认模板无法删除'
-														: 'Default templates cannot be deleted'
-													: undefined}
+												onClick={() => handleDeleteClick(template)}
+												className="hover:bg-red-500/10 hover:text-red-300"
 											>
 												<Trash2 className="h-4 w-4 text-red-400" />
 											</Button>
@@ -922,6 +928,117 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 							type="button"
 						>
 							{language === 'zh' ? '保存' : 'Save'}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Delete Confirmation Modal */}
+			<Dialog open={showDeleteConfirm} onOpenChange={(open) => !open && handleDeleteCancel()}>
+				<DialogContent className="max-w-md bg-gradient-to-br from-gray-900 via-gray-900 to-gray-950 border-red-500/30">
+					<DialogHeader>
+						<div className="flex items-center gap-3">
+							<div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 border border-red-500/30">
+								<Trash2 className="h-6 w-6 text-red-400" />
+							</div>
+							<div>
+								<DialogTitle className="text-xl text-vis-text-primary">
+									{language === 'zh' ? '确认删除' : 'Confirm Deletion'}
+								</DialogTitle>
+								<DialogDescription className="text-vis-text-secondary">
+									{language === 'zh' ? '此操作无法撤销' : 'This action cannot be undone'}
+								</DialogDescription>
+							</div>
+						</div>
+					</DialogHeader>
+
+					<div className="py-4">
+						<p className="text-vis-text-secondary">
+							{language === 'zh' ? (
+								<>
+									确定要删除模板 <span className="font-semibold text-vis-text-primary">"{templateToDelete?.name}"</span> 吗？
+								</>
+							) : (
+								<>
+									Are you sure you want to delete the template <span className="font-semibold text-vis-text-primary">"{templateToDelete?.name}"</span>?
+								</>
+							)}
+						</p>
+					</div>
+
+					<DialogFooter className="gap-2">
+						<Button
+							variant="outline"
+							onClick={handleDeleteCancel}
+							disabled={isDeleting}
+							className="border-vis-border hover:bg-gray-800/50"
+						>
+							{language === 'zh' ? '取消' : 'Cancel'}
+						</Button>
+						<Button
+							onClick={handleDeleteConfirm}
+							disabled={isDeleting}
+							className="bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white border-0 shadow-lg hover:shadow-red-500/30"
+						>
+							{isDeleting ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									{language === 'zh' ? '删除中...' : 'Deleting...'}
+								</>
+							) : (
+								<>
+									<Trash2 className="mr-2 h-4 w-4" />
+									{language === 'zh' ? '确认删除' : 'Delete'}
+								</>
+							)}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* Delete Success Modal */}
+			<Dialog open={showDeleteSuccess} onOpenChange={setShowDeleteSuccess}>
+				<DialogContent className="max-w-md bg-gradient-to-br from-gray-900 via-gray-900 to-gray-950 border-vis-teal-500/30">
+					<div className="flex flex-col items-center justify-center py-6 text-center">
+						<div className="flex h-16 w-16 items-center justify-center rounded-full bg-vis-teal-500/10 border border-vis-teal-500/30 mb-4">
+							<svg className="h-8 w-8 text-vis-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+							</svg>
+						</div>
+						<DialogTitle className="text-2xl font-semibold text-vis-text-primary mb-2">
+							{language === 'zh' ? '删除成功' : 'Deleted Successfully'}
+						</DialogTitle>
+						<DialogDescription className="text-vis-text-secondary">
+							{language === 'zh'
+								? '模板已成功删除'
+								: 'The template has been successfully deleted'}
+						</DialogDescription>
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Delete Error Modal */}
+			<Dialog open={showDeleteError} onOpenChange={setShowDeleteError}>
+				<DialogContent className="max-w-md bg-gradient-to-br from-gray-900 via-gray-900 to-gray-950 border-red-500/30">
+					<div className="flex flex-col items-center justify-center py-6 text-center">
+						<div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 border border-red-500/30 mb-4">
+							<AlertCircle className="h-8 w-8 text-red-400" />
+						</div>
+						<DialogTitle className="text-2xl font-semibold text-vis-text-primary mb-2">
+							{language === 'zh' ? '删除失败' : 'Deletion Failed'}
+						</DialogTitle>
+						<DialogDescription className="text-vis-text-secondary">
+							{language === 'zh'
+								? '删除模板失败，请稍后重试。'
+								: 'Unable to delete template. Please try again later.'}
+						</DialogDescription>
+					</div>
+					<DialogFooter>
+						<Button
+							onClick={() => setShowDeleteError(false)}
+							className="w-full bg-gradient-to-r from-vis-teal-500 to-vis-cyan-500 hover:from-vis-teal-400 hover:to-vis-cyan-400 text-white border-0"
+						>
+							{language === 'zh' ? '好的' : 'OK'}
 						</Button>
 					</DialogFooter>
 				</DialogContent>
