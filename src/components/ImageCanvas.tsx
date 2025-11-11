@@ -498,8 +498,26 @@ export const ImageCanvas: React.FC = () => {
     };
 
     updateSize();
+    
+    // Use ResizeObserver to detect container size changes (when sidebars are shown/hidden)
+    const container = document.getElementById('canvas-container');
+    let resizeObserver: ResizeObserver | null = null;
+    
+    if (container) {
+      resizeObserver = new ResizeObserver(() => {
+        updateSize();
+      });
+      resizeObserver.observe(container);
+    }
+    
     window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+    
+    return () => {
+      window.removeEventListener('resize', updateSize);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+    };
   }, []);
 
   useEffect(() => {
