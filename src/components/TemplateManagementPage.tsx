@@ -60,6 +60,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 	const setPromptCategories = useAppStore((state) => state.setPromptCategories);
 	const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 	const isPremiumUser = useAuthStore((state) => state.isPremiumUser);
+	const logout = useAuthStore((state) => state.logout);
 	const templates = useTemplateStore((state) => state.templates);
 	const templatesLoading = useTemplateStore((state) => state.loading.templates);
 	const fetchTemplates = useTemplateStore((state) => state.fetchTemplates);
@@ -110,6 +111,12 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 
 		fetchTemplates().catch((error) => {
 			console.error('Failed to fetch templates:', error);
+			const errorMessage = error?.message || String(error);
+			if (errorMessage.includes('401') || errorMessage.includes('403') || 
+			    errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ||
+			    errorMessage.includes('authentication')) {
+				logout();
+			}
 		});
 	}, [isAuthenticated, fetchTemplates]);
 
@@ -124,6 +131,12 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 				.then((categories) => setPromptCategories(categories))
 				.catch((error) => {
 					console.error('Failed to fetch categories:', error);
+					const errorMessage = error?.message || String(error);
+					if (errorMessage.includes('401') || errorMessage.includes('403') || 
+					    errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ||
+					    errorMessage.includes('authentication')) {
+						logout();
+					}
 				});
 		}
 	}, [isAuthenticated, promptCategories.length, setPromptCategories]);
@@ -339,7 +352,14 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 			setImageToCrop(null);
 		} catch (error) {
 			console.error('Failed to crop and upload image:', error);
-			alert(language === 'zh' ? '图片处理失败' : 'Failed to process image');
+			const errorMessage = error?.message || String(error);
+			if (errorMessage.includes('401') || errorMessage.includes('403') || 
+			    errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ||
+			    errorMessage.includes('authentication')) {
+				logout();
+			} else {
+				alert(language === 'zh' ? '图片处理失败' : 'Failed to process image');
+			}
 		}
 	};
 
@@ -388,11 +408,18 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 			resetForm();
 		} catch (error) {
 			console.error('Failed to save template:', error);
-			alert(
-				language === 'zh'
-					? '无法保存模板，请稍后重试。'
-					: 'Unable to save template. Please try again later.'
-			);
+			const errorMessage = error?.message || String(error);
+			if (errorMessage.includes('401') || errorMessage.includes('403') || 
+			    errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ||
+			    errorMessage.includes('authentication')) {
+				logout();
+			} else {
+				alert(
+					language === 'zh'
+						? '无法保存模板，请稍后重试。'
+						: 'Unable to save template. Please try again later.'
+				);
+			}
 		}
 	};
 
@@ -415,8 +442,15 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 			}, 2000);
 		} catch (error) {
 			console.error('Failed to delete template:', error);
-			setShowDeleteConfirm(false);
-			setShowDeleteError(true);
+			const errorMessage = error?.message || String(error);
+			if (errorMessage.includes('401') || errorMessage.includes('403') || 
+			    errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ||
+			    errorMessage.includes('authentication')) {
+				logout();
+			} else {
+				setShowDeleteConfirm(false);
+				setShowDeleteError(true);
+			}
 		} finally {
 			setIsDeleting(false);
 		}
@@ -443,11 +477,18 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 			});
 		} catch (error) {
 			console.error('Failed to duplicate template:', error);
-			alert(
-				language === 'zh'
-					? '复制模板失败。'
-					: 'Unable to duplicate template.'
-			);
+			const errorMessage = error?.message || String(error);
+			if (errorMessage.includes('401') || errorMessage.includes('403') || 
+			    errorMessage.includes('Unauthorized') || errorMessage.includes('Forbidden') ||
+			    errorMessage.includes('authentication')) {
+				logout();
+			} else {
+				alert(
+					language === 'zh'
+						? '复制模板失败。'
+						: 'Unable to duplicate template.'
+				);
+			}
 		}
 	};
 

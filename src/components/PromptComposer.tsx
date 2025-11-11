@@ -841,9 +841,9 @@ export const PromptComposer: React.FC = () => {
         aria-orientation="vertical"
         title="Drag to resize"
       >
-        <div className="absolute inset-y-0 right-0 w-1 bg-gray-700/40 group-hover:bg-purple-500/70 transition-all" />
+        <div className="absolute inset-y-0 right-0 w-px bg-vis-border-light group-hover:bg-vis-teal-400/70 transition-all" />
         <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          <div className="w-0.5 h-16 bg-purple-400 rounded-full shadow-lg shadow-purple-500/50" />
+          <div className="w-0.5 h-16 bg-vis-teal-400 rounded-full shadow-lg shadow-vis-teal-500/50" />
         </div>
         <Button
           variant="ghost"
@@ -853,7 +853,7 @@ export const PromptComposer: React.FC = () => {
             setShowPromptPanel(false);
           }}
           title={t.hidePromptPanel}
-          className="absolute top-6 -right-3 h-8 w-8 rounded-full border border-vis-border bg-gray-900/70 text-vis-text-secondary hover:bg-gray-800/90 hover:text-vis-teal-300 transition-all duration-200 z-[9999] opacity-60 hover:opacity-100 pointer-events-auto shadow-vis-glow-teal"
+          className="absolute top-6 -right-3 h-8 w-8 rounded-full border border-vis-border-light bg-vis-panel text-vis-text-secondary hover:bg-gray-800/90 hover:text-vis-teal-300 transition-all duration-200 z-[9999] opacity-60 hover:opacity-100 pointer-events-auto shadow-vis-glow-teal"
           aria-label={t.hidePromptPanel}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -1009,7 +1009,7 @@ export const PromptComposer: React.FC = () => {
             ? t.promptPlaceholderGenerate
             : t.promptPlaceholderEdit
           }
-          className="min-h-[150px] resize-y bg-gray-950/90 border border-vis-border focus:border-vis-teal-400/70 focus:ring-1 focus:ring-vis-teal-400/30 transition-all duration-200 pr-20 pb-12 text-[13px] leading-relaxed text-vis-text-primary placeholder:text-vis-text-muted"
+          className="min-h-[150px] resize-y bg-gray-950/90 border border-vis-border focus:border-vis-teal-400/70 focus:ring-1 focus:ring-vis-teal-400/30 transition-all duration-200 pl-3 pr-12 pb-12 text-[13px] leading-relaxed text-vis-text-primary placeholder:text-vis-text-muted"
         />
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
           <button
@@ -1155,7 +1155,7 @@ export const PromptComposer: React.FC = () => {
           </div>
           <div
             className={cn(
-              'mt-3 border-t border-vis-border pt-3 overflow-y-auto sidebar-scrollbar',
+              'mt-3 border-t border-vis-border-light pt-3 overflow-y-auto sidebar-scrollbar',
               isMobileViewport ? 'max-h-48' : 'flex-1'
             )}
           >
@@ -1195,8 +1195,8 @@ export const PromptComposer: React.FC = () => {
             </div>
           )}
           </div>
-          <div className="mt-3 border-t border-vis-border pt-2 text-center text-[11px] text-vis-text-muted">
-          <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-vis-border mr-1 text-vis-text-secondary">alt+up/down</kbd>
+          <div className="mt-3 border-t border-vis-border-light pt-2 text-center text-[11px] text-vis-text-muted">
+          <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded border border-vis-border-light mr-1 text-vis-text-secondary">alt+up/down</kbd>
           {t.switchBetweenPrompts}
           </div>
         </div>
@@ -1213,7 +1213,7 @@ export const PromptComposer: React.FC = () => {
               value={negativePrompt}
               onChange={(e) => setNegativePrompt(e.target.value)}
               placeholder={t.enterNegativePrompt}
-              className="min-h-[100px] resize-none bg-gray-950/90 border border-vis-border focus:border-orange-400/70 focus:ring-1 focus:ring-orange-400/30 transition-all duration-200 text-[13px] leading-relaxed text-vis-text-primary placeholder:text-vis-text-muted"
+              className="min-h-[100px] resize-none bg-gray-950/90 border border-vis-border focus:border-orange-400/70 focus:ring-1 focus:ring-orange-400/30 transition-all duration-200 pl-3 pr-3 text-[13px] leading-relaxed text-vis-text-primary placeholder:text-vis-text-muted"
             />
           </div>
         )}
@@ -1502,7 +1502,7 @@ export const PromptComposer: React.FC = () => {
 
         {/* Upload History - Show previously uploaded images */}
         {uploadHistory.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-vis-border">
+          <div className="mt-4 pt-4 border-t border-vis-border-light">
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-semibold text-vis-text-secondary tracking-wide">
                 {t.previousUploads}
@@ -1688,7 +1688,7 @@ export const PromptComposer: React.FC = () => {
           </div>
 
           {/* Seed Controls */}
-          <div className="pt-3 border-t transition-colors" style={{ borderColor: 'var(--surface-border)' }}>
+          <div className="pt-3 border-t border-vis-border-light transition-colors" style={{ borderColor: 'var(--surface-border)' }}>
             <div className="rounded-lg p-3 border space-y-3 transition-colors" style={{ backgroundColor: 'var(--surface-secondary)', borderColor: 'var(--surface-border)' }}>
               <label className="text-xs font-semibold block tracking-wide transition-colors" style={{ color: 'var(--text-primary)' }}>
                 {t.seed}
@@ -1742,7 +1742,7 @@ export const PromptComposer: React.FC = () => {
       )}
 
       {/* Advanced Controls */}
-      <div>
+      <div className="pt-4 border-t border-vis-border-light flex-shrink-0">
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
           className="flex items-center text-sm text-vis-text-secondary hover:text-vis-teal-300 transition-colors duration-200"
@@ -1760,7 +1760,7 @@ export const PromptComposer: React.FC = () => {
         </button>
         
         {showClearConfirm && (
-          <div className="mt-3 p-3 bg-gray-800/50 rounded-lg border border-vis-border">
+          <div className="mt-3 p-3 bg-gray-800/50 rounded-lg border border-vis-border-light">
             <p className="text-xs text-vis-text-primary mb-3">
               {t.clearSessionConfirm || 'Are you sure you want to clear this session? This will remove all reference images, prompts, canvas content, and previous history.'}
             </p>
@@ -1773,7 +1773,7 @@ export const PromptComposer: React.FC = () => {
               </button>
               <button
                 onClick={() => setShowClearConfirm(false)}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background shadow-sm hover:bg-accent h-8 rounded-md px-3 text-xs flex-1 border-vis-border hover:border-vis-teal-400 text-vis-text-primary hover:text-vis-teal-300"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background shadow-sm hover:bg-accent h-8 rounded-md px-3 text-xs flex-1 border-vis-border-light hover:border-vis-teal-400 text-vis-text-primary hover:text-vis-teal-300"
               >
                 {t.cancel || 'Cancel'}
               </button>
@@ -1803,7 +1803,7 @@ export const PromptComposer: React.FC = () => {
       </div>
 
       {/* Keyboard Shortcuts */}
-      <div className="pt-4 border-t border-vis-border flex-shrink-0">
+      <div className="pt-4 border-t border-vis-border-light flex-shrink-0">
         <h4 className="text-xs font-medium text-vis-text-secondary mb-2">{t.shortcuts}</h4>
         <div className="space-y-1 text-xs text-vis-text-muted">
           <div className="flex justify-between">

@@ -13,6 +13,7 @@ import {
   faFolder,
 } from '@fortawesome/free-solid-svg-icons';
 import { useAppStore } from '../store/useAppStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { getTranslation } from '../i18n/translations';
 import { PromptCategory } from '../types';
 import * as categoryService from '../services/categoryService';
@@ -27,6 +28,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
   const t = getTranslation(language);
   const { theme } = useTheme();
   const isDarkMode = theme !== 'light';
+  const logout = useAuthStore(s => s.logout);
   
   // Use Zustand store for categories
   const cats = useAppStore(s => s.promptCategories);
@@ -139,11 +141,19 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
       } catch (err) {
         console.error('[CategoryManagement] Failed to load categories:', err);
         const errorMessage = err instanceof Error ? err.message : 'Failed to load categories';
-        setError(errorMessage);
         
-        // If 403, it means authentication failed
-        if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
-          setError(language === 'zh' ? '认证失败，请重新登录' : 'Authentication failed, please login again');
+        // Check if it's an authentication error
+        const isAuthError = errorMessage.includes('401') || 
+                           errorMessage.includes('403') || 
+                           errorMessage.includes('Unauthorized') || 
+                           errorMessage.includes('Forbidden') || 
+                           errorMessage.includes('authentication');
+        
+        if (isAuthError) {
+          console.warn('[CategoryManagement] Authentication error detected - logging out');
+          logout();
+        } else {
+          setError(errorMessage);
         }
       } finally {
         setIsLoading(false);
@@ -151,7 +161,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
     };
     
     loadCategories();
-  }, [setPromptCategories, language]);
+  }, [setPromptCategories, language, logout]);
 
   const add = () => { 
     setEdit(null); 
@@ -224,7 +234,21 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
       setEmoji('📁');
     } catch (err) {
       console.error('[CategoryManagement] Failed to save category:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save category');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save category';
+      
+      // Check if it's an authentication error
+      const isAuthError = errorMessage.includes('401') || 
+                         errorMessage.includes('403') || 
+                         errorMessage.includes('Unauthorized') || 
+                         errorMessage.includes('Forbidden') || 
+                         errorMessage.includes('authentication');
+      
+      if (isAuthError) {
+        console.warn('[CategoryManagement] Authentication error during save - logging out');
+        logout();
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -241,7 +265,21 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
       deletePromptCategory(id);
     } catch (err) {
       console.error('Failed to delete category:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete category');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete category';
+      
+      // Check if it's an authentication error
+      const isAuthError = errorMessage.includes('401') || 
+                         errorMessage.includes('403') || 
+                         errorMessage.includes('Unauthorized') || 
+                         errorMessage.includes('Forbidden') || 
+                         errorMessage.includes('authentication');
+      
+      if (isAuthError) {
+        console.warn('[CategoryManagement] Authentication error during delete - logging out');
+        logout();
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 

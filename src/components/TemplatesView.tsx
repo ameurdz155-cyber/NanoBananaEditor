@@ -589,6 +589,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
   const deleteTemplateFromStore = useTemplateStore((state) => state.deleteTemplate);
   const templateError = useTemplateStore((state) => state.error);
   const templatesLoadingFlag = useTemplateStore((state) => state.loading.templates);
+  const logout = useAuthStore((state) => state.logout);
   const t = getTranslation(language);
   const [isDarkMode, setIsDarkMode] = React.useState(resolveIsDarkMode);
   const [isSavingTemplate, setIsSavingTemplate] = React.useState(false);
@@ -659,8 +660,16 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     hasFetchedTemplatesRef.current = true;
     fetchTemplates().catch((error) => {
       console.error('Failed to fetch templates', error);
+      
+      // Check if it's an authentication error (401 or 403)
+      if (error?.response?.status === 401 || error?.response?.status === 403 || 
+          error?.message?.includes('401') || error?.message?.includes('403') ||
+          error?.message?.includes('Unauthorized') || error?.message?.includes('authentication')) {
+        // Logout and redirect to login
+        logout();
+      }
     });
-  }, [fetchTemplates]);
+  }, [fetchTemplates, logout]);
 
   const resolvedCategories = React.useMemo<DisplayCategory[]>(() => {
     const map = new Map<string, DisplayCategory>();
