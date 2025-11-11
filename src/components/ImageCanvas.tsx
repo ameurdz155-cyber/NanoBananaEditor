@@ -68,6 +68,8 @@ export const ImageCanvas: React.FC = () => {
   const [currentStroke, setCurrentStroke] = useState<number[]>([]);
   const [contextMenu, setContextMenu] = useState<{ open: boolean; x: number; y: number }>({ open: false, x: 0, y: 0 });
   const [showBoardPicker, setShowBoardPicker] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isPanModeEnabled, setIsPanModeEnabled] = useState(false);
   const menuPanelRef = useRef<HTMLDivElement | null>(null);
   const imageGroupRef = useRef<any>(null);
 
@@ -535,6 +537,17 @@ export const ImageCanvas: React.FC = () => {
     };
   }, [closeContextMenu]);
 
+  // Listen for pan mode toggle from Header
+  useEffect(() => {
+    const handlePanModeToggle = (event: Event) => {
+      const customEvent = event as CustomEvent<{ enabled: boolean }>;
+      setIsPanModeEnabled(customEvent.detail.enabled);
+    };
+
+    window.addEventListener('togglePanMode', handlePanModeToggle);
+    return () => window.removeEventListener('togglePanMode', handlePanModeToggle);
+  }, []);
+
   const handleMouseDown = () => {
     if (selectedTool !== 'mask' || !image || isGenerating) return;
 
@@ -699,8 +712,14 @@ export const ImageCanvas: React.FC = () => {
           scaleY={canvasZoom}
           x={canvasPan.x * canvasZoom}
           y={canvasPan.y * canvasZoom}
-          draggable={selectedTool !== 'mask' && !isGenerating}
+          draggable={(isPanModeEnabled || selectedTool !== 'mask') && !isGenerating}
+          onDragStart={() => {
+            if ((isPanModeEnabled || selectedTool !== 'mask') && !isGenerating) {
+              setIsDragging(true);
+            }
+          }}
           onDragEnd={(e) => {
+            setIsDragging(false);
             if (!isGenerating) {
               setCanvasPan({ 
                 x: e.target.x() / canvasZoom, 
@@ -740,7 +759,13 @@ export const ImageCanvas: React.FC = () => {
           onMousemove={handleMouseMove}
           onMouseup={handleMouseUp}
           style={{ 
-            cursor: isGenerating ? 'wait' : (selectedTool === 'mask' ? 'crosshair' : 'default'),
+            cursor: isGenerating 
+              ? 'wait' 
+              : selectedTool === 'mask' && !isPanModeEnabled
+                ? 'crosshair' 
+                : isDragging 
+                  ? 'grabbing' 
+                  : (image && (isPanModeEnabled || selectedTool !== 'mask') ? 'grab' : 'default'),
             pointerEvents: isGenerating ? 'none' : 'auto'
           }}
         >

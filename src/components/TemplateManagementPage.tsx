@@ -619,7 +619,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 												const imageSrc = rawImage && (/^https?:\/\//i.test(rawImage) || /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(rawImage) || rawImage.startsWith('/')) ? rawImage : undefined;
 												
 												return (
-													<div className="relative overflow-hidden rounded-lg border border-vis-border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-24 h-24 flex-shrink-0">
+													<div className="relative overflow-hidden rounded-lg border border-vis-border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-40 h-[90px] flex-shrink-0">
 														{imageSrc ? (
 															<>
 																<img
@@ -863,7 +863,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 				<DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
 					<DialogHeader>
 						<DialogTitle>
-							{language === 'zh' ? '裁剪图片 (1:1)' : 'Crop Image (1:1)'}
+							{language === 'zh' ? '裁剪图片 (16:9)' : 'Crop Image (16:9)'}
 						</DialogTitle>
 						<DialogDescription>
 							{language === 'zh'
@@ -878,7 +878,7 @@ export const TemplateManagementPage: React.FC<TemplateManagementPageProps> = ({ 
 								image={imageToCrop}
 								crop={crop}
 								zoom={zoom}
-								aspect={1}
+								aspect={16 / 9}
 								onCropChange={setCrop}
 								onZoomChange={setZoom}
 								onCropComplete={onCropComplete}

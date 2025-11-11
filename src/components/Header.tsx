@@ -46,6 +46,7 @@ import {
   ListOrdered,
   X,
   XCircle,
+  Hand,
 } from "lucide-react";
 import logoDark from "../assets/AI-POD-lite-logo.png";
 import logoLight from "../assets/AI-POD-lite-logo-light.png";
@@ -92,6 +93,7 @@ export function Header() {
   const [savedGalleryName, setSavedGalleryName] = useState("");
   const [savedImagePath, setSavedImagePath] = useState<string | undefined>();
   const [savedImageData, setSavedImageData] = useState<string | undefined>();
+  const [isPanMode, setIsPanMode] = useState(false);
 
   const canvasZoom = useAppStore((state) => state.canvasZoom);
   const setCanvasZoom = useAppStore((state) => state.setCanvasZoom);
@@ -288,6 +290,12 @@ export function Header() {
 
   const handleMasksToggle = () => {
     setShowMasks(!showMasks);
+  };
+
+  const handlePanModeToggle = () => {
+    setIsPanMode(!isPanMode);
+    // Dispatch event that ImageCanvas can listen to
+    window.dispatchEvent(new CustomEvent('togglePanMode', { detail: { enabled: !isPanMode } }));
   };
 
   const handleThemeToggle = () => {
@@ -564,6 +572,17 @@ export function Header() {
           title={language === 'zh' ? '旋转画布 90°' : 'Rotate canvas 90°'}
         >
           <RotateCcw className="w-4 h-4 text-vis-text-secondary hover:text-vis-teal-400 transition-colors" />
+        </Button>
+
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={handlePanModeToggle}
+          className={`hover:bg-vis-teal-500/10 rounded-lg w-9 h-9 border border-vis-border hover:border-vis-teal-400 transition-all ${isPanMode ? 'bg-vis-teal-500/20 border-vis-teal-400' : ''}`}
+          aria-pressed={isPanMode}
+          title={isPanMode ? (language === 'zh' ? '禁用拖动模式' : 'Disable pan mode') : (language === 'zh' ? '启用拖动模式' : 'Enable pan mode')}
+        >
+          <Hand className={`w-4 h-4 ${isPanMode ? 'text-vis-teal-400' : 'text-vis-text-secondary hover:text-vis-teal-400'} transition-colors`} />
         </Button>
 
         {selectedTool === 'mask' && (

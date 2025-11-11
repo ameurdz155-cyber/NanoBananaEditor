@@ -1349,7 +1349,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
 
     const contentClasses = 'cursor-pointer flex h-full flex-col gap-2 p-2';
 
-    const thumbnailClasses = 'relative overflow-hidden rounded-md border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-full aspect-square';
+    const thumbnailClasses = 'relative overflow-hidden rounded-md border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-full aspect-video';
 
     const thumbnailStyle = {
       borderColor: 'var(--surface-border)'
@@ -2431,7 +2431,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           >
             <div className="p-6 border-b border-vis-border">
               <Dialog.Title className="text-2xl font-bold text-vis-text-primary">
-                {language === 'zh' ? '裁剪图片 (1:1)' : 'Crop Image (1:1)'}
+                {language === 'zh' ? '裁剪图片 (16:9)' : 'Crop Image (16:9)'}
               </Dialog.Title>
               <Dialog.Description className="text-vis-text-secondary mt-2">
                 {language === 'zh'
@@ -2446,7 +2446,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   image={imageToCrop}
                   crop={imageCrop}
                   zoom={imageZoom}
-                  aspect={1}
+                  aspect={16 / 9}
                   onCropChange={setImageCrop}
                   onZoomChange={setImageZoom}
                   onCropComplete={onImageCropComplete}

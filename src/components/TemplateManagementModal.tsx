@@ -11,7 +11,7 @@ export const TemplateManagementModal: React.FC<TemplateManagementModalProps> = (
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-5xl w-full h-[85vh] overflow-hidden p-0 bg-transparent border border-vis-border rounded-2xl shadow-vis-glow-teal"
+        className="max-w-5xl w-full aspect-video overflow-hidden p-0 bg-transparent border border-vis-border rounded-2xl shadow-vis-glow-teal"
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">Template management</DialogTitle>
