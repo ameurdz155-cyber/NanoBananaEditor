@@ -18,28 +18,15 @@ import { PromptCategory } from '../types';
 import * as categoryService from '../services/categoryService';
 import { cn } from '../utils/cn';
 import { CategoryManagementToolbar, VoiceLanguageOption } from './CategoryManagementToolbar';
+import { useTheme } from 'next-themes';
 
 export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   console.log('[CategoryManagementPage] Component rendered');
   
   const language = useAppStore(s => s.language);
   const t = getTranslation(language);
-  
-  const [isDarkMode, setIsDarkMode] = React.useState(() => {
-    if (typeof window === 'undefined') return true;
-    const savedTheme = localStorage.getItem('app-theme');
-    return savedTheme !== 'light';
-  });
-
-  React.useEffect(() => {
-    const handleThemeChange = () => {
-      const savedTheme = localStorage.getItem('app-theme');
-      setIsDarkMode(savedTheme !== 'light');
-    };
-
-    window.addEventListener('themeChange', handleThemeChange);
-    return () => window.removeEventListener('themeChange', handleThemeChange);
-  }, []);
+  const { theme } = useTheme();
+  const isDarkMode = theme !== 'light';
   
   // Use Zustand store for categories
   const cats = useAppStore(s => s.promptCategories);
@@ -325,15 +312,37 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
 
   return (
     <>
-      <div className="h-full w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 flex flex-col overflow-hidden">
+      <div className={cn(
+        "h-full w-full flex flex-col overflow-hidden",
+        isDarkMode
+          ? "bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950"
+          : "bg-gradient-to-br from-purple-50 via-white to-pink-50"
+      )}>
         {/* Header */}
-  <div className="flex-shrink-0 bg-gray-900 backdrop-blur-xl border-b border-vis-border z-30">
+  <div className={cn(
+    "flex-shrink-0 backdrop-blur-xl border-b z-30",
+    isDarkMode
+      ? "bg-gray-900 border-vis-border"
+      : "bg-white/80 border-purple-200/40"
+  )}>
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Folder className="h-7 w-7 text-vis-teal-400" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400 bg-clip-text text-transparent">{language === 'zh' ? '提示词分类' : 'Prompt Categories'}</h1>
+              <Folder className={cn(
+                "h-7 w-7",
+                isDarkMode ? "text-vis-teal-400" : "text-purple-600"
+              )} />
+              <h1 className={cn(
+                "text-2xl font-bold bg-clip-text text-transparent",
+                isDarkMode
+                  ? "bg-gradient-to-r from-vis-teal-400 to-vis-cyan-400"
+                  : "bg-gradient-to-r from-purple-600 to-pink-600"
+              )}>{language === 'zh' ? '提示词分类' : 'Prompt Categories'}</h1>
             </div>
-            <Button onClick={onClose} variant="ghost" size="sm" className="text-vis-text-secondary hover:text-vis-teal-300">
+            <Button onClick={onClose} variant="ghost" size="sm" className={cn(
+              isDarkMode
+                ? "text-vis-text-secondary hover:text-vis-teal-300"
+                : "text-gray-600 hover:text-purple-600"
+            )}>
               <ArrowLeft className="h-5 w-5 mr-1" />
               {language === 'zh' ? '返回' : 'Back'}
             </Button>
@@ -363,7 +372,12 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
         {/* Error Display */}
         {error && (
           <div className="flex-shrink-0 max-w-7xl mx-auto px-6 pb-4 w-full">
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
+            <div className={cn(
+              "rounded-lg p-4",
+              isDarkMode
+                ? "bg-red-500/10 border border-red-500/30 text-red-400"
+                : "bg-red-50 border border-red-200 text-red-700"
+            )}>
               {error}
             </div>
           </div>
@@ -423,8 +437,32 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                         </div>
                       </div>
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-4">
-                        <Button size="icon" variant="ghost" onClick={() => editCat(c)} className="h-8 w-8 text-vis-cyan-400 hover:text-vis-cyan-300 hover:bg-vis-cyan-500/10"><Edit2 className="h-4 w-4" /></Button>
-                        <Button size="icon" variant="ghost" onClick={() => del(c.id)} className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10"><Trash2 className="h-4 w-4" /></Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          onClick={() => editCat(c)} 
+                          className={cn(
+                            "h-8 w-8",
+                            isDarkMode
+                              ? "text-vis-cyan-400 hover:text-vis-cyan-300 hover:bg-vis-cyan-500/10"
+                              : "text-purple-600 hover:text-purple-700 hover:bg-purple-100"
+                          )}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          onClick={() => del(c.id)} 
+                          className={cn(
+                            "h-8 w-8",
+                            isDarkMode
+                              ? "text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              : "text-red-600 hover:text-red-700 hover:bg-red-100"
+                          )}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                 </Card>
