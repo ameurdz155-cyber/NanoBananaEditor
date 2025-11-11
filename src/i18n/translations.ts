@@ -436,6 +436,36 @@ export interface Translations {
   premiumFeatureTitle: string;
   premiumFeatureDescription: string;
   upgradeToUnlock: string;
+  
+  // Authentication
+  loginTitle: string;
+  loginSubtitle: string;
+  loginButton: string;
+  signingIn: string;
+  emailAddress: string;
+  password: string;
+  enterPassword: string;
+  rememberMe: string;
+  dontHaveAccount: string;
+  signUp: string;
+  defaultCredentials: string;
+  registrationTitle: string;
+  registrationSubtitle: string;
+  username: string;
+  fullName: string;
+  fullNamePlaceholder: string;
+  confirmPassword: string;
+  createPassword: string;
+  confirmPasswordPlaceholder: string;
+  createAccount: string;
+  creatingAccount: string;
+  backToLogin: string;
+  passwordsDoNotMatch: string;
+  passwordTooShort: string;
+  unableToSignIn: string;
+  unableToRegister: string;
+  accountCreatedTitle: string;
+  accountCreatedSubtitle: string;
 }
 
 const translations: Record<Language, Translations> = {

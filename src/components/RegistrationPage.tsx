@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, Loader2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { useAppStore } from '../store/useAppStore';
+import { getTranslation } from '../i18n/translations';
 import logoIcon from '../assets/AI-POD-Lite-icon.png';
 
 interface RegistrationPageProps {
@@ -9,6 +11,8 @@ interface RegistrationPageProps {
 
 export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogin }) => {
   const register = useAuthStore((state) => state.register);
+  const language = useAppStore((state) => state.language);
+  const t = getTranslation(language);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
@@ -23,12 +27,12 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
 
     // Validation
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t.passwordsDoNotMatch);
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(t.passwordTooShort);
       return;
     }
 
@@ -40,7 +44,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Unable to register. Please try again.');
+        setError(t.unableToRegister);
       }
     } finally {
       setIsLoading(false);
@@ -63,14 +67,14 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
             </div>
 
             <div className="text-center">
-              <h1 className="text-lg font-semibold text-vis-text-primary">Get started</h1>
-              <p className="text-xs text-vis-text-secondary mt-1.5">Join AI POD Lite and start creating with AI.</p>
+              <h1 className="text-lg font-semibold text-vis-text-primary">{t.registrationTitle}</h1>
+              <p className="text-xs text-vis-text-secondary mt-1.5">{t.registrationSubtitle}</p>
             </div>
 
             <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-xs font-medium text-vis-text-primary mb-1.5" htmlFor="email">
-                  Email address
+                  {t.emailAddress}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-vis-text-muted" />
@@ -81,7 +85,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     className="w-full rounded-lg border border-vis-border bg-gray-800/50 py-2.5 pl-9 pr-3 text-sm text-vis-text-primary placeholder:text-vis-text-muted focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-500/30 outline-none transition-all duration-200"
-                    placeholder="your@email.com"
+                    placeholder={t.emailAddress}
                     autoComplete="email"
                   />
                 </div>
@@ -89,7 +93,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
 
               <div>
                 <label className="block text-xs font-medium text-vis-text-primary mb-1.5" htmlFor="username">
-                  Username
+                  {t.username}
                 </label>
                 <div className="relative">
                   <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-vis-text-muted" />
@@ -102,7 +106,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
                     value={username}
                     onChange={(event) => setUsername(event.target.value)}
                     className="w-full rounded-lg border border-vis-border bg-gray-800/50 py-2.5 pl-9 pr-3 text-sm text-vis-text-primary placeholder:text-vis-text-muted focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-500/30 outline-none transition-all duration-200"
-                    placeholder="username"
+                    placeholder={t.username}
                     autoComplete="username"
                   />
                 </div>
@@ -110,7 +114,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
 
               <div>
                 <label className="block text-xs font-medium text-vis-text-primary mb-1.5" htmlFor="fullName">
-                  Full name (optional)
+                  {t.fullName}
                 </label>
                 <div className="relative">
                   <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-vis-text-muted" />
@@ -120,7 +124,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
                     value={fullName}
                     onChange={(event) => setFullName(event.target.value)}
                     className="w-full rounded-lg border border-vis-border bg-gray-800/50 py-2.5 pl-9 pr-3 text-sm text-vis-text-primary placeholder:text-vis-text-muted focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-500/30 outline-none transition-all duration-200"
-                    placeholder="John Doe"
+                    placeholder={t.fullNamePlaceholder}
                     autoComplete="name"
                   />
                 </div>
@@ -128,7 +132,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
 
               <div>
                 <label className="block text-xs font-medium text-vis-text-primary mb-1.5" htmlFor="password">
-                  Password
+                  {t.password}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-vis-text-muted" />
@@ -140,7 +144,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     className="w-full rounded-lg border border-vis-border bg-gray-800/50 py-2.5 pl-9 pr-3 text-sm text-vis-text-primary placeholder:text-vis-text-muted focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-500/30 outline-none transition-all duration-200"
-                    placeholder="Create password"
+                    placeholder={t.createPassword}
                     autoComplete="new-password"
                   />
                 </div>
@@ -148,7 +152,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
 
               <div>
                 <label className="block text-xs font-medium text-vis-text-primary mb-1.5" htmlFor="confirmPassword">
-                  Confirm password
+                  {t.confirmPassword}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-vis-text-muted" />
@@ -160,7 +164,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     className="w-full rounded-lg border border-vis-border bg-gray-800/50 py-2.5 pl-9 pr-3 text-sm text-vis-text-primary placeholder:text-vis-text-muted focus:border-vis-teal-400 focus:ring-2 focus:ring-vis-teal-500/30 outline-none transition-all duration-200"
-                    placeholder="Confirm password"
+                    placeholder={t.confirmPasswordPlaceholder}
                     autoComplete="new-password"
                   />
                 </div>
@@ -179,7 +183,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
               >
                 <span className="flex items-center justify-center space-x-2">
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                  <span className="text-sm">{isLoading ? 'Creating account…' : 'Create account'}</span>
+                  <span className="text-sm">{isLoading ? t.creatingAccount : t.createAccount}</span>
                 </span>
               </button>
             </form>
@@ -193,7 +197,7 @@ export const RegistrationPage: React.FC<RegistrationPageProps> = ({ onBackToLogi
                 className="w-full text-center text-xs text-vis-text-secondary hover:text-vis-teal-300 transition-colors flex items-center justify-center space-x-1"
               >
                 <ArrowLeft className="h-3 w-3" />
-                <span>Back to login</span>
+                <span>{t.backToLogin}</span>
               </button>
             </div>
           )}
