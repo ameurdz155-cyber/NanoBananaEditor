@@ -1345,7 +1345,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     const isSelected = selectedTemplate === template.id;
 
     const cardClasses = cn(
-      'group relative w-full cursor-pointer overflow-hidden rounded-lg border transition-all duration-300 backdrop-blur hover:border-purple-500/40 h-full',
+      'group relative w-full cursor-pointer overflow-hidden rounded-xl border transition-all duration-300 backdrop-blur hover:border-purple-500/40 h-full',
       isSelected
         ? 'shadow-[0_8px_20px_-10px_rgba(168,85,247,0.45)]'
         : 'hover:shadow-[0_10px_24px_-12px_rgba(168,85,247,0.35)] hover:-translate-y-0.5'
@@ -1356,9 +1356,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       borderColor: isSelected ? 'rgba(168, 85, 247, 0.4)' : 'var(--surface-border)'
     };
 
-    const contentClasses = 'cursor-pointer flex h-full flex-col gap-2 p-2';
+    const contentClasses = 'cursor-pointer flex h-full flex-col gap-2.5 p-3';
 
-    const thumbnailClasses = 'relative overflow-hidden rounded-md border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-full aspect-video';
+    const thumbnailClasses = 'relative overflow-hidden rounded-lg border bg-gradient-to-br from-purple-500/15 via-indigo-500/10 to-purple-500/25 flex items-center justify-center w-full aspect-video';
 
     const thumbnailStyle = {
       borderColor: 'var(--surface-border)'
@@ -1376,14 +1376,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     const templateIconNode = renderIconValue(
       template.emoji,
       cn(
-        'w-8 h-8 text-2xl leading-none flex items-center justify-center',
+        'w-12 h-12 text-3xl leading-none flex items-center justify-center',
         isDarkMode ? 'text-purple-200' : 'text-purple-600'
       )
     );
 
     const categoryIconNode = categoryInfo ? (
-      <span className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-vis-teal-400">
-        {renderIconValue(categoryInfo.image || categoryInfo.emoji, 'w-full h-full text-xs')}
+      <span className="w-5 h-5 flex items-center justify-center flex-shrink-0 text-vis-teal-400">
+        {renderIconValue(categoryInfo.image || categoryInfo.emoji, 'w-full h-full text-sm')}
       </span>
     ) : null;
 
@@ -1430,7 +1430,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                 />
                 <div className="fallback-icon hidden w-full h-full items-center justify-center">
                   {templateIconNode || (
-                    <span className="text-xl font-semibold text-vis-teal-400">
+                    <span className="text-3xl font-semibold text-vis-teal-400">
                       {template.name.charAt(0).toUpperCase()}
                     </span>
                   )}
@@ -1438,43 +1438,43 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               </>
             ) : (
               templateIconNode || (
-                <span className="text-xl font-semibold text-vis-teal-400">
+                <span className="text-3xl font-semibold text-vis-teal-400">
                   {template.name.charAt(0).toUpperCase()}
                 </span>
               )
             )}
           </div>
 
-          <div className="flex-1 min-w-0 flex flex-col gap-1">
-            <div className="flex items-center gap-1 flex-wrap">
-              <h4 className="text-xs font-semibold text-vis-text-primary line-clamp-2">{template.name}</h4>
+          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h4 className="text-sm font-semibold text-vis-text-primary line-clamp-2">{template.name}</h4>
               {selectedTemplate === template.id && (
-                <span className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide border border-vis-teal-400/40 bg-vis-teal-500/20 text-vis-teal-200">
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide border border-vis-teal-400/40 bg-vis-teal-500/20 text-vis-teal-200">
                   {language === 'zh' ? '✓' : '✓'}
                 </span>
               )}
             </div>
 
             {template.description && (
-              <p className="text-[10px] line-clamp-2 text-vis-text-secondary">
+              <p className="text-xs line-clamp-2 text-vis-text-secondary">
                 {template.description}
               </p>
             )}
 
             {categoryInfo ? (
-              <div className="flex items-center gap-1 text-[10px] text-vis-text-muted">
+              <div className="flex items-center gap-1.5 text-xs text-vis-text-muted">
                 {categoryIconNode}
                 <span className="line-clamp-1">{categoryInfo.name}</span>
               </div>
             ) : !template.categoryId ? (
-              <div className="text-[10px] text-vis-text-muted">{t.uncategorized}</div>
+              <div className="text-xs text-vis-text-muted">{t.uncategorized}</div>
             ) : null}
           </div>
 
           {selectedTemplate === template.id ? (
             <div className={activeActionsClasses}>
-              <div className="flex h-6 w-6 items-center justify-center rounded-md border border-transparent text-vis-text-muted">
-                <ChevronDown className="h-3 w-3" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-vis-text-muted">
+                <ChevronDown className="h-4 w-4" />
               </div>
             </div>
           ) : (
@@ -1482,33 +1482,33 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 text-vis-text-secondary hover:text-vis-cyan-400 hover:bg-vis-cyan-500/10"
+                className="h-7 w-7 text-vis-text-secondary hover:text-vis-cyan-400 hover:bg-vis-cyan-500/10"
                 onClick={(e) => {
                   e.stopPropagation();
                   openDuplicateModal(template);
                 }}
                 title={t.duplicateTemplate}
               >
-                <Copy className="h-3 w-3" />
+                <Copy className="h-3.5 w-3.5" />
               </Button>
               {isCustom && (
                 <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10"
+                    className="h-7 w-7 text-vis-text-secondary hover:text-vis-teal-400 hover:bg-vis-teal-500/10"
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditModal(template);
                     }}
                     title={t.editTemplate}
                   >
-                    <Edit2 className="h-3 w-3" />
+                    <Edit2 className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 text-red-400 hover:text-red-200 hover:bg-red-500/15"
+                    className="h-7 w-7 text-red-400 hover:text-red-200 hover:bg-red-500/15"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteTemplate(template.id);
@@ -1517,7 +1517,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                     disabled={deletingTemplateId === template.id}
                     aria-busy={deletingTemplateId === template.id}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </>
               )}
@@ -1528,12 +1528,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
     );
   };
 
-  const templateListClasses = 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2';
+  const templateListClasses = 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3';
 
   return (
     <div className="flex flex-col w-full h-full min-h-0">
       {/* Search, Actions, and Categories */}
-      <div className="flex-shrink-0 mb-3 space-y-3">
+      <div className="flex-shrink-0 mb-2 space-y-2">
         <CategoryManagementToolbar
           searchValue={searchQuery}
           onSearchChange={(value) => setSearchQuery(value)}
@@ -1568,7 +1568,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-xs uppercase tracking-wide text-vis-text-muted">
               {t.templateCategories}
@@ -1587,12 +1587,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
             )} */}
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {categoryTabs.map((category) => {
               const isActive = activeCategory === category.id;
               const countValue = category.count ?? 0;
               const countClasses = cn(
-                'ml-1 text-[11px] font-medium transition-colors',
+                'ml-1 text-[10px] font-medium transition-colors',
                 isActive ? 'text-vis-teal-100' : 'text-vis-text-muted'
               );
               return (
@@ -1600,14 +1600,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
                   key={category.id}
                   onClick={() => handleCategoryChipClick(category)}
                   className={cn(
-                    'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition-all',
+                    'flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-all',
                     isActive
                       ? 'border-vis-teal-400 bg-gradient-to-r from-vis-teal-500/20 to-vis-cyan-500/20 text-vis-teal-200 shadow-vis-glow-teal'
                       : 'border-vis-border text-vis-text-secondary hover:text-vis-text-primary hover:border-vis-teal-400/40 hover:bg-vis-teal-500/10'
                   )}
                   type="button"
                 >
-                  <span className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                  <span className="w-3.5 h-3.5 flex items-center justify-center flex-shrink-0">
                     {renderIconValue(category.image || category.emoji, 'w-full h-full text-sm')}
                   </span>
                   <span className="inline-flex items-center gap-1">
@@ -1622,7 +1622,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateSelect }
       </div>
 
       {/* Templates List */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-2">
         {templatesLoading && (
           <div className="rounded-lg border border-vis-teal-400/30 bg-vis-teal-500/10 text-vis-teal-200 px-3 py-2 text-sm flex items-center justify-between gap-2">
             <span>
