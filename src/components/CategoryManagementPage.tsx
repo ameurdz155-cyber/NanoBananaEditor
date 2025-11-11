@@ -163,7 +163,8 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
   const editCat = (c: PromptCategory) => { 
     setEdit(c); 
     setName(c.name); 
-    setEmoji(c.emoji || '📁'); 
+    // Show the image from backend if it exists, otherwise use emoji
+    setEmoji(c.image || c.emoji || '📁'); 
     setOpen(true); 
   };
   
@@ -396,7 +397,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
           ) : (
             <div className="flex flex-col gap-3">
               {filtered.map(c => {
-                const displayEmoji = c.emoji || c.image || '📁';
+                const displayEmoji = c.image || c.emoji || '📁';
                 const cardSurfaceClasses = isDarkMode
                   ? 'border border-vis-border bg-gradient-to-br from-gray-800/50 to-gray-900/50 hover:border-vis-teal-400 hover:shadow-vis-glow-teal'
                   : 'border border-slate-200 bg-white/95 shadow-md hover:border-purple-300/60 hover:shadow-[0_18px_36px_-20px_rgba(124,58,237,0.25)]';
@@ -426,7 +427,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        {displayEmoji.startsWith('data:') ? (
+                        {displayEmoji.startsWith('data:') || displayEmoji.startsWith('http://') || displayEmoji.startsWith('https://') ? (
                           <img src={displayEmoji} alt={c.name} className={imageClasses} />
                         ) : (
                           <div className={emojiClasses}>{displayEmoji}</div>
@@ -547,7 +548,7 @@ export const CategoryManagementPage: React.FC<{ onClose: () => void }> = ({ onCl
                         ? "border-vis-border bg-gray-800/50" 
                         : "border-purple-200/60 bg-purple-50/50"
                     )}>
-                      {emoji.startsWith('data:') ? (
+                      {emoji.startsWith('data:') || emoji.startsWith('http://') || emoji.startsWith('https://') ? (
                         <img src={emoji} alt="Icon preview" className="h-full w-full rounded-md object-cover" />
                       ) : (
                         <span className="text-3xl">{emoji}</span>
