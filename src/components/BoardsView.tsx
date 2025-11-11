@@ -395,29 +395,57 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   // Handle asset file upload
   const handleAssetUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/') && selectedBoardId) {
-      try {
-        // Upload to backend for better performance
-        const uploadResult = await uploadAsset(file);
-        const assetUrl = getAssetUrl(uploadResult.asset_id);
-        
-        // Add the uploaded asset ID (not URL) to the current board
-        await addImageToBoard(selectedBoardId, uploadResult.asset_id);
-      } catch (error) {
-        console.error('Failed to upload asset:', error);
-        // Fallback to base64 if upload fails
-        try {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const dataUrl = e.target?.result as string;
-            addImageToBoard(selectedBoardId, dataUrl);
-          };
-          reader.readAsDataURL(file);
-        } catch (fallbackError) {
-          console.error('Fallback upload also failed:', fallbackError);
-        }
+    if (!file || !file.type.startsWith('image/')) {
+      event.target.value = '';
+      return;
+    }
+    
+    // Wait a moment for boards to load if none exist yet
+    if (boards.length === 0) {
+      console.log('Waiting for boards to load...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    // Ensure we have a valid board selected (not the placeholder 'default')
+    let targetBoardId = selectedBoardId;
+    if (!targetBoardId || targetBoardId === 'default') {
+      // Try to use the first available board
+      if (boards.length > 0) {
+        targetBoardId = boards[0].id;
+        setSelectedBoardId(targetBoardId);
+      } else {
+        console.error('No board available for upload - please create a board first');
+        alert('Please wait for boards to load or create a board first');
+        event.target.value = '';
+        return;
       }
     }
+    
+    try {
+      // Upload to backend for better performance
+      const uploadResult = await uploadAsset(file);
+      
+      // Add the uploaded asset ID (not URL) to the current board
+      await addImageToBoard(targetBoardId, uploadResult.asset_id);
+      
+      // Switch to assets tab to show the uploaded image
+      setActiveTab('assets');
+    } catch (error) {
+      console.error('Failed to upload asset:', error);
+      // Fallback to base64 if upload fails
+      try {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          addImageToBoard(targetBoardId, dataUrl);
+          setActiveTab('assets');
+        };
+        reader.readAsDataURL(file);
+      } catch (fallbackError) {
+        console.error('Fallback upload also failed:', fallbackError);
+      }
+    }
+    
     // Reset the input so the same file can be selected again
     event.target.value = '';
   };
@@ -435,6 +463,14 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       return;
     }
 
+    // Validate that boardId is not the placeholder 'default'
+    if (!boardId || boardId === 'default') {
+      console.error('Invalid board ID for upload:', boardId);
+      alert('Please wait for boards to load');
+      event.target.value = '';
+      return;
+    }
+
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) {
         continue;
@@ -443,7 +479,6 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
       try {
         // Upload to backend for better performance
         const uploadResult = await uploadAsset(file);
-        const assetUrl = getAssetUrl(uploadResult.asset_id);
         await addImageToBoard(boardId, uploadResult.asset_id);
         setActiveTab('assets');
       } catch (error) {
@@ -464,7 +499,9 @@ export const BoardsView: React.FC<BoardsViewProps> = ({
   }, [addImageToBoard]);
 
   React.useEffect(() => {
-    if (boards.length > 0 && !selectedBoardId) {
+    // Initialize selectedBoardId when boards are loaded
+    // Or if current selection is the placeholder 'default'
+    if (boards.length > 0 && (!selectedBoardId || selectedBoardId === 'default')) {
       setSelectedBoardId(boards[0].id);
     }
   }, [boards, selectedBoardId, setSelectedBoardId]);

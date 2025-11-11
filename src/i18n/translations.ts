@@ -165,6 +165,7 @@ export interface Translations {
   clearSessionConfirm: string;
   yesClear: string;
   cancel: string;
+  clearAll: string;
   
   // Keyboard shortcuts
   shortcuts: string;

@@ -115,6 +115,7 @@ export const PromptComposer: React.FC = () => {
     removeEditReferenceImage,
     clearEditReferenceImages,
     uploadHistory,
+    clearUploadHistory,
     canvasImage,
     setCanvasImage,
     showPromptPanel,
@@ -729,13 +730,39 @@ export const PromptComposer: React.FC = () => {
   };
 
   const handleClearSession = () => {
+    // Clear prompt and all settings
     setCurrentPrompt('');
+    setNegativePrompt('');
+    setShowNegativePrompt(false);
+    
+    // Clear template selection and template-related state
+    setSelectedTemplate(null);
+    setLastSelectedTemplate(null);
+    setIsTemplatePromptActive(false);
+    setSavedPromptBeforeTemplate('');
+    
+    // Clear all reference images
     clearUploadedImages();
     clearEditReferenceImages();
+    
+    // Clear upload history (reference image history)
+    clearUploadHistory();
+    
+    // Clear canvas and brush strokes
     clearBrushStrokes();
     setCanvasImage(null);
+    
+    // Clear prompt history
+    for (let i = promptHistory.length - 1; i >= 0; i--) {
+      deletePromptFromHistory(i);
+    }
+    
+    // Reset settings to defaults
     setSeed(null);
     setTemperature(0.7);
+    setRandomSeed(true);
+    
+    // Close confirmation dialog
     setShowClearConfirm(false);
   };
 
@@ -1736,25 +1763,21 @@ export const PromptComposer: React.FC = () => {
         {showClearConfirm && (
           <div className="mt-3 p-3 bg-gray-800/50 rounded-lg border border-vis-border">
             <p className="text-xs text-vis-text-primary mb-3">
-              {t.clearSessionConfirm}
+              {t.clearSessionConfirm || 'Are you sure you want to clear this session? This will remove all reference images, prompts, canvas content, and previous history.'}
             </p>
             <div className="flex space-x-2">
-              <Button
-                variant="destructive"
-                size="sm"
+              <button
                 onClick={handleClearSession}
-                className="flex-1"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 h-8 rounded-md px-3 text-xs flex-1"
               >
-                {t.yesClear}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+                {t.yesClear || 'Yes, Clear'}
+              </button>
+              <button
                 onClick={() => setShowClearConfirm(false)}
-                className="flex-1 border-vis-border hover:border-vis-teal-400 text-vis-text-primary hover:text-vis-teal-300"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background shadow-sm hover:bg-accent h-8 rounded-md px-3 text-xs flex-1 border-vis-border hover:border-vis-teal-400 text-vis-text-primary hover:text-vis-teal-300"
               >
-                {t.cancel}
-              </Button>
+                {t.cancel || 'Cancel'}
+              </button>
             </div>
           </div>
         )}
@@ -1912,10 +1935,25 @@ export const PromptComposer: React.FC = () => {
             {((selectedTool === 'generate' && uploadedImages.length > 0) ||
               (selectedTool === 'edit' && editReferenceImages.length > 0)) && (
               <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-3 flex items-center transition-colors" style={{ color: 'var(--text-primary)' }}>
-                  <Check className="h-4 w-4 mr-2 text-green-500" />
-                  {`${t.currentReferences} (${(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length})`}
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold flex items-center transition-colors" style={{ color: 'var(--text-primary)' }}>
+                    <Check className="h-4 w-4 mr-2 text-green-500" />
+                    {`${t.currentReferences} (${(selectedTool === 'generate' ? uploadedImages : editReferenceImages).length})`}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      if (selectedTool === 'generate') {
+                        clearUploadedImages();
+                      } else {
+                        clearEditReferenceImages();
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 border border-red-500/30"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    {t.clearAll || 'Clear All'}
+                  </button>
+                </div>
                 <div
                   className={`flex gap-3 ${
                     (selectedTool === 'generate' ? uploadedImages : editReferenceImages).length > 3

@@ -121,6 +121,8 @@ interface AppState {
   removeEditReferenceImage: (index: number) => void;
   clearEditReferenceImages: () => void;
   
+  clearUploadHistory: () => void;
+  
   addBrushStroke: (stroke: BrushStroke) => void;
   clearBrushStrokes: () => void;
   setBrushSize: (size: number) => void;
@@ -194,17 +196,8 @@ export const useAppStore = create<AppState>()(
       // Initial state
       currentProject: null,
       
-      boards: [
-        {
-          id: 'default',
-          name: 'My Creations',
-          description: 'All your generated images',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-          imageIds: []
-        }
-      ],
-      selectedBoardId: 'default',
+      boards: [],
+      selectedBoardId: null,
       favoriteImageIds: [],
       
   customTemplates: [],
@@ -310,6 +303,8 @@ export const useAppStore = create<AppState>()(
         editReferenceImages: state.editReferenceImages.filter((_, i) => i !== index) 
       })),
       clearEditReferenceImages: () => set({ editReferenceImages: [] }),
+      
+      clearUploadHistory: () => set({ uploadHistory: [] }),
       
       addBrushStroke: (stroke) => set((state) => ({ 
         brushStrokes: [...state.brushStrokes, stroke] 
@@ -543,14 +538,15 @@ export const useAppStore = create<AppState>()(
             imageIds: b.image_ids
           }));
           
-          // If there are boards and current selected board is "default", 
-          // update to the first board from backend
+          // If there are boards and no board is selected (or 'default' placeholder),
+          // select the first board from backend
           const currentState = get();
-          const newSelectedBoardId = boards.length > 0 && currentState.selectedBoardId === 'default' 
+          const newSelectedBoardId = boards.length > 0 && (!currentState.selectedBoardId || currentState.selectedBoardId === 'default')
             ? boards[0].id 
             : currentState.selectedBoardId;
           
           set({ boards, selectedBoardId: newSelectedBoardId });
+          console.log('✅ Boards loaded:', boards.length, 'Selected:', newSelectedBoardId);
         } catch (error) {
           console.error('Failed to load boards from backend:', error);
           // If failed, keep local boards

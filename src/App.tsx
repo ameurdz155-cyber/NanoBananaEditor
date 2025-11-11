@@ -61,7 +61,7 @@ function AppContent() {
   
   // Load history and boards from backend on mount
   React.useEffect(() => {
-    if (currentProject) {
+    if (isAuthenticated) {
       hydrateHistoryFromBackend().catch(err => {
         console.error('Failed to load history from backend:', err);
       });
@@ -69,7 +69,7 @@ function AppContent() {
         console.error('Failed to load boards from backend:', err);
       });
     }
-  }, [currentProject?.id]); // Only run when project ID changes
+  }, [isAuthenticated]); // Run when authentication status changes
   
   // Update page title when language changes
   React.useEffect(() => {
