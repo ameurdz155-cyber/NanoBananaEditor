@@ -684,9 +684,9 @@ export const HistoryPanel: React.FC = () => {
                         )}
                       </div>
                       
-                      {/* Timestamp */}
-                      <div className="absolute bottom-2 right-2 bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md text-vis-text-secondary border border-vis-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {/* Type Label on Hover */}
+                      <div className="absolute bottom-2 right-2 bg-vis-teal-500/90 backdrop-blur-sm text-xs px-2.5 py-1 rounded-md text-white font-medium border border-vis-teal-400/50 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                        {generation.tags?.includes('upscall') ? 'Upscale' : 'Generation'}
                       </div>
                     </button>
                   );
@@ -773,9 +773,9 @@ export const HistoryPanel: React.FC = () => {
                         </div>
                       )}
                       
-                      {/* Timestamp */}
-                      <div className="absolute bottom-2 right-2 bg-gray-900/90 backdrop-blur-sm text-xs px-2 py-1 rounded-md text-vis-text-secondary border border-vis-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {/* Type Label on Hover */}
+                      <div className="absolute bottom-2 right-2 bg-vis-cyan-500/90 backdrop-blur-sm text-xs px-2.5 py-1 rounded-md text-white font-medium border border-vis-cyan-400/50 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                        Edit
                       </div>
                     </button>
                   );
